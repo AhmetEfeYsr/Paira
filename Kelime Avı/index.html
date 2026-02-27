@@ -19,11 +19,14 @@
 
     <main id="app-container" class="glass-panel custom-scrollbar">
         <!-- 1. GİRİŞ EKRANI -->
-        <section id="login-screen" class="view-state active">
-            <h1 class="gradient-text">Kelime Avı</h1>
-            <p class="subtitle">Ebe Uyanmadan Eşleş!</p>
+        <section id="login-screen" class="view-state active" style="justify-content: flex-start; padding-top: 5vh; align-items: center;">
+            <div class="hero-content">
+                <h1 class="gradient-text">Kelime Avı</h1>
+                <p class="subtitle" style="margin-bottom: 0.5rem;">Ebe Uyanmadan Eşleş!</p>
+                <p class="seo-description">Sosyal çıkarım ve kelime tahmin mekaniklerini birleştiren en yeni online parti oyunu. Arkadaşlarınızla ücretsiz, şifresiz ve sunucusuz oynayın!</p>
+            </div>
 
-            <div style="max-width: 420px; width: 100%;">
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
                 <div class="form-group">
                     <label for="username-input">Oyuncu Adı</label>
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
@@ -34,6 +37,28 @@
                     <div class="join-row" style="display: flex; gap: 12px;">
                         <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" style="margin-bottom: 0;">
                         <button id="btn-join" class="btn btn-secondary" style="padding: 14px 28px;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Roller Dağıtılır</h3>
+                        <p>Oyun başladığında sistem rastgele birini gizli <strong>Ebe</strong> seçer. Odadaki diğer herkes <strong>Masum</strong>'dur. Ebe tüm kelimeyi görür, masumlar sadece baş harfini.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Şifreli Konuşun</h3>
+                        <p>Masumlar süre bitmeden aralarında sesli iletişim kurarak, o harfle başlayan bir kelimede anlaşmalıdır. Ancak dikkat edin: Kelimeyi çok açık ederseniz ebe duyar!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Tahmin ve Av</h3>
+                        <p>Süre bitiminde herkes anlaştığı kelimeyi yazar. Ebe de dinlediklerinden yola çıkarak 5 tahmin yapar. Masumlar eşleşirse kazanır, Ebe masumların kelimesini tahmin ederse onları avlar!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Büyük Vurgun (Jackpot)</h3>
+                        <p>Masumlardan biri risk alıp, doğrudan Ebenin tuttuğu asıl kelimeyi bulursa anında Jackpot yapar ve büyük puan kazanır!</p>
                     </div>
                 </div>
             </div>

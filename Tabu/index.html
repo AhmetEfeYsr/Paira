@@ -19,9 +19,13 @@
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
-        <section id="login-screen" class="view-state active">
-            <h1 class="gradient-text">Paira Tabu</h1>
-            <div style="max-width: 420px; width: 100%;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
+            <div class="hero-content">
+                <h1 class="gradient-text">Paira Tabu</h1>
+                <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online yasaklı kelime (tabu) oyunu oynayın! Serverless WebRTC teknolojisi ile sıfır gecikme.</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
                 <div class="form-group">
                     <label for="username-input">Oyuncu Adı</label>
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
@@ -32,6 +36,28 @@
                     <div class="join-row" style="display: flex; gap: 12px;">
                         <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" style="margin-bottom: 0;">
                         <button id="btn-join" class="btn btn-secondary" style="padding: 14px 28px;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Oda Kur & Katıl</h3>
+                        <p>Bir kişi "Yeni Oda Kur" diyerek kurucu olur. Ekranda beliren 6 haneli kodu arkadaşlarına yollar. Diğerleri bu kodla odaya katılır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Takımlara Ayrılın</h3>
+                        <p>Lobi ekranında herkes takımını (A veya B) seçebilir. Kurucu, tur süresini, zorluğu ve kategorileri ayarlayıp oyunu başlatır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Süre Başlasın!</h3>
+                        <p>Sırası gelen oyuncu, ana kelimeyi takım arkadaşlarına anlatmaya çalışır. Ancak altındaki yasaklı kelimeleri (tabu kelimeleri) <strong>kesinlikle</strong> kullanamaz!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Doğru, Pas, Tabu</h3>
+                        <p>Takım arkadaşınız kelimeyi bilirse "Doğru", yasaklı kelime kullanırsanız "Tabu", zorlanırsanız "Pas" butonuna basın. En çok puanı toplayan kazanır!</p>
                     </div>
                 </div>
             </div>

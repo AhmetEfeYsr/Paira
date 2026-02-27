@@ -9,8 +9,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-/* 1. KURAL: Tarayıcının ana çubuğunun (sağdaki ana scroll) çıkmasını kesinlikle engelliyoruz */
-html, body { height: 100%; height: 100dvh; overflow: hidden; } 
+/* 1. KURAL: Tarayıcının ana çubuğunun (sağdaki ana scroll) çıkmasını kesinlikle engelliyoruz (SEO sonrası overflow serbest) */
+html, body { min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
 
 body {
     font-family: 'Poppins', sans-serif; 
@@ -53,7 +53,20 @@ body {
 .view-state { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.4s ease; min-height: 0; overflow: hidden; }
 .view-state:not(.active) { display: none; }
 
-#login-screen { justify-content: center; align-items: center; overflow-y: auto; }
+#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; width: 100%; }
+
+/* SEO ve Kurallar Bolumu */
+.hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
+.seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: -1rem; margin-bottom: 1rem; }
+
+.seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; overflow-y: visible; }
+.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: #fff; }
+
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
+.rule-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
+.rule-card:hover { transform: translateY(-5px); border-color: var(--neon-purple); background: rgba(138, 43, 226, 0.1); }
+.rule-card h3 { font-size: 1.1rem; color: var(--neon-purple); margin-bottom: 0.5rem; }
+.rule-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
