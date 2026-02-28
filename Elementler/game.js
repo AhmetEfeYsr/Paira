@@ -91,8 +91,7 @@ class GameManager {
 
         // Kişi sayısına göre ağacı render et
         let pCount = Object.keys(this.state.players).length || 1;
-        // 4 kişilik (Hava) karakteri de oyuna girdiğinde kendi kapısını arayacağı için
-        // 4 kişi varsa 4 kişilik haritaları (taslakta olan map_4_x'leri) açmak zorundayız.
+        // Maximum oyuncu sayısı 4
         if (pCount > 4) pCount = 4;
 
         const container = document.getElementById('level-tree-nodes');

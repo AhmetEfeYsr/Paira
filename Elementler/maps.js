@@ -873,7 +873,280 @@ window.MAPS = {
         ]
     },
 
-    "map_4_1": { name: "Dört Yön", treeX: 50, treeY: 80, type: 'hexagon', unlocks: ["map_4_2"], width: 2400, height: 1600, grid: createGrid(75,50), spawns: {su:{x:32*TILE,y:38*TILE},ates:{x:35*TILE,y:38*TILE},doga:{x:38*TILE,y:38*TILE},hava:{x:41*TILE,y:38*TILE}}, entities: [{type:'exit',x:6*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}, {type:'exit',x:62*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}}, {type:'exit',x:25*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}}, {type:'exit',x:48*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}}] },
-    "map_4_2": { name: "Hava Desteği", treeX: 50, treeY: 50, type: 'hexagon', unlocks: ["map_4_3"], width: 2400, height: 1600, grid: createGrid(75,50), spawns: {su:{x:300,y:900},ates:{x:400,y:900},doga:{x:500,y:900},hava:{x:600,y:900}}, entities: [{type:'exit',x:55*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}}, {type:'exit',x:58*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}}, {type:'exit',x:61*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}}, {type:'exit',x:64*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}] },
-    "map_4_3": { name: "Kaos Zindanı", treeX: 50, treeY: 20, type: 'hexagon', unlocks: [], width: 2800, height: 1800, grid: createGrid(87,56), spawns: {su:{x:300,y:1200},ates:{x:400,y:1200},doga:{x:500,y:1200},hava:{x:600,y:1200}}, entities: [{type:'exit',x:65*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}}, {type:'exit',x:68*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}}, {type:'exit',x:71*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}}, {type:'exit',x:74*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}] }
+    // ==================================================================
+    // 4 KİŞİLİK HARİTALAR - PART 1 (Ateş, Su, Doğa, Hava)
+    // ==================================================================
+    "map_4_1": {
+        name: "Dört Elementin Uyanışı", treeX: 50, treeY: 90, type: 'hexagon',
+        unlocks: ["map_4_2", "map_4_3"], width: 1600, height: 1000,
+        grid: (function(){ let g = createGrid(50,31); for(let x=2;x<48;x++)g[25][x]=1; return g; })(),
+        spawns: { su: { x: 3*TILE, y: 23*TILE }, ates: { x: 5*TILE, y: 23*TILE }, doga: { x: 7*TILE, y: 23*TILE }, hava: { x: 9*TILE, y: 23*TILE } },
+        entities: [
+            {type:'exit',x:38*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:41*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:44*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:47*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_2": {
+        name: "Rüzgarın Yolu", treeX: 35, treeY: 75, type: 'hexagon',
+        unlocks: ["map_4_4"], width: 1800, height: 1200,
+        grid: (function(){
+            let g = createGrid(56,37);
+            for(let x=2;x<20;x++)g[30][x]=1; // Alt kat (Ates, Su, Doga)
+            for(let x=25;x<54;x++)g[15][x]=1; // Üst kat (Hava için)
+            for(let x=20;x<25;x++)g[30][x]=1;
+            for(let y=15;y<30;y++)g[y][22]=6; // Fırtına (Sadece Hava uçar)
+            for(let x=30;x<54;x++)g[30][x]=1; // Alt kat devam
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 28*TILE }, ates: { x: 5*TILE, y: 28*TILE }, doga: { x: 7*TILE, y: 28*TILE }, hava: { x: 9*TILE, y: 28*TILE } },
+        entities: [
+            {type:'button',x:40*TILE,y:15*TILE,w:TILE,h:TILE/2,props:{color:'#facc15',targetId:'door_hava',requiresWeight:false}}, // Hava uçar basar
+            {type:'door',x:28*TILE,y:20*TILE,w:TILE,h:TILE*10,props:{id:'door_hava',color:'#1e293b'}}, // Alt kattaki diğerlerinin yolu açılır
+            {type:'exit',x:45*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:48*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:51*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:48*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}} // Havanın kapısı üstte
+        ]
+    },
+    "map_4_3": {
+        name: "Yüksek Sarmaşıklar", treeX: 65, treeY: 75, type: 'hexagon',
+        unlocks: ["map_4_5"], width: 1800, height: 1200,
+        grid: (function(){
+            let g = createGrid(56,37);
+            for(let x=2;x<20;x++)g[30][x]=1;
+            for(let x=20;x<54;x++)g[15][x]=1; // Üst kat
+            for(let y=15;y<30;y++)g[y][18]=5; // Sarmaşık (Doğa tırmanır)
+            for(let x=30;x<54;x++)g[30][x]=1; // Alt kat devam
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 28*TILE }, ates: { x: 5*TILE, y: 28*TILE }, doga: { x: 7*TILE, y: 28*TILE }, hava: { x: 9*TILE, y: 28*TILE } },
+        entities: [
+            {type:'button',x:40*TILE,y:15*TILE,w:TILE,h:TILE/2,props:{color:'#10b981',targetId:'door_doga_hava',requiresWeight:false}}, // Doğa basar
+            {type:'door',x:25*TILE,y:20*TILE,w:TILE,h:TILE*10,props:{id:'door_doga_hava',color:'#1e293b'}}, // Alt yol açılır
+            {type:'exit',x:45*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:48*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:51*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}},
+            {type:'exit',x:48*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}} // Doğa üstte
+        ]
+    },
+    "map_4_4": {
+        name: "Çifte Yetenek", treeX: 20, treeY: 60, type: 'diamond',
+        unlocks: ["map_4_6", "map_4_7"], width: 2000, height: 1400,
+        grid: (function(){
+            let g = createGrid(62,43);
+            for(let x=2;x<20;x++)g[35][x]=1;
+            for(let x=20;x<60;x++)g[15][x]=1; // En üst (Hava)
+            for(let x=20;x<60;x++)g[25][x]=1; // Orta (Doğa)
+            for(let x=30;x<60;x++)g[35][x]=1; // Alt
+            for(let y=15;y<35;y++)g[y][18]=6; // Fırtına (Hava uçar)
+            for(let y=25;y<35;y++)g[y][22]=5; // Sarmaşık (Doğa)
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 33*TILE }, ates: { x: 5*TILE, y: 33*TILE }, doga: { x: 7*TILE, y: 33*TILE }, hava: { x: 9*TILE, y: 33*TILE } },
+        entities: [
+            {type:'button',x:40*TILE,y:15*TILE,w:TILE,h:TILE/2,props:{color:'#facc15',targetId:'door_h1',requiresWeight:false}},
+            {type:'button',x:40*TILE,y:25*TILE,w:TILE,h:TILE/2,props:{color:'#10b981',targetId:'door_d1',requiresWeight:false}},
+            {type:'door',x:28*TILE,y:25*TILE,w:TILE,h:TILE*10,props:{id:'door_h1',color:'#1e293b'}},
+            {type:'door',x:29*TILE,y:25*TILE,w:TILE,h:TILE*10,props:{id:'door_d1',color:'#1e293b'}}, // Çift kilitli alt kapı
+            {type:'exit',x:50*TILE,y:33*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:53*TILE,y:33*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:50*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:50*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_5": {
+        name: "Yeraltı Suları", treeX: 80, treeY: 60, type: 'diamond',
+        unlocks: ["map_4_7", "map_4_8"], width: 2000, height: 1400,
+        grid: (function(){
+            let g = createGrid(62,43);
+            for(let x=2;x<20;x++)g[20][x]=1;
+            for(let y=20;y<40;y++)g[y][15]=8; // Boru (Aşağı inen)
+            for(let x=10;x<60;x++)g[40][x]=1; // En alt kat
+            for(let x=30;x<60;x++)g[20][x]=1; // Sağ üst
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 18*TILE }, ates: { x: 5*TILE, y: 18*TILE }, doga: { x: 7*TILE, y: 18*TILE }, hava: { x: 9*TILE, y: 18*TILE } },
+        entities: [
+            {type:'button',x:40*TILE,y:40*TILE,w:TILE,h:TILE/2,props:{color:'#3b82f6',targetId:'door_su_alt',requiresWeight:false}}, // Su alt katta basar
+            {type:'door',x:25*TILE,y:10*TILE,w:TILE,h:TILE*10,props:{id:'door_su_alt',color:'#1e293b'}},
+            {type:'exit',x:50*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:53*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:56*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}},
+            {type:'exit',x:50*TILE,y:38*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}}
+        ]
+    },
+    "map_4_6": {
+        name: "Dörtlü Tahterevalli", treeX: 10, treeY: 45, type: 'hexagon',
+        unlocks: ["map_4_9"], width: 2200, height: 1000,
+        grid: (function(){ let g=createGrid(68,31); for(let x=2;x<10;x++)g[20][x]=1; for(let x=60;x<66;x++)g[20][x]=1; return g; })(),
+        spawns: { su: { x: 3*TILE, y: 18*TILE }, ates: { x: 4*TILE, y: 18*TILE }, doga: { x: 5*TILE, y: 18*TILE }, hava: { x: 6*TILE, y: 18*TILE } },
+        entities: [
+            {type:'seesaw',x:12*TILE,y:22*TILE,w:TILE*10,h:TILE/2,props:{}},
+            {type:'seesaw',x:24*TILE,y:22*TILE,w:TILE*10,h:TILE/2,props:{}},
+            {type:'seesaw',x:36*TILE,y:22*TILE,w:TILE*10,h:TILE/2,props:{}},
+            {type:'seesaw',x:48*TILE,y:22*TILE,w:TILE*10,h:TILE/2,props:{}},
+            {type:'exit',x:61*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:62*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:63*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:64*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_7": {
+        name: "Ateş ve Rüzgar", treeX: 50, treeY: 45, type: 'hexagon',
+        unlocks: ["map_4_10", "map_4_11"], width: 2200, height: 1200,
+        grid: (function(){
+            let g=createGrid(68,37);
+            for(let x=2;x<20;x++)g[25][x]=1;
+            for(let x=20;x<40;x++){g[25][x]=1; g[24][x]=2;} // Lav gölü
+            for(let y=15;y<25;y++)g[y][25]=6; // Fırtına
+            for(let x=40;x<66;x++)g[25][x]=1;
+            for(let x=30;x<66;x++)g[15][x]=1; // Üst kat
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 23*TILE }, ates: { x: 5*TILE, y: 23*TILE }, doga: { x: 7*TILE, y: 23*TILE }, hava: { x: 9*TILE, y: 23*TILE } },
+        entities: [
+            {type:'button',x:50*TILE,y:25*TILE,w:TILE,h:TILE/2,props:{color:'#ef4444',targetId:'door_ates_47',requiresWeight:false}}, // Ateş lavı geçip basar
+            {type:'button',x:50*TILE,y:15*TILE,w:TILE,h:TILE/2,props:{color:'#facc15',targetId:'door_hava_47',requiresWeight:false}}, // Hava uçup basar
+            {type:'door',x:15*TILE,y:15*TILE,w:TILE,h:TILE*10,props:{id:'door_ates_47',color:'#1e293b'}},
+            {type:'door',x:16*TILE,y:15*TILE,w:TILE,h:TILE*10,props:{id:'door_hava_47',color:'#1e293b'}}, // Çifte kapı kalkar, Su ve Doğa geçer
+            {type:'exit',x:60*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:63*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:55*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:55*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_8": {
+        name: "Asit Kulesi", treeX: 90, treeY: 45, type: 'hexagon',
+        unlocks: ["map_4_12"], width: 2000, height: 1600,
+        grid: (function(){
+            let g=createGrid(62,50);
+            for(let x=2;x<20;x++)g[45][x]=1;
+            for(let x=20;x<50;x++){g[45][x]=1; g[44][x]=4;} // Asit
+            for(let x=50;x<60;x++)g[45][x]=1;
+            for(let x=20;x<50;x++)g[25][x]=1; // Doğa ve Hava için üst yol
+            for(let y=25;y<45;y++)g[y][18]=5; // Doğa tırmanır
+            for(let y=25;y<45;y++)g[y][22]=6; // Hava uçar
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 43*TILE }, ates: { x: 5*TILE, y: 43*TILE }, doga: { x: 7*TILE, y: 43*TILE }, hava: { x: 9*TILE, y: 43*TILE } },
+        entities: [
+            {type:'box',x:30*TILE,y:25*TILE,w:TILE*2,h:TILE*2,props:{}}, // Hava ve Doğa yukarı çıkıp asite kutu atar
+            {type:'box',x:35*TILE,y:25*TILE,w:TILE*2,h:TILE*2,props:{}},
+            {type:'exit',x:52*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:55*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:45*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:48*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_9": {
+        name: "Ağır Kutu", treeX: 25, treeY: 30, type: 'diamond',
+        unlocks: ["map_4_13"], width: 2400, height: 1200,
+        grid: (function(){ let g=createGrid(75,37); for(let x=2;x<73;x++)g[30][x]=1; return g; })(),
+        spawns: { su: { x: 3*TILE, y: 28*TILE }, ates: { x: 5*TILE, y: 28*TILE }, doga: { x: 7*TILE, y: 28*TILE }, hava: { x: 9*TILE, y: 28*TILE } },
+        entities: [
+            {type:'box',x:15*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{resistance:0.1}}, // Çok ağır kutu, itmek için 4 kişi aynı anda ittirmeli
+            {type:'button',x:40*TILE,y:30*TILE,w:TILE,h:TILE/2,props:{color:'#ffffff',targetId:'door_agir',requiresWeight:true}}, // Kutu buraya gelmeli
+            {type:'door',x:50*TILE,y:20*TILE,w:TILE,h:TILE*10,props:{id:'door_agir',color:'#1e293b'}},
+            {type:'exit',x:60*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:63*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:66*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:69*TILE,y:28*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_10": {
+        name: "Hava Asansörü", treeX: 40, treeY: 30, type: 'diamond',
+        unlocks: ["map_4_13"], width: 2000, height: 1600,
+        grid: (function(){
+            let g=createGrid(62,50);
+            for(let x=2;x<20;x++)g[45][x]=1;
+            for(let x=40;x<60;x++)g[45][x]=1;
+            for(let x=40;x<60;x++)g[15][x]=1;
+            for(let y=15;y<45;y++)g[y][30]=6; // Ortada devasa fırtına
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 43*TILE }, ates: { x: 5*TILE, y: 43*TILE }, doga: { x: 7*TILE, y: 43*TILE }, hava: { x: 9*TILE, y: 43*TILE } },
+        entities: [
+            {type:'button',x:50*TILE,y:15*TILE,w:TILE,h:TILE/2,props:{color:'#facc15',targetId:'door_asansor_hava',requiresWeight:true}},
+            {type:'door',x:20*TILE,y:35*TILE,w:TILE*20,h:TILE*10,props:{id:'door_asansor_hava',color:'#1e293b'}}, // Hava yukarı çıkıp basınca devasa köprü açılır (yatay door)
+            {type:'exit',x:45*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:48*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:51*TILE,y:43*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:55*TILE,y:13*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    },
+    "map_4_11": {
+        name: "Yanan Orman", treeX: 60, treeY: 30, type: 'diamond',
+        unlocks: ["map_4_13"], width: 2200, height: 1400,
+        grid: (function(){
+            let g=createGrid(68,43);
+            for(let x=2;x<20;x++)g[35][x]=1;
+            for(let x=20;x<50;x++)g[25][x]=1; // Orta platform
+            for(let x=50;x<66;x++)g[35][x]=1;
+            // Tahta duvarlar (Ateşin yolu açması lazım)
+            for(let y=25;y<35;y++)g[y][20]=7;
+            for(let y=25;y<35;y++)g[y][49]=7;
+            for(let y=25;y<35;y++)g[y][15]=5; // Doğa tırmanır
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 33*TILE }, ates: { x: 5*TILE, y: 33*TILE }, doga: { x: 7*TILE, y: 33*TILE }, hava: { x: 9*TILE, y: 33*TILE } },
+        entities: [
+            {type:'button',x:30*TILE,y:25*TILE,w:TILE,h:TILE/2,props:{color:'#10b981',targetId:'door_orman_1',requiresWeight:false}}, // Doğa basar
+            {type:'door',x:19*TILE,y:25*TILE,w:TILE,h:TILE*10,props:{id:'door_orman_1',color:'#1e293b'}}, // Ateşin geçmesi için ilk kapı
+            // Ateş geçince tahtayı yakar
+            {type:'exit',x:55*TILE,y:33*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:58*TILE,y:33*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:61*TILE,y:33*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}},
+            {type:'exit',x:45*TILE,y:23*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}}
+        ]
+    },
+    "map_4_12": {
+        name: "Su Borusu Ağları", treeX: 75, treeY: 30, type: 'diamond',
+        unlocks: ["map_4_13"], width: 2400, height: 1600,
+        grid: (function(){
+            let g=createGrid(75,50);
+            for(let x=2;x<20;x++)g[40][x]=1;
+            for(let x=50;x<73;x++)g[40][x]=1;
+            for(let x=30;x<45;x++)g[20][x]=1; // En üst platform
+            // Kompleks boru sistemi
+            for(let x=20;x<50;x++)g[40][x]=8;
+            for(let y=20;y<40;y++)g[y][30]=8;
+            for(let y=20;y<40;y++)g[y][45]=8;
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 38*TILE }, ates: { x: 5*TILE, y: 38*TILE }, doga: { x: 7*TILE, y: 38*TILE }, hava: { x: 9*TILE, y: 38*TILE } },
+        entities: [
+            {type:'button',x:35*TILE,y:20*TILE,w:TILE,h:TILE/2,props:{color:'#3b82f6',targetId:'door_boru_dev',requiresWeight:false}}, // Su labirenti geçip basar
+            {type:'door',x:20*TILE,y:30*TILE,w:TILE*30,h:TILE*10,props:{id:'door_boru_dev',color:'#1e293b'}}, // Dev kapı/köprü
+            {type:'exit',x:55*TILE,y:38*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:58*TILE,y:38*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:61*TILE,y:38*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}},
+            {type:'exit',x:40*TILE,y:18*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}}
+        ]
+    },
+    "map_4_13": {
+        name: "Büyük Geçit (Ara Final)", treeX: 50, treeY: 15, type: 'hexagon',
+        unlocks: [], width: 2800, height: 1800,
+        grid: (function(){
+            let g=createGrid(87,56);
+            for(let x=2;x<85;x++)g[50][x]=1; // Dümdüz arena
+            for(let x=25;x<35;x++){g[50][x]=1; g[49][x]=2;} // Lav
+            for(let x=45;x<55;x++){g[50][x]=1; g[49][x]=4;} // Asit
+            for(let x=65;x<75;x++){g[50][x]=1; g[49][x]=3;} // Su
+            for(let y=30;y<50;y++)g[y][20]=6; // Fırtına
+            for(let y=30;y<50;y++)g[y][40]=5; // Sarmaşık
+            return g;
+        })(),
+        spawns: { su: { x: 3*TILE, y: 48*TILE }, ates: { x: 5*TILE, y: 48*TILE }, doga: { x: 7*TILE, y: 48*TILE }, hava: { x: 9*TILE, y: 48*TILE } },
+        entities: [
+            {type:'box',x:15*TILE,y:48*TILE,w:TILE*2,h:TILE*2,props:{}}, // Asiti geçmek için
+            {type:'seesaw',x:28*TILE,y:46*TILE,w:TILE*8,h:TILE/2,props:{}},
+            {type:'seesaw',x:68*TILE,y:46*TILE,w:TILE*8,h:TILE/2,props:{}},
+            {type:'exit',x:78*TILE,y:48*TILE,w:TILE*2,h:TILE*2,props:{role:'su'}},
+            {type:'exit',x:81*TILE,y:48*TILE,w:TILE*2,h:TILE*2,props:{role:'ates'}},
+            {type:'exit',x:84*TILE,y:48*TILE,w:TILE*2,h:TILE*2,props:{role:'doga'}},
+            {type:'exit',x:75*TILE,y:48*TILE,w:TILE*2,h:TILE*2,props:{role:'hava'}}
+        ]
+    }
 };
