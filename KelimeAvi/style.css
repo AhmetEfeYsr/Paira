@@ -46,51 +46,49 @@ body {
 /* ANA PANEL */
 .glass-panel {
     width: 100%;
-    max-width: 1000px; /* Biraz daha dar tuttuk */
+    max-width: 1200px;
     flex-grow: 1;
     background: var(--bg-panel);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: var(--glass-border);
-    border-radius: clamp(12px, 2vw, 20px) clamp(12px, 2vw, 20px) 0 0;
+    border-radius: clamp(16px, 3vw, 24px);
     box-shadow: var(--glass-shadow);
-    padding: clamp(1rem, 2.5vw, 2rem);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    margin-top: 0;
-    margin-bottom: 0;
+    padding: clamp(1rem, 3vw, 2rem);
+    margin-bottom: clamp(1rem, 3vw, 2rem);
+    min-height: 600px;
 }
 
-.view-state { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.4s ease; min-height: 0; overflow: hidden; }
+.view-state { display: flex; flex-direction: column; flex-grow: 1; animation: fadeIn 0.4s ease-out; height: 100%; min-height: 0; overflow: hidden; }
 .view-state:not(.active) { display: none; }
 
-#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; text-align: center; width: 100%; }
+#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; text-align: center; width: 100%; padding-top: 5vh; }
 
 /* SEO ve Kurallar Bölümü */
 .hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
+.gradient-text {
+    font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #fff, var(--lilac)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle { font-size: clamp(1.1rem, 2.5vw, 1.4rem); color: var(--lilac); font-weight: 500; opacity: 0.9; margin-bottom: 2rem; }
+
 .seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: 0.5rem; margin-bottom: 1rem; }
 
-.seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; overflow-y: visible; }
-.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: #fff; }
+.seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; overflow-y: visible; }
+.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: var(--lilac); }
 
-.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
-.rule-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; text-align: left; padding-bottom: 20px; }
+.rule-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
 .rule-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); background: rgba(59, 130, 246, 0.1); }
-.rule-card h3 { font-size: 1.1rem; color: var(--neon-blue); margin-bottom: 0.5rem; }
-.rule-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+.rule-card h3 { font-size: 1.05rem; color: var(--neon-blue); margin-bottom: 0.5rem; }
+.rule-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); letter-spacing: 0.5px; }
-
-.gradient-text {
-    background: linear-gradient(45deg, var(--lilac), var(--neon-blue));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    font-size: clamp(2.2rem, 6vw, 4rem);
-    font-weight: 800; text-align: center; margin-bottom: 0.5rem;
-}
-.subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; font-weight: 300; letter-spacing: 1px; }
 
 .form-group { margin-bottom: clamp(1rem, 2.5vw, 1.5rem); width: 100%; text-align: left;}
 .form-group label { display: block; margin-bottom: 0.5rem; color: var(--lilac); font-weight: 600; font-size: 0.9rem; }

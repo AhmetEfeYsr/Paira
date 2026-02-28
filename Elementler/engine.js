@@ -132,6 +132,116 @@ class Seesaw extends Rect {
     }
 }
 
+
+class Bouncer extends Rect {
+    constructor(id, x, y, w, h, props) {
+        super(x, y, w, h);
+        this.id = id;
+        this.power = props.power || -15;
+        this.color = props.color || '#f59e0b';
+        this.isSolid = true;
+    }
+    interact(entity) {
+        if (entity.vy >= 0 && entity.y + entity.h <= this.y + entity.vy + 4) {
+            entity.vy = this.power;
+            entity.y = this.y - entity.h;
+            entity.jumping = true;
+        }
+    }
+}
+
+class FragileBlock extends Rect {
+    constructor(id, x, y, w, h, props) {
+        super(x, y, w, h);
+        this.id = id;
+        this.breakTime = props.breakTime || 60;
+        this.timer = 0;
+        this.isBroken = false;
+        this.isSteppedOn = false;
+        this.color = props.color || '#d1d5db';
+        this.isSolid = true;
+    }
+    update() {
+        if (this.isBroken) return;
+        if (this.isSteppedOn) {
+            this.timer++;
+            if (this.timer >= this.breakTime) {
+                this.isBroken = true;
+                this.isSolid = false;
+            }
+        }
+    }
+    interact(entity) {
+        if (this.isBroken) return;
+        if (entity.vy >= 0 && entity.y + entity.h <= this.y + entity.vy + 4) {
+            this.isSteppedOn = true;
+        }
+    }
+}
+
+class Teleporter extends Rect {
+    constructor(id, x, y, w, h, props) {
+        super(x, y, w, h);
+        this.id = id;
+        this.targetId = props.targetId;
+        this.color = props.color || '#8b5cf6';
+        this.cooldowns = new Map();
+    }
+    interact(entity, entities) {
+        if (!this.targetId) return;
+        let cooldown = this.cooldowns.get(entity) || 0;
+        if (cooldown > 0) return;
+
+        let targetPortal = entities.find(e => e.id === this.targetId && e instanceof Teleporter);
+        if (targetPortal) {
+            entity.x = targetPortal.x + (targetPortal.w - entity.w) / 2;
+            entity.y = targetPortal.y + (targetPortal.h - entity.h) / 2;
+            targetPortal.cooldowns.set(entity, 30);
+            this.cooldowns.set(entity, 30);
+        }
+    }
+    update() {
+        for (let [entity, time] of this.cooldowns.entries()) {
+            if (time > 0) {
+                this.cooldowns.set(entity, time - 1);
+            } else {
+                this.cooldowns.delete(entity);
+            }
+        }
+    }
+}
+
+class GravityZone extends Rect {
+    constructor(id, x, y, w, h, props) {
+        super(x, y, w, h);
+        this.id = id;
+        this.gravityMultiplier = props.gravityMultiplier !== undefined ? props.gravityMultiplier : -1;
+        this.color = props.color || 'rgba(168, 85, 247, 0.2)';
+    }
+    contains(entity) {
+        return (entity.x < this.x + this.w &&
+                entity.x + entity.w > this.x &&
+                entity.y < this.y + this.h &&
+                entity.y + entity.h > this.y);
+    }
+}
+
+class SpikeTrap extends Rect {
+    constructor(id, x, y, w, h, props) {
+        super(x, y, w, h);
+        this.id = id;
+        this.period = props.period || 120;
+        this.activeTime = props.activeTime || 60;
+        this.timer = 0;
+        this.isActive = false;
+        this.color = props.color || '#991b1b';
+    }
+    update() {
+        this.timer = (this.timer + 1) % this.period;
+        this.isActive = (this.timer < this.activeTime);
+    }
+}
+
 class PlayerEntity extends Rect {
     constructor(id, role, name, startX, startY) {
         super(startX, startY, 32, 32, 'player');
@@ -451,6 +561,26 @@ class GameEngine {
                     const seesaw = new Seesaw(e.x, e.y, e.w, e.h, e.props || {});
                     this.rects.push(seesaw);
                     this.dynamicEntities.push(seesaw);
+                } else if (e.type === 'bouncer') {
+                    const b = new Bouncer(e.id, e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(b);
+                    this.dynamicEntities.push(b);
+                } else if (e.type === 'fragile') {
+                    const f = new FragileBlock(e.id, e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(f);
+                    this.dynamicEntities.push(f);
+                } else if (e.type === 'teleporter') {
+                    const tp = new Teleporter(e.id, e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(tp);
+                    this.dynamicEntities.push(tp);
+                } else if (e.type === 'gravity') {
+                    const gz = new GravityZone(e.id, e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(gz);
+                    this.dynamicEntities.push(gz);
+                } else if (e.type === 'spiketrap') {
+                    const st = new SpikeTrap(e.id, e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(st);
+                    this.dynamicEntities.push(st);
                 } else {
                     this.rects.push(new Rect(e.x, e.y, e.w, e.h, e.type, e.props));
                 }
@@ -503,9 +633,28 @@ class GameEngine {
 
         // Update Physics
         for (let id in this.players) {
-            // Local oyuncu tam hesaplanır.
-            // Uzaktaki oyuncular interpolation ile veya gönderdikleri x/y ile yumuşatılır (Burada basit linear çalıştırıyoruz).
-            this.players[id].update(dt, this.rects);
+            let p = this.players[id];
+
+            // New Mechanics Interactions for Player before actual update
+            if (!p.dead) {
+                // GravityZone and SpikeTrap interactions
+                let inGravityZone = false;
+                for (let r of this.rects) {
+                    if (r instanceof GravityZone && r.contains(p)) {
+                        // Negate normal gravity and apply new
+                        p.vy += (0.4 * r.gravityMultiplier) - 0.4;
+                        inGravityZone = true;
+                    }
+                    if (r instanceof SpikeTrap && r.isActive && checkAABB(p, r)) {
+                        p.dead = true;
+                    }
+                    if (r instanceof Bouncer && checkAABB(p, r)) r.interact(p);
+                    if (r instanceof FragileBlock && checkAABB(p, r)) r.interact(p);
+                    if (r instanceof Teleporter && checkAABB(p, r)) r.interact(p, this.rects);
+                }
+            }
+
+            p.update(dt, this.rects);
         }
 
         // Camera follow
