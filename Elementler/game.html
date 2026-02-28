@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Elementler | Co-Op Zindan Kaçış</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="display: flex; flex-direction: column;">
+
+        <!-- LOBİ EKRANI -->
+        <section id="lobby-screen" class="view-state active">
+            <header class="lobby-header">
+                <div class="code-container">
+                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-blue); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
+                </div>
+                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
+            </header>
+
+            <div class="lobby-grid">
+                <!-- Oyuncular ve Elementler -->
+                <aside class="players-panel card">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Maceracılar (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar"></ul>
+                </aside>
+
+                <!-- Kurucu Ayarları -->
+                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyun Modu</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px;">Zindan odadaki kişi sayısına göre (1-4) otomatik olarak ölçeklenir.</p>
+
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Maceraya Başla</button>
+                </section>
+
+                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
+                    <div style="color: var(--primary-blue); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Oda kurucusu macerayı başlatacak.</p>
+                </section>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI (CANVAS) -->
+        <section id="game-screen" class="view-state hidden" style="flex-grow: 1; padding: 0; margin: 0; background: transparent;">
+            <!-- UI Overlay (Can, Ölüm vs) -->
+            <div id="game-ui-overlay" style="position: absolute; top: 20px; left: 20px; z-index: 100; pointer-events: none;">
+                <div id="fps-counter" style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace;">FPS: 60</div>
+                <div id="death-counter" style="color: var(--danger); font-weight: 600; font-size: 1.2rem; margin-top: 5px;">Ölümler: <span id="death-val">0</span></div>
+            </div>
+
+            <div id="winner-banner" class="hidden" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background: rgba(0,0,0,0.8); padding: 30px 50px; border-radius: 20px; border: 2px solid var(--success); text-align: center;">
+                <h1 style="color: var(--success); font-size: 3rem; margin-bottom: 10px;">Bölüm Tamamlandı!</h1>
+                <p id="winner-msg" style="color: white; font-size: 1.2rem;">Tüm karakterler kendi kapısına ulaştı.</p>
+                <button id="btn-next-level" class="btn btn-primary" style="margin-top: 20px;">Sıradaki Bölüme Geç (Sadece Kurucu)</button>
+            </div>
+
+            <canvas id="game-canvas"></canvas>
+        </section>
+
+    </main>
+
+    <script src="index.js"></script>
+    <script src="maps.js"></script>
+    <script src="engine.js"></script>
+    <script src="game.js"></script>
+    <script src="network.js"></script>
+</body>
+</html>
