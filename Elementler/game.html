@@ -35,26 +35,19 @@
 
                 <!-- Kurucu Ayarları -->
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Bölüm Seçimi</h3>
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 10px;">Macera Haritası</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;">Oynamak istediğiniz bölüme tıklayın. Altın renkli bölümler tamamlanmış, mavi renkli olanlar kilidi açılmış bölümlerdir.</p>
 
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label for="mode-select">Oyun Modu</label>
-                        <select id="mode-select" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: white; border: 1px solid rgba(255,255,255,0.2);">
-                            <option value="progression">İlerleme Modu (Sırayla Geç)</option>
-                            <option value="free">Özgür Mod (İstediğin Bölüm)</option>
-                        </select>
-                    </div>
+                    <div id="level-tree-container" style="position: relative; width: 100%; height: 500px; background: #0f172a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 15px; flex-shrink: 0;">
+                        <!-- SVG for lines connecting nodes -->
+                        <svg id="level-tree-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
 
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label for="level-select">Bölüm (Kişi Sayısına Göre)</label>
-                        <select id="level-select" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <!-- Container for HTML nodes -->
+                        <div id="level-tree-nodes" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
                             <!-- JS ile doldurulacak -->
-                        </select>
+                        </div>
                     </div>
 
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px; line-height: 1.4;">Zindan odadaki kişi sayısına göre otomatik olarak değişir. İlerleme modunda sadece açtığınız bölümleri oynayabilirsiniz.</p>
-
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Maceraya Başla</button>
                 </section>
 
                 <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
@@ -77,8 +70,7 @@
                 <h1 style="color: var(--success); font-size: 3rem; margin-bottom: 10px;">Bölüm Tamamlandı!</h1>
                 <p id="winner-msg" style="color: white; font-size: 1.2rem;">Tüm karakterler kendi kapısına ulaştı.</p>
                 <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
-                    <button id="btn-back-lobby" class="btn btn-secondary">Lobiye Dön</button>
-                    <button id="btn-next-level" class="btn btn-primary">Sıradaki Bölüme Geç</button>
+                    <button id="btn-next-level" class="btn btn-primary">Ağaca Dön</button>
                 </div>
             </div>
 

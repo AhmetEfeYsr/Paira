@@ -158,3 +158,48 @@ input[type="text"]:focus, input[type="number"]:focus { outline: none; border-col
     .glass-panel { height: auto; min-height: 0; flex-grow: 1; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
     .settings-grid { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
 }
+/* Level Tree Nodes */
+.level-node {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    transform: translate(-50%, -50%); /* Merkezlemek için */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #1e293b;
+}
+
+.level-node:hover {
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+.level-node.type-hexagon {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.level-node.type-diamond {
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* States */
+.level-node.state-locked {
+    background: #1e293b;
+    border: 2px solid #334155;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.level-node.state-locked:hover { transform: translate(-50%, -50%); }
+
+.level-node.state-unlocked {
+    background: var(--primary-blue);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+}
+
+.level-node.state-completed {
+    background: #facc15; /* Altın/Sarı */
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.6);
+}

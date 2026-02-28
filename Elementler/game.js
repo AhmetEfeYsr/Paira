@@ -6,16 +6,15 @@ class GameManager {
             status: 'lobby',
             players: {},
             deaths: 0,
-            level: 1, // 1, 2, 3 ...
-            mode: 'progression', // 'progression' veya 'free'
+            level: 'map_1_1', // Artık direkt map id tutuyoruz, varsayılan map_1_1 (1 kişilik)
             playerCount: 1
         };
 
         this.engine = null;
         this.gameLoopRef = null;
 
-        // Save Sistemi (localStorage)
-        this.unlockedLevels = this.loadProgress();
+        // Save Sistemi (localStorage) - Artık bir obje: { "map_1_1": "completed", "map_1_2": "unlocked" }
+        this.levelProgress = this.loadProgress();
 
         // Input Tracking
         this.keys = { up: false, down: false, left: false, right: false, jump: false };
@@ -24,62 +23,49 @@ class GameManager {
 
     loadProgress() {
         try {
-            const saved = localStorage.getItem('elementler_progress');
+            const saved = localStorage.getItem('elementler_progress_tree');
             if (saved) return JSON.parse(saved);
         } catch(e) { console.error("Save okunamadı", e); }
-        // Default (her kişi sayısı için 1. level açık)
-        return { 1: 1, 2: 1, 3: 1, 4: 1 };
+
+        // Varsayılan ilk bölümleri açık başlat
+        return {
+            "map_1_1": "unlocked",
+            "map_2_1": "unlocked",
+            "map_3_1": "unlocked",
+            "map_4_1": "unlocked"
+        };
     }
 
-    saveProgress(playerCount, newLevel) {
-        if (newLevel > this.unlockedLevels[playerCount]) {
-            this.unlockedLevels[playerCount] = newLevel;
-            localStorage.setItem('elementler_progress', JSON.stringify(this.unlockedLevels));
+    saveProgress() {
+        localStorage.setItem('elementler_progress_tree', JSON.stringify(this.levelProgress));
+    }
+
+    markLevelComplete(mapId) {
+        if(!window.MAPS || !window.MAPS[mapId]) return;
+
+        this.levelProgress[mapId] = "completed";
+
+        // Unlock next maps in the tree
+        const mapData = window.MAPS[mapId];
+        if (mapData.unlocks && Array.isArray(mapData.unlocks)) {
+            for (let nextMap of mapData.unlocks) {
+                if (this.levelProgress[nextMap] !== "completed") {
+                    this.levelProgress[nextMap] = "unlocked";
+                }
+            }
         }
+        this.saveProgress();
     }
 
     initEventListeners() {
-        const btnStart = document.getElementById('btn-start-game');
-        if(btnStart) {
-            btnStart.addEventListener('click', () => {
-                if(NetworkManager.isHost()) {
-                    const select = document.getElementById('level-select');
-                    this.state.level = parseInt(select.value) || 1;
-                    const modeSelect = document.getElementById('mode-select');
-                    this.state.mode = modeSelect.value || 'progression';
-                    this.startGame();
-                }
-            });
-        }
-
-        const modeSelect = document.getElementById('mode-select');
-        if(modeSelect) {
-            modeSelect.addEventListener('change', () => {
-                if(NetworkManager.isHost()) {
-                    this.state.mode = modeSelect.value;
-                    this.updateLevelSelectUI();
-                }
-            });
-        }
-
         const btnNext = document.getElementById('btn-next-level');
         if(btnNext) {
             btnNext.addEventListener('click', () => {
                 if(NetworkManager.isHost()) {
                     document.getElementById('winner-banner').classList.add('hidden');
-
-                    // Sonraki bölüme geç (Eğer varsa)
-                    const nextLevelKey = `map_${this.state.playerCount}_${this.state.level + 1}`;
-                    if(window.MAPS && window.MAPS[nextLevelKey]) {
-                        this.state.level++;
-                        NetworkManager.sendGameAction('LOAD_LEVEL', { level: this.state.level, mode: this.state.mode });
-                        this.executeActionLocally('LOAD_LEVEL', { level: this.state.level, mode: this.state.mode });
-                    } else {
-                        showToast("Tebrikler! Bu moddaki tüm bölümleri bitirdiniz.", "success");
-                        // Lobiye dön
-                        NetworkManager.sendGameAction('RETURN_LOBBY', {});
-                        this.executeActionLocally('RETURN_LOBBY', {});
-                    }
+                    // Branching sistemde "Sıradaki Bölüm" kavramı ağaca döndürmek olmalı
+                    NetworkManager.sendGameAction('RETURN_LOBBY', {});
+                    this.executeActionLocally('RETURN_LOBBY', {});
                 }
             });
         }
@@ -99,42 +85,65 @@ class GameManager {
         window.addEventListener('keyup', (e) => this.handleKey(e, false));
     }
 
+    // Ağaç Çizimini Başlat (updateUI'dan çağrılır)
     updateLevelSelectUI() {
-        const select = document.getElementById('level-select');
-        if(!select) return;
+        if (!NetworkManager.isHost()) return;
+        const pCount = Object.keys(this.state.players).length || 1;
 
-        select.innerHTML = '';
-        const count = Object.keys(this.state.players).length || 1;
-        const maxLevelUnlocked = this.unlockedLevels[count] || 1;
+        const container = document.getElementById('level-tree-nodes');
+        const svgPath = document.getElementById('level-tree-lines');
+        if (!container || !svgPath) return;
 
-        // Haritaları bul
-        let maxAvailable = 1;
-        while(window.MAPS && window.MAPS[`map_${count}_${maxAvailable}`]) {
-            maxAvailable++;
-        }
-        maxAvailable--; // son başarısız artışı geri al
+        container.innerHTML = '';
+        let svgHtml = '';
 
-        for(let i = 1; i <= maxAvailable; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            const mapName = window.MAPS[`map_${count}_${i}`].name || `Bölüm ${i}`;
+        // İlgili kişi sayısına ait mapleri bul
+        const mapsForCount = Object.keys(window.MAPS).filter(k => k.startsWith(`map_${pCount}_`));
 
-            if (this.state.mode === 'progression') {
-                if (i <= maxLevelUnlocked) {
-                    option.text = `${i}. ${mapName}`;
-                } else {
-                    option.text = `${i}. (Kilitli)`;
-                    option.disabled = true;
+        // Önce Çizgileri çiz (Bağlantılar)
+        for (let mapId of mapsForCount) {
+            const mapData = window.MAPS[mapId];
+            if (!mapData.unlocks) continue;
+
+            for (let targetId of mapData.unlocks) {
+                const targetData = window.MAPS[targetId];
+                if (targetData) {
+                    // TreeX/TreeY yüzde cinsinden. SVG % desteklemez pathlerde, bu yüzden 1000x1000 bazında (viewbox)
+                    const x1 = mapData.treeX * 10;
+                    const y1 = mapData.treeY * 10;
+                    const x2 = targetData.treeX * 10;
+                    const y2 = targetData.treeY * 10;
+
+                    // Kilidi açılmışsa veya bitmişse altın rengi çizgi, kilitliyse karanlık çizgi
+                    const isUnlocked = this.levelProgress[mapId] === 'completed';
+                    const color = isUnlocked ? '#facc15' : '#334155';
+                    const width = isUnlocked ? 6 : 3;
+
+                    svgHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${width}" />`;
                 }
-            } else {
-                option.text = `${i}. ${mapName} (Özgür)`;
             }
-            select.appendChild(option);
         }
+        svgPath.innerHTML = svgHtml;
 
-        // Eğer seçili olan kilitliyse 1'e çek
-        if(this.state.mode === 'progression' && select.value > maxLevelUnlocked) {
-            select.value = 1;
+        // Sonra Nodları Çiz
+        for (let mapId of mapsForCount) {
+            const mapData = window.MAPS[mapId];
+            const nodeState = this.levelProgress[mapId] || 'locked'; // 'locked', 'unlocked', 'completed'
+
+            const node = document.createElement('div');
+            node.className = `level-node type-${mapData.type || 'hexagon'} state-${nodeState}`;
+            node.style.left = `${mapData.treeX}%`;
+            node.style.top = `${mapData.treeY}%`;
+            node.title = mapData.name || mapId;
+
+            if (nodeState !== 'locked') {
+                node.addEventListener('click', () => {
+                    this.state.level = mapId;
+                    this.startGame();
+                });
+            }
+
+            container.appendChild(node);
         }
     }
 
@@ -176,8 +185,8 @@ class GameManager {
 
         NetworkManager.broadcastState();
 
-        // Clientlere de level'i zorla
-        NetworkManager.sendGameAction('LOAD_LEVEL', { level: this.state.level, mode: this.state.mode });
+        // Clientlere de level'i zorla (Level ID olarak geçiyor artık)
+        NetworkManager.sendGameAction('LOAD_LEVEL', { level: this.state.level });
         this.startGameEngine();
     }
 
@@ -193,12 +202,12 @@ class GameManager {
         document.getElementById('game-screen').classList.add('active');
         this.engine.resize();
 
-        // Haritayı Seç (Örn: 2 kişi varsa window.MAPS["map_2_1"])
-        const mapKey = `map_${this.state.playerCount}_${this.state.level}`;
-        const mapData = window.MAPS ? window.MAPS[mapKey] : null;
+        // Haritayı Seç (Artık state.level direkt mapId stringidir. Örn "map_1_5")
+        const mapId = this.state.level;
+        const mapData = window.MAPS ? window.MAPS[mapId] : null;
 
         if(!mapData) {
-            showToast(`Harita bulunamadı: ${mapKey}. Lütfen harita ekleyin.`, 'error');
+            showToast(`Harita bulunamadı: ${mapId}.`, 'error');
             return;
         }
 
@@ -312,10 +321,8 @@ class GameManager {
         if(allFinished && activePlayersCount > 0) {
             // Sadece 1 kez tetiklenmesini sağla
             if(document.getElementById('winner-banner').classList.contains('hidden')) {
-                // Host olarak ilerlemeyi kaydet (Özgür modda da kaydetsin zararı yok)
-                if(this.state.mode === 'progression') {
-                    this.saveProgress(this.state.playerCount, this.state.level + 1);
-                }
+                // Host olarak ilerlemeyi kaydet
+                this.markLevelComplete(this.state.level);
 
                 this.executeActionLocally('LEVEL_COMPLETE', {});
                 NetworkManager.sendGameAction('LEVEL_COMPLETE', {});
@@ -399,8 +406,7 @@ class GameManager {
             this.startGameEngine(); // Haritayı tekrar yükle
         }
         else if (action === 'LOAD_LEVEL') {
-            this.state.level = payload.level;
-            this.state.mode = payload.mode;
+            this.state.level = payload.level; // payload.level is a string ID e.g., 'map_1_5'
             this.state.status = 'playing';
             document.getElementById('winner-banner').classList.add('hidden');
             this.startGameEngine();
@@ -408,21 +414,13 @@ class GameManager {
         else if (action === 'LEVEL_COMPLETE') {
             document.getElementById('winner-banner').classList.remove('hidden');
 
-            // Sıradaki bölüm butonunu yönet
             const btnNext = document.getElementById('btn-next-level');
-            const nextLevelKey = `map_${this.state.playerCount}_${this.state.level + 1}`;
-            if(window.MAPS && !window.MAPS[nextLevelKey]) {
-                btnNext.style.display = 'none'; // Sonraki bölüm yok
-            } else {
-                btnNext.style.display = 'inline-block';
-            }
-
-            // Sadece host basabilsin diye görsel
+            // Ağaç yapısında her zaman lobiye/ağaca döner
             if(!NetworkManager.isHost()) {
                 btnNext.innerText = "Host Bekleniyor...";
                 btnNext.classList.add('disabled');
             } else {
-                btnNext.innerText = "Sıradaki Bölüme Geç";
+                btnNext.innerText = "Ağaca Dön";
                 btnNext.classList.remove('disabled');
             }
         }
@@ -457,29 +455,21 @@ function updateUI() {
         if(count) count.innerText = Object.keys(state.players).length;
     }
 
-    // Host isek Level Listesini Güncelle
-    if(NetworkManager.isHost() && window.gameApp) {
-        // Dropdown sadece hostta var, logic gereği güncellenmesi lazım
-        // Ancak focus kaybolmaması için sadece length değiştiğinde güncelle
-        const select = document.getElementById('level-select');
-        const pCount = Object.keys(state.players).length || 1;
-        if(select && !select.dataset.lastCount || select.dataset.lastCount != pCount) {
-            select.dataset.lastCount = pCount;
-            window.gameApp.updateLevelSelectUI();
-        }
+    // Client UI Durumu (Client'e sadece bekleme ekranı gösteriyoruz)
+    const hostSettings = document.getElementById('host-settings');
+    const clientWaiting = document.getElementById('client-waiting');
+
+    if (NetworkManager.isHost()) {
+        if (hostSettings) hostSettings.classList.remove('hidden');
+        if (clientWaiting) clientWaiting.classList.add('hidden');
+    } else {
+        if (hostSettings) hostSettings.classList.add('hidden');
+        if (clientWaiting) clientWaiting.classList.remove('hidden');
     }
 
-    // Host isek Butonu Kontrol Et
-    const btnStart = document.getElementById('btn-start-game');
-    if(btnStart && NetworkManager.isHost()) {
-        const pCount = Object.keys(state.players).length;
-        if(pCount >= 1 && pCount <= 4) {
-            btnStart.classList.remove('disabled');
-            btnStart.innerText = `${pCount} Kişilik Macerayı Başlat`;
-        } else {
-            btnStart.classList.add('disabled');
-            btnStart.innerText = "Bekleniyor...";
-        }
+    // Host isek Ağaç Listesini Güncelle
+    if(NetworkManager.isHost() && window.gameApp && window.gameApp.state.status === 'lobby') {
+        window.gameApp.updateLevelSelectUI();
     }
 }
 
