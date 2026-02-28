@@ -18,6 +18,120 @@ class Rect {
     }
 }
 
+class PushableBox extends Rect {
+    constructor(x, y, w, h, props) {
+        super(x, y, w, h, 'box', props);
+        this.vx = 0;
+        this.vy = 0;
+        this.gravity = 1200;
+        this.friction = 0.8;
+        this.grounded = false;
+        // İtme gücü katsayısı
+        this.pushResistance = props.resistance || 0.9;
+    }
+
+    update(dt, levelRects) {
+        this.vy += this.gravity * dt;
+        this.vx *= this.friction;
+
+        // X ekseni
+        this.x += this.vx * dt;
+        this.handleCollisions(levelRects, 'x');
+
+        // Y ekseni
+        this.y += this.vy * dt;
+        this.grounded = false;
+        this.handleCollisions(levelRects, 'y');
+    }
+
+    handleCollisions(rects, axis) {
+        for (let r of rects) {
+            if (r === this) continue; // Kendisiyle çarpışmaz
+            if (r.type === 'solid' || r.type === 'tahta_duvar' || r.type === 'box' || r.type === 'door' && !r.props.open) {
+                if (this.intersects(r)) {
+                    if (axis === 'x') {
+                        if (this.vx > 0) { this.x = r.x - this.w; this.vx = 0; }
+                        else if (this.vx < 0) { this.x = r.x + r.w; this.vx = 0; }
+                    } else if (axis === 'y') {
+                        if (this.vy > 0) { this.y = r.y - this.h; this.vy = 0; this.grounded = true; }
+                        else if (this.vy < 0) { this.y = r.y + r.h; this.vy = 0; }
+                    }
+                }
+            }
+        }
+    }
+}
+
+class Seesaw extends Rect {
+    constructor(x, y, w, h, props) {
+        super(x, y, w, h, 'seesaw', props);
+        // Tahterevalli merkezi pivot noktası
+        this.pivotX = x + w / 2;
+        this.pivotY = y + h / 2;
+        // Dönüş açısı (radyan)
+        this.angle = 0;
+        this.angularVelocity = 0;
+        // Maksimum dönüş açısı (örn. 30 derece)
+        this.maxAngle = Math.PI / 6;
+        this.damping = 0.95; // Sürtünme
+        this.returnForce = 0.05; // Merkeze dönme eğilimi
+    }
+
+    update(dt, entities) {
+        // Tork hesaplama: Tahterevallinin üstünde kim varsa, ağırlık merkezine uzaklığına göre tork uygular.
+        let torque = 0;
+        const seesawLeft = this.x;
+        const seesawRight = this.x + this.w;
+        // Basit AABB kesişimi kullanıyoruz, dönüş açısı büyük olmadığından kabul edilebilir bir hile.
+        // Yüksekliği (AABB olarak) açıya göre genişletiyoruz.
+        const currentH = this.h + Math.abs(Math.sin(this.angle) * this.w);
+
+        // Kesişim için geçici bir dikdörtgen
+        const bounds = {
+            x: this.x,
+            y: this.y - currentH/2,
+            w: this.w,
+            h: currentH
+        };
+
+        for (let e of entities) {
+            if (e.type === 'player' || e.type === 'box') {
+                // Sadece üstündeysen etki et (basit kontrol)
+                if (e.x + e.w > bounds.x && e.x < bounds.x + bounds.w &&
+                    e.y + e.h >= bounds.y && e.y + e.h <= bounds.y + bounds.h + 10) {
+
+                    // Nesnenin X merkezinin pivot'a uzaklığı
+                    const distFromCenter = (e.x + e.w/2) - this.pivotX;
+                    // Tork ekle (ağırlık katsayısı)
+                    const weight = e.type === 'box' ? 1.5 : 1.0;
+                    torque += distFromCenter * weight * 0.05 * dt;
+
+                    // Nesnenin Y pozisyonunu tahterevalli yüzeyine it (basit fizik)
+                    // Yüzeyin o noktadaki Y si:
+                    const surfaceY = this.pivotY + Math.tan(this.angle) * distFromCenter;
+                    if (e.y + e.h > surfaceY - this.h/2) {
+                        e.y = surfaceY - this.h/2 - e.h;
+                        if(e.type === 'player') e.grounded = true;
+                        if(e.type === 'box') e.grounded = true;
+                        e.vy = 0;
+                    }
+                }
+            }
+        }
+
+        // Fizik güncellemesi
+        this.angularVelocity += torque;
+        // Merkeze dönme eğilimi (yay gibi)
+        this.angularVelocity -= this.angle * this.returnForce * dt;
+        this.angularVelocity *= this.damping;
+        this.angle += this.angularVelocity;
+
+        // Açı sınırları
+        if (this.angle > this.maxAngle) { this.angle = this.maxAngle; this.angularVelocity *= -0.5; }
+        if (this.angle < -this.maxAngle) { this.angle = -this.maxAngle; this.angularVelocity *= -0.5; }
+    }
+}
+
 class PlayerEntity extends Rect {
     constructor(id, role, name, startX, startY) {
         super(startX, startY, 32, 32, 'player');
@@ -98,28 +212,50 @@ class PlayerEntity extends Rect {
 
         // --- X EKSENİ HAREKETİ VE ÇARPIŞMA ---
         this.x += this.vx * dt;
-        this.handleCollisions(levelRects, 'x');
+        this.handleCollisions(levelRects, 'x', dt);
 
         // --- Y EKSENİ HAREKETİ VE ÇARPIŞMA ---
         this.y += this.vy * dt;
         this.grounded = false;
         this.climbing = false;
         this.flying = false;
-        this.handleCollisions(levelRects, 'y');
+        this.handleCollisions(levelRects, 'y', dt);
 
         // Sensörler / Özel Zemin Kontrolleri
         this.checkSensors(levelRects);
     }
 
-    handleCollisions(rects, axis) {
+    handleCollisions(rects, axis, dt) {
         // Çok basit AABB (Axis-Aligned Bounding Box) Resolving
         for (let r of rects) {
-            if (r.type === 'solid' || r.type === 'tahta_duvar') {
+            if (r.type === 'solid' || r.type === 'tahta_duvar' || r.type === 'door' && !r.props.open) {
                 if (this.intersects(r)) {
                     // Ateş, tahta duvara değerse yakar (Oyun içi aksiyondur, burada sadece solid gibi davranır ilk freym, sonra game.js siler)
                     if (axis === 'x') {
                         if (this.vx > 0) { this.x = r.x - this.w; this.vx = 0; }
                         else if (this.vx < 0) { this.x = r.x + r.w; this.vx = 0; }
+                    } else if (axis === 'y') {
+                        if (this.vy > 0) { this.y = r.y - this.h; this.vy = 0; this.grounded = true; }
+                        else if (this.vy < 0) { this.y = r.y + r.h; this.vy = 0; }
+                    }
+                }
+            }
+            // İtilebilir Kutular (Aynı zamanda platform gibi üstüne çıkılabilir)
+            else if (r.type === 'box') {
+                if (this.intersects(r)) {
+                    if (axis === 'x') {
+                        // Kutuyu İtme Mekaniği
+                        if (this.vx > 0) {
+                            this.x = r.x - this.w;
+                            // Kutuyu it
+                            r.vx = this.vx * r.pushResistance;
+                            this.vx = 0;
+                        }
+                        else if (this.vx < 0) {
+                            this.x = r.x + r.w;
+                            r.vx = this.vx * r.pushResistance;
+                            this.vx = 0;
+                        }
                     } else if (axis === 'y') {
                         if (this.vy > 0) { this.y = r.y - this.h; this.vy = 0; this.grounded = true; }
                         else if (this.vy < 0) { this.y = r.y + r.h; this.vy = 0; }
@@ -263,6 +399,8 @@ class GameEngine {
         this.lastTime = 0;
         this.running = false;
 
+        this.dynamicEntities = []; // Kutular vb. için
+
         this.resize();
         window.addEventListener('resize', () => this.resize());
     }
@@ -280,6 +418,7 @@ class GameEngine {
 
     loadMap(mapData) {
         this.rects = [];
+        this.dynamicEntities = [];
         this.mapW = mapData.width;
         this.mapH = mapData.height;
         this.camera.mw = this.mapW;
@@ -304,7 +443,17 @@ class GameEngine {
         // Entity ler (Kapılar, objeler vb.)
         if(mapData.entities) {
             mapData.entities.forEach(e => {
-                this.rects.push(new Rect(e.x, e.y, e.w, e.h, e.type, e.props));
+                if (e.type === 'box') {
+                    const box = new PushableBox(e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(box);
+                    this.dynamicEntities.push(box);
+                } else if (e.type === 'seesaw') {
+                    const seesaw = new Seesaw(e.x, e.y, e.w, e.h, e.props || {});
+                    this.rects.push(seesaw);
+                    this.dynamicEntities.push(seesaw);
+                } else {
+                    this.rects.push(new Rect(e.x, e.y, e.w, e.h, e.type, e.props));
+                }
             });
         }
     }
@@ -339,7 +488,18 @@ class GameEngine {
         if (dt > 0.1) dt = 0.1; // Uzun lagları engelle
 
         // Game Logic (Buton tetikleri vs)
-        if(window.gameApp) window.gameApp.logicTick(this.rects, this.players);
+        if(window.gameApp) window.gameApp.logicTick(this.rects, this.players, this.dynamicEntities);
+
+        // Update Dynamic Entities (Boxes, Seesaws)
+        for (let entity of this.dynamicEntities) {
+            if (entity.type === 'box') {
+                entity.update(dt, this.rects);
+            } else if (entity.type === 'seesaw') {
+                // Tahterevalli için oyuncular ve kutuları argüman geç
+                const allDynamic = [...Object.values(this.players), ...this.dynamicEntities.filter(e => e.type === 'box')];
+                entity.update(dt, allDynamic);
+            }
+        }
 
         // Update Physics
         for (let id in this.players) {
@@ -413,11 +573,52 @@ class GameEngine {
                 this.ctx.fillStyle = r.props.color || '#94a3b8';
                 let bh = r.props.pressed ? 8 : 16; // Basılınca çöker
                 this.ctx.fillRect(r.x, r.y + (r.h - bh), r.w, bh);
+
+                // Ağırlıklı buton göstergesi
+                if(r.props.requiresWeight) {
+                    this.ctx.fillStyle = '#1e293b';
+                    this.ctx.fillRect(r.x + r.w/2 - 4, r.y + (r.h - bh) + 2, 8, 4);
+                }
             } else if (r.type === 'door') {
                 if(!r.props.open) {
                     this.ctx.fillStyle = r.props.color || '#475569';
                     this.ctx.fillRect(r.x, r.y, r.w, r.h);
+                    // Kapı detayı
+                    this.ctx.strokeStyle = '#1e293b';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(r.x+2, r.y+2, r.w-4, r.h-4);
                 }
+            } else if (r.type === 'box') {
+                this.ctx.fillStyle = '#8B4513'; // Ahşap kutu
+                this.ctx.fillRect(r.x, r.y, r.w, r.h);
+                this.ctx.strokeStyle = '#5C3A21';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(r.x, r.y, r.w, r.h);
+                // Çarpı deseni
+                this.ctx.beginPath();
+                this.ctx.moveTo(r.x, r.y); this.ctx.lineTo(r.x+r.w, r.y+r.h);
+                this.ctx.moveTo(r.x+r.w, r.y); this.ctx.lineTo(r.x, r.y+r.h);
+                this.ctx.stroke();
+            } else if (r.type === 'seesaw') {
+                this.ctx.save();
+                this.ctx.translate(r.pivotX, r.pivotY);
+                this.ctx.rotate(r.angle);
+
+                // Tahterevalli tahtası
+                this.ctx.fillStyle = '#d97706';
+                this.ctx.fillRect(-r.w/2, -r.h/2, r.w, r.h);
+                this.ctx.strokeStyle = '#b45309';
+                this.ctx.strokeRect(-r.w/2, -r.h/2, r.w, r.h);
+
+                this.ctx.restore();
+
+                // Pivot üçgeni (Sabit)
+                this.ctx.fillStyle = '#475569';
+                this.ctx.beginPath();
+                this.ctx.moveTo(r.pivotX, r.pivotY);
+                this.ctx.lineTo(r.pivotX - 10, r.pivotY + 20);
+                this.ctx.lineTo(r.pivotX + 10, r.pivotY + 20);
+                this.ctx.fill();
             } else if (r.type === 'exit') {
                 // Çıkış kapısı
                 this.ctx.fillStyle = 'rgba(0,0,0,0.5)';

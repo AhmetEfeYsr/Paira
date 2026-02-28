@@ -35,8 +35,24 @@
 
                 <!-- Kurucu Ayarları -->
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyun Modu</h3>
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px;">Zindan odadaki kişi sayısına göre (1-4) otomatik olarak ölçeklenir.</p>
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Bölüm Seçimi</h3>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="mode-select">Oyun Modu</label>
+                        <select id="mode-select" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                            <option value="progression">İlerleme Modu (Sırayla Geç)</option>
+                            <option value="free">Özgür Mod (İstediğin Bölüm)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="level-select">Bölüm (Kişi Sayısına Göre)</label>
+                        <select id="level-select" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                            <!-- JS ile doldurulacak -->
+                        </select>
+                    </div>
+
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px; line-height: 1.4;">Zindan odadaki kişi sayısına göre otomatik olarak değişir. İlerleme modunda sadece açtığınız bölümleri oynayabilirsiniz.</p>
 
                     <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Maceraya Başla</button>
                 </section>
@@ -60,7 +76,10 @@
             <div id="winner-banner" class="hidden" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background: rgba(0,0,0,0.8); padding: 30px 50px; border-radius: 20px; border: 2px solid var(--success); text-align: center;">
                 <h1 style="color: var(--success); font-size: 3rem; margin-bottom: 10px;">Bölüm Tamamlandı!</h1>
                 <p id="winner-msg" style="color: white; font-size: 1.2rem;">Tüm karakterler kendi kapısına ulaştı.</p>
-                <button id="btn-next-level" class="btn btn-primary" style="margin-top: 20px;">Sıradaki Bölüme Geç (Sadece Kurucu)</button>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button id="btn-back-lobby" class="btn btn-secondary">Lobiye Dön</button>
+                    <button id="btn-next-level" class="btn btn-primary">Sıradaki Bölüme Geç</button>
+                </div>
             </div>
 
             <canvas id="game-canvas"></canvas>

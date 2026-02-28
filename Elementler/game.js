@@ -6,23 +6,59 @@ class GameManager {
             status: 'lobby',
             players: {},
             deaths: 0,
-            level: 1, // 1 kişilikse map_1_1, 2 kişilikse map_2_1 vb. mapler kullanılacak
+            level: 1, // 1, 2, 3 ...
+            mode: 'progression', // 'progression' veya 'free'
             playerCount: 1
         };
 
         this.engine = null;
         this.gameLoopRef = null;
 
+        // Save Sistemi (localStorage)
+        this.unlockedLevels = this.loadProgress();
+
         // Input Tracking
         this.keys = { up: false, down: false, left: false, right: false, jump: false };
         this.lastInputSent = JSON.stringify(this.keys);
+    }
+
+    loadProgress() {
+        try {
+            const saved = localStorage.getItem('elementler_progress');
+            if (saved) return JSON.parse(saved);
+        } catch(e) { console.error("Save okunamadı", e); }
+        // Default (her kişi sayısı için 1. level açık)
+        return { 1: 1, 2: 1, 3: 1, 4: 1 };
+    }
+
+    saveProgress(playerCount, newLevel) {
+        if (newLevel > this.unlockedLevels[playerCount]) {
+            this.unlockedLevels[playerCount] = newLevel;
+            localStorage.setItem('elementler_progress', JSON.stringify(this.unlockedLevels));
+        }
     }
 
     initEventListeners() {
         const btnStart = document.getElementById('btn-start-game');
         if(btnStart) {
             btnStart.addEventListener('click', () => {
-                if(NetworkManager.isHost()) this.startGame();
+                if(NetworkManager.isHost()) {
+                    const select = document.getElementById('level-select');
+                    this.state.level = parseInt(select.value) || 1;
+                    const modeSelect = document.getElementById('mode-select');
+                    this.state.mode = modeSelect.value || 'progression';
+                    this.startGame();
+                }
+            });
+        }
+
+        const modeSelect = document.getElementById('mode-select');
+        if(modeSelect) {
+            modeSelect.addEventListener('change', () => {
+                if(NetworkManager.isHost()) {
+                    this.state.mode = modeSelect.value;
+                    this.updateLevelSelectUI();
+                }
             });
         }
 
@@ -31,9 +67,29 @@ class GameManager {
             btnNext.addEventListener('click', () => {
                 if(NetworkManager.isHost()) {
                     document.getElementById('winner-banner').classList.add('hidden');
-                    // Bir sonraki bölüme geçme mantığı eklenebilir. Şu anlık aynı bölümü restart atarız.
-                    NetworkManager.sendGameAction('RESTART_LEVEL', {});
-                    this.executeActionLocally('RESTART_LEVEL', {});
+
+                    // Sonraki bölüme geç (Eğer varsa)
+                    const nextLevelKey = `map_${this.state.playerCount}_${this.state.level + 1}`;
+                    if(window.MAPS && window.MAPS[nextLevelKey]) {
+                        this.state.level++;
+                        NetworkManager.sendGameAction('LOAD_LEVEL', { level: this.state.level, mode: this.state.mode });
+                        this.executeActionLocally('LOAD_LEVEL', { level: this.state.level, mode: this.state.mode });
+                    } else {
+                        showToast("Tebrikler! Bu moddaki tüm bölümleri bitirdiniz.", "success");
+                        // Lobiye dön
+                        NetworkManager.sendGameAction('RETURN_LOBBY', {});
+                        this.executeActionLocally('RETURN_LOBBY', {});
+                    }
+                }
+            });
+        }
+
+        const btnBack = document.getElementById('btn-back-lobby');
+        if(btnBack) {
+            btnBack.addEventListener('click', () => {
+                if(NetworkManager.isHost()) {
+                    NetworkManager.sendGameAction('RETURN_LOBBY', {});
+                    this.executeActionLocally('RETURN_LOBBY', {});
                 }
             });
         }
@@ -41,6 +97,45 @@ class GameManager {
         // Klavye Eventleri
         window.addEventListener('keydown', (e) => this.handleKey(e, true));
         window.addEventListener('keyup', (e) => this.handleKey(e, false));
+    }
+
+    updateLevelSelectUI() {
+        const select = document.getElementById('level-select');
+        if(!select) return;
+
+        select.innerHTML = '';
+        const count = Object.keys(this.state.players).length || 1;
+        const maxLevelUnlocked = this.unlockedLevels[count] || 1;
+
+        // Haritaları bul
+        let maxAvailable = 1;
+        while(window.MAPS && window.MAPS[`map_${count}_${maxAvailable}`]) {
+            maxAvailable++;
+        }
+        maxAvailable--; // son başarısız artışı geri al
+
+        for(let i = 1; i <= maxAvailable; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            const mapName = window.MAPS[`map_${count}_${i}`].name || `Bölüm ${i}`;
+
+            if (this.state.mode === 'progression') {
+                if (i <= maxLevelUnlocked) {
+                    option.text = `${i}. ${mapName}`;
+                } else {
+                    option.text = `${i}. (Kilitli)`;
+                    option.disabled = true;
+                }
+            } else {
+                option.text = `${i}. ${mapName} (Özgür)`;
+            }
+            select.appendChild(option);
+        }
+
+        // Eğer seçili olan kilitliyse 1'e çek
+        if(this.state.mode === 'progression' && select.value > maxLevelUnlocked) {
+            select.value = 1;
+        }
     }
 
     handleKey(e, isDown) {
@@ -80,6 +175,9 @@ class GameManager {
         this.state.deaths = 0;
 
         NetworkManager.broadcastState();
+
+        // Clientlere de level'i zorla
+        NetworkManager.sendGameAction('LOAD_LEVEL', { level: this.state.level, mode: this.state.mode });
         this.startGameEngine();
     }
 
@@ -87,6 +185,13 @@ class GameManager {
         if(this.engine) this.engine.stop();
 
         this.engine = new GameEngine('game-canvas');
+
+        // UI Geçişi
+        document.getElementById('lobby-screen').classList.add('hidden');
+        document.getElementById('lobby-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('game-screen').classList.add('active');
+        this.engine.resize();
 
         // Haritayı Seç (Örn: 2 kişi varsa window.MAPS["map_2_1"])
         const mapKey = `map_${this.state.playerCount}_${this.state.level}`;
@@ -142,14 +247,17 @@ class GameManager {
     }
 
     // OYUN MANTIĞI: ETKİLEŞİMLER (Engine Loop içinden her karede çağrılır)
-    logicTick(rects, players) {
+    logicTick(rects, players, dynamicEntities) {
         if(!NetworkManager.isHost()) return; // Tetiklenmeleri sadece host hesaplar
 
         let allFinished = true;
+        let activePlayersCount = 0;
 
         for (let id in players) {
             const p = players[id];
+            if(p.dead) continue;
 
+            activePlayersCount++;
             if(!p.finished) allFinished = false;
 
             for (let r of rects) {
@@ -157,27 +265,58 @@ class GameManager {
 
                 // 1. ATEŞ YAKMASI (Tahta Duvar)
                 if (r.type === 'tahta_duvar' && p.role === 'ates') {
-                    // Yok et, herkese bildir
                     this.executeActionLocally('DESTROY_RECT', { rx: r.x, ry: r.y });
                     NetworkManager.sendGameAction('DESTROY_RECT', { rx: r.x, ry: r.y });
                 }
+            }
+        }
 
-                // 2. BUTONLAR
-                if (r.type === 'button') {
-                    // Bu sadece çok basit bir örnek, buton basıldığında belirli kapıyı (door) açar
-                    if(!r.props.pressed) {
-                        r.props.pressed = true;
-                        this.executeActionLocally('PRESS_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId });
-                        NetworkManager.sendGameAction('PRESS_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId });
+        if(activePlayersCount === 0) allFinished = false;
+
+        // 2. BUTONLAR - Ağırlık ve normal basım kontrolü
+        // Host tüm butonların state'ini kontrol edip gerekiyorsa basılı/basılmamış yapar
+        const allEntities = [...Object.values(players), ...dynamicEntities.filter(e => e.type === 'box')];
+
+        for (let r of rects) {
+            if (r.type === 'button') {
+                let isPressedNow = false;
+
+                // Butonun üstünde ağırlık var mı?
+                for (let e of allEntities) {
+                    if (e.intersects(r)) {
+                        isPressedNow = true;
+                        break;
+                    }
+                }
+
+                if (r.props.requiresWeight) {
+                    // Ağırlık gerektiren buton: Üstünden inilirse geri kalkar
+                    if (isPressedNow && !r.props.pressed) {
+                        this.executeActionLocally('TOGGLE_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId, state: true });
+                        NetworkManager.sendGameAction('TOGGLE_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId, state: true });
+                    } else if (!isPressedNow && r.props.pressed) {
+                        this.executeActionLocally('TOGGLE_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId, state: false });
+                        NetworkManager.sendGameAction('TOGGLE_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId, state: false });
+                    }
+                } else {
+                    // Kalıcı buton: Bir kere basıldıysa hep basılı kalır
+                    if (isPressedNow && !r.props.pressed) {
+                        this.executeActionLocally('TOGGLE_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId, state: true, permanent: true });
+                        NetworkManager.sendGameAction('TOGGLE_BUTTON', { rx: r.x, ry: r.y, targetId: r.props.targetId, state: true, permanent: true });
                     }
                 }
             }
         }
 
         // BÖLÜM BİTİŞ KONTROLÜ
-        if(allFinished && Object.keys(players).length > 0) {
+        if(allFinished && activePlayersCount > 0) {
             // Sadece 1 kez tetiklenmesini sağla
             if(document.getElementById('winner-banner').classList.contains('hidden')) {
+                // Host olarak ilerlemeyi kaydet (Özgür modda da kaydetsin zararı yok)
+                if(this.state.mode === 'progression') {
+                    this.saveProgress(this.state.playerCount, this.state.level + 1);
+                }
+
                 this.executeActionLocally('LEVEL_COMPLETE', {});
                 NetworkManager.sendGameAction('LEVEL_COMPLETE', {});
             }
@@ -226,20 +365,27 @@ class GameManager {
     }
 
     executeActionLocally(action, payload) {
-        if(!this.engine) return;
+        if(!this.engine && action !== 'RETURN_LOBBY') return;
 
         if (action === 'DESTROY_RECT') {
             // İlgili rect'i diziden çıkar
             const idx = this.engine.rects.findIndex(r => r.x === payload.rx && r.y === payload.ry && r.type === 'tahta_duvar');
             if(idx > -1) this.engine.rects.splice(idx, 1);
         }
-        else if (action === 'PRESS_BUTTON') {
+        else if (action === 'TOGGLE_BUTTON') {
             const btn = this.engine.rects.find(r => r.x === payload.rx && r.y === payload.ry && r.type === 'button');
-            if(btn) btn.props.pressed = true;
+            if(btn) {
+                btn.props.pressed = payload.state;
+                if(payload.permanent) btn.props.pressed = true;
+            }
 
-            // Kapıyı kaldır (aç)
-            const doorIdx = this.engine.rects.findIndex(r => r.type === 'door' && r.props.id === payload.targetId);
-            if(doorIdx > -1) this.engine.rects.splice(doorIdx, 1);
+            // Kapıyı bul
+            const door = this.engine.rects.find(r => r.type === 'door' && r.props.id === payload.targetId);
+            if(door) {
+                // state = true ise kapı açılır (open=true)
+                door.props.open = payload.state;
+                if(payload.permanent) door.props.open = true;
+            }
         }
         else if (action === 'MARK_FINISH_DOOR') {
             const door = this.engine.rects.find(r => r.type === 'exit' && r.props.role === payload.role);
@@ -252,8 +398,43 @@ class GameManager {
             }
             this.startGameEngine(); // Haritayı tekrar yükle
         }
+        else if (action === 'LOAD_LEVEL') {
+            this.state.level = payload.level;
+            this.state.mode = payload.mode;
+            this.state.status = 'playing';
+            document.getElementById('winner-banner').classList.add('hidden');
+            this.startGameEngine();
+        }
         else if (action === 'LEVEL_COMPLETE') {
             document.getElementById('winner-banner').classList.remove('hidden');
+
+            // Sıradaki bölüm butonunu yönet
+            const btnNext = document.getElementById('btn-next-level');
+            const nextLevelKey = `map_${this.state.playerCount}_${this.state.level + 1}`;
+            if(window.MAPS && !window.MAPS[nextLevelKey]) {
+                btnNext.style.display = 'none'; // Sonraki bölüm yok
+            } else {
+                btnNext.style.display = 'inline-block';
+            }
+
+            // Sadece host basabilsin diye görsel
+            if(!NetworkManager.isHost()) {
+                btnNext.innerText = "Host Bekleniyor...";
+                btnNext.classList.add('disabled');
+            } else {
+                btnNext.innerText = "Sıradaki Bölüme Geç";
+                btnNext.classList.remove('disabled');
+            }
+        }
+        else if (action === 'RETURN_LOBBY') {
+            this.state.status = 'lobby';
+            if(this.engine) this.engine.stop();
+            document.getElementById('winner-banner').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('lobby-screen').classList.remove('hidden');
+            document.getElementById('lobby-screen').classList.add('active');
+            if(NetworkManager.isHost()) this.updateLevelSelectUI();
         }
     }
 }
@@ -265,15 +446,27 @@ function updateUI() {
     // Oyuncu Listesi (Lobi)
     const pList = document.getElementById('players-list');
     if (pList) {
-        pList.innerHTML = '';
+        const oldHtml = pList.innerHTML;
+        let newHtml = '';
         Object.values(state.players).forEach(p => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === NetworkManager.getMyId() ? '(Sen)' : ''}</span> <strong style="color:var(--neon-blue)">${p.role.toUpperCase()}</strong>`;
-            pList.appendChild(li);
+            newHtml += `<li><span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === NetworkManager.getMyId() ? '(Sen)' : ''}</span> <strong style="color:var(--neon-blue)">${p.role.toUpperCase()}</strong></li>`;
         });
+        if(oldHtml !== newHtml) pList.innerHTML = newHtml;
 
         const count = document.getElementById('player-count');
         if(count) count.innerText = Object.keys(state.players).length;
+    }
+
+    // Host isek Level Listesini Güncelle
+    if(NetworkManager.isHost() && window.gameApp) {
+        // Dropdown sadece hostta var, logic gereği güncellenmesi lazım
+        // Ancak focus kaybolmaması için sadece length değiştiğinde güncelle
+        const select = document.getElementById('level-select');
+        const pCount = Object.keys(state.players).length || 1;
+        if(select && !select.dataset.lastCount || select.dataset.lastCount != pCount) {
+            select.dataset.lastCount = pCount;
+            window.gameApp.updateLevelSelectUI();
+        }
     }
 
     // Host isek Butonu Kontrol Et
