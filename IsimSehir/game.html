@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İsim Şehir Hayvan - Oyun</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <!-- Top Header -->
+    <header class="game-header glass-panel">
+        <div class="header-left">
+            <span id="room-display">Oda: <strong id="room-code-txt">---</strong></span>
+            <span class="status-dot" id="network-status"></span>
+        </div>
+        <div class="header-center">
+            <h2 class="round-display">Tur: <span id="current-round">1</span> / <span id="total-rounds">?</span></h2>
+        </div>
+        <div class="header-right">
+            <span id="player-name-display">---</span>
+            <button id="leave-btn" class="danger-btn-small">Çık</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+
+        <!-- Sidebar: Players -->
+        <aside class="sidebar glass-panel">
+            <h3>Oyuncular (<span id="player-count">1</span>)</h3>
+            <ul id="player-list" class="player-list">
+                <!-- Players will be injected here -->
+            </ul>
+        </aside>
+
+        <!-- Content Area -->
+        <section class="content-area">
+
+            <!-- LOBBY SCREEN -->
+            <div id="lobby-screen" class="screen glass-panel active">
+                <h2>Oyun Lobisi</h2>
+                <div class="lobby-content">
+                    <div id="host-controls" class="host-only hidden">
+                        <div class="control-group">
+                            <label>Tur Sayısı:</label>
+                            <input type="number" id="setting-rounds" min="1" max="10" value="3">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Bitiş Şartı:</label>
+                            <select id="setting-end-condition">
+                                <option value="first_finish">İlk bitiren kişiden X saniye sonra</option>
+                                <option value="time_limit">Oyun başladıktan X saniye sonra</option>
+                                <option value="all_finish">X kişi bitir butonuna basınca (Hepsi)</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group" id="setting-end-value-group">
+                            <label id="setting-end-label">Saniye (X):</label>
+                            <input type="number" id="setting-end-value" min="5" max="300" value="15">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Kategoriler:</label>
+                            <div class="category-grid" id="category-selection-grid">
+                                <!-- Checkboxes will be injected here -->
+                            </div>
+                            <div class="custom-category-add">
+                                <input type="text" id="custom-cat-input" placeholder="Özel Kategori Ekle..." maxlength="20">
+                                <button id="add-custom-cat-btn" class="secondary-btn-small">+</button>
+                            </div>
+                        </div>
+
+                        <button id="start-game-btn" class="primary-btn mt-20">Oyunu Başlat</button>
+                    </div>
+
+                    <div id="client-waiting" class="client-only text-center">
+                        <div class="spinner"></div>
+                        <p>Kurucu (<span id="host-name-display">Host</span>) ayarları yapıyor. Oyunun başlaması bekleniyor...</p>
+                        <div class="selected-categories-preview" id="client-cats-preview">
+                            <!-- Preview categories -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GAMEPLAY SCREEN -->
+            <div id="game-screen" class="screen glass-panel">
+                <div class="game-top-bar">
+                    <div class="letter-display">
+                        Harf: <span id="current-letter" class="huge-letter">A</span>
+                        <button id="change-letter-btn" class="host-only hidden secondary-btn-small">Değiştir</button>
+                    </div>
+                    <div class="timer-display">
+                        Kalan Süre: <span id="time-left">--:--</span>
+                    </div>
+                </div>
+
+                <div class="game-grid" id="game-inputs-container">
+                    <!-- Inputs will be injected here based on selected categories -->
+                </div>
+
+                <div class="game-actions">
+                    <button id="finish-turn-btn" class="primary-btn pulse">Bitir!</button>
+                    <p id="finish-status-text" class="text-muted"></p>
+                </div>
+            </div>
+
+            <!-- VOTING SCREEN -->
+            <div id="voting-screen" class="screen glass-panel">
+                <h2>Tur Sonu Oylaması</h2>
+                <p class="text-muted">Cevaplar otomatik kontrol edildi. Puanları oylayarak nihai kararı verin.</p>
+
+                <div class="voting-container" id="voting-container">
+                    <!-- Voting blocks injected here -->
+                </div>
+
+                <div class="voting-actions mt-20">
+                    <button id="submit-votes-btn" class="primary-btn">Oyları Gönder</button>
+                    <button id="bypass-votes-btn" class="secondary-btn">Önerilen Puanlarla Devam Et (Geç)</button>
+                    <p id="voting-status-text" class="text-muted mt-10"></p>
+                </div>
+            </div>
+
+            <!-- SCOREBOARD SCREEN -->
+            <div id="score-screen" class="screen glass-panel">
+                <h2>Puan Durumu</h2>
+                <table class="scoreboard-table">
+                    <thead>
+                        <tr>
+                            <th>Sıra</th>
+                            <th>Oyuncu</th>
+                            <th>Tur Puanı</th>
+                            <th>Toplam Puan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoreboard-body">
+                        <!-- Scores injected here -->
+                    </tbody>
+                </table>
+
+                <div class="score-actions mt-20 host-only hidden">
+                    <button id="next-round-btn" class="primary-btn">Sonraki Tura Geç</button>
+                    <div class="extend-game-group hidden" id="extend-game-group">
+                        <input type="number" id="extend-rounds-input" min="1" max="5" value="1" style="width: 60px;">
+                        <button id="extend-game-btn" class="secondary-btn">Tur Uzat</button>
+                    </div>
+                </div>
+                <div class="client-only text-center mt-20">
+                    <p>Kurucunun kararı bekleniyor...</p>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="network.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
