@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Elementler | Co-Op Platform Oyunu</title>
+    <meta name="description" content="Ateş, Su, Doğa ve Hava elementleriyle arkadaşlarınızla ücretsiz, tarayıcı tabanlı co-op bulmaca platform oyunu oynayın.">
+    <meta name="keywords" content="ateş ve su tarzı oyun, co-op oyun, platform oyunu, tarayıcı oyunu, arkadaş bulma, webrtc oyun, multiplayer, elementler oyunu">
+    <meta name="author" content="Paira">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Elementler | Co-Op Platform Oyunu">
+    <meta property="og:description" content="Ateş, Su, Doğa ve Hava. Elementlerin gücünü birleştirerek arkadaşlarınızla karmaşık zindanlardan kaçın! Serverless WebRTC teknolojisi.">
+
+    <!-- Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Elementler",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Platform Puzzle Game",
+      "description": "Dört elementin kooperatif çalıştığı zindan kaçış platform oyunu.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <div id="mobile-warning" class="hidden">
+        <h1>Sadece Bilgisayar</h1>
+        <p>Bu oyun fizik tabanlı bir platform oyunu olduğu için sadece <strong>Klavye</strong> ile oynanabilir. Lütfen bir bilgisayar tarayıcısından giriş yapın.</p>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="login-screen" class="view-state active" style="justify-content: flex-start; padding-top: 5vh; align-items: center;">
+            <div class="hero-content">
+                <h1 class="gradient-text">Elementler</h1>
+                <p class="subtitle" style="margin-bottom: 0.5rem; color: var(--lilac);">Birlikten Kaçış Doğar!</p>
+                <p class="seo-description">Ateş, Su, Doğa ve Hava. Elementlerin eşsiz yeteneklerini kullanarak arkadaşlarınızla zorlu zindanlardan ücretsiz ve sunucusuz kaçın. (Sadece Klavye)</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block">Yeni Macera Kur</button>
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin: 0.5rem 0;">VEYA</div>
+                    <div class="join-row" style="display: flex; gap: 12px;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" style="margin-bottom: 0;">
+                        <button id="btn-join" class="btn btn-secondary" style="padding: 14px 28px;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Elementini Seç</h3>
+                        <p>Ateş (Kırmızı), Su (Mavi), Doğa (Yeşil) veya Hava (Sarı). Her oyuncu bir elementin kontrolünü alır ve sadece o elementin yeteneklerini kullanabilir.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Engelleri Aşın</h3>
+                        <p><strong>Ateş:</strong> Tahta duvarları yakar.<br><strong>Su:</strong> İnce borulardan sıvı gibi geçer.<br><strong>Doğa:</strong> Sarmaşıklara tırmanır.<br><strong>Hava:</strong> Fırtına alanlarında yukarı uçar.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Birlikte Çalışın</h3>
+                        <p>Bazı kapılar sadece diğer elementlerin basabileceği butonlarla açılır. Birbirinizle iletişim kurarak (Discord vb.) yolları açın.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Kendi Kapına Ulaş</h3>
+                        <p>Herkes kendi rengindeki çıkış kapısına ulaşmalıdır. Dikkat! Biriniz ölürse bölüm baştan başlar. WASD veya Yön Tuşları ile oynanır.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="index.js"></script>
+    <script>
+        // Basit bir mobil tespit, eğer mobilseniz oynatmasın
+        document.addEventListener("DOMContentLoaded", () => {
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768) {
+                document.getElementById('app-container').style.display = 'none';
+                document.getElementById('mobile-warning').classList.remove('hidden');
+                document.getElementById('mobile-warning').classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
