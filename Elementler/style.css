@@ -64,24 +64,30 @@ body {
 
 /* GİRİŞ EKRANI */
 .view-state {
-    display: flex; flex-direction: column; flex-grow: 1; animation: fadeIn 0.4s ease-out; height: 100%;
+    display: flex; flex-direction: column; flex-grow: 1; animation: fadeIn 0.4s ease-out; height: 100%; min-height: 0; overflow: hidden;
 }
+.view-state:not(.active) { display: none; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.hero-content { text-align: center; margin-bottom: clamp(1.5rem, 4vw, 3rem); }
+#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; text-align: center; width: 100%; padding-top: 5vh; }
+
+.hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
 .gradient-text {
     font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;
     background: linear-gradient(135deg, #fff, var(--lilac)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .subtitle { font-size: clamp(1.1rem, 2.5vw, 1.4rem); color: var(--lilac); font-weight: 500; opacity: 0.9; }
 
-.seo-description { font-size: 0.95rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 2rem auto; line-height: 1.5; font-weight: 400; }
-.seo-rules-container { margin-top: auto; width: 100%; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); }
-.seo-rules-container h2 { font-size: 1.4rem; color: var(--lilac); margin-bottom: 1rem; text-align: center; font-weight: 600; }
-.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-.rule-card { background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-.rule-card h3 { font-size: 1.05rem; color: var(--neon-blue); margin-bottom: 0.5rem; }
-.rule-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+.seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: 0.5rem; margin-bottom: 1rem; }
+
+.seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; overflow-y: visible; }
+.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: #fff; }
+
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
+.rule-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
+.rule-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); background: rgba(59, 130, 246, 0.1); }
+.rule-card h3 { font-size: 1.1rem; color: var(--neon-blue); margin-bottom: 0.5rem; }
+.rule-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
 /* FORMLAR & BUTONLAR */
 .form-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 8px; width: 100%; }
