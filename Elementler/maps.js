@@ -25,339 +25,356 @@ window.MAPS = {
     // ==================================================================
 
     "map_1_1": {
-        name: "Su'nun Uyanışı", treeX: 50, treeY: 90, type: 'hexagon',
+        name: "Trambolin Uyanışı", treeX: 50, treeY: 90, type: 'hexagon',
         unlocks: ["map_1_2", "map_1_3"],
-        width: 1200, height: 800,
+        width: 1400, height: 800,
         grid: (function() {
-            let g = createGrid(38, 25);
-            for(let x=2; x<15; x++) g[15][x] = 1; // Başlangıç
-            for(let x=18; x<30; x++) g[20][x] = 1; // Alt platform
-            for(let x=25; x<35; x++) g[10][x] = 1; // Çıkış platformu
-            for(let y=15; y<20; y++) g[y][18] = 8; // Boru
-            return g;
-        })(),
-        spawns: { su: { x: 100, y: 400 } },
-        entities: [ { type: 'exit', x: 28*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } } ]
-    },
-
-    "map_1_2": {
-        name: "Kutu ve Denge", treeX: 35, treeY: 75, type: 'hexagon',
-        unlocks: ["map_1_4", "map_1_5"],
-        width: 1200, height: 800,
-        grid: (function() {
-            let g = createGrid(38, 25);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=10; x<16; x++) g[18][x] = 1;
-            for(let x=26; x<34; x++) g[20][x] = 1;
-            return g;
-        })(),
-        spawns: { su: { x: 100, y: 550 } },
-        entities: [
-            { type: 'seesaw', x: 16*TILE, y: 18*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'box', x: 4*TILE, y: 18*TILE, w: TILE, h: TILE, props: { resistance: 0.8 } },
-            { type: 'button', x: 30*TILE, y: 20*TILE, w: TILE, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_1', requiresWeight: true } },
-            { type: 'door', x: 32*TILE, y: 15*TILE, w: TILE, h: TILE*5, props: { id: 'door_1', color: '#1e293b' } },
-            { type: 'exit', x: 33*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_3": {
-        name: "Ateş Çukuru", treeX: 65, treeY: 75, type: 'hexagon',
-        unlocks: ["map_1_6", "map_1_7"],
-        width: 1500, height: 800,
-        grid: (function() {
-            let g = createGrid(46, 25);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=8; x<25; x++) g[23][x] = 1;
-            for(let x=8; x<25; x++) g[22][x] = 2; // Lav havuzu (su ölür)
-            for(let x=28; x<40; x++) g[15][x] = 1;
-            return g;
-        })(),
-        spawns: { su: { x: 100, y: 550 } },
-        entities: [
-            { type: 'box', x: 6*TILE, y: 18*TILE, w: TILE, h: TILE, props: { resistance: 0.9 } },
-            { type: 'box', x: 5*TILE, y: 16*TILE, w: TILE, h: TILE, props: { resistance: 0.9 } },
-            { type: 'seesaw', x: 18*TILE, y: 15*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'exit', x: 35*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_4": {
-        name: "Tahterevalli Dansı", treeX: 20, treeY: 60, type: 'diamond',
-        unlocks: ["map_1_8"],
-        width: 1600, height: 900,
-        grid: (function() {
-            let g = createGrid(50, 28);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=16; x<20; x++) g[15][x] = 1;
-            for(let x=28; x<32; x++) g[22][x] = 1;
-            for(let x=40; x<48; x++) g[18][x] = 1;
+            let g = createGrid(43, 25);
+            for(let x=2; x<15; x++) g[20][x] = 1; // Başlangıç
+            for(let x=15; x<25; x++) { g[23][x] = 1; g[22][x] = 3; } // Su havuzu
+            for(let x=25; x<40; x++) g[10][x] = 1; // Çıkış yukarıda
             return g;
         })(),
         spawns: { su: { x: 4*TILE, y: 18*TILE } },
         entities: [
-            { type: 'seesaw', x: 8*TILE, y: 20*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 20*TILE, y: 15*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 32*TILE, y: 22*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'box', x: 5*TILE, y: 18*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'exit', x: 45*TILE, y: 16*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_5": {
-        name: "Çift Kutu Zekası", treeX: 40, treeY: 55, type: 'diamond',
-        unlocks: ["map_1_9"],
-        width: 1400, height: 900,
-        grid: (function() {
-            let g = createGrid(43, 28);
-            for(let x=2; x<12; x++) g[20][x] = 1;
-            for(let x=15; x<25; x++) g[24][x] = 1;
-            for(let x=28; x<40; x++) g[14][x] = 1;
-            for(let y=18; y<24; y++) g[y][25] = 1; // Duvar
-            return g;
-        })(),
-        spawns: { su: { x: 3*TILE, y: 18*TILE } },
-        entities: [
-            { type: 'box', x: 8*TILE, y: 18*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'box', x: 10*TILE, y: 18*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'button', x: 20*TILE, y: 24*TILE, w: TILE, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_x', requiresWeight: true } },
-            { type: 'door', x: 30*TILE, y: 9*TILE, w: TILE, h: TILE*5, props: { id: 'door_x', color: '#1e293b' } },
-            { type: 'exit', x: 36*TILE, y: 12*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_6": {
-        name: "Boru Tesisatı", treeX: 60, treeY: 55, type: 'diamond',
-        unlocks: ["map_1_10"],
-        width: 1400, height: 900,
-        grid: (function() {
-            let g = createGrid(43, 28);
-            for(let x=2; x<10; x++) g[20][x] = 1;
-            for(let y=15; y<22; y++) g[y][15] = 1; // Engel 1
-            for(let y=20; y<25; y++) g[y][15] = 8; // Boru geçidi
-            for(let x=18; x<25; x++) g[25][x] = 1;
-            for(let y=10; y<22; y++) g[y][28] = 8; // Dik boru
-            for(let x=30; x<40; x++) g[10][x] = 1;
-            return g;
-        })(),
-        spawns: { su: { x: 4*TILE, y: 18*TILE } },
-        entities: [
-            { type: 'box', x: 6*TILE, y: 18*TILE, w: TILE, h: TILE, props: {} }, // Kutuyu iterek boruya zıplama
+            { type: 'bouncer', id: 'b1', x: 20*TILE, y: 22*TILE, w: TILE*2, h: TILE, props: { power: -22, color: '#f59e0b' } },
             { type: 'exit', x: 35*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
         ]
     },
 
-    "map_1_7": {
-        name: "Asit Sarkaçları", treeX: 80, treeY: 60, type: 'diamond',
-        unlocks: ["map_1_11"],
-        width: 1800, height: 900,
+    "map_1_2": {
+        name: "Kırılgan Adımlar", treeX: 35, treeY: 75, type: 'hexagon',
+        unlocks: ["map_1_4", "map_1_5"],
+        width: 1600, height: 900,
         grid: (function() {
-            let g = createGrid(56, 28);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=10; x<40; x++) g[26][x] = 4; // Yeşil Asit Okyanusu
-            for(let x=45; x<52; x++) g[15][x] = 1;
+            let g = createGrid(50, 28);
+            for(let x=2; x<10; x++) g[22][x] = 1;
+            for(let x=10; x<40; x++) { g[26][x] = 1; g[25][x] = 2; } // Lav
+            for(let x=40; x<48; x++) g[22][x] = 1;
             return g;
         })(),
-        spawns: { su: { x: 4*TILE, y: 18*TILE } },
+        spawns: { su: { x: 4*TILE, y: 20*TILE } },
         entities: [
-            { type: 'seesaw', x: 10*TILE, y: 20*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 22*TILE, y: 18*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 34*TILE, y: 16*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'exit', x: 48*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+            { type: 'fragile', id: 'f1', x: 15*TILE, y: 18*TILE, w: TILE*2, h: TILE, props: { breakTime: 30 } },
+            { type: 'fragile', id: 'f2', x: 22*TILE, y: 15*TILE, w: TILE*2, h: TILE, props: { breakTime: 20 } },
+            { type: 'fragile', id: 'f3', x: 30*TILE, y: 18*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'f4', x: 35*TILE, y: 22*TILE, w: TILE*2, h: TILE, props: { breakTime: 10 } },
+            { type: 'exit', x: 44*TILE, y: 20*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
         ]
     },
 
-    "map_1_8": {
-        name: "Tetik Mekaniği", treeX: 10, treeY: 40, type: 'hexagon',
-        unlocks: ["map_1_12"],
+    "map_1_3": {
+        name: "Tersine Yerçekimi", treeX: 65, treeY: 75, type: 'hexagon',
+        unlocks: ["map_1_6", "map_1_7"],
         width: 1400, height: 1000,
         grid: (function() {
             let g = createGrid(43, 31);
-            for(let x=2; x<10; x++) g[15][x] = 1;
-            for(let x=15; x<25; x++) g[28][x] = 1;
-            for(let x=30; x<40; x++) g[15][x] = 1;
-            return g;
-        })(),
-        spawns: { su: { x: 4*TILE, y: 13*TILE } },
-        entities: [
-            { type: 'box', x: 8*TILE, y: 13*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'button', x: 20*TILE, y: 28*TILE, w: TILE, h: TILE/2, props: { color: '#ef4444', targetId: 'door_a', requiresWeight: true } },
-            { type: 'door', x: 35*TILE, y: 10*TILE, w: TILE, h: TILE*5, props: { id: 'door_a', color: '#1e293b' } },
-            { type: 'exit', x: 37*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_9": {
-        name: "Yükselen Su", treeX: 30, treeY: 35, type: 'hexagon',
-        unlocks: ["map_1_12", "map_1_13"],
-        width: 1400, height: 1200,
-        grid: (function() {
-            let g = createGrid(43, 37);
-            for(let x=2; x<8; x++) g[32][x] = 1;
-            for(let x=12; x<18; x++) g[26][x] = 1;
-            for(let x=22; x<28; x++) g[20][x] = 1;
-            for(let x=32; x<38; x++) g[14][x] = 1;
-            for(let y=14; y<35; y++) g[y][10] = 8; // Dikey Boru
-            return g;
-        })(),
-        spawns: { su: { x: 4*TILE, y: 30*TILE } },
-        entities: [
-            { type: 'box', x: 6*TILE, y: 30*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'seesaw', x: 23*TILE, y: 20*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'exit', x: 35*TILE, y: 12*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_10": {
-        name: "Dar Koridor", treeX: 70, treeY: 35, type: 'hexagon',
-        unlocks: ["map_1_14", "map_1_15"],
-        width: 2000, height: 800,
-        grid: (function() {
-            let g = createGrid(62, 25);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=10; x<55; x++) g[15][x] = 1; // Uzun köprü
-            for(let x=10; x<55; x++) g[16][x] = 2; // Altında lav var
-            return g;
-        })(),
-        spawns: { su: { x: 4*TILE, y: 18*TILE } },
-        entities: [
-            { type: 'box', x: 12*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { resistance: 0.95 } },
-            { type: 'box', x: 20*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { resistance: 0.95 } },
-            { type: 'box', x: 30*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { resistance: 0.95 } },
-            { type: 'button', x: 45*TILE, y: 15*TILE, w: TILE, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_k', requiresWeight: true } },
-            { type: 'door', x: 50*TILE, y: 10*TILE, w: TILE, h: TILE*5, props: { id: 'door_k', color: '#1e293b' } },
-            { type: 'exit', x: 53*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_11": {
-        name: "Kutu Yağmuru", treeX: 90, treeY: 40, type: 'hexagon',
-        unlocks: ["map_1_15"],
-        width: 1400, height: 1200,
-        grid: (function() {
-            let g = createGrid(43, 37);
-            for(let x=2; x<8; x++) g[10][x] = 1; // Spawn üstte
-            for(let x=15; x<25; x++) g[20][x] = 1;
-            for(let x=30; x<40; x++) g[32][x] = 1;
-            return g;
-        })(),
-        spawns: { su: { x: 4*TILE, y: 8*TILE } },
-        entities: [
-            { type: 'box', x: 6*TILE, y: 8*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'seesaw', x: 15*TILE, y: 20*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'button', x: 20*TILE, y: 20*TILE, w: TILE, h: TILE/2, props: { color: '#ef4444', targetId: 'door_r', requiresWeight: true } },
-            { type: 'door', x: 35*TILE, y: 27*TILE, w: TILE, h: TILE*5, props: { id: 'door_r', color: '#1e293b' } },
-            { type: 'exit', x: 37*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_12": {
-        name: "Zamanla Yarış", treeX: 20, treeY: 20, type: 'diamond',
-        unlocks: ["map_1_16"],
-        width: 1800, height: 800,
-        grid: (function() {
-            let g = createGrid(56, 25);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=15; x<40; x++) g[23][x] = 1; // Hızlı koşulacak zemin
-            for(let x=45; x<52; x++) g[15][x] = 1;
-            return g;
-        })(),
-        spawns: { su: { x: 4*TILE, y: 18*TILE } },
-        entities: [
-            { type: 'button', x: 6*TILE, y: 20*TILE, w: TILE, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_t', requiresWeight: false } }, // Kalıcı
-            { type: 'door', x: 40*TILE, y: 18*TILE, w: TILE, h: TILE*5, props: { id: 'door_t', color: '#1e293b' } },
-            { type: 'seesaw', x: 42*TILE, y: 20*TILE, w: TILE*6, h: TILE/2, props: {} },
-            { type: 'exit', x: 48*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
-        ]
-    },
-
-    "map_1_13": {
-        name: "Üç Dengeleyici", treeX: 40, treeY: 15, type: 'diamond',
-        unlocks: ["map_1_16"],
-        width: 1800, height: 1000,
-        grid: (function() {
-            let g = createGrid(56, 31);
-            for(let x=2; x<8; x++) g[25][x] = 1;
-            for(let x=48; x<54; x++) g[15][x] = 1;
+            for(let x=2; x<15; x++) g[25][x] = 1;
+            for(let x=15; x<30; x++) { g[29][x] = 1; g[28][x] = 4; } // Asit
+            for(let x=30; x<40; x++) g[5][x] = 1; // Çıkış tavanda
+            for(let y=10; y<25; y++) g[y][20] = 1;
             return g;
         })(),
         spawns: { su: { x: 4*TILE, y: 23*TILE } },
         entities: [
-            { type: 'box', x: 6*TILE, y: 23*TILE, w: TILE, h: TILE, props: {} },
-            { type: 'seesaw', x: 10*TILE, y: 25*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 22*TILE, y: 22*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 34*TILE, y: 19*TILE, w: TILE*8, h: TILE/2, props: {} },
-            { type: 'exit', x: 50*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+            { type: 'gravity', id: 'gz1', x: 12*TILE, y: 5*TILE, w: TILE*6, h: TILE*20, props: { gravityMultiplier: -1, color: 'rgba(56, 189, 248, 0.3)' } },
+            { type: 'gravity', id: 'gz2', x: 25*TILE, y: 5*TILE, w: TILE*6, h: TILE*20, props: { gravityMultiplier: -1.2, color: 'rgba(56, 189, 248, 0.3)' } },
+            { type: 'exit', x: 35*TILE, y: 3*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
         ]
     },
 
-    "map_1_14": {
-        name: "Kör Düğüm", treeX: 60, treeY: 15, type: 'diamond',
-        unlocks: ["map_1_16"],
-        width: 1600, height: 1200,
+    "map_1_4": {
+        name: "Işınlanma Ağları", treeX: 20, treeY: 60, type: 'diamond',
+        unlocks: ["map_1_8"],
+        width: 1500, height: 1200,
         grid: (function() {
-            let g = createGrid(50, 37);
-            for(let x=2; x<10; x++) g[30][x] = 1;
-            for(let x=20; x<30; x++) g[20][x] = 1;
-            for(let x=40; x<48; x++) g[10][x] = 1;
+            let g = createGrid(46, 37);
+            for(let x=2; x<10; x++) g[32][x] = 1;
+            for(let x=35; x<45; x++) g[10][x] = 1;
+            for(let x=15; x<25; x++) { g[24][x] = 1; g[16][x] = 1; }
+            for(let y=16; y<=24; y++) { g[y][15] = 1; g[y][25] = 1; }
+            for(let x=28; x<35; x++) { g[20][x] = 1; g[12][x] = 1; }
+            for(let y=12; y<=20; y++) { g[y][28] = 1; g[y][35] = 1; }
             return g;
         })(),
-        spawns: { su: { x: 4*TILE, y: 28*TILE } },
+        spawns: { su: { x: 4*TILE, y: 30*TILE } },
         entities: [
-            { type: 'button', x: 25*TILE, y: 20*TILE, w: TILE, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_n', requiresWeight: true } },
-            { type: 'box', x: 8*TILE, y: 28*TILE, w: TILE, h: TILE, props: {} }, // Kutuyu 20.kata çıkarmak gerekecek
-            { type: 'door', x: 38*TILE, y: 5*TILE, w: TILE, h: TILE*5, props: { id: 'door_n', color: '#1e293b' } },
-            { type: 'exit', x: 44*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+            { type: 'teleporter', id: 'tp1_in', x: 7*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp1_out', color: '#a855f7' } },
+            { type: 'teleporter', id: 'tp1_out', x: 17*TILE, y: 22*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp2_in', color: '#a855f7' } },
+            { type: 'teleporter', id: 'tp2_in', x: 22*TILE, y: 22*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp2_out', color: '#22c55e' } },
+            { type: 'teleporter', id: 'tp2_out', x: 30*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp3_in', color: '#22c55e' } },
+            { type: 'teleporter', id: 'tp3_in', x: 32*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp3_out', color: '#f43f5e' } },
+            { type: 'teleporter', id: 'tp3_out', x: 38*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp1_in', color: '#f43f5e' } },
+            { type: 'exit', x: 41*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
         ]
     },
 
-    "map_1_15": {
-        name: "Lava Köprüsü", treeX: 80, treeY: 20, type: 'diamond',
-        unlocks: ["map_1_16"],
-        width: 2000, height: 800,
+    "map_1_5": {
+        name: "Dikenli Koridor", treeX: 40, treeY: 55, type: 'diamond',
+        unlocks: ["map_1_9"],
+        width: 1600, height: 800,
         grid: (function() {
-            let g = createGrid(62, 25);
-            for(let x=2; x<8; x++) g[20][x] = 1;
-            for(let x=10; x<55; x++) g[24][x] = 2; // Zemin full lav
-            for(let x=55; x<60; x++) g[20][x] = 1;
+            let g = createGrid(50, 25);
+            for(let x=2; x<48; x++) g[20][x] = 1;
             return g;
         })(),
         spawns: { su: { x: 4*TILE, y: 18*TILE } },
         entities: [
-            { type: 'box', x: 6*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { resistance: 0.95 } },
-            { type: 'seesaw', x: 15*TILE, y: 20*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 30*TILE, y: 20*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 45*TILE, y: 20*TILE, w: TILE*10, h: TILE/2, props: {} },
-            { type: 'exit', x: 56*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+            { type: 'spiketrap', id: 'st1', x: 10*TILE, y: 19*TILE, w: TILE*2, h: TILE, props: { period: 120, activeTime: 60 } },
+            { type: 'spiketrap', id: 'st2', x: 14*TILE, y: 19*TILE, w: TILE*2, h: TILE, props: { period: 120, activeTime: 60 } },
+            { type: 'spiketrap', id: 'st3', x: 18*TILE, y: 19*TILE, w: TILE*2, h: TILE, props: { period: 120, activeTime: 60 } },
+            { type: 'spiketrap', id: 'st4', x: 26*TILE, y: 19*TILE, w: TILE*2, h: TILE, props: { period: 90, activeTime: 40 } },
+            { type: 'spiketrap', id: 'st5', x: 30*TILE, y: 19*TILE, w: TILE*2, h: TILE, props: { period: 90, activeTime: 40 } },
+            { type: 'spiketrap', id: 'st6', x: 34*TILE, y: 19*TILE, w: TILE*2, h: TILE, props: { period: 90, activeTime: 40 } },
+            { type: 'button', x: 40*TILE, y: 20*TILE, w: TILE, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_sp_5', requiresWeight: false } },
+            { type: 'door', x: 44*TILE, y: 15*TILE, w: TILE, h: TILE*5, props: { id: 'door_sp_5', color: '#1e293b' } },
+            { type: 'exit', x: 46*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
         ]
     },
 
-    "map_1_16": {
-        name: "Su Tapınağı", treeX: 50, treeY: 5, type: 'hexagon',
-        unlocks: ["map_1_17"],
+    "map_1_6": {
+        name: "Işınlanan Kutular", treeX: 60, treeY: 55, type: 'diamond',
+        unlocks: ["map_1_10"],
+        width: 1400, height: 1200,
+        grid: (function() {
+            let g = createGrid(43, 37);
+            for(let x=2; x<15; x++) g[10][x] = 1;
+            for(let x=20; x<40; x++) g[32][x] = 1;
+            for(let y=15; y<37; y++) g[y][18] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 8*TILE } },
+        entities: [
+            { type: 'box', x: 8*TILE, y: 8*TILE, w: TILE*1.5, h: TILE*1.5, props: { weight: 2 } },
+            { type: 'teleporter', id: 'tp_b_in', x: 12*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp_b_out', color: '#f59e0b' } },
+            { type: 'teleporter', id: 'tp_b_out', x: 22*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp_b_in', color: '#f59e0b' } },
+            { type: 'button', x: 28*TILE, y: 32*TILE, w: TILE*2, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_b_1', requiresWeight: true } },
+            { type: 'door', x: 35*TILE, y: 27*TILE, w: TILE, h: TILE*5, props: { id: 'door_b_1', color: '#1e293b' } },
+            { type: 'teleporter', id: 'tp_p_in', x: 2*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp_p_out', color: '#10b981' } },
+            { type: 'teleporter', id: 'tp_p_out', x: 30*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'tp_p_in', color: '#10b981' } },
+            { type: 'exit', x: 37*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_7": {
+        name: "Zamanla Kırılan Yerçekimi", treeX: 80, treeY: 60, type: 'diamond',
+        unlocks: ["map_1_11"],
+        width: 1800, height: 1200,
+        grid: (function() {
+            let g = createGrid(56, 37);
+            for(let x=2; x<10; x++) g[32][x] = 1;
+            for(let x=45; x<52; x++) g[10][x] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 30*TILE } },
+        entities: [
+            { type: 'gravity', id: 'gz3', x: 10*TILE, y: 8*TILE, w: TILE*35, h: TILE*25, props: { gravityMultiplier: -0.8, color: 'rgba(236, 72, 153, 0.2)' } },
+            { type: 'fragile', id: 'fr1', x: 15*TILE, y: 25*TILE, w: TILE*2, h: TILE, props: { breakTime: 20 } },
+            { type: 'fragile', id: 'fr2', x: 22*TILE, y: 20*TILE, w: TILE*2, h: TILE, props: { breakTime: 20 } },
+            { type: 'fragile', id: 'fr3', x: 28*TILE, y: 15*TILE, w: TILE*2, h: TILE, props: { breakTime: 20 } },
+            { type: 'fragile', id: 'fr4', x: 35*TILE, y: 10*TILE, w: TILE*2, h: TILE, props: { breakTime: 20 } },
+            { type: 'exit', x: 48*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_8": {
+        name: "Zıplama Şenliği", treeX: 10, treeY: 40, type: 'hexagon',
+        unlocks: ["map_1_12"],
+        width: 2000, height: 1000,
+        grid: (function() {
+            let g = createGrid(62, 31);
+            for(let x=2; x<8; x++) g[25][x] = 1;
+            for(let x=55; x<60; x++) g[15][x] = 1;
+            for(let x=8; x<55; x++) { g[29][x] = 1; g[28][x] = 4; }
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 23*TILE } },
+        entities: [
+            { type: 'bouncer', id: 'bn1', x: 12*TILE, y: 27*TILE, w: TILE*2, h: TILE, props: { power: -18 } },
+            { type: 'bouncer', id: 'bn2', x: 20*TILE, y: 27*TILE, w: TILE*2, h: TILE, props: { power: -20 } },
+            { type: 'bouncer', id: 'bn3', x: 28*TILE, y: 27*TILE, w: TILE*2, h: TILE, props: { power: -22 } },
+            { type: 'bouncer', id: 'bn4', x: 36*TILE, y: 27*TILE, w: TILE*2, h: TILE, props: { power: -24 } },
+            { type: 'bouncer', id: 'bn5', x: 44*TILE, y: 27*TILE, w: TILE*2, h: TILE, props: { power: -26 } },
+            { type: 'button', x: 2*TILE, y: 25*TILE, w: TILE, h: TILE/2, props: { color: '#ef4444', targetId: 'door_sp_8', requiresWeight: false } },
+            { type: 'door', x: 50*TILE, y: 5*TILE, w: TILE, h: TILE*15, props: { id: 'door_sp_8', color: '#1e293b' } },
+            { type: 'exit', x: 57*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_9": {
+        name: "Tahterevalli ve Kırık Zeminler", treeX: 30, treeY: 35, type: 'hexagon',
+        unlocks: ["map_1_12", "map_1_13"],
+        width: 1800, height: 1000,
+        grid: (function() {
+            let g = createGrid(56, 31);
+            for(let x=2; x<12; x++) g[20][x] = 1;
+            for(let x=45; x<54; x++) g[15][x] = 1;
+            for(let x=12; x<45; x++) { g[29][x] = 1; g[28][x] = 2; }
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 18*TILE } },
+        entities: [
+            { type: 'seesaw', x: 15*TILE, y: 20*TILE, w: TILE*10, h: TILE/2, props: {} },
+            { type: 'box', x: 26*TILE, y: 10*TILE, w: TILE*2, h: TILE*2, props: { weight: 3 } },
+            { type: 'fragile', id: 'fr_b1', x: 25*TILE, y: 15*TILE, w: TILE*4, h: TILE, props: { breakTime: 10 } },
+            { type: 'seesaw', x: 30*TILE, y: 25*TILE, w: TILE*10, h: TILE/2, props: {} },
+            { type: 'exit', x: 48*TILE, y: 13*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_10": {
+        name: "Işınlanma Labirenti", treeX: 70, treeY: 35, type: 'hexagon',
+        unlocks: ["map_1_14", "map_1_15"],
+        width: 2000, height: 1400,
+        grid: (function() {
+            let g = createGrid(62, 43);
+            for(let x=2; x<8; x++) g[10][x] = 1;
+            for(let x=55; x<60; x++) g[40][x] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 8*TILE } },
+        entities: [
+            { type: 'teleporter', id: 't1_in', x: 5*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't1_out', color: '#10b981' } },
+            { type: 'teleporter', id: 't1_out', x: 15*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't2_in', color: '#10b981' } },
+            { type: 'spiketrap', id: 'st_10_1', x: 20*TILE, y: 31*TILE, w: TILE*4, h: TILE, props: { period: 100, activeTime: 50 } },
+            { type: 'teleporter', id: 't2_in', x: 28*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't2_out', color: '#f59e0b' } },
+            { type: 'teleporter', id: 't2_out', x: 40*TILE, y: 10*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't3_in', color: '#f59e0b' } },
+            { type: 'gravity', id: 'gz_10_1', x: 45*TILE, y: 10*TILE, w: TILE*8, h: TILE*30, props: { gravityMultiplier: 0.2, color: 'rgba(255,255,0,0.2)' } },
+            { type: 'exit', x: 57*TILE, y: 38*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_11": {
+        name: "Yükselen Kutu Zindanı", treeX: 90, treeY: 40, type: 'hexagon',
+        unlocks: ["map_1_15"],
+        width: 1400, height: 1600,
+        grid: (function() {
+            let g = createGrid(43, 50);
+            for(let x=2; x<15; x++) g[45][x] = 1;
+            for(let x=30; x<40; x++) g[10][x] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 43*TILE } },
+        entities: [
+            { type: 'box', x: 10*TILE, y: 43*TILE, w: TILE*2, h: TILE*2, props: { weight: 1 } },
+            { type: 'bouncer', id: 'bn_11_1', x: 20*TILE, y: 44*TILE, w: TILE*2, h: TILE, props: { power: -35 } },
+            { type: 'fragile', id: 'fr_11_1', x: 20*TILE, y: 25*TILE, w: TILE*4, h: TILE, props: { breakTime: 20 } },
+            { type: 'button', x: 22*TILE, y: 15*TILE, w: TILE*2, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_sp_11', requiresWeight: true } },
+            { type: 'door', x: 28*TILE, y: 5*TILE, w: TILE, h: TILE*5, props: { id: 'door_sp_11', color: '#1e293b' } },
+            { type: 'exit', x: 35*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_12": {
+        name: "Senkronize Tehlikeler", treeX: 20, treeY: 20, type: 'star',
+        unlocks: ["map_1_16"],
+        width: 1800, height: 1000,
+        grid: (function() {
+            let g = createGrid(56, 31);
+            for(let x=2; x<54; x++) g[25][x] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 23*TILE } },
+        entities: [
+            { type: 'spiketrap', id: 's12_1', x: 10*TILE, y: 24*TILE, w: TILE*2, h: TILE, props: { period: 60, activeTime: 30 } },
+            { type: 'spiketrap', id: 's12_2', x: 15*TILE, y: 24*TILE, w: TILE*2, h: TILE, props: { period: 60, activeTime: 30 } },
+            { type: 'spiketrap', id: 's12_3', x: 20*TILE, y: 24*TILE, w: TILE*2, h: TILE, props: { period: 90, activeTime: 40 } },
+            { type: 'spiketrap', id: 's12_4', x: 25*TILE, y: 24*TILE, w: TILE*2, h: TILE, props: { period: 90, activeTime: 40 } },
+            { type: 'spiketrap', id: 's12_5', x: 30*TILE, y: 24*TILE, w: TILE*2, h: TILE, props: { period: 120, activeTime: 20 } },
+            { type: 'button', x: 40*TILE, y: 25*TILE, w: TILE, h: TILE/2, props: { color: '#eab308', targetId: 'door_sp_12', requiresWeight: false } },
+            { type: 'door', x: 45*TILE, y: 15*TILE, w: TILE, h: TILE*10, props: { id: 'door_sp_12', color: '#1e293b' } },
+            { type: 'exit', x: 50*TILE, y: 23*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_13": {
+        name: "Yerçekimi Bulmacası", treeX: 45, treeY: 20, type: 'star',
+        unlocks: ["map_1_16"],
+        width: 2200, height: 1200,
+        grid: (function() {
+            let g = createGrid(68, 37);
+            for(let x=2; x<15; x++) g[20][x] = 1;
+            for(let x=55; x<65; x++) g[20][x] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 18*TILE } },
+        entities: [
+            { type: 'box', x: 8*TILE, y: 18*TILE, w: TILE, h: TILE, props: { weight: 1 } },
+            { type: 'gravity', id: 'gz13_1', x: 18*TILE, y: 5*TILE, w: TILE*6, h: TILE*20, props: { gravityMultiplier: -1, color: 'rgba(56, 189, 248, 0.3)' } },
+            { type: 'teleporter', id: 't13_1', x: 12*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't13_2', color: '#10b981' } },
+            { type: 'teleporter', id: 't13_2', x: 30*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't13_1', color: '#10b981' } },
+            { type: 'button', x: 20*TILE, y: 4*TILE, w: TILE*2, h: TILE/2, props: { color: '#3b82f6', targetId: 'door_sp_13', requiresWeight: true } },
+            { type: 'door', x: 50*TILE, y: 15*TILE, w: TILE, h: TILE*10, props: { id: 'door_sp_13', color: '#1e293b' } },
+            { type: 'exit', x: 60*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_14": {
+        name: "Trambolin ve Portal Kombosu", treeX: 65, treeY: 20, type: 'star',
+        unlocks: ["map_1_16"],
         width: 2400, height: 1600,
         grid: (function() {
             let g = createGrid(75, 50);
-            // Dev Labirent & Final
             for(let x=2; x<10; x++) g[40][x] = 1;
-            for(let x=15; x<25; x++) g[35][x] = 1;
-            for(let x=30; x<40; x++) g[30][x] = 1;
-            for(let x=45; x<55; x++) g[25][x] = 1;
-            for(let x=60; x<70; x++) g[20][x] = 1;
+            for(let x=65; x<73; x++) g[10][x] = 1;
             return g;
         })(),
         spawns: { su: { x: 4*TILE, y: 38*TILE } },
         entities: [
-            { type: 'box', x: 8*TILE, y: 38*TILE, w: TILE*2, h: TILE*2, props: {} },
-            { type: 'seesaw', x: 27*TILE, y: 32*TILE, w: TILE*6, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 42*TILE, y: 27*TILE, w: TILE*6, h: TILE/2, props: {} },
-            { type: 'seesaw', x: 57*TILE, y: 22*TILE, w: TILE*6, h: TILE/2, props: {} },
-            { type: 'button', x: 65*TILE, y: 20*TILE, w: TILE, h: TILE/2, props: { color: '#facc15', targetId: 'door_z', requiresWeight: true } },
-            { type: 'door', x: 68*TILE, y: 15*TILE, w: TILE, h: TILE*5, props: { id: 'door_z', color: '#1e293b' } },
-            { type: 'exit', x: 69*TILE, y: 18*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+            { type: 'bouncer', id: 'b14_1', x: 15*TILE, y: 40*TILE, w: TILE*4, h: TILE, props: { power: -30 } },
+            { type: 'teleporter', id: 't14_1', x: 16*TILE, y: 15*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't14_2', color: '#a855f7' } },
+            { type: 'teleporter', id: 't14_2', x: 30*TILE, y: 15*TILE, w: TILE*2, h: TILE*2, props: { targetId: 't14_3', color: '#a855f7' } },
+            { type: 'bouncer', id: 'b14_2', x: 45*TILE, y: 30*TILE, w: TILE*4, h: TILE, props: { power: -25 } },
+            { type: 'exit', x: 68*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
         ]
     },
 
+    "map_1_15": {
+        name: "Kırılan Dünyalar", treeX: 85, treeY: 20, type: 'star',
+        unlocks: ["map_1_16"],
+        width: 2000, height: 1400,
+        grid: (function() {
+            let g = createGrid(62, 43);
+            for(let x=2; x<10; x++) g[38][x] = 1;
+            for(let x=50; x<58; x++) g[10][x] = 1;
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 36*TILE } },
+        entities: [
+            { type: 'fragile', id: 'fr15_1', x: 12*TILE, y: 34*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'fr15_2', x: 18*TILE, y: 30*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'fr15_3', x: 24*TILE, y: 26*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'fr15_4', x: 30*TILE, y: 22*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'fr15_5', x: 36*TILE, y: 18*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'fr15_6', x: 42*TILE, y: 14*TILE, w: TILE*2, h: TILE, props: { breakTime: 15 } },
+            { type: 'exit', x: 53*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
+
+    "map_1_16": {
+        name: "Kaos Sınavı (Final)", treeX: 50, treeY: -10, type: 'hexagon',
+        unlocks: [],
+        width: 3200, height: 2400,
+        grid: (function() {
+            let g = createGrid(100, 75);
+            for(let x=2; x<10; x++) g[70][x] = 1;
+            for(let x=90; x<98; x++) g[10][x] = 1;
+            for(let x=10; x<90; x++) { g[74][x] = 1; g[73][x] = 2; }
+            return g;
+        })(),
+        spawns: { su: { x: 4*TILE, y: 68*TILE } },
+        entities: [
+            { type: 'bouncer', id: 'f_b1', x: 15*TILE, y: 72*TILE, w: TILE*2, h: TILE, props: { power: -30 } },
+            { type: 'teleporter', id: 'f_t1', x: 15*TILE, y: 30*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'f_t2', color: '#f59e0b' } },
+            { type: 'teleporter', id: 'f_t2', x: 30*TILE, y: 60*TILE, w: TILE*2, h: TILE*2, props: { targetId: 'f_t1', color: '#f59e0b' } },
+            { type: 'gravity', id: 'f_g1', x: 40*TILE, y: 10*TILE, w: TILE*10, h: TILE*60, props: { gravityMultiplier: -1, color: 'rgba(236, 72, 153, 0.2)' } },
+            { type: 'spiketrap', id: 'f_s1', x: 55*TILE, y: 11*TILE, w: TILE*2, h: TILE, props: { period: 60, activeTime: 30 } },
+            { type: 'spiketrap', id: 'f_s2', x: 60*TILE, y: 11*TILE, w: TILE*2, h: TILE, props: { period: 60, activeTime: 30 } },
+            { type: 'fragile', id: 'f_fr1', x: 70*TILE, y: 20*TILE, w: TILE*4, h: TILE, props: { breakTime: 15 } },
+            { type: 'fragile', id: 'f_fr2', x: 80*TILE, y: 15*TILE, w: TILE*4, h: TILE, props: { breakTime: 15 } },
+            { type: 'exit', x: 94*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } }
+        ]
+    },
     "map_1_17": {
         name: "Yansıma Testi", treeX: 50, treeY: -10, type: 'square',
         unlocks: ["map_1_18", "map_1_19"], width: 2000, height: 1200,
