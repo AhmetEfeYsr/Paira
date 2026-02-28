@@ -32,7 +32,7 @@ class FuzzyMatcher {
     getDistance(word1, word2) {
         word1 = word1.toLowerCase();
         word2 = word2.toLowerCase();
-        
+
         const len1 = word1.length;
         const len2 = word2.length;
         const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
@@ -42,7 +42,7 @@ class FuzzyMatcher {
 
         for (let i = 1; i <= len1; i++) {
             for (let j = 1; j <= len2; j++) {
-                const cost = word1[i - 1] === word2[j - 1] ? 0 : 
+                const cost = word1[i - 1] === word2[j - 1] ? 0 :
                             (this.isAdjacent(word1[i - 1], word2[j - 1]) ? 0.4 : 1); // Q klavye komşuluğu ucuza mal olur
 
                 matrix[i][j] = Math.min(
@@ -262,7 +262,7 @@ class GameManager {
     handleLocalEbeSubmission(guesses) {
         document.getElementById('btn-submit-ebe').disabled = true;
         showToast("Tahminler gönderildi!", "info");
-        
+
         if(NetworkManager.isHost()) {
             this.state.ebeGuesses = guesses;
             this.checkAllSubmissions();
@@ -300,7 +300,7 @@ class GameManager {
     evaluateRound() {
         if(!NetworkManager.isHost()) return;
         if(this.state.status !== 'playing') return; // Çoklu tetiklenmeyi önle
-        
+
         const masumWords = Object.values(this.state.submittedWords);
         const ebeGuesses = this.state.ebeGuesses;
         const targetWord = this.state.targetWord;

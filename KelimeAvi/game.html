@@ -4,68 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
-    <title>Kelime Avı | Sosyal Çıkarım Oyunu</title>
-    <meta name="description" content="Ebe ve Masumlar konseptine dayalı, kelime tahmin etme ve sosyal çıkarım mekaniklerini birleştiren parti oyunu.">
-    <meta name="author" content="AhmetEfeYSR & AI Assistant">
+    <title>Kelime Avı | Oyun Odası</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="toast-container" class="toast-container"></div>
-
     <main id="app-container" class="glass-panel custom-scrollbar">
-        <!-- 1. GİRİŞ EKRANI -->
-        <section id="login-screen" class="view-state active" style="justify-content: flex-start; padding-top: 5vh; align-items: center;">
-            <div class="hero-content">
-                <h1 class="gradient-text">Kelime Avı</h1>
-                <p class="subtitle" style="margin-bottom: 0.5rem;">Ebe Uyanmadan Eşleş!</p>
-                <p class="seo-description">Sosyal çıkarım ve kelime tahmin mekaniklerini birleştiren en yeni online parti oyunu. Arkadaşlarınızla ücretsiz, şifresiz ve sunucusuz oynayın!</p>
-            </div>
 
-            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
-                <div class="form-group">
-                    <label for="username-input">Oyuncu Adı</label>
-                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                    <button id="btn-host" class="btn btn-primary btn-block">Yeni Oda Kur</button>
-                    <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin: 0.5rem 0;">VEYA</div>
-                    <div class="join-row" style="display: flex; gap: 12px;">
-                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" style="margin-bottom: 0;">
-                        <button id="btn-join" class="btn btn-secondary" style="padding: 14px 28px;">Katıl</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="seo-rules-container custom-scrollbar">
-                <h2>Nasıl Oynanır?</h2>
-                <div class="rules-grid">
-                    <div class="rule-card">
-                        <h3>1. Roller Dağıtılır</h3>
-                        <p>Oyun başladığında sistem rastgele birini gizli <strong>Ebe</strong> seçer. Odadaki diğer herkes <strong>Masum</strong>'dur. Ebe tüm kelimeyi görür, masumlar sadece baş harfini.</p>
-                    </div>
-                    <div class="rule-card">
-                        <h3>2. Şifreli Konuşun</h3>
-                        <p>Masumlar süre bitmeden aralarında sesli iletişim kurarak, o harfle başlayan bir kelimede anlaşmalıdır. Ancak dikkat edin: Kelimeyi çok açık ederseniz ebe duyar!</p>
-                    </div>
-                    <div class="rule-card">
-                        <h3>3. Tahmin ve Av</h3>
-                        <p>Süre bitiminde herkes anlaştığı kelimeyi yazar. Ebe de dinlediklerinden yola çıkarak 5 tahmin yapar. Masumlar eşleşirse kazanır, Ebe masumların kelimesini tahmin ederse onları avlar!</p>
-                    </div>
-                    <div class="rule-card">
-                        <h3>4. Büyük Vurgun (Jackpot)</h3>
-                        <p>Masumlardan biri risk alıp, doğrudan Ebenin tuttuğu asıl kelimeyi bulursa anında Jackpot yapar ve büyük puan kazanır!</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. LOBİ EKRANI -->
-        <section id="lobby-screen" class="view-state hidden">
+        <!-- LOBİ EKRANI -->
+        <section id="lobby-screen" class="view-state active">
             <header class="lobby-header">
                 <div class="code-container">
                     <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
@@ -112,7 +62,7 @@
             </div>
         </section>
 
-        <!-- 3. OYUN EKRANI -->
+        <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card">
                 <div class="round-indicator" id="round-indicator">Tur 1 / 5</div>
@@ -161,7 +111,7 @@
             </div>
         </section>
 
-        <!-- 4. BİTİŞ EKRANI -->
+        <!-- BİTİŞ EKRANI -->
         <section id="winner-screen" class="view-state hidden">
             <h1 class="gradient-text">Oyun Bitti!</h1>
             <div class="card" style="max-width: 500px; width: 100%; text-align: center; margin: 0 auto; display: flex; flex-direction: column;">
@@ -180,5 +130,4 @@
     <script src="network.js"></script>
 
 </body>
-
 </html>

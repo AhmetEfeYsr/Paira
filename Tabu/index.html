@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    
+
     <title>Paira Tabu | Online Çok Oyunculu Yasaklı Kelime Oyunu</title>
-    <meta name="description" content="Paira Tabu ile arkadaşlarınızla tarayıcı üzerinden ücretsiz, şifresiz ve indirmesiz online tabu oynayın. En iyi yasaklı kelime oyunu deneyimi.">
-    <meta name="keywords" content="online tabu, paira tabu, tabu paira, çok oyunculu tabu, multiplayer tabu, yasaklı kelime oyunu, arkadaş grupları için oyun, webrtc tabu, paira, tabu oyna">
-    <meta name="author" content="AhmetEfeYSR">
+    <meta name="description" content="Paira Tabu ile arkadaşlarınızla tarayıcı üzerinden ücretsiz, şifresiz ve indirmesiz online tabu oynayın.">
 
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
@@ -62,135 +57,20 @@
                 </div>
             </div>
         </section>
-
-        <section id="lobby-screen" class="view-state hidden">
-            <header class="lobby-header">
-                <div class="code-container">
-                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
-                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
-                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
-                </div>
-                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
-            </header>
-            <div class="lobby-grid">
-                <aside class="players-panel card">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
-                    <ul id="players-list" class="custom-scrollbar"></ul>
-                    <button id="btn-switch-team" class="btn btn-secondary btn-block mt-auto" style="margin-top: 20px;">Takım Değiştir</button>
-                </aside>
-                
-                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Ayarlar</h3>
-                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1.5rem;">
-                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="10" max="180"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Pas Hakkı</label><input type="number" id="pass-limit" value="3" min="0" max="10"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Tabu Cezası</label><input type="number" id="taboo-penalty" value="1" min="0" max="5"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Toplam Tur</label><input type="number" id="round-count" value="3" min="1" max="10"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Zorluk (1-100)</label>
-                        <div class="difficulty-row" style="display: flex; gap: 12px;">
-                            <input type="number" id="min-difficulty" value="1" placeholder="Min"><input type="number" id="max-difficulty" value="100" placeholder="Max">
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex-grow: 1;">
-                        <label>Kategoriler</label>
-                        <div class="category-grid" id="category-selection"><div style="color: var(--text-muted); font-size: 0.95rem;">Yükleniyor...</div></div>
-                    </div>
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled" style="padding: 16px; font-size: 1.15rem; margin-top: 25px; letter-spacing: 1px;">Başlat</button>
-                </section>
-                
-                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
-                    <div style="color: var(--lilac); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
-                    <h3>Bekleniyor...</h3>
-                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu ayarları yapıyor.</p>
-                </section>
-            </div>
-        </section>
-
-        <section id="game-screen" class="view-state hidden">
-            <header class="game-topbar card">
-                <div class="round-indicator" id="round-indicator">Tur 1 / 3</div>
-                <div class="score-board">
-                    <div class="team team-a">Takım A: <span id="score-a">0</span></div>
-                    <div class="team team-b">Takım B: <span id="score-b">0</span></div>
-                </div>
-                <div id="current-player-indicator" style="font-size: 1.15rem; background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 12px;">
-                    Sıra: <strong id="turn-name" style="color: var(--neon-purple); letter-spacing: 0.5px;">...</strong>
-                </div>
-                
-                <div class="timer-wrapper" style="display: flex; align-items: center; gap: 15px;">
-                    <div id="timer-display" class="timer">00:00</div>
-                    <button id="btn-pause" class="btn btn-secondary hidden" title="Oyunu Duraklat" style="padding: 10px; font-size: 1.2rem; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">⏸</button>
-                </div>
-            </header>
-            
-            <div class="game-layout">
-                <main class="play-area">
-                    <div id="game-status-message" class="status-badge">Yükleniyor...</div>
-                    
-                    <div id="start-turn-container" class="hidden" style="margin-top: 1rem; margin-bottom: 1rem;">
-                        <button id="btn-start-narrating" class="btn btn-primary pop-animation" style="padding: 16px 32px; font-size: 1.2rem;">
-                            🚀 Süreyi Başlat ve Kelimeleri Gör
-                        </button>
-                    </div>
-                    
-                    <div id="word-card" class="taboo-card hidden">
-                        <header class="card-header"><h2 id="main-word">...</h2></header>
-                        <ul id="forbidden-words"></ul>
-                    </div>
-                    
-                    <div class="narrator-actions hidden" id="narrator-actions">
-                        <button id="btn-correct" class="btn btn-success" style="flex: 1; padding: 16px;">✓ Doğru</button>
-                        <button id="btn-taboo" class="btn btn-danger" style="flex: 1; padding: 16px;">✗ Tabu</button>
-                        <button id="btn-pass" class="btn btn-warning" style="flex: 1; padding: 16px;">⟳ Pas</button>
-                    </div>
-                </main>
-                
-                <aside class="chat-panel card">
-                    <div style="color: var(--lilac); font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Sohbet</div>
-                    <div id="chat-messages" class="messages-container custom-scrollbar"></div>
-                    <div class="chat-input-wrapper">
-                        <input type="text" id="chat-input" autocomplete="off" placeholder="Mesaj yazın...">
-                        <button id="btn-send-chat" class="btn btn-primary" style="padding: 12px 18px;" aria-label="Gönder">➤</button>
-                    </div>
-                </aside>
-            </div>
-        </section>
-
-        <section id="winner-screen" class="view-state hidden">
-            <h1 class="gradient-text">Oyun Bitti!</h1>
-            <div class="card" style="max-width: 500px; width: 100%; text-align: center; margin: 0 auto;">
-                <h2 id="winner-team-name" style="font-size: 2.2rem; margin-bottom: 20px;">...</h2>
-                <div style="display: flex; justify-content: space-around; margin: 30px 0; font-size: 1.2rem;">
-                    <div class="team-a">Takım A<br><strong id="final-score-a" style="font-size: 3rem; color: #3498db;">0</strong></div>
-                    <div class="team-b">Takım B<br><strong id="final-score-b" style="font-size: 3rem; color: #e74c3c;">0</strong></div>
-                </div>
-                <button id="btn-back-to-lobby" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.15rem; margin-top: 20px;">Lobiye Dön</button>
-            </div>
-        </section>
     </main>
 
     <footer class="app-footer">
         <div class="footer-text">Paira Tabu v1.2 • WebRTC Serverless</div>
         <div class="footer-links">
             <a href="https://github.com/AhmetEfeYSR" target="_blank" rel="noopener noreferrer" class="social-link">
-                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 <span>AhmetEfeYSR</span>
             </a>
             <a href="https://kick.com/Pairaaa" target="_blank" rel="noopener noreferrer" class="social-link kick-link">
-                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-                    <path fill="#53fc18" d="M37 .036h164.448v113.621h54.71v-56.82h54.731V.036h164.448v170.777h-54.73v56.82h-54.711v56.8h54.71v56.82h54.73V512.03H310.89v-56.82h-54.73v-56.8h-54.711v113.62H37V.036z"/>
-                </svg>
                 <span>Paira</span>
             </a>
         </div>
     </footer>
 
-    <script src="game.js"></script>
-    <script src="network.js"></script>
-
+    <script src="index.js"></script>
 </body>
-
 </html>
-

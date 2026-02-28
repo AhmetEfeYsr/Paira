@@ -19,36 +19,38 @@ function generateRoomCode() {
 }
 
 // --- KULLANICI ROLÜ VE BAĞLANTIYI BAŞLATMA ---
-function setupUserRole(isHosting) {
+function setupUserRole() {
     // Ses başlangıcı (varsa)
     if (typeof initAudio === 'function') initAudio();
 
-    const nameInput = document.getElementById('username-input').value.trim();
-    if (!nameInput) {
-        if (typeof showToast === 'function') showToast("Lütfen bir ad girin", "error");
+    const storedName = sessionStorage.getItem('playerName');
+    const storedIsHost = sessionStorage.getItem('isHost') === 'true';
+    const storedRoomCode = sessionStorage.getItem('roomCode');
+
+    if (!storedName) {
+        window.location.href = 'index.html'; // Fallback
         return;
     }
 
     // Easter Egg Kontrolü
-    const lowerName = nameInput.toLowerCase();
+    const lowerName = storedName.toLowerCase();
     if (lowerName === 'paira' || lowerName === 'pai' || lowerName === 'paiko') {
         if (typeof showToast === 'function') showToast("canım ablam 💜", "info");
     }
 
-    myName = nameInput.substring(0, 25);
-    isHost = isHosting;
+    myName = storedName.substring(0, 25);
+    isHost = storedIsHost;
 
     if (isHost) {
         document.getElementById('host-settings').classList.remove('hidden');
         document.getElementById('client-waiting').classList.add('hidden');
         initPeer(generateRoomCode()); // Kurucu için kısa kod üret
     } else {
-        const roomCode = document.getElementById('room-code-input').value.trim().toUpperCase();
-        if (!roomCode) {
-            if (typeof showToast === 'function') showToast("Oda kodu gerekli", "error");
+        if (!storedRoomCode) {
+            window.location.href = 'index.html';
             return;
         }
-        hostId = roomCode;
+        hostId = storedRoomCode;
         document.getElementById('host-settings').classList.add('hidden');
         document.getElementById('client-waiting').classList.remove('hidden');
         initPeer(); // Katılımcı için rastgele PeerID, sonra Host'a bağlanacak
@@ -57,11 +59,8 @@ function setupUserRole(isHosting) {
 
 // Buton Dinleyicileri (DOM yüklendikten sonra eklenecek, veya elementler varsa)
 document.addEventListener('DOMContentLoaded', () => {
-    const btnHost = document.getElementById('btn-host');
-    if(btnHost) btnHost.addEventListener('click', () => setupUserRole(true));
-
-    const btnJoin = document.getElementById('btn-join');
-    if(btnJoin) btnJoin.addEventListener('click', () => setupUserRole(false));
+    // Initialize user role from sessionStorage
+    setupUserRole();
 
     // Lobi Kodu Göster/Gizle ve Kopyala
     const btnToggleCode = document.getElementById('btn-toggle-code');
@@ -120,12 +119,15 @@ function initPeer(customId = null) {
     peer.on('connection', setupConnection);
 
     peer.on('error', (err) => {
+        console.error("PeerJS Error:", err);
         if (err.type === 'peer-unavailable') {
-            if(typeof showToast === 'function') showToast("Oda bulunamadı veya kapandı.", "error");
-            if(typeof showScreen === 'function') showScreen('login-screen');
+            if(typeof showToast === 'function') showToast("Oda bulunamadı veya kapandı. Lütfen ana sayfaya dönün.", "error");
+            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
         } else if (err.type === 'unavailable-id' && isHost) {
             // Eğer kısa kod çakışırsa yeniden dene
             initPeer(generateRoomCode());
+        } else if (err.type === 'network' || err.type === 'server-error') {
+            if(typeof showToast === 'function') showToast("Bağlantı hatası. Lütfen sayfayı yenileyin.", "error");
         }
     });
 }

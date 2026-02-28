@@ -260,10 +260,19 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
     .app-footer { justify-content: center; flex-direction: column; text-align: center; border-radius: clamp(10px, 1.5vw, 16px); }
     
     /* Mobilde yapısal olarak normal akışa izin verdik */
-    .game-layout { grid-template-columns: 1fr; overflow-y: auto; display: flex; flex-direction: column; }
-    .chat-panel { min-height: 250px; flex-shrink: 0; }
-    .play-area { overflow: visible; flex-grow: 1; min-height: 400px; }
+    .game-layout { grid-template-columns: 1fr; overflow-y: visible; display: flex; flex-direction: column; }
+    .chat-panel { min-height: 250px; flex-shrink: 0; margin-top: 1rem; }
+    .play-area { overflow: visible; flex-grow: 1; min-height: auto; }
     .settings-grid { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 2.2rem; }
+    .btn { font-size: 0.9rem; padding: 10px 16px; }
+    #word-card h2 { font-size: 2rem; word-wrap: break-word; }
+    .narrator-actions { flex-direction: column; gap: 8px; }
+    .narrator-actions .btn { width: 100%; flex: none; }
+    .lobby-header { flex-direction: column; align-items: stretch; }
 }
 
 @keyframes errorShake {

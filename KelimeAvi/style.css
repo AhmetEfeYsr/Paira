@@ -174,3 +174,12 @@ input:focus, select:focus { border-color: var(--neon-blue); background: rgba(0, 
     .glass-panel { height: auto; min-height: 0; flex-grow: 1; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
     .settings-grid { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
 }
+
+@media (max-width: 480px) {
+    h1 { font-size: 2.2rem; }
+    .btn { font-size: 0.9rem; padding: 10px 16px; }
+    #current-letters { font-size: 2rem !important; word-wrap: break-word; }
+    .lobby-header { flex-direction: column; align-items: stretch; }
+    #ebe-area input { font-size: 0.95rem; }
+    #masum-area input { font-size: 0.95rem; }
+}
