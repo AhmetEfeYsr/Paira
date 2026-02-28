@@ -88,7 +88,12 @@ class GameManager {
     // Ağaç Çizimini Başlat (updateUI'dan çağrılır)
     updateLevelSelectUI() {
         if (!NetworkManager.isHost()) return;
-        const pCount = Object.keys(this.state.players).length || 1;
+
+        // Kişi sayısına göre ağacı render et
+        let pCount = Object.keys(this.state.players).length || 1;
+        // 4 kişilik (Hava) karakteri de oyuna girdiğinde kendi kapısını arayacağı için
+        // 4 kişi varsa 4 kişilik haritaları (taslakta olan map_4_x'leri) açmak zorundayız.
+        if (pCount > 4) pCount = 4;
 
         const container = document.getElementById('level-tree-nodes');
         const svgPath = document.getElementById('level-tree-lines');

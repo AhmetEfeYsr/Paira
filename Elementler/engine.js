@@ -430,9 +430,9 @@ class GameEngine {
             for (let x = 0; x < mapData.grid[y].length; x++) {
                 const val = mapData.grid[y][x];
                 if (val === 1) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'solid'));
-                else if (val === 2) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_ates'));
-                else if (val === 3) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_su'));
-                else if (val === 4) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_doga'));
+                else if (val === 2) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_ates')); // Lav (Suyu öldürür)
+                else if (val === 3) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_su')); // Su (Ateşi öldürür)
+                else if (val === 4) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_doga')); // Asit (İkisini de öldürür)
                 else if (val === 5) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'sarmasik'));
                 else if (val === 6) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'firtina'));
                 else if (val === 7) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'tahta_duvar'));
@@ -542,15 +542,21 @@ class GameEngine {
                 this.ctx.fillRect(r.x, r.y, r.w, r.h);
                 this.ctx.strokeStyle = '#334155';
                 this.ctx.strokeRect(r.x, r.y, r.w, r.h);
-            } else if (r.type === 'danger_ates') {
-                this.ctx.fillStyle = 'rgba(239, 68, 68, 0.7)'; // Lav
+            } else if (r.type === 'danger_ates') { // Lav (Suyu öldürür)
+                this.ctx.fillStyle = 'rgba(239, 68, 68, 0.8)'; // Parlak Kırmızı Lav
                 this.ctx.fillRect(r.x, r.y, r.w, r.h);
-            } else if (r.type === 'danger_su') {
-                this.ctx.fillStyle = 'rgba(59, 130, 246, 0.7)'; // Zehirli Su
+                this.ctx.fillStyle = 'rgba(255, 150, 50, 0.5)'; // Lav Yüzey Dalgaları
+                this.ctx.fillRect(r.x, r.y, r.w, 4);
+            } else if (r.type === 'danger_su') { // Su Havuzu (Ateşi öldürür)
+                this.ctx.fillStyle = 'rgba(59, 130, 246, 0.8)'; // Parlak Mavi Su
                 this.ctx.fillRect(r.x, r.y, r.w, r.h);
-            } else if (r.type === 'danger_doga') {
-                this.ctx.fillStyle = 'rgba(16, 185, 129, 0.7)'; // Asit
+                this.ctx.fillStyle = 'rgba(150, 200, 255, 0.5)'; // Su Yüzey Dalgaları
+                this.ctx.fillRect(r.x, r.y, r.w, 4);
+            } else if (r.type === 'danger_doga') { // Zehir/Asit Havuzu (İkisini de öldürür)
+                this.ctx.fillStyle = 'rgba(16, 185, 129, 0.8)'; // Parlak Yeşil Asit
                 this.ctx.fillRect(r.x, r.y, r.w, r.h);
+                this.ctx.fillStyle = 'rgba(150, 255, 150, 0.5)'; // Asit Yüzey Baloncukları
+                this.ctx.fillRect(r.x, r.y, r.w, 4);
             } else if (r.type === 'sarmasik') {
                 this.ctx.fillStyle = 'rgba(34, 197, 94, 0.3)'; // Yeşil şeffaf merdiven
                 this.ctx.fillRect(r.x, r.y, r.w, r.h);
