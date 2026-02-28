@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'bitki', name: 'Bitki' },
         { id: 'esya', name: 'Eşya' },
         { id: 'ulke', name: 'Ülke' },
+        { id: 'baskent', name: 'Başkent' },
         { id: 'unlu', name: 'Ünlü' },
         { id: 'meslek', name: 'Meslek' },
         { id: 'renk', name: 'Renk' },
