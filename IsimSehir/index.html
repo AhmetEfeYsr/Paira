@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İsim Şehir Hayvan - Online Multiplayer</title>
+
+    <!-- SEO & Open Graph Meta Tags -->
+    <meta name="description" content="Efsanevi masa oyunu İsim Şehir Hayvan'ı arkadaşlarınızla ücretsiz ve online oynayın! Kurulum yok, sadece bir oda kurun ve eğlenceye başlayın.">
+    <meta name="keywords" content="isim şehir hayvan, isim şehir, online isim şehir, p2p isim şehir, webrtc oyun, kelime oyunu, multiplayer, arkadaş oyunları, türkçe oyun">
+    <meta property="og:title" content="İsim Şehir Hayvan - Online Multiplayer">
+    <meta property="og:description" content="Arkadaşlarınızla ücretsiz online İsim Şehir Hayvan oynayın.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://isimsehir.example.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="İsim Şehir Hayvan - Online">
+    <meta name="twitter:description" content="Arkadaşlarınızla ücretsiz online İsim Şehir Hayvan oynayın.">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "İsim Şehir Hayvan",
+      "description": "Efsanevi masa oyunu İsim Şehir Hayvan'ın online, tarayıcı tabanlı versiyonu.",
+      "genre": "Party Game",
+      "playMode": ["MultiPlayer"],
+      "applicationCategory": "Game",
+      "operatingSystem": "Web Browser"
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <div class="login-container glass-panel">
+        <h1 class="game-title">İsim Şehir Hayvan</h1>
+        <p class="game-desc">Efsanevi oyunu arkadaşlarınızla online oynayın!</p>
+
+        <div class="input-group">
+            <input type="text" id="username-input" placeholder="Kullanıcı Adınız" maxlength="15" autocomplete="off">
+        </div>
+
+        <div class="action-buttons">
+            <button id="host-btn" class="primary-btn">Oda Kur</button>
+            <div class="divider">veya</div>
+            <div class="join-group">
+                <input type="text" id="room-input" placeholder="Oda Kodu" maxlength="10" autocomplete="off" style="text-transform: uppercase;">
+                <button id="join-btn" class="secondary-btn">Katıl</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO & Rules Section -->
+    <div class="rules-section">
+        <h2>Nasıl Oynanır?</h2>
+        <div class="rules-grid">
+            <div class="rule-card glass-panel">
+                <h3>1. Oda Kur veya Katıl</h3>
+                <p>Bir kullanıcı adı belirleyin. Arkadaşlarınızı davet etmek için 'Oda Kur' butonuna basın veya size verilen oda kodunu girerek mevcut bir oyuna katılın.</p>
+            </div>
+            <div class="rule-card glass-panel">
+                <h3>2. Kategorileri Seç</h3>
+                <p>Oda kurucusu, oyunda yer alacak kategorileri (İsim, Şehir, Eşya vb.) belirler. İster klasik kategorileri kullanın, ister kendi özel kategorilerinizi ekleyin.</p>
+            </div>
+            <div class="rule-card glass-panel">
+                <h3>3. Harfe Göre Kelime Bul</h3>
+                <p>Sistem rastgele bir harf seçer (veya kurucu değiştirir). Belirlenen harf ile başlayan kelimeleri en hızlı şekilde ilgili kategorilere yazın.</p>
+            </div>
+            <div class="rule-card glass-panel">
+                <h3>4. Puanları Oyla</h3>
+                <p>Tur bittiğinde, herkesin cevapları otomatik kontrol edilir ve önerilen puanlar sunulur. Oyuncular cevaplara itiraz edip puanları oylayarak nihai sonucu belirler. (Benzersiz: 10, Aynı: 5, Geçersiz: 0)</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
