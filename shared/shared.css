@@ -1,0 +1,189 @@
+/* Shared styles for Paira Games (Footer, Modal, Cookies) */
+
+/* Footer */
+.app-footer {
+    width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
+    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: rgba(0,0,0,0.25); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
+    border: 1px solid rgba(200, 162, 200, 0.2); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); flex-shrink: 0;
+}
+.footer-text { color: #adb5bd; font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
+.footer-links { display: flex; gap: clamp(0.6rem, 1.5vw, 1.2rem); flex-wrap: wrap; justify-content: center; align-items: center; margin: 0.2rem 0; }
+.social-link {
+    display: inline-flex; align-items: center; gap: 6px; color: #f8f9fa; text-decoration: none;
+    background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 10px; transition: all 0.3s ease; font-weight: 600; font-size: clamp(0.85rem, 1.5vw, 0.95rem); border: 1px solid transparent; cursor: pointer;
+}
+.social-link:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+.social-link.kick-link span:first-child { color: #53fc18; font-weight: 900; font-size: clamp(0.9rem, 1.5vw, 1rem); letter-spacing: 0.45px; }
+.social-link.kick-link span:last-child { color: #bb88d0; font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(1rem, 2vw, 1.2rem); letter-spacing: 1.5px; line-height: 1; }
+
+@media (max-width: 900px) {
+    .app-footer { justify-content: center; flex-direction: column; text-align: center; border-radius: clamp(10px, 1.5vw, 16px); }
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 8, 22, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: rgba(21, 18, 54, 0.95);
+    border: 1px solid rgba(200, 162, 200, 0.3);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    color: #f8f9fa;
+    font-family: 'Poppins', sans-serif;
+}
+
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #c8a2c8;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: #adb5bd;
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #e74c3c;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #adb5bd;
+}
+
+.modal-body h3 {
+    color: #a64dff;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.modal-body h3:first-child {
+    margin-top: 0;
+}
+
+.modal-body p {
+    margin-bottom: 1rem;
+}
+
+/* Scrollbar for modal */
+.modal-body::-webkit-scrollbar { width: 6px; }
+.modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: #a64dff; border-radius: 4px; }
+
+/* Cookie Banner */
+.cookie-banner {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    background: rgba(30, 25, 70, 0.95);
+    border: 1px solid #a64dff;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    z-index: 99998;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: #f8f9fa;
+    font-family: 'Poppins', sans-serif;
+    flex-wrap: wrap;
+}
+
+.cookie-banner.show {
+    bottom: 20px;
+}
+
+.cookie-text {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #adb5bd;
+    min-width: 250px;
+}
+
+.cookie-text a {
+    color: #a64dff;
+    text-decoration: none;
+}
+
+.cookie-text a:hover {
+    text-decoration: underline;
+}
+
+.cookie-btn {
+    background: #8a2be2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.cookie-btn:hover {
+    background: #a64dff;
+}
+
+@media (max-width: 600px) {
+    .cookie-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.2rem;
+    }
+    .cookie-btn {
+        width: 100%;
+    }
+}
