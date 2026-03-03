@@ -1,0 +1,108 @@
+/* ChatTabu specific styles */
+
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+    padding: 1.5rem;
+    height: calc(100% - 60px); /* Subtract topbar height roughly */
+}
+
+@media (max-width: 900px) {
+    .game-layout {
+        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+}
+
+.leaderboard-panel {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+#leaderboard-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+#leaderboard-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-weight: 500;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+    font-size: 1.05rem;
+}
+
+#leaderboard-list li:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#leaderboard-list li .points {
+    background: var(--warning);
+    color: #000;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+/* 1st Place Styling */
+#leaderboard-list li:nth-child(1) { border-left: 4px solid gold; }
+#leaderboard-list li:nth-child(2) { border-left: 4px solid silver; }
+#leaderboard-list li:nth-child(3) { border-left: 4px solid #cd7f32; } /* Bronze */
+
+.chat-notification {
+    position: absolute;
+    bottom: -60px; /* Hidden below slightly */
+    left: 50%;
+    transform: translateX(-50%) translateY(20px) scale(0.9);
+    background: rgba(46, 204, 113, 0.95);
+    border: 2px solid #2ecc71;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    z-index: 100;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.chat-notification.show {
+    bottom: 20px;
+    opacity: 1 !important;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.form-card {
+    background: rgba(0,0,0,0.3);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.form-card input, .form-card select {
+    background: rgba(0,0,0,0.5);
+    border-color: rgba(255,255,255,0.1);
+}
+.form-card input:focus, .form-card select:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.2);
+}

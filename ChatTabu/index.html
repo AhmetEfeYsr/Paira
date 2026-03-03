@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>ChatTabu | Yayıncı Oyunları</title>
+    <meta name="description" content="Yayıncılar için özel Chat Tabu! Twitch veya Kick izleyicilerinizle canlı yayında interaktif tabu oynayın.">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css"> <!-- Portal style for base glassmorphism -->
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <!-- GİRİŞ EKRANI -->
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
+            <div class="hero-content">
+                <h1 class="gradient-text" style="background: linear-gradient(45deg, #e74c3c, #c0392b); -webkit-background-clip: text;">ChatTabu</h1>
+                <p class="seo-description">İzleyicilerinizle canlı yayında oynayın! Twitch veya Kick kanalınızı bağlayın, kelimeyi anlatmaya başlayın ve chat'te ilk bilen puanı kapsın.</p>
+            </div>
+
+            <div class="form-card" style="max-width: 450px; width: 100%; margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label>Yayın Platformu</label>
+                    <select id="platform-select">
+                        <option value="twitch">Twitch</option>
+                        <option value="kick">Kick</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kanal Adı</label>
+                    <input type="text" id="channel-input" placeholder="Yayın yaptığınız kanalın adını yazın" autocomplete="off">
+                </div>
+
+                <button id="btn-start-game" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.15rem; background: var(--danger);">Kanala Bağlan ve Oyna</button>
+            </div>
+
+            <div class="seo-rules-container">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Kanala Bağlanın</h3>
+                        <p>Twitch veya Kick kanal adınızı yazarak oyunu başlatın. Sistem otomatik olarak chat'i dinlemeye başlar.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Kelimeyi Anlatın</h3>
+                        <p>Ekranda çıkan ana kelimeyi (yasaklı kelimeleri kullanmadan) izleyicilerinize anlatmaya çalışın.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Chat Tahmin Etsin</h3>
+                        <p>İzleyiciler chat'e tahminlerini yazar. Doğru kelimeyi ilk yazan kişi puanı kazanır!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Liderlik Tablosu</h3>
+                        <p>Doğru bilen izleyiciler sağ taraftaki liderlik tablosunda otomatik olarak yükselir. En çok bilen izleyiciyi ödüllendirin.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI -->
+        <section id="game-screen" class="view-state" style="padding: 0; display: none;">
+            <div class="game-topbar" style="background: rgba(231, 76, 60, 0.2); border-bottom: 1px solid rgba(231, 76, 60, 0.4);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="connection-status" style="display: inline-block; width: 12px; height: 12px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success);"></span>
+                    <strong id="channel-display" style="font-size: 1.2rem; color: #fff;">Kanal: Bağlanıyor...</strong>
+                </div>
+                <button id="btn-end-game" class="btn btn-secondary">Oyunu Bitir</button>
+            </div>
+
+            <div class="game-layout">
+                <!-- Sol Taraf: Kelime Kartı ve Kontroller -->
+                <div class="play-area" style="overflow: visible;">
+                    <div class="taboo-card" style="border-color: var(--danger);">
+                        <div class="card-header" style="background: rgba(231, 76, 60, 0.2); border-bottom-color: var(--danger);">
+                            <h2 id="main-word" style="font-size: 2.5rem; text-transform: uppercase;">KELİME</h2>
+                        </div>
+                        <ul id="forbidden-words" style="padding: 2rem;">
+                            <li>Yasaklı 1</li>
+                            <li>Yasaklı 2</li>
+                            <li>Yasaklı 3</li>
+                            <li>Yasaklı 4</li>
+                            <li>Yasaklı 5</li>
+                        </ul>
+                    </div>
+
+                    <div class="narrator-actions" style="margin-top: 20px;">
+                        <button id="btn-pass" class="btn btn-warning" style="flex: 1; padding: 15px; font-size: 1.1rem;">Pas Geç</button>
+                        <button id="btn-next" class="btn btn-success" style="flex: 1; padding: 15px; font-size: 1.1rem;">Sıradaki (Zorla)</button>
+                    </div>
+                </div>
+
+                <!-- Sağ Taraf: Leaderboard ve Bildirimler -->
+                <div class="leaderboard-panel">
+                    <h3 style="text-align: center; color: #fff; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">🏆 Chat Liderlik Tablosu</h3>
+
+                    <ul id="leaderboard-list" class="custom-scrollbar">
+                        <li style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz kimse puan alamadı. İzleyicilerinizi cesaretlendirin!</li>
+                    </ul>
+
+                    <div id="chat-notification" class="chat-notification pop-animation" style="opacity: 0; pointer-events: none;">
+                        <span id="notif-winner" style="color: var(--warning); font-weight: bold; font-size: 1.2rem;">paiko</span> doğru bildi!
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/chat.js"></script>
+    <script src="../Tabu/words.js"></script> <!-- Reuse existing words! -->
+    <script src="app.js"></script>
+</body>
+</html>
