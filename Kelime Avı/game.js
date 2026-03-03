@@ -206,4 +206,10 @@ class GameManager {
 }
 
 // Global olarak başlat
-window.gameApp = new GameManager();
+if (typeof window !== 'undefined') {
+    window.gameApp = new GameManager();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { FuzzyMatcher };
+}
