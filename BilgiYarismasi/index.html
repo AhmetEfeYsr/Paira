@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Paira Bilgi Yarışması | Online Çok Oyunculu Trivia</title>
+    <meta name="description" content="Paira Bilgi Yarışması ile arkadaşlarınızla tarayıcı üzerinden ücretsiz, şifresiz ve indirmesiz online trivia oynayın. En iyi bilgi yarışması deneyimi.">
+    <meta name="keywords" content="online bilgi yarışması, ücretsiz trivia oyunu, arkadaş grupları için oyun, webrtc trivia, paira, bilgi yarışması oyna, genel kültür, discord oyunları, tarayıcı oyunları">
+    <meta name="author" content="Paira">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Paira Bilgi Yarışması | Online Çok Oyunculu Trivia">
+    <meta property="og:description" content="Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online bilgi yarışması oynayın! Serverless WebRTC teknolojisi ile sıfır gecikme.">
+    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Paira Bilgi Yarışması | Online Çok Oyunculu Trivia">
+    <meta property="twitter:description" content="Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online bilgi yarışması oynayın! Serverless WebRTC teknolojisi ile sıfır gecikme.">
+
+    <!-- Schema.org (JSON-LD) for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira Bilgi Yarışması",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Party Game",
+      "description": "Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online bilgi yarışması oyunu oynayın! Serverless WebRTC teknolojisi ile sıfır gecikme.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
+            <div class="hero-content">
+                <h1 class="gradient-text">Paira Bilgi Yarışması</h1>
+                <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online bilgi yarışması oynayın! Hızlı olan kazansın.</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block">Yeni Oda Kur</button>
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin: 0.5rem 0;">VEYA</div>
+                    <div class="join-row" style="display: flex; gap: 12px;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" style="margin-bottom: 0;">
+                        <button id="btn-join" class="btn btn-secondary" style="padding: 14px 28px;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Oda Kur & Katıl</h3>
+                        <p>Bir kişi "Yeni Oda Kur" diyerek kurucu olur. Ekranda beliren 6 haneli kodu arkadaşlarına yollar. Diğerleri bu kodla odaya katılır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Sorulara Hazırlanın</h3>
+                        <p>Kurucu; kategori, zorluk, soru sayısı, süre ve yanlış cevap cezasını (-5 puan) belirledikten sonra oyunu başlatır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Hızlı Cevapla, Çok Puan Kazan!</h3>
+                        <p>Ekrana gelen soru için şıklardan (A, B, C, D) doğru olanı seçin. Ne kadar hızlı ve doğru cevap verirseniz, kalan süre kadar puan kazanırsınız!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. En Yüksek Puanı Topla</h3>
+                        <p>Tüm sorular bittiğinde en yüksek puanı toplayan oyuncu oyunu kazanır. Yanlış cevaplara dikkat edin, puan kaybedebilirsiniz!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-text">Paira Bilgi Yarışması v1.0 • WebRTC Serverless</div>
+        <div class="footer-links">
+            <a href="https://github.com/AhmetEfeYSR" target="_blank" rel="noopener noreferrer" class="social-link">
+                <span>AhmetEfeYSR</span>
+            </a>
+            <a href="https://kick.com/Pairaaa" target="_blank" rel="noopener noreferrer" class="social-link kick-link">
+                <span>Paira</span>
+            </a>
+        </div>
+    </footer>
+
+    <script src="index.js"></script>
+</body>
+</html>

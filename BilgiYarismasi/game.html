@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Paira Bilgi Yarışması | Oyun Odası</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+
+        <!-- LOBI EKRANI -->
+        <section id="lobby-screen" class="view-state active">
+            <header class="lobby-header">
+                <div class="code-container">
+                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
+                </div>
+                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
+            </header>
+            <div class="lobby-grid">
+                <aside class="players-panel card">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar"></ul>
+                </aside>
+
+                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Ayarlar</h3>
+                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1.5rem;">
+                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="20" min="5" max="180"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Soru Sayısı</label><input type="number" id="round-count" value="10" min="1" max="50"></div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="wrong-penalty" checked style="width: auto; height: 1.2rem; min-height: auto;">
+                            Yanlış Cevap Cezası (-5 Puan)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Zorluk (1-100)</label>
+                        <div class="difficulty-row" style="display: flex; gap: 12px;">
+                            <input type="number" id="min-difficulty" value="1" placeholder="Min"><input type="number" id="max-difficulty" value="100" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex-grow: 1;">
+                        <label>Kategoriler</label>
+                        <div class="category-grid" id="category-selection"><div style="color: var(--text-muted); font-size: 0.95rem;">Yükleniyor...</div></div>
+                    </div>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled" style="padding: 16px; font-size: 1.15rem; margin-top: 25px; letter-spacing: 1px;">Başlat</button>
+                </section>
+
+                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
+                    <div style="color: var(--lilac); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu ayarları yapıyor.</p>
+                </section>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI -->
+        <section id="game-screen" class="view-state hidden">
+            <header class="game-topbar card">
+                <div class="round-indicator" id="round-indicator">Soru 1 / 10</div>
+                <div class="score-board" id="in-game-scoreboard" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    <!-- Player scores injected here -->
+                </div>
+
+                <div class="timer-wrapper" style="display: flex; align-items: center; gap: 15px;">
+                    <div id="timer-display" class="timer">00:00</div>
+                </div>
+            </header>
+
+            <div class="game-layout" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 0; overflow: hidden; width: 100%;">
+                <div id="game-status-message" class="status-badge" style="width: 100%; max-width: 600px; margin-bottom: 1rem;">Hazırlanıyor...</div>
+
+                <div id="question-card" class="taboo-card hidden" style="width: 100%; max-width: 800px; padding: 1.5rem; text-align: center;">
+                    <header class="card-header" style="background: transparent; border: none; padding-bottom: 1rem;">
+                        <span id="question-category" style="font-size: 0.9rem; color: var(--lilac); text-transform: uppercase; letter-spacing: 1px;">Kategori</span>
+                        <h2 id="main-question" style="font-size: clamp(1.2rem, 3vw, 1.6rem); margin-top: 0.5rem; line-height: 1.4;">...</h2>
+                    </header>
+
+                    <div class="choices-grid" id="choices-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%;">
+                        <!-- Dinamik Şıklar Gelecek -->
+                        <button class="btn btn-secondary choice-btn" data-choice="0" style="padding: 1.2rem; font-size: 1.1rem; height: auto; white-space: normal;">A) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="1" style="padding: 1.2rem; font-size: 1.1rem; height: auto; white-space: normal;">B) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="2" style="padding: 1.2rem; font-size: 1.1rem; height: auto; white-space: normal;">C) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="3" style="padding: 1.2rem; font-size: 1.1rem; height: auto; white-space: normal;">D) ...</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SONUÇ EKRANI -->
+        <section id="winner-screen" class="view-state hidden">
+            <h1 class="gradient-text">Oyun Bitti!</h1>
+            <div class="card" style="max-width: 600px; width: 100%; text-align: center; margin: 0 auto;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 20px;">Sıralama</h2>
+
+                <ul id="final-scoreboard-list" style="list-style: none; padding: 0; margin-bottom: 30px; text-align: left; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                    <!-- Final sıralama dinamik eklenecek -->
+                </ul>
+
+                <button id="btn-back-to-lobby" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.15rem;">Lobiye Dön</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="game.js"></script>
+    <script src="network.js"></script>
+
+</body>
+</html>
