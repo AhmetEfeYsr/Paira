@@ -140,9 +140,6 @@ class GameManager {
         this.ui.submitBtn.disabled = true;
         this.updateUX("Kelimeniz gönderildi, diğer oyuncular bekleniyor...", "info");
 
-        // BURASI P2P BAĞLANTISI İÇİNDİR. network.js içindeki fonksiyonu çağırır.
-        // window.NetworkManager.broadcast({ type: 'SUBMIT_WORD', word: word });
-        
         // Şimdilik test için kendi state'imize ekleyelim
         this.state.submittedWords['localUser'] = word;
     }
@@ -150,10 +147,6 @@ class GameManager {
     // WebRTC'den bir oyuncunun kelimesi geldiğinde
     handleRemoteSubmission(peerId, word) {
         this.state.submittedWords[peerId] = word;
-        // Eğer Ebe(Host) isek ve herkes gönderdiyse değerlendirmeyi başlat
-        // if (Object.keys(this.state.submittedWords).length === TOTAL_PLAYERS) {
-        //     this.evaluateRound();
-        // }
     }
 
     // Tur bitiminde kelimeleri Akıllı Tolerans ile karşılaştırma
