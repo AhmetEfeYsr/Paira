@@ -2,6 +2,17 @@
  * game.js
  * Oyunun temel mantığını, UX yönlendirmelerini ve Akıllı Hata Tolerans (Fuzzy Search) motorunu içerir.
  */
+// --- GUVENLIK: Prototype Pollution Engelleme ---
+function isDangerousKey(key) {
+    const dangerousProps = [
+        '__proto__', 'constructor', 'prototype',
+        'toString', 'hasOwnProperty', '__defineGetter__', '__defineSetter__',
+        '__lookupGetter__', '__lookupSetter__', 'isPrototypeOf',
+        'propertyIsEnumerable', 'toLocaleString', 'valueOf'
+    ];
+    return dangerousProps.includes(key);
+}
+
 
 // 1. AKILLI HATA TOLERANS MOTORU (Fuzzy Matcher)
 class FuzzyMatcher {
@@ -149,6 +160,10 @@ class GameManager {
 
     // WebRTC'den bir oyuncunun kelimesi geldiğinde
     handleRemoteSubmission(peerId, word) {
+        if (isDangerousKey(peerId)) {
+            console.error("Dangerous peer ID blocked in submission:", peerId);
+            return;
+        }
         this.state.submittedWords[peerId] = word;
         // Eğer Ebe(Host) isek ve herkes gönderdiyse değerlendirmeyi başlat
         // if (Object.keys(this.state.submittedWords).length === TOTAL_PLAYERS) {

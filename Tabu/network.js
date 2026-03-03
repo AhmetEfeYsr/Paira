@@ -6,6 +6,17 @@ let myName = null;
 let isHost = false;
 let hostId = null;
 let connections = {};
+// --- GUVENLIK: Prototype Pollution Engelleme ---
+function isDangerousKey(key) {
+    const dangerousProps = [
+        '__proto__', 'constructor', 'prototype',
+        'toString', 'hasOwnProperty', '__defineGetter__', '__defineSetter__',
+        '__lookupGetter__', '__lookupSetter__', 'isPrototypeOf',
+        'propertyIsEnumerable', 'toLocaleString', 'valueOf'
+    ];
+    return dangerousProps.includes(key);
+}
+
 
 // --- KISA ODA KODU ÜRETİCİ ---
 function generateRoomCode() {
@@ -106,6 +117,11 @@ function connectToPeer(targetId) {
 }
 
 function setupConnection(conn) {
+    if (isDangerousKey(conn.peer)) {
+        console.error("Dangerous peer ID blocked:", conn.peer);
+        conn.close();
+        return;
+    }
     conn.on('open', () => {
         connections[conn.peer] = conn;
         if (isHost) {
@@ -148,6 +164,10 @@ function handleData(data, peerId) {
     if (!data.type) return;
 
     if (data.type === 'JOIN' && isHost) {
+        if (isDangerousKey(data.id)) {
+            console.error("Dangerous player ID blocked:", data.id);
+            return;
+        }
         const countA = Object.values(state.players).filter(p => p.team === 'A').length;
         const countB = Object.values(state.players).filter(p => p.team === 'B').length;
         state.players[data.id] = { 
@@ -192,6 +212,7 @@ function handleData(data, peerId) {
 }
 
 function handleDisconnect(peerId) {
+    if (isDangerousKey(peerId)) return;
     if (connections[peerId]) delete connections[peerId];
     if (!state.players[peerId]) return;
 
