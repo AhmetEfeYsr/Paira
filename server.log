@@ -1,17 +1,17 @@
-127.0.0.1 - - [28/Feb/2026 09:50:05] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:50:13] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:50:13] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:50:13] "GET /network.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:50:13] "GET /game.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:51:22] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:51:22] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:51:22] "GET /game.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:51:22] "GET /network.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:52:41] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:52:41] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:52:41] "GET /network.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:52:41] "GET /game.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:53:03] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:53:03] "GET /network.js HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:53:03] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 09:53:03] "GET /game.js HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:43] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:43] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:43] "GET /shared/shared.css HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:43] "GET /shared/shared.js HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:45] "GET /ChatTabu/index.html HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:45] "GET /shared/chat.js HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:45] "GET /ChatTabu/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:45] "GET /ChatTabu/game.js HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:46] "GET /ChatTabu/game.html HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:46] code 404, message File not found
+127.0.0.1 - - [04/Mar/2026 12:19:46] "GET /Tabu/words.js HTTP/1.1" 404 -
+127.0.0.1 - - [04/Mar/2026 12:19:46] code 404, message File not found
+127.0.0.1 - - [04/Mar/2026 12:19:46] "GET /Tabu/words.json HTTP/1.1" 404 -
+127.0.0.1 - - [04/Mar/2026 12:19:47] "GET /Gartic/index.html HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:47] "GET /Gartic/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:47] "GET /Gartic/game.html HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 12:19:47] "GET /Gartic/game.js HTTP/1.1" 200 -

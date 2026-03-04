@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oyun | ÇizBil (Gartic)</title>
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .cizbil-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+        .game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
+        .sidebar { flex: 1; min-width: 300px; max-width: 350px; background: rgba(0,0,0,0.3); border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; padding: 1rem; }
+
+        .header-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .word-display { font-size: 2rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--glow-primary); background: rgba(0,0,0,0.4); padding: 0.5rem 2rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1); }
+
+        .canvas-container { position: relative; width: 100%; max-width: 800px; background: #fff; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; border: 4px solid var(--border-color); }
+        canvas { display: block; width: 100%; height: auto; aspect-ratio: 16/9; }
+
+        .toolbar { display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); width: 100%; max-width: 800px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .color-picker { display: flex; gap: 0.5rem; }
+        .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
+        .color-swatch:hover { transform: scale(1.1); }
+        .color-swatch.active { border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.8); }
+
+        .size-picker { display: flex; gap: 0.5rem; align-items: center; }
+        .size-btn { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        .size-btn.active { background: rgba(255,255,255,0.3); border-color: #fff; }
+        .size-dot { background: var(--text-main); border-radius: 50%; }
+
+        .tools { display: flex; gap: 0.5rem; }
+
+        .sidebar-header { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
+        .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; }
+        .chat-msg { background: rgba(255,255,255,0.05); padding: 0.5rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; word-break: break-word; }
+        .chat-msg strong { color: var(--primary); }
+        .chat-msg.correct { background: rgba(46, 204, 113, 0.2); border: 1px solid var(--success); }
+
+        .leaderboard { height: 30%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; display: flex; flex-direction: column; }
+        .leaderboard-list { overflow-y: auto; flex: 1; font-size: 0.9rem; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        @media (max-width: 768px) {
+            .cizbil-layout { flex-direction: column; }
+            .sidebar { max-width: 100%; height: 40vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
+            .leaderboard { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-bg"></div>
+
+    <div class="cizbil-layout">
+        <div class="game-area">
+            <div class="header-bar">
+                <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış</button>
+                <div class="word-display" id="main-word">Yükleniyor...</div>
+                <div style="font-size: 1rem; font-weight: bold; color: var(--text-main);">
+                    <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="drawing-board" width="800" height="450"></canvas>
+            </div>
+
+            <div class="toolbar">
+                <div class="color-picker" id="color-picker">
+                    <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                    <div class="color-swatch" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                    <div class="color-swatch" style="background: #3498db;" data-color="#3498db"></div>
+                    <div class="color-swatch" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                    <div class="color-swatch" style="background: #f1c40f;" data-color="#f1c40f"></div>
+                    <div class="color-swatch" style="background: #9b59b6;" data-color="#9b59b6"></div>
+                    <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;" data-color="#ffffff"></div> <!-- Eraser essentially -->
+                </div>
+
+                <div class="size-picker" id="size-picker">
+                    <div class="size-btn" data-size="3"><div class="size-dot" style="width: 4px; height: 4px;"></div></div>
+                    <div class="size-btn active" data-size="8"><div class="size-dot" style="width: 8px; height: 8px;"></div></div>
+                    <div class="size-btn" data-size="15"><div class="size-dot" style="width: 14px; height: 14px;"></div></div>
+                    <div class="size-btn" data-size="25"><div class="size-dot" style="width: 20px; height: 20px;"></div></div>
+                </div>
+
+                <div class="tools">
+                    <button class="btn btn-secondary btn-sm" id="btn-clear">Temizle</button>
+                    <button class="btn btn-primary btn-sm" id="btn-skip">Pas Geç</button>
+                    <button class="btn btn-success btn-sm" id="btn-next" style="display: none;">Sonraki</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">Canlı Tahminler (<span id="channel-name-display"></span>)</div>
+            <div class="chat-feed custom-scrollbar" id="chat-feed"></div>
+
+            <div class="leaderboard">
+                <div class="sidebar-header">Sıralama</div>
+                <div class="leaderboard-list custom-scrollbar" id="leaderboard-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/chat.js"></script>
+    <script src="game.js" type="module"></script>
+</body>
+</html>

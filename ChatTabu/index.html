@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chat Tabu | Streamer vs Chat</title>
+
+    <!-- SEO & Social Meta Tags -->
+    <meta name="description" content="Yayıncı vs Chat! Yayıncı kelimeleri anlatır, chat tahmin eder. Twitch ve Kick ile tam entegre chat tabu oyunu.">
+    <meta name="keywords" content="Tabu, Chat Tabu, Yayıncı Oyunu, Twitch Tabu, Kick Tabu, Streamer vs Chat, Paira Games">
+
+    <meta property="og:title" content="Chat Tabu | Streamer vs Chat">
+    <meta property="og:description" content="Yayıncı vs Chat! Yayıncı kelimeleri anlatır, chat tahmin eder.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ahmetefeysr.github.com/ChatTabu">
+    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗣️</text></svg>">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="bubble-layer" id="bubble-layer"></div>
+
+    <div class="container main-menu" id="login-container">
+        <header class="app-header">
+            <h1 class="logo-text">Chat <span class="logo-accent">Tabu</span></h1>
+            <p class="subtitle">Streamer vs Chat | Yayıncı Anlatır, Chat Bilir!</p>
+        </header>
+
+        <div class="card login-card">
+            <div class="input-group">
+                <label for="platform-select">Platform Seçimi</label>
+                <select id="platform-select" class="game-input">
+                    <option value="twitch">Twitch</option>
+                    <option value="kick">Kick</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="channel-input">Kanal Adı</label>
+                <input type="text" id="channel-input" class="game-input" placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
+            </div>
+
+            <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
+            <button id="btn-back" class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="window.location.href='../index.html'">Ana Menüye Dön</button>
+            <div id="login-status" class="status-msg"></div>
+        </div>
+
+        <div class="rules-section card">
+            <h2>Nasıl Oynanır? 🗣️</h2>
+            <div class="rules-grid">
+                <div class="rule-item">
+                    <div class="rule-icon">🎬</div>
+                    <div class="rule-text">
+                        <h3>Başlangıç</h3>
+                        <p>Kanal adınızı ve platformunuzu girerek canlı sohbeti dinlemeye başlayın.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon">🎤</div>
+                    <div class="rule-text">
+                        <h3>Yayıncı (Sen)</h3>
+                        <p>Ekranda çıkan ana kelimeyi, yasaklı kelimeleri kullanmadan chate anlatmaya çalış.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon">💬</div>
+                    <div class="rule-text">
+                        <h3>Chat</h3>
+                        <p>Chatinizdeki izleyiciler, anlattığın kelimeyi doğru tahmin etmeye çalışır.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon">🏆</div>
+                    <div class="rule-text">
+                        <h3>Puanlama</h3>
+                        <p>İlk doğru tahmin eden izleyici puanı kazanır. Yasaklı kelime kullanırsan pas geç!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/chat.js"></script>
+    <script src="game.js" type="module"></script>
+</body>
+</html>
