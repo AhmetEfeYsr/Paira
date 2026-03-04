@@ -74,11 +74,11 @@
             <div class="game-layout">
                 <!-- Sol Taraf: Kelime Kartı ve Kontroller -->
                 <div class="play-area" style="overflow: visible;">
-                    <div class="taboo-card" style="border-color: var(--danger);">
-                        <div class="card-header" style="background: rgba(231, 76, 60, 0.2); border-bottom-color: var(--danger);">
-                            <h2 id="main-word" style="font-size: 2.5rem; text-transform: uppercase;">KELİME</h2>
+                    <div class="taboo-card card">
+                        <div class="card-header">
+                            <h2 id="main-word">KELİME</h2>
                         </div>
-                        <ul id="forbidden-words" style="padding: 2rem;">
+                        <ul id="forbidden-words" class="custom-scrollbar">
                             <li>Yasaklı 1</li>
                             <li>Yasaklı 2</li>
                             <li>Yasaklı 3</li>
@@ -87,7 +87,7 @@
                         </ul>
                     </div>
 
-                    <div class="narrator-actions" style="margin-top: 20px;">
+                    <div class="narrator-actions">
                         <button id="btn-pass" class="btn btn-warning" style="flex: 1; padding: 15px; font-size: 1.1rem;">Pas Geç</button>
                         <button id="btn-next" class="btn btn-success" style="flex: 1; padding: 15px; font-size: 1.1rem;">Sıradaki (Zorla)</button>
                     </div>
@@ -95,14 +95,14 @@
 
                 <!-- Sağ Taraf: Leaderboard ve Bildirimler -->
                 <div class="leaderboard-panel">
-                    <h3 style="text-align: center; color: #fff; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">🏆 Chat Liderlik Tablosu</h3>
+                    <h3>🏆 Liderlik Tablosu</h3>
 
                     <ul id="leaderboard-list" class="custom-scrollbar">
-                        <li style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz kimse puan alamadı. İzleyicilerinizi cesaretlendirin!</li>
+                        <li style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz kimse puan alamadı.</li>
                     </ul>
 
-                    <div id="chat-notification" class="chat-notification pop-animation" style="opacity: 0; pointer-events: none;">
-                        <span id="notif-winner" style="color: var(--warning); font-weight: bold; font-size: 1.2rem;">paiko</span> doğru bildi!
+                    <div id="chat-notification" class="chat-notification">
+                        <span id="notif-winner">paiko</span> kelimeyi buldu!
                     </div>
                 </div>
             </div>

@@ -58,6 +58,48 @@ body {
     font-weight: 800; text-align: center; margin-bottom: clamp(1.2rem, 3vw, 2.5rem);
 }
 
+h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); letter-spacing: 0.5px; }
+
+/* Form Controls & Inputs */
+.form-group { margin-bottom: clamp(1rem, 2.5vw, 1.5rem); width: 100%; text-align: left; }
+.form-group label { display: block; margin-bottom: 0.5rem; color: var(--lilac); font-weight: 600; font-size: 0.9rem; }
+
+input[type="text"], input[type="number"], select {
+    width: 100%; padding: 12px 16px; min-height: 40px; background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--lilac-muted); border-radius: 10px;
+    color: var(--text-main); font-family: inherit; font-size: 16px;
+    outline: none; transition: all 0.3s ease;
+}
+
+input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0, 0, 0, 0.4); box-shadow: 0 0 10px rgba(166, 77, 255, 0.2); }
+
+/* Buttons */
+.btn {
+    padding: 12px 20px; min-height: 40px; border: none; border-radius: 10px;
+    font-size: clamp(0.9rem, 2vw, 1rem); font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    color: white; touch-action: manipulation; white-space: nowrap; font-family: inherit;
+}
+.btn-primary { background: var(--primary-purple); }
+.btn-primary:hover:not(:disabled) { background: var(--neon-purple); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(138, 43, 226, 0.3); }
+.btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--lilac-muted); }
+.btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: var(--lilac); transform: translateY(-2px); }
+.btn-success { background: rgba(46, 204, 113, 0.2); color: var(--success); border: 1px solid var(--success); }
+.btn-success:hover:not(:disabled) { background: rgba(46, 204, 113, 0.3); transform: translateY(-2px); }
+.btn-danger { background: rgba(231, 76, 60, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover:not(:disabled) { background: rgba(231, 76, 60, 0.3); transform: translateY(-2px); }
+.btn-warning { background: rgba(241, 196, 15, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+.btn-warning:hover:not(:disabled) { background: rgba(241, 196, 15, 0.3); transform: translateY(-2px); }
+.btn-block { width: 100%; display: flex; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(50%); }
+
+/* Global Card styling (like in Tabu/KelimeAvi) */
+.card {
+    background: rgba(0, 0, 0, 0.25); border: var(--glass-border);
+    border-radius: clamp(12px, 2vw, 16px); padding: clamp(1rem, 2.5vw, 1.5rem);
+    overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+}
+
 .games-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

@@ -161,7 +161,7 @@ function updateLeaderboardUI() {
 
         const pointSpan = document.createElement('span');
         pointSpan.className = 'points';
-        pointSpan.textContent = points;
+        pointSpan.innerHTML = `${points} <span style="font-size: 1.1rem;">⭐</span>`;
 
         li.appendChild(nameSpan);
         li.appendChild(pointSpan);

@@ -138,7 +138,12 @@ function renderHistory() {
 
     sortedGuesses.forEach(g => {
         const li = document.createElement('li');
-        li.className = `history-item ${getColorClass(g.rank)}`;
+        li.className = `history-item`;
+
+        // Dynamic HSL coloring based on score (1.00 = 120 hue/green, 0.00 = 0 hue/red)
+        const hue = Math.max(0, g.score * 120);
+        li.style.background = `hsla(${hue}, 80%, 40%, 0.4)`;
+        li.style.border = `1px solid hsla(${hue}, 80%, 40%, 0.8)`;
 
         const wordDiv = document.createElement('div');
         wordDiv.className = 'word';
@@ -163,14 +168,6 @@ function renderHistory() {
 
         listEl.appendChild(li);
     });
-}
-
-function getColorClass(rank) {
-    if(rank === 1) return 'color-1'; // Target
-    if(rank <= 100) return 'color-2'; // Very close
-    if(rank <= 1000) return 'color-3'; // Close
-    if(rank <= 10000) return 'color-4'; // Moderate
-    return 'color-5'; // Far
 }
 
 function handleWin() {
