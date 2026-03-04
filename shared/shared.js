@@ -1,6 +1,94 @@
+// Apply theme immediately before DOM content loads to prevent flashing
+(function() {
+    const theme = localStorage.getItem('paira_theme');
+    if (theme && theme !== 'default') {
+        document.documentElement.setAttribute('data-theme', theme);
+        // Note: the CSS targets [data-theme] which works on body or html.
+        // We do it on documentElement to ensure it runs before body exists,
+        // but we'll also ensure body gets it below just in case.
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
+    applySavedTheme();
     injectSharedUI();
+    injectThemeSelector();
 });
+
+function applySavedTheme() {
+    const theme = localStorage.getItem('paira_theme') || 'default';
+    setTheme(theme, false);
+}
+
+function setTheme(themeName, save = true) {
+    if (themeName === 'default') {
+        document.body.removeAttribute('data-theme');
+        document.documentElement.removeAttribute('data-theme');
+    } else {
+        document.body.setAttribute('data-theme', themeName);
+        document.documentElement.setAttribute('data-theme', themeName);
+    }
+    if (save) {
+        localStorage.setItem('paira_theme', themeName);
+    }
+}
+
+function injectThemeSelector() {
+    if (document.getElementById('theme-selector')) return;
+
+    const themeContainer = document.createElement('div');
+    themeContainer.id = 'theme-selector';
+    themeContainer.style.cssText = `
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+
+    const themeSelect = document.createElement('select');
+    themeSelect.id = 'theme-dropdown';
+    themeSelect.style.cssText = `
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        background: var(--bg-panel);
+        color: var(--text-main);
+        border: 1px solid var(--lilac-muted);
+        cursor: pointer;
+        outline: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        font-family: 'Poppins', sans-serif;
+        appearance: none;
+        -webkit-appearance: none;
+    `;
+
+    const options = [
+        { value: 'default', text: '💜 Mor (Varsayılan)' },
+        { value: 'blue', text: '🟦 Mavi' },
+        { value: 'green', text: '🟩 Yeşil' },
+        { value: 'light', text: '☀️ Açık Tema' }
+    ];
+
+    const currentTheme = localStorage.getItem('paira_theme') || 'default';
+
+    options.forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt.value;
+        el.textContent = opt.text;
+        if (opt.value === currentTheme) el.selected = true;
+        themeSelect.appendChild(el);
+    });
+
+    themeSelect.addEventListener('change', (e) => {
+        setTheme(e.target.value);
+    });
+
+    themeContainer.appendChild(themeSelect);
+    document.body.appendChild(themeContainer);
+}
 
 function injectSharedUI() {
     // Inject Footer
