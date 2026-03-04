@@ -1,0 +1,258 @@
+// --- ChatTabu Logic ---
+
+// Fallback Word List (same as Tabu fallback)
+const fallbackWords = [
+    { id:1, kelime:"ARABA", yasakli_kelimeler:["TAŞIT","MOTOR","DİREKSİYON","TEKERLEK","VİTES"], kategori:"Genel", zorluk:1 },
+    { id:2, kelime:"BİLGİSAYAR", yasakli_kelimeler:["KLAVYE","FARE","EKRAN","İNTERNET","TEKNOLOJİ"], kategori:"Genel", zorluk:1 },
+    { id:3, kelime:"GÜNEŞ", yasakli_kelimeler:["SICAK","YAZ","GÖKYÜZÜ","SARI","IŞIK"], kategori:"Doğa", zorluk:1 },
+    { id:4, kelime:"KALEM", yasakli_kelimeler:["YAZI","KAĞIT","SİLGİ","OKUL","MÜREKKEP"], kategori:"Eğitim", zorluk:1 },
+    { id:5, kelime:"DENİZ", yasakli_kelimeler:["SU","MAVİ","YÜZMEK","KUM","DALGA"], kategori:"Doğa", zorluk:1 },
+    { id:6, kelime:"KİTAP", yasakli_kelimeler:["OKUMAK","SAYFA","YAZAR","KÜTÜPHANE","ROMAN"], kategori:"Eğitim", zorluk:1 },
+    { id:7, kelime:"TELEFON", yasakli_kelimeler:["ARAMAK","MESAJ","CEP","EKRAN","İLETİŞİM"], kategori:"Teknoloji", zorluk:1 },
+    { id:8, kelime:"EV", yasakli_kelimeler:["YAŞAMAK","AİLE","ODALAR","KAPI","PENCERE"], kategori:"Genel", zorluk:1 },
+    { id:9, kelime:"AĞAÇ", yasakli_kelimeler:["YEŞİL","YAPRAK","ORMAN","DOĞA","DAL"], kategori:"Doğa", zorluk:1 },
+    { id:10, kelime:"KEDİ", yasakli_kelimeler:["MİYAV","HAYVAN","EVVCİL","TÜY","KUYRUK"], kategori:"Hayvanlar", zorluk:1 }
+];
+
+let wordDatabase = [];
+let currentWordIndex = 0;
+let currentWord = null;
+let chatListener = null;
+
+let state = {
+    platform: '',
+    channel: '',
+    scores: {}, // username -> score
+    isPaused: false
+};
+
+// Fuzzy Matcher implementation for Turkish characters (from KelimeAvi/Aglam concept)
+const normalizeTurkish = (str) => {
+    return str.replace(/İ/g, 'I').replace(/ı/g, 'I')
+              .replace(/Ş/g, 'S').replace(/ş/g, 'S')
+              .replace(/Ğ/g, 'G').replace(/ğ/g, 'G')
+              .replace(/Ü/g, 'U').replace(/ü/g, 'U')
+              .replace(/Ö/g, 'O').replace(/ö/g, 'O')
+              .replace(/Ç/g, 'C').replace(/ç/g, 'C')
+              .toUpperCase().trim();
+};
+
+const levenshtein = (a, b) => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+    for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) == a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // deletion
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+};
+
+const isMatch = (guess, target) => {
+    const nGuess = normalizeTurkish(guess);
+    const nTarget = normalizeTurkish(target);
+
+    // Direct match or within 1 edit distance for slightly longer words
+    if (nGuess === nTarget) return true;
+
+    if (nTarget.length > 4) {
+        const distance = levenshtein(nGuess, nTarget);
+        if (distance <= 1) return true;
+    }
+    return false;
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // If we are on index.html (Setup)
+    if (document.getElementById('login-container')) {
+        setupLogin();
+    }
+    // If we are on game.html
+    else if (document.getElementById('main-word')) {
+        await initGame();
+    }
+});
+
+function setupLogin() {
+    const btnStart = document.getElementById('btn-start');
+    const channelInput = document.getElementById('channel-input');
+    const platformSelect = document.getElementById('platform-select');
+    const loginStatus = document.getElementById('login-status');
+
+    btnStart.addEventListener('click', () => {
+        const channel = channelInput.value.trim();
+        const platform = platformSelect.value;
+
+        if (!channel) {
+            loginStatus.innerText = 'Lütfen bir kanal adı girin!';
+            loginStatus.className = 'status-msg error';
+            return;
+        }
+
+        // Save connection params to sessionStorage and redirect
+        sessionStorage.setItem('chattabu_channel', channel);
+        sessionStorage.setItem('chattabu_platform', platform);
+        window.location.href = 'game.html';
+    });
+}
+
+async function initGame() {
+    const channel = sessionStorage.getItem('chattabu_channel');
+    const platform = sessionStorage.getItem('chattabu_platform');
+
+    if (!channel || !platform) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
+
+    // Load Words
+    try {
+        const response = await fetch('../Tabu/words.json');
+        if (response.ok) {
+            wordDatabase = await response.json();
+        } else {
+            wordDatabase = fallbackWords;
+        }
+    } catch (e) {
+        wordDatabase = fallbackWords;
+    }
+
+    // Shuffle words securely
+    wordDatabase.sort(() => (window.crypto.getRandomValues(new Uint32Array(1))[0] % 100) - 50);
+
+    // Setup Chat Listener
+    if (typeof ChatListener === 'undefined') {
+        alert('ChatListener kütüphanesi yüklenemedi!');
+        return;
+    }
+
+    chatListener = new ChatListener(platform, channel, handleChatMessage);
+
+    const statusBadge = document.getElementById('status-badge');
+    statusBadge.textContent = 'Bağlanıyor...';
+    statusBadge.style.color = 'var(--warning)';
+
+    // Start listening
+    chatListener.start();
+
+    // Hacky connection display for UI since ChatListener doesn't have events yet.
+    setTimeout(() => {
+        statusBadge.textContent = 'Bağlandı';
+        statusBadge.style.color = 'var(--success)';
+    }, 2000);
+
+    // Controls
+    document.getElementById('btn-skip').addEventListener('click', nextWord);
+    document.getElementById('btn-next').addEventListener('click', nextWord);
+    document.getElementById('btn-leave').addEventListener('click', () => {
+        chatListener.stop();
+        window.location.href = 'index.html';
+    });
+
+    nextWord();
+}
+
+function nextWord() {
+    if (wordDatabase.length === 0) return;
+
+    currentWordIndex = (currentWordIndex + 1) % wordDatabase.length;
+    currentWord = wordDatabase[currentWordIndex];
+
+    const mainEl = document.getElementById('main-word');
+    const fbEl = document.getElementById('forbidden-words');
+
+    mainEl.textContent = currentWord.kelime;
+    fbEl.innerHTML = currentWord.yasakli_kelimeler.map(w => `<li>${w}</li>`).join('');
+
+    state.isPaused = false;
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('btn-skip').style.display = 'inline-block';
+}
+
+function handleChatMessage(username, message) {
+    if (state.isPaused || !currentWord) return;
+
+    const chatFeed = document.getElementById('chat-feed');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'chat-msg';
+
+    // Sanitize textContent
+    const usernameSpan = document.createElement('strong');
+    usernameSpan.textContent = username + ': ';
+    const textSpan = document.createElement('span');
+    textSpan.textContent = message;
+
+    msgDiv.appendChild(usernameSpan);
+    msgDiv.appendChild(textSpan);
+
+    // Check if match
+    if (isMatch(message, currentWord.kelime)) {
+        msgDiv.classList.add('correct');
+        textSpan.textContent += ' (🎉 DOĞRU BİLDİ!)';
+
+        handleCorrectGuess(username);
+    }
+
+    chatFeed.appendChild(msgDiv);
+
+    // Autoscroll
+    chatFeed.scrollTop = chatFeed.scrollHeight;
+}
+
+function handleCorrectGuess(username) {
+    state.isPaused = true;
+
+    if (!state.scores[username]) state.scores[username] = 0;
+    state.scores[username] += 1;
+
+    updateLeaderboard();
+
+    document.getElementById('btn-next').style.display = 'inline-block';
+    document.getElementById('btn-skip').style.display = 'none';
+
+    // Confetti effect / visual cue on main card
+    document.querySelector('.card-tabu').style.borderColor = 'var(--success)';
+    document.querySelector('.card-tabu').style.boxShadow = '0 10px 40px rgba(46, 204, 113, 0.4)';
+
+    setTimeout(() => {
+        document.querySelector('.card-tabu').style.borderColor = 'var(--border-color)';
+        document.querySelector('.card-tabu').style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+    }, 2000);
+}
+
+function updateLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    list.innerHTML = '';
+
+    const sortedScores = Object.entries(state.scores).sort((a, b) => b[1] - a[1]);
+
+    sortedScores.forEach(([uname, score]) => {
+        const item = document.createElement('div');
+        item.className = 'leaderboard-item';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = uname;
+
+        const scoreSpan = document.createElement('span');
+        scoreSpan.textContent = `${score} Puan`;
+        scoreSpan.style.color = 'var(--primary)';
+        scoreSpan.style.fontWeight = 'bold';
+
+        item.appendChild(nameSpan);
+        item.appendChild(scoreSpan);
+        list.appendChild(item);
+    });
+}

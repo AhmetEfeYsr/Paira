@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ÇizBil | Streamer vs Chat</title>
+
+    <!-- SEO & Social Meta Tags -->
+    <meta name="description" content="Yayıncı çizer, Chat bilir! Yayıncı vs Chat çizim oyunu. Twitch ve Kick ile tam entegre.">
+    <meta name="keywords" content="ÇizBil, Gartic, Çizim Oyunu, Yayıncı Oyunu, Twitch Çizim, Kick Çizim, Streamer vs Chat, Paira Games">
+
+    <meta property="og:title" content="ÇizBil | Streamer vs Chat">
+    <meta property="og:description" content="Yayıncı çizer, Chat bilir!">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+
+    <div class="container main-menu" id="login-container">
+        <header class="app-header">
+            <h1 class="logo-text">Çiz<span class="logo-accent">Bil</span></h1>
+            <p class="subtitle">Streamer vs Chat | Yayıncı Çizer, Chat Bilir!</p>
+        </header>
+
+        <div class="card login-card">
+            <div class="input-group">
+                <label for="platform-select">Platform Seçimi</label>
+                <select id="platform-select" class="game-input">
+                    <option value="twitch">Twitch</option>
+                    <option value="kick">Kick</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="channel-input">Kanal Adı</label>
+                <input type="text" id="channel-input" class="game-input" placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
+            </div>
+
+            <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
+            <button id="btn-back" class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="window.location.href='../index.html'">Ana Menüye Dön</button>
+            <div id="login-status" class="status-msg"></div>
+        </div>
+
+        <div class="rules-section card">
+            <h2>Nasıl Oynanır? 🎨</h2>
+            <div class="rules-grid">
+                <div class="rule-item">
+                    <div class="rule-icon">🎬</div>
+                    <div class="rule-text">
+                        <h3>Başlangıç</h3>
+                        <p>Kanal adınızı ve platformunuzu girerek canlı sohbeti dinlemeye başlayın.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon">🖌️</div>
+                    <div class="rule-text">
+                        <h3>Yayıncı (Sen)</h3>
+                        <p>Sana verilen kelimeyi çizerek chate anlatmaya çalış. Harf yazmak yasak!</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon">💬</div>
+                    <div class="rule-text">
+                        <h3>Chat</h3>
+                        <p>İzleyicilerin, ne çizdiğini tahmin etmeye çalışır. İlk bilen puanı alır.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon">🏆</div>
+                    <div class="rule-text">
+                        <h3>Araçlar</h3>
+                        <p>Renk paletini ve fırça boyutunu kullanarak en iyi çizimi yap!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../shared/shared.js"></script>
+    <script>
+        document.getElementById('btn-start').addEventListener('click', () => {
+            const channel = document.getElementById('channel-input').value.trim();
+            const platform = document.getElementById('platform-select').value;
+            const status = document.getElementById('login-status');
+
+            if (!channel) {
+                status.innerText = 'Lütfen bir kanal adı girin!';
+                status.className = 'status-msg error';
+                return;
+            }
+
+            sessionStorage.setItem('cizbil_channel', channel);
+            sessionStorage.setItem('cizbil_platform', platform);
+            window.location.href = 'game.html';
+        });
+    </script>
+</body>
+</html>

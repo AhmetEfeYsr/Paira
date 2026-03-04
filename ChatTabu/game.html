@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oyun | Chat Tabu</title>
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗣️</text></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .chat-tabu-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+        .game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+        .sidebar { flex: 1; min-width: 300px; max-width: 400px; background: rgba(0,0,0,0.3); border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; padding: 1rem; }
+
+        .card-tabu { background: var(--card-bg); border-radius: 1.5rem; border: 1px solid var(--border-color); width: 100%; max-width: 500px; padding: 2rem; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; }
+
+        .main-word { font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 15px var(--glow-primary); }
+        .forbidden-words-list { list-style: none; padding: 0; margin-top: 1.5rem; }
+        .forbidden-words-list li { font-size: 1.5rem; font-weight: 500; color: var(--danger); margin: 0.5rem 0; text-transform: uppercase; }
+
+        .controls { display: flex; gap: 1rem; margin-top: 2rem; width: 100%; justify-content: center; }
+
+        .sidebar-header { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
+        .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; }
+        .chat-msg { background: rgba(255,255,255,0.05); padding: 0.8rem 1rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+        .chat-msg strong { color: var(--primary); }
+        .chat-msg.correct { background: rgba(46, 204, 113, 0.2); border: 1px solid var(--success); animation: pulse 1s infinite alternate; }
+
+        .leaderboard { height: 30%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; display: flex; flex-direction: column; }
+        .leaderboard-list { overflow-y: auto; flex: 1; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px var(--success); }
+            100% { box-shadow: 0 0 15px var(--success); }
+        }
+
+        @media (max-width: 768px) {
+            .chat-tabu-layout { flex-direction: column; }
+            .sidebar { max-width: 100%; height: 50vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
+            .leaderboard { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-bg"></div>
+
+    <div class="chat-tabu-layout">
+        <!-- Main Game Area (Streamer View) -->
+        <div class="game-area">
+            <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış Yap</button>
+                <div style="font-size: 1.2rem; font-weight: bold; color: var(--text-main);">
+                    Bağlantı: <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
+                </div>
+            </div>
+
+            <div class="card-tabu">
+                <div class="main-word" id="main-word">Yükleniyor...</div>
+                <ul class="forbidden-words-list" id="forbidden-words">
+                    <li>Lütfen</li>
+                    <li>Bekleyiniz</li>
+                </ul>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-danger" id="btn-skip">Pas Geç</button>
+                <button class="btn btn-success" id="btn-next" style="display: none;">Sonraki Kelime</button>
+            </div>
+        </div>
+
+        <!-- Sidebar (Chat Feed & Leaderboard) -->
+        <div class="sidebar">
+            <div class="sidebar-header">Canlı Sohbet Tahminleri (<span id="channel-name-display"></span>)</div>
+            <div class="chat-feed custom-scrollbar" id="chat-feed">
+                <!-- Messages will appear here -->
+            </div>
+
+            <div class="leaderboard">
+                <div class="sidebar-header" style="font-size: 1.2rem;">Liderlik Tablosu</div>
+                <div class="leaderboard-list custom-scrollbar" id="leaderboard-list">
+                    <!-- Scores -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/chat.js"></script>
+    <script src="../Tabu/words.js"></script> <!-- Reusing Tabu words database -->
+    <script src="game.js" type="module"></script>
+</body>
+</html>
