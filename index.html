@@ -43,83 +43,104 @@
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
-        <section id="portal-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
+        <section id="portal-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; padding-bottom: 80px;">
             <div class="hero-content">
                 <h1 class="gradient-text">Paira Games</h1>
                 <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online parti oyunları ve günlük zeka oyunları oynayın! Eğlenceye hemen katılın.</p>
             </div>
 
-            <div class="games-grid">
-                <!-- Ağlam -->
-                <a href="Aglam/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #1abc9c, #16a085);">A</div>
-                    <div class="game-info">
-                        <h3>Ağlam</h3>
-                        <p>Günlük Gizli Kelime</p>
-                    </div>
-                </a>
+            <div class="category-header">
+                <h2>🎮 Parti ve Günlük Oyunlar</h2>
+                <p>Arkadaşlarınızla sesli sohbette veya tek başınıza beyin fırtınası yaparken oynayabileceğiniz efsane oyunlar.</p>
+            </div>
 
+            <div class="games-list">
                 <!-- Tabu -->
-                <a href="Tabu/index.html" class="game-card">
+                <a href="Tabu/index.html" class="game-card row-layout">
                     <div class="game-icon" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">T</div>
                     <div class="game-info">
                         <h3>Tabu</h3>
-                        <p>Yasaklı Kelimeler</p>
+                        <p class="game-desc">Zamanla yarışırken, yasaklı kelimeleri kullanmadan takım arkadaşlarına ana kelimeyi anlat. Eğlencenin dibine vur!</p>
                     </div>
+                    <div class="game-action"><span class="btn-play">Oyna ➤</span></div>
                 </a>
 
                 <!-- Kelime Avı -->
-                <a href="KelimeAvi/index.html" class="game-card">
+                <a href="KelimeAvi/index.html" class="game-card row-layout">
                     <div class="game-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">K</div>
                     <div class="game-info">
                         <h3>Kelime Avı</h3>
-                        <p>Sosyal Çıkarım</p>
+                        <p class="game-desc">Ajan mısın yoksa masum mu? Gizli kelimeyi bul veya kimsenin bilmediği kelimeyi çaktırmadan tahmin etmeye çalış.</p>
                     </div>
+                    <div class="game-action"><span class="btn-play">Oyna ➤</span></div>
                 </a>
 
                 <!-- İsim Şehir -->
-                <a href="IsimSehir/index.html" class="game-card">
+                <a href="IsimSehir/index.html" class="game-card row-layout">
                     <div class="game-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">İ</div>
                     <div class="game-info">
                         <h3>İsim Şehir</h3>
-                        <p>Klasik Eğlence</p>
+                        <p class="game-desc">Çocukluğumuzun efsanesi tarayıcında! Rastgele bir harf ile başlayan en yaratıcı isim, şehir ve eşyaları hızlıca yaz.</p>
                     </div>
+                    <div class="game-action"><span class="btn-play">Oyna ➤</span></div>
                 </a>
 
                 <!-- Elementler -->
-                <a href="Elementler/index.html" class="game-card">
+                <a href="Elementler/index.html" class="game-card row-layout">
                     <div class="game-icon" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">E</div>
                     <div class="game-info">
                         <h3>Elementler</h3>
-                        <p>Co-op Platform</p>
+                        <p class="game-desc">1-4 kişilik Co-op Platform! Ateş, Su, Doğa ve Hava elementlerini kullanarak zorlu fizik bulmacalarını arkadaşlarınla çöz.</p>
                     </div>
+                    <div class="game-action"><span class="btn-play">Oyna ➤</span></div>
                 </a>
 
                 <!-- Bilgi Yarışması -->
-                <a href="BilgiYarismasi/index.html" class="game-card">
+                <a href="BilgiYarismasi/index.html" class="game-card row-layout">
                     <div class="game-icon" style="background: linear-gradient(135deg, #f1c40f, #f39c12);">B</div>
                     <div class="game-info">
                         <h3>Bilgi Yarışması</h3>
-                        <p>Zeka ve Hız</p>
+                        <p class="game-desc">Genel kültür, tarih, spor ve daha fazlası... Rakiplerinden önce en hızlı ve doğru cevabı ver, liderliği kap!</p>
                     </div>
+                    <div class="game-action"><span class="btn-play">Oyna ➤</span></div>
                 </a>
 
+                <!-- Ağlam -->
+                <a href="Aglam/index.html" class="game-card row-layout">
+                    <div class="game-icon" style="background: linear-gradient(135deg, #1abc9c, #16a085);">A</div>
+                    <div class="game-info">
+                        <h3>Ağlam</h3>
+                        <p class="game-desc">Günün gizli kelimesini bulabilir misin? Tahminlerinin anlamsal (semantik) yakınlığına göre ipuçlarını takip et.</p>
+                    </div>
+                    <div class="game-action"><span class="btn-play">Oyna ➤</span></div>
+                </a>
+            </div>
+
+            <!-- STREAMER GAMES SECTION -->
+            <div class="category-header mt-4">
+                <h2>🎥 Yayıncı vs Chat Oyunları</h2>
+                <p>Twitch veya Kick sohbetinizi canlı olarak oyuna dahil edin, izleyicilerinizle etkileşimin sınırlarını zorlayın!</p>
+            </div>
+
+            <div class="games-list">
                 <!-- Chat Tabu -->
-                <a href="ChatTabu/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">C</div>
+                <a href="ChatTabu/index.html" class="game-card row-layout streamer-card">
+                    <div class="game-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">💬</div>
                     <div class="game-info">
                         <h3>Chat Tabu</h3>
-                        <p>Streamer vs Chat</p>
+                        <p class="game-desc">Yayıncı ekrandaki kelimeyi anlatır, chat ise canlı sohbette doğru kelimeyi ilk tahmin eden olmak için yarışır!</p>
                     </div>
+                    <div class="game-action"><span class="btn-play streamer-btn">Sohbeti Dinle ➤</span></div>
                 </a>
 
                 <!-- ÇizBil (Gartic) -->
-                <a href="Gartic/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #34495e, #2c3e50);">Ç</div>
+                <a href="Gartic/index.html" class="game-card row-layout streamer-card">
+                    <div class="game-icon" style="background: linear-gradient(135deg, #34495e, #2c3e50);">🎨</div>
                     <div class="game-info">
-                        <h3>ÇizBil</h3>
-                        <p>Streamer vs Chat</p>
+                        <h3>ÇizBil (Gartic)</h3>
+                        <p class="game-desc">Fırçanı kap ve çizmeye başla! Bakalım yeteneklerin ne kadar iyi ve izleyicilerin ne çizdiğini ne kadar sürede bilecek?</p>
                     </div>
+                    <div class="game-action"><span class="btn-play streamer-btn">Sohbeti Dinle ➤</span></div>
                 </a>
             </div>
         </section>

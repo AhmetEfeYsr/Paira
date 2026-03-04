@@ -119,14 +119,9 @@ async function initGame() {
     document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
 
     // Load Words
-    try {
-        const response = await fetch('../Tabu/words.json');
-        if (response.ok) {
-            wordDatabase = await response.json();
-        } else {
-            wordDatabase = fallbackWords;
-        }
-    } catch (e) {
+    if (typeof allWords !== 'undefined' && allWords.length > 0) {
+        wordDatabase = allWords;
+    } else {
         wordDatabase = fallbackWords;
     }
 

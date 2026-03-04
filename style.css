@@ -58,61 +58,170 @@ body {
     font-weight: 800; text-align: center; margin-bottom: clamp(1.2rem, 3vw, 2.5rem);
 }
 
-.games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+/* Category Headers */
+.category-header {
+    width: 100%;
+    max-width: 1000px;
+    margin: 2rem auto 1.5rem auto;
+    text-align: left;
+    border-bottom: 2px solid rgba(200, 162, 200, 0.2);
+    padding-bottom: 0.5rem;
+}
+
+.category-header h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--text-main);
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+}
+
+.category-header p {
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    color: var(--text-muted);
+}
+
+.mt-4 { margin-top: 4rem; }
+
+/* New List Layout */
+.games-list {
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
     width: 100%;
     max-width: 1000px;
     margin: 0 auto 2rem;
-    padding-bottom: 2rem;
 }
 
-.game-card {
-    background: rgba(0, 0, 0, 0.2);
+.game-card.row-layout {
+    background: rgba(0, 0, 0, 0.3);
     border: var(--glass-border);
     border-radius: 16px;
     padding: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 1.5rem;
     text-decoration: none;
     color: inherit;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
-.game-card:hover {
-    transform: translateY(-5px);
+.game-card.row-layout::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: skewX(-25deg);
+    transition: left 0.5s ease;
+}
+
+.game-card.row-layout:hover::before {
+    left: 150%;
+}
+
+.game-card.row-layout:hover {
+    transform: translateX(5px) translateY(-3px);
     border-color: var(--neon-purple);
-    background: rgba(138, 43, 226, 0.1);
-    box-shadow: 0 8px 25px rgba(138, 43, 226, 0.2);
+    background: rgba(138, 43, 226, 0.15);
+    box-shadow: 0 10px 30px rgba(138, 43, 226, 0.3);
+}
+
+.streamer-card:hover {
+    border-color: #e67e22 !important;
+    background: rgba(230, 126, 34, 0.1) !important;
+    box-shadow: 0 10px 30px rgba(230, 126, 34, 0.2) !important;
 }
 
 .game-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    font-size: 2.2rem;
     font-weight: 800;
     color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     flex-shrink: 0;
 }
 
-.game-info h3 {
-    font-size: 1.2rem;
-    color: var(--lilac);
-    margin: 0 0 0.3rem 0;
+.game-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-.game-info p {
-    font-size: 0.9rem;
+.game-info h3 {
+    font-size: clamp(1.3rem, 2.5vw, 1.5rem);
+    color: var(--text-main);
+    margin: 0 0 0.4rem 0;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.game-desc {
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
     color: var(--text-muted);
+    line-height: 1.5;
     margin: 0;
+    max-width: 90%;
+}
+
+.game-action {
+    flex-shrink: 0;
+    padding-left: 1rem;
+}
+
+.btn-play {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--neon-purple), var(--primary-purple));
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.streamer-btn {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    box-shadow: 0 4px 15px rgba(230, 126, 34, 0.4);
+}
+
+.game-card.row-layout:hover .btn-play {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(138, 43, 226, 0.6);
+}
+
+.streamer-card:hover .streamer-btn {
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.6);
+}
+
+
+@media (max-width: 768px) {
+    .game-card.row-layout {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+    }
+
+    .game-icon {
+        width: 70px; height: 70px; font-size: 2rem; margin: 0 auto;
+    }
+
+    .game-desc { max-width: 100%; margin: 0 auto; }
+
+    .game-action { width: 100%; padding-left: 0; margin-top: 0.5rem; }
+    .btn-play { display: block; width: 100%; padding: 12px; }
+
+    .category-header { text-align: center; }
 }
 
 @media (max-width: 900px) {
