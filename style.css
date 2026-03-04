@@ -4,6 +4,10 @@
     --lilac-muted: rgba(200, 162, 200, 0.4); --text-main: #f8f9fa;
     --text-muted: #adb5bd; --glass-border: 1px solid rgba(200, 162, 200, 0.2);
     --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+    --btn-text: #fff;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --warning: #f1c40f;
 }
 
 [data-theme="blue"] {
@@ -11,6 +15,10 @@
     --primary-purple: #007bff; --neon-purple: #3399ff; --lilac: #a3c2fa;
     --lilac-muted: rgba(163, 194, 250, 0.4);
     --glass-border: 1px solid rgba(163, 194, 250, 0.2);
+
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --warning: #f1c40f;
 }
 
 [data-theme="green"] {
@@ -26,6 +34,7 @@
     --lilac-muted: rgba(108, 92, 231, 0.4); --text-main: #2d3436;
     --text-muted: #636e72; --glass-border: 1px solid rgba(108, 92, 231, 0.2);
     --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.1);
+    --btn-text: #fff;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -100,7 +109,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
     padding: 12px 20px; min-height: 40px; border: none; border-radius: 10px;
     font-size: clamp(0.9rem, 2vw, 1rem); font-weight: 600; cursor: pointer; transition: all 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    color: white; touch-action: manipulation; white-space: nowrap; font-family: inherit;
+    color: var(--btn-text); touch-action: manipulation; white-space: nowrap; font-family: inherit;
 }
 .btn-primary { background: var(--primary-purple); }
 .btn-primary:hover:not(:disabled) { background: var(--neon-purple); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(138, 43, 226, 0.3); }
@@ -113,7 +122,15 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 .btn-warning { background: rgba(241, 196, 15, 0.2); color: var(--warning); border: 1px solid var(--warning); }
 .btn-warning:hover:not(:disabled) { background: rgba(241, 196, 15, 0.3); transform: translateY(-2px); }
 .btn-block { width: 100%; display: flex; }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(50%); }
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: var(--bg-deep) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--glass-border);
+}
 
 /* Global Card styling (like in Tabu/KelimeAvi) */
 .card {

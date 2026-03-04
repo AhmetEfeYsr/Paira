@@ -48,7 +48,7 @@
     text-transform: uppercase;
     color: #fff;
     margin: 0;
-    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
 #forbidden-words {
@@ -89,7 +89,7 @@
 
 .leaderboard-panel h3 {
     text-align: center;
-    color: #fff;
+    color: var(--text-main);
     margin: 0;
     padding: 1rem;
     background: rgba(231, 76, 60, 0.2);
@@ -111,18 +111,18 @@
     align-items: center;
     padding: 14px 20px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-main);
     font-weight: 600;
     margin-bottom: 10px;
     font-size: 1.1rem;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     transition: all 0.3s ease;
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #leaderboard-list li:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(128, 128, 128, 0.15);
     transform: translateX(5px);
 }
 
@@ -177,15 +177,15 @@
 }
 
 .form-card {
-    background: rgba(0,0,0,0.3);
+    background: var(--bg-deep);
     padding: 2rem;
     border-radius: 16px;
     border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
 .form-card input, .form-card select {
-    background: rgba(0,0,0,0.5);
-    border-color: rgba(255,255,255,0.1);
+    background: var(--bg-deep);
+    border-color: var(--border-color);
 }
 .form-card input:focus, .form-card select:focus {
     border-color: var(--danger);

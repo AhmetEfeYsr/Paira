@@ -7,27 +7,21 @@ async def run():
         browser = await p.chromium.launch()
         page = await browser.new_page()
 
-        # Navigate to portal
-        await page.goto("http://localhost:8000/")
-        await page.wait_for_timeout(1000)
+        # Helper function to take screenshots for all themes
+        async def take_theme_screenshots(url, prefix):
+            await page.goto(url)
+            await page.wait_for_timeout(1000) # wait for render
 
-        # Set themes and screenshot
-        themes = ['default', 'blue', 'green', 'light']
-        for theme in themes:
-            print(f"Setting theme: {theme}")
-            await page.select_option('#theme-dropdown', value=theme)
-            await page.wait_for_timeout(500)
-            await page.screenshot(path=f"/home/jules/verification/theme_{theme}_portal.png")
+            themes = ['default', 'blue', 'green', 'light']
+            for theme in themes:
+                print(f"Setting theme: {theme} on {prefix}")
+                await page.select_option('#theme-dropdown', value=theme)
+                await page.wait_for_timeout(500) # wait for transition
+                await page.screenshot(path=f"/home/jules/verification/{prefix}_{theme}.png", full_page=True)
 
-        # Navigate to Aglam
-        await page.goto("http://localhost:8000/Aglam/")
-        await page.wait_for_timeout(1000)
-
-        for theme in themes:
-            print(f"Setting theme in Aglam: {theme}")
-            await page.select_option('#theme-dropdown', value=theme)
-            await page.wait_for_timeout(500)
-            await page.screenshot(path=f"/home/jules/verification/theme_{theme}_aglam.png")
+        await take_theme_screenshots("http://localhost:8000/", "portal")
+        await take_theme_screenshots("http://localhost:8000/Aglam/", "aglam")
+        await take_theme_screenshots("http://localhost:8000/ChatTabu/", "chattabu")
 
         await browser.close()
 
