@@ -535,7 +535,7 @@ function updateUI() {
         const oldHtml = pList.innerHTML;
         let newHtml = '';
         Object.values(state.players).forEach(p => {
-            newHtml += `<li><span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === NetworkManager.getMyId() ? '(Sen)' : ''}</span> <strong style="color:var(--neon-blue)">${p.role.toUpperCase()}</strong></li>`;
+            newHtml += `<li><span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === NetworkManager.getMyId() ? '(Sen)' : ''}</span> <strong style="color:var(--neon-purple)">${p.role.toUpperCase()}</strong></li>`;
         });
         if(oldHtml !== newHtml) pList.innerHTML = newHtml;
 

@@ -75,8 +75,8 @@ body {
 }
 
 .games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
     width: 100%;
     max-width: 1000px;
@@ -170,4 +170,100 @@ body {
 @media (max-width: 900px) {
     body { padding-bottom: env(safe-area-inset-bottom); }
     .glass-panel { height: auto; min-height: 0; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
+}
+
+/* Index Category Sections */
+.category-section {
+    width: 100%;
+    margin-bottom: 3rem;
+    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.category-section:nth-child(1) { animation-delay: 0.1s; }
+.category-section:nth-child(2) { animation-delay: 0.3s; }
+.category-section:nth-child(3) { animation-delay: 0.5s; }
+
+.category-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-main);
+    text-shadow: 0 0 10px var(--neon-glow-rgba);
+    border-bottom: 2px solid var(--neon-glow-rgba);
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+
+/* Horizontal Game Cards (1 per row) */
+.games-grid.single-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.horizontal-card {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    padding: 1.5rem 2rem;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: auto;
+}
+
+.horizontal-card .game-icon {
+    margin-bottom: 0;
+    margin-right: 2rem;
+    flex-shrink: 0;
+    width: 90px;
+    height: 90px;
+}
+
+.horizontal-card .game-info {
+    flex-grow: 1;
+}
+
+.horizontal-card .game-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.horizontal-card .game-info p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .horizontal-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+
+    .horizontal-card .game-icon {
+        margin-right: 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .category-title {
+        font-size: 1.5rem;
+        display: block;
+        text-align: center;
+    }
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
