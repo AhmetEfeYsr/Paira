@@ -1,5 +1,135 @@
 /* Shared styles for Paira Games (Footer, Modal, Cookies) */
 
+.rule-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(200, 162, 200, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.rule-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(166, 77, 255, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.rule-card > * {
+    z-index: 1;
+    position: relative;
+}
+
+.rule-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--neon-purple);
+    background: rgba(138, 43, 226, 0.1);
+    box-shadow: 0 8px 25px rgba(138, 43, 226, 0.2);
+}
+
+.rule-card:hover::before {
+    opacity: 1;
+}
+
+.rule-card h3 {
+    color: var(--neon-purple);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.rule-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4); }
+    50% { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(166, 77, 255, 0.6); }
+    100% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4); }
+}
+
+.game-logo-container {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.game-logo-container img {
+    width: 100px;
+    height: 100px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4);
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Global Inputs & Buttons Enhanced */
+input[type="text"], input[type="password"], input[type="number"], select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(200, 162, 200, 0.2);
+    color: var(--text-main);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--neon-purple);
+    background: rgba(138, 43, 226, 0.1);
+    box-shadow: 0 0 15px rgba(166, 77, 255, 0.3);
+}
+
+.btn {
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--primary-purple), var(--neon-purple));
+    color: white;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(166, 77, 255, 0.5);
+    background: linear-gradient(45deg, var(--neon-purple), #c8a2c8);
+}
+
+.btn-primary:active {
+    transform: translateY(1px) scale(0.95);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px) scale(1.02);
+}
+
+.btn-secondary:active {
+    transform: translateY(1px) scale(0.95);
+}
+
 /* Footer */
 .app-footer {
     width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
