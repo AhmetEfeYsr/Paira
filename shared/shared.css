@@ -1,5 +1,41 @@
 /* Shared styles for Paira Games (Footer, Modal, Cookies) */
 
+:root, [data-theme="paira"] {
+    --bg-deep: #0a0816; --bg-navy: #151236; --bg-panel: rgba(21, 18, 54, 0.85);
+    --primary-purple: #8a2be2; --neon-purple: #a64dff; --lilac: #c8a2c8;
+    --lilac-muted: rgba(200, 162, 200, 0.4); --text-main: #f8f9fa;
+    --text-muted: #adb5bd; --glass-border: 1px solid rgba(200, 162, 200, 0.2);
+    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+    --neon-glow-rgba: rgba(166, 77, 255, 0.4);
+    --primary-rgb: 138, 43, 226;
+    --gradient-end: #ff79c6;
+    --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f;
+}
+
+[data-theme="ocean"] {
+    --bg-deep: #020c1b; --bg-navy: #0a192f; --bg-panel: rgba(10, 25, 47, 0.85);
+    --primary-purple: #00b4d8; --neon-purple: #00f5d4; --lilac: #90e0ef;
+    --lilac-muted: rgba(144, 224, 239, 0.3); --text-main: #e6f1ff;
+    --text-muted: #8892b0; --glass-border: 1px solid rgba(144, 224, 239, 0.2);
+    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+    --neon-glow-rgba: rgba(0, 245, 212, 0.4);
+    --primary-rgb: 0, 180, 216;
+    --gradient-end: #48cae4;
+    --success: #06d6a0; --danger: #ef476f; --warning: #ffd166;
+}
+
+[data-theme="light"] {
+    --bg-deep: #f8f9fa; --bg-navy: #e9ecef; --bg-panel: rgba(255, 255, 255, 0.9);
+    --primary-purple: #4361ee; --neon-purple: #3f37c9; --lilac: #4895ef;
+    --lilac-muted: rgba(67, 97, 238, 0.3); --text-main: #2b2d42;
+    --text-muted: #6c757d; --glass-border: 1px solid rgba(67, 97, 238, 0.3);
+    --glass-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+    --neon-glow-rgba: rgba(63, 55, 201, 0.3);
+    --primary-rgb: 67, 97, 238;
+    --gradient-end: #4cc9f0;
+    --success: #2a9d8f; --danger: #e63946; --warning: #e9c46a;
+}
+
 .rule-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(200, 162, 200, 0.2);
@@ -28,8 +64,8 @@
 .rule-card:hover {
     transform: translateY(-5px);
     border-color: var(--neon-purple);
-    background: rgba(138, 43, 226, 0.1);
-    box-shadow: 0 8px 25px rgba(138, 43, 226, 0.2);
+    background: rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.2);
 }
 
 .rule-card:hover::before {
@@ -49,9 +85,9 @@
 }
 
 @keyframes float {
-    0% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4); }
-    50% { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(166, 77, 255, 0.6); }
-    100% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4); }
+    0% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); }
+    50% { transform: translateY(-10px); box-shadow: 0 20px 40px var(--neon-glow-rgba); }
+    100% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); }
 }
 
 .game-logo-container {
@@ -63,14 +99,14 @@
     width: 100px;
     height: 100px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4);
+    box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4);
     animation: float 6s ease-in-out infinite;
 }
 
 /* Global Inputs & Buttons Enhanced */
 input[type="text"], input[type="password"], input[type="number"], select {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(200, 162, 200, 0.2);
+    border: 1px solid var(--lilac-muted);
     color: var(--text-main);
     border-radius: 12px;
     padding: 12px 16px;
@@ -83,8 +119,8 @@ input[type="text"], input[type="password"], input[type="number"], select {
 input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus {
     outline: none;
     border-color: var(--neon-purple);
-    background: rgba(138, 43, 226, 0.1);
-    box-shadow: 0 0 15px rgba(166, 77, 255, 0.3);
+    background: rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 0 15px var(--neon-glow-rgba);
 }
 
 .btn {
@@ -101,12 +137,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 .btn-primary {
     background: linear-gradient(45deg, var(--primary-purple), var(--neon-purple));
     color: white;
-    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(166, 77, 255, 0.5);
+    box-shadow: 0 8px 25px var(--neon-glow-rgba);
     background: linear-gradient(45deg, var(--neon-purple), #c8a2c8);
 }
 

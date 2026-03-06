@@ -1,25 +1,3 @@
-:root {
-    /* Renk Paleti - Lacivert ve Mavi Tonları Ağırlıklı */
-    --bg-deep: #050814;
-    --bg-navy: #0a1128;
-    --bg-panel: rgba(10, 17, 40, 0.85);
-
-    --primary-blue: #1e3a8a;
-    --neon-blue: #3b82f6;
-    --lilac: #93c5fd;
-    --lilac-muted: rgba(147, 197, 253, 0.4);
-
-    --text-main: #f8f9fa;
-    --text-muted: #94a3b8;
-
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-
-    --glass-border: 1px solid rgba(147, 197, 253, 0.2);
-    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
-}
-
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body { min-height: 100vh; overflow-y: auto; overflow-x: hidden; }

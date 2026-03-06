@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <script src="shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira Games | Çok Oyunculu Parti ve Günlük Bulmaca Oyunları</title>
@@ -43,6 +44,15 @@
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
+        <!-- Theme Switcher -->
+        <div class="theme-switcher" style="position: absolute; top: clamp(1rem, 2.5vw, 2rem); right: clamp(1rem, 2.5vw, 2rem); z-index: 10;">
+            <select id="theme-select" class="game-input" style="padding: 8px 12px; font-size: 0.9rem; min-width: 120px; cursor: pointer;" onchange="switchTheme(this.value)">
+                <option value="paira">Karanlık Neon</option>
+                <option value="ocean">Okyanus</option>
+                <option value="light">Aydınlık</option>
+            </select>
+        </div>
+
         <section id="portal-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
             <div class="hero-content">
                 <h1 class="gradient-text">Paira Games</h1>
@@ -142,6 +152,12 @@
     </main>
 
     <!-- Footer will be injected by shared.js -->
-    <script src="shared/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            const select = document.getElementById('theme-select');
+            if (select) select.value = savedTheme;
+        });
+    </script>
 </body>
 </html>
