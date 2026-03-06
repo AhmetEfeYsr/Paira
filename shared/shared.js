@@ -1,6 +1,17 @@
+// Apply theme immediately to prevent FOUC (Flash of Unstyled Content)
+(function applyTheme() {
+    const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     injectSharedUI();
 });
+
+function switchTheme(themeName) {
+    document.documentElement.setAttribute('data-theme', themeName);
+    localStorage.setItem('paira_theme', themeName);
+}
 
 function injectSharedUI() {
     // Inject Footer

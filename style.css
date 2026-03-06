@@ -1,11 +1,3 @@
-:root {
-    --bg-deep: #0a0816; --bg-navy: #151236; --bg-panel: rgba(21, 18, 54, 0.85);
-    --primary-purple: #8a2be2; --neon-purple: #a64dff; --lilac: #c8a2c8;
-    --lilac-muted: rgba(200, 162, 200, 0.4); --text-main: #f8f9fa;
-    --text-muted: #adb5bd; --glass-border: 1px solid rgba(200, 162, 200, 0.2);
-    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
-}
-
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body { min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
@@ -13,12 +5,20 @@ html, body { min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
 body {
     font-family: 'Poppins', sans-serif;
     background: radial-gradient(circle at top left, var(--bg-navy), var(--bg-deep) 80%);
+    background-size: 400% 400%;
+    animation: bgGradient 15s ease infinite;
     color: var(--text-main);
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: clamp(0.5rem, 2vw, 1rem);
     padding-bottom: 0;
+}
+
+@keyframes bgGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -51,16 +51,32 @@ body {
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+@keyframes pulseGlow {
+    0% { text-shadow: 0 0 10px var(--neon-glow-rgba), 0 0 20px rgba(0,0,0,0.1); }
+    50% { text-shadow: 0 0 20px var(--neon-glow-rgba), 0 0 30px var(--neon-glow-rgba); }
+    100% { text-shadow: 0 0 10px var(--neon-glow-rgba), 0 0 20px rgba(0,0,0,0.1); }
+}
+
 .gradient-text {
-    background: linear-gradient(45deg, var(--lilac), var(--neon-purple));
+    background: linear-gradient(45deg, var(--lilac), var(--neon-purple), var(--gradient-end));
+    background-size: 200% auto;
+    animation: gradientShift 3s ease infinite, pulseGlow 2s infinite alternate;
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     font-size: clamp(2.2rem, 6vw, 3.5rem);
     font-weight: 800; text-align: center; margin-bottom: clamp(1.2rem, 3vw, 2.5rem);
+    position: relative;
+    display: inline-block;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
     width: 100%;
     max-width: 1000px;
@@ -78,15 +94,39 @@ body {
     gap: 1.2rem;
     text-decoration: none;
     color: inherit;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.game-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, var(--neon-glow-rgba), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.game-card > * {
+    z-index: 1;
 }
 
 .game-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px) scale(1.02);
     border-color: var(--neon-purple);
-    background: rgba(138, 43, 226, 0.1);
-    box-shadow: 0 8px 25px rgba(138, 43, 226, 0.2);
+    background: rgba(var(--primary-rgb), 0.15);
+    box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.3), 0 0 15px var(--neon-glow-rgba) inset;
+}
+
+.game-card:hover::before {
+    opacity: 1;
+}
+
+.game-card:active {
+    transform: translateY(-2px) scale(0.98);
 }
 
 .game-icon {
@@ -101,6 +141,18 @@ body {
     color: white;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     flex-shrink: 0;
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.game-card:hover .game-icon {
+    transform: rotate(5deg) scale(1.1);
+}
+
+.game-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
 }
 
 .game-info h3 {
@@ -118,4 +170,100 @@ body {
 @media (max-width: 900px) {
     body { padding-bottom: env(safe-area-inset-bottom); }
     .glass-panel { height: auto; min-height: 0; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
+}
+
+/* Index Category Sections */
+.category-section {
+    width: 100%;
+    margin-bottom: 3rem;
+    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.category-section:nth-child(1) { animation-delay: 0.1s; }
+.category-section:nth-child(2) { animation-delay: 0.3s; }
+.category-section:nth-child(3) { animation-delay: 0.5s; }
+
+.category-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-main);
+    text-shadow: 0 0 10px var(--neon-glow-rgba);
+    border-bottom: 2px solid var(--neon-glow-rgba);
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+
+/* Horizontal Game Cards (1 per row) */
+.games-grid.single-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.horizontal-card {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    padding: 1.5rem 2rem;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: auto;
+}
+
+.horizontal-card .game-icon {
+    margin-bottom: 0;
+    margin-right: 2rem;
+    flex-shrink: 0;
+    width: 90px;
+    height: 90px;
+}
+
+.horizontal-card .game-info {
+    flex-grow: 1;
+}
+
+.horizontal-card .game-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.horizontal-card .game-info p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .horizontal-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+
+    .horizontal-card .game-icon {
+        margin-right: 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .category-title {
+        font-size: 1.5rem;
+        display: block;
+        text-align: center;
+    }
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <script src="shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira Games | Çok Oyunculu Parti ve Günlük Bulmaca Oyunları</title>
@@ -43,89 +44,126 @@
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
+        <!-- Theme Switcher -->
+        <div class="theme-switcher" style="position: absolute; top: clamp(1rem, 2.5vw, 2rem); right: clamp(1rem, 2.5vw, 2rem); z-index: 10;">
+            <select id="theme-select" class="game-input" style="padding: 8px 12px; font-size: 0.9rem; min-width: 120px; cursor: pointer;" onchange="switchTheme(this.value)">
+                <option value="paira">Karanlık Neon</option>
+                <option value="space">Space</option>
+                <option value="light">Aydınlık</option>
+            </select>
+        </div>
+
         <section id="portal-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
             <div class="hero-content">
                 <h1 class="gradient-text">Paira Games</h1>
                 <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, tarayıcınız üzerinden ücretsiz ve indirmesiz online parti oyunları ve günlük zeka oyunları oynayın! Eğlenceye hemen katılın.</p>
             </div>
 
-            <div class="games-grid">
-                <!-- Ağlam -->
-                <a href="Aglam/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #1abc9c, #16a085);">A</div>
-                    <div class="game-info">
-                        <h3>Ağlam</h3>
-                        <p>Günlük Gizli Kelime</p>
-                    </div>
-                </a>
 
-                <!-- Tabu -->
-                <a href="Tabu/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">T</div>
-                    <div class="game-info">
-                        <h3>Tabu</h3>
-                        <p>Yasaklı Kelimeler</p>
-                    </div>
-                </a>
+            <div class="category-section">
+                <h2 class="category-title">Solo Oyunlar</h2>
+                <div class="games-grid single-column">
+                    <a href="Aglam/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/aglam.svg" alt="Ağlam Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Ağlam</h3>
+                            <p>Sadece 6 denemede o günkü gizli kelimeyi bul! Yapay zeka ile sıralanmış devasa sözcük ağımızda ne kadar "yakın" olduğunu renklerle gör.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
 
-                <!-- Kelime Avı -->
-                <a href="KelimeAvi/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">K</div>
-                    <div class="game-info">
-                        <h3>Kelime Avı</h3>
-                        <p>Sosyal Çıkarım</p>
-                    </div>
-                </a>
+            <div class="category-section">
+                <h2 class="category-title">Ekip Oyunları</h2>
+                <div class="games-grid single-column">
+                    <a href="Tabu/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/tabu.svg" alt="Tabu Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Tabu</h3>
+                            <p>Yasaklı kelimelere basmadan takımını zafere taşı! Zamana karşı yarışırken kelime dağarcığını ve anlatım becerini sına.</p>
+                        </div>
+                    </a>
 
-                <!-- İsim Şehir -->
-                <a href="IsimSehir/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">İ</div>
-                    <div class="game-info">
-                        <h3>İsim Şehir</h3>
-                        <p>Klasik Eğlence</p>
-                    </div>
-                </a>
+                    <a href="KelimeAvi/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/kelime-avi.svg" alt="Kelime Avı Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Kelime Avı</h3>
+                            <p>Harfleri birbirine bağla, en ilginç kelimeleri sen bul! Rakiplerinin aklına bile gelmeyen sözcükleri türeterek gecenin yıldızı ol.</p>
+                        </div>
+                    </a>
 
-                <!-- Elementler -->
-                <a href="Elementler/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">E</div>
-                    <div class="game-info">
-                        <h3>Elementler</h3>
-                        <p>Co-op Platform</p>
-                    </div>
-                </a>
+                    <a href="IsimSehir/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/isim-sehir.svg" alt="İsim Şehir Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>İsim Şehir</h3>
+                            <p>Klasik defter kalem oyunu artık dijitalde! Belirlenen harf ile en hızlı şekilde kategorileri doldurup herkesi şaşırtacak cevaplar ver.</p>
+                        </div>
+                    </a>
 
-                <!-- Bilgi Yarışması -->
-                <a href="BilgiYarismasi/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #f1c40f, #f39c12);">B</div>
-                    <div class="game-info">
-                        <h3>Bilgi Yarışması</h3>
-                        <p>Zeka ve Hız</p>
-                    </div>
-                </a>
+                    <a href="Elementler/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/elementler.svg" alt="Elementler Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Elementler</h3>
+                            <p>Suyu dondur, ateşi harlayarak rüzgarı yönet! 1-4 kişilik bu aksiyon dolu platformda sadece zeka ve takım oyunu bölümü geçmeni sağlar.</p>
+                        </div>
+                    </a>
 
-                <!-- Chat Tabu -->
-                <a href="ChatTabu/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">C</div>
-                    <div class="game-info">
-                        <h3>Chat Tabu</h3>
-                        <p>Streamer vs Chat</p>
-                    </div>
-                </a>
+                    <a href="BilgiYarismasi/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/bilgi-yarismasi.svg" alt="Bilgi Yarışması Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Bilgi Yarışması</h3>
+                            <p>Genel kültürden eğlenceye uzanan onlarca farklı konuda kapışın! Doğru cevabı saniyeler içinde ilk bulan en yüksek puanı kapar.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
 
-                <!-- ÇizBil (Gartic) -->
-                <a href="Gartic/index.html" class="game-card">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #34495e, #2c3e50);">Ç</div>
-                    <div class="game-info">
-                        <h3>ÇizBil</h3>
-                        <p>Streamer vs Chat</p>
-                    </div>
-                </a>
+            <div class="category-section">
+                <h2 class="category-title">Yayıncı - Chat Oyunları</h2>
+                <div class="games-grid single-column">
+                    <a href="ChatTabu/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/chat-tabu.svg" alt="Chat Tabu Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Chat Tabu</h3>
+                            <p>Yayıncı anlatır, chat çıldırır! Yasaklı kelimeleri kullanmadan hedefe ulaşmaya çalışırken izleyicilerle aranızdaki bağı test edin.</p>
+                        </div>
+                    </a>
+
+                    <a href="Gartic/index.html" class="game-card horizontal-card">
+                        <div class="game-icon">
+                            <img src="logolar/cizbil.svg" alt="ÇizBil Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>ÇizBil</h3>
+                            <p>Sanatını konuştur ya da çöp adamla idare et, gerisini chat halletsin! Çizim yeteneğinin komik tahminlerle buluştuğu interaktif bir şölen.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
         </section>
-    </main>
+        </main>
 
     <!-- Footer will be injected by shared.js -->
-    <script src="shared/shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            const select = document.getElementById('theme-select');
+            if (select) select.value = savedTheme;
+        });
+    </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ÇizBil | Streamer vs Chat</title>
@@ -26,9 +27,10 @@
     <div class="glass-bg"></div>
 
     <div class="container main-menu" id="login-container">
+        <div class="game-logo-container" ><img src="../logolar/cizbil.svg" alt="ÇizBil Logo" ></div>
         <header class="app-header">
-            <h1 class="logo-text">Çiz<span class="logo-accent">Bil</span></h1>
-            <p class="subtitle">Streamer vs Chat | Yayıncı Çizer, Chat Bilir!</p>
+            <h1 class="logo-text gradient-text">Çiz<span class="logo-accent">Bil</span></h1>
+            <p class="subtitle seo-description">Streamer vs Chat | Yayıncı Çizer, Chat Bilir!</p>
         </header>
 
         <div class="card login-card">
@@ -86,7 +88,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="../shared/shared.js"></script>
+
     <script>
         document.getElementById('btn-start').addEventListener('click', () => {
             const channel = document.getElementById('channel-input').value.trim();

@@ -42,7 +42,7 @@ function showToast(msg, type = "info") {
     }
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-blue)' };
+    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
     toast.style.borderLeftColor = colors[type] || colors.info;
     toast.textContent = msg;
     container.appendChild(toast);

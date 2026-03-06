@@ -40,7 +40,7 @@
 }
 
 .secondary-btn-small {
-    background-color: var(--primary-color);
+    background-color: var(--primary-purple);
     color: white;
     border: none;
     padding: 5px 15px;
@@ -137,7 +137,7 @@
     outline: none;
 }
 .control-group input[type="number"]:focus, .control-group select:focus {
-    border-color: var(--primary-color);
+    border-color: var(--primary-purple);
 }
 
 .category-grid {
@@ -159,8 +159,8 @@
     transition: all 0.2s;
     font-size: 0.9rem;
 }
-.cat-checkbox:hover { border-color: var(--primary-color); }
-.cat-checkbox input { accent-color: var(--primary-color); }
+.cat-checkbox:hover { border-color: var(--primary-purple); }
+.cat-checkbox input { accent-color: var(--primary-purple); }
 
 .custom-category-add {
     display: flex;
@@ -175,14 +175,14 @@
     border-radius: 8px;
     outline: none;
 }
-.custom-category-add input:focus { border-color: var(--primary-color); }
+.custom-category-add input:focus { border-color: var(--primary-purple); }
 
 /* Spinner */
 .spinner {
     width: 40px;
     height: 40px;
     border: 4px solid rgba(255,255,255,0.1);
-    border-top-color: var(--primary-color);
+    border-top-color: var(--primary-purple);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 20px auto;
@@ -240,7 +240,7 @@
     transition: border-color 0.2s, background 0.2s;
 }
 .game-input-wrapper input:focus {
-    border-color: var(--primary-color);
+    border-color: var(--primary-purple);
     background: rgba(0, 0, 0, 0.6);
     outline: none;
 }
@@ -288,7 +288,7 @@
 
 .voting-container::-webkit-scrollbar { width: 6px; }
 .voting-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-.voting-container::-webkit-scrollbar-thumb { background: var(--primary-hover); border-radius: 4px; }
+.voting-container::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 4px; }
 
 .vote-category-block {
     background: rgba(0, 0, 0, 0.2);

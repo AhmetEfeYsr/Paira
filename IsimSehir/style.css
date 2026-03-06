@@ -1,19 +1,3 @@
-:root {
-    --bg-deep: #0a0816;
-    --bg-navy: #151236;
-    --bg-panel: rgba(21, 18, 54, 0.85);
-    --primary-color: #8a2be2;
-    --primary-hover: #a64dff;
-    --secondary-color: #c8a2c8;
-    --secondary-hover: rgba(200, 162, 200, 0.8);
-    --danger-color: #e74c3c;
-    --success-color: #2ecc71;
-    --text-color: #f8f9fa;
-    --text-muted: #adb5bd;
-    --glass-border: rgba(200, 162, 200, 0.2);
-    --font-main: 'Poppins', sans-serif;
-}
-
 html, body {
     margin: 0;
     padding: 0;
@@ -76,7 +60,7 @@ html, body {
 }
 
 .input-group input:focus, .join-group input:focus {
-    border-color: var(--primary-color);
+    border-color: var(--primary-purple);
     box-shadow: 0 0 8px rgba(138, 43, 226, 0.3);
 }
 
@@ -99,7 +83,7 @@ button {
 }
 
 .primary-btn {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    background: linear-gradient(135deg, var(--primary-purple), var(--neon-purple));
     color: white;
     width: 100%;
     box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
@@ -176,7 +160,7 @@ button {
 .rule-card h3 {
     font-size: 1.1rem;
     margin: 0 0 10px 0;
-    color: var(--primary-hover);
+    color: var(--neon-purple);
 }
 
 .rule-card p {
@@ -199,7 +183,7 @@ button {
     color: white;
     padding: 12px 24px;
     border-radius: 10px;
-    border-left: 4px solid var(--primary-color);
+    border-left: 4px solid var(--primary-purple);
     font-weight: 500;
     box-shadow: 0 6px 16px rgba(0,0,0,0.4);
     margin-top: 10px;
