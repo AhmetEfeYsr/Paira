@@ -11,7 +11,28 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchTheme(themeName) {
     document.documentElement.setAttribute('data-theme', themeName);
     localStorage.setItem('paira_theme', themeName);
+    updateLogos(themeName);
 }
+
+function updateLogos(themeName) {
+    const logos = document.querySelectorAll('.game-icon img');
+    logos.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src.includes('logolar/')) {
+            // Find the base name (e.g. logolar/aglam.svg or logolar/aglam_paira.svg)
+            const parts = src.split('/');
+            const filename = parts[parts.length - 1];
+            const base = filename.split('_')[0].split('.')[0];
+            img.setAttribute('src', `../logolar/${base}_${themeName}.svg`.replace('../logolar', src.includes('../logolar') ? '../logolar' : 'logolar'));
+        }
+    });
+}
+
+// Initial logo update on load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+    updateLogos(savedTheme);
+});
 
 function injectSharedUI() {
     // Inject Footer

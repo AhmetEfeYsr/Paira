@@ -3,6 +3,7 @@
 :root, [data-theme="paira"] {
     --bg-deep: #0a0816; --bg-navy: #151236; --bg-panel: rgba(21, 18, 54, 0.85);
     --card-bg: rgba(0, 0, 0, 0.2);
+    --footer-bg: rgba(0, 0, 0, 0.25);
     --primary-purple: #8a2be2; --neon-purple: #a64dff; --lilac: #c8a2c8;
     --lilac-muted: rgba(200, 162, 200, 0.4); --text-main: #f8f9fa;
     --text-muted: #adb5bd; --glass-border: 1px solid rgba(200, 162, 200, 0.2);
@@ -16,6 +17,7 @@
 [data-theme="space"] {
     --bg-deep: #040a1f; --bg-navy: #09142e; --bg-panel: rgba(9, 20, 46, 0.85);
     --card-bg: rgba(0, 0, 0, 0.2);
+    --footer-bg: rgba(0, 0, 0, 0.25);
     --primary-purple: #00d2ff; --neon-purple: #3aedaf; --lilac: #a8f0d5;
     --lilac-muted: rgba(58, 237, 175, 0.3); --text-main: #eaf1fa;
     --text-muted: #8397c4; --glass-border: 1px solid rgba(58, 237, 175, 0.2);
@@ -29,6 +31,7 @@
 [data-theme="light"] {
     --bg-deep: #fdfdfd; --bg-navy: #f0f2f5; --bg-panel: rgba(255, 255, 255, 0.95);
     --card-bg: rgba(255, 255, 255, 0.6);
+    --footer-bg: #F0F0FF;
     --primary-purple: #3a86ff; --neon-purple: #4ea8de; --lilac: #48cae4;
     --lilac-muted: rgba(58, 134, 255, 0.3); --text-main: #2b2d42;
     --text-muted: #6c757d; --glass-border: 1px solid rgba(58, 134, 255, 0.3);
@@ -186,7 +189,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 /* Footer */
 .app-footer {
     width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
-    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: rgba(0,0,0,0.25); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
+    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: var(--footer-bg); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
     border: 1px solid rgba(200, 162, 200, 0.2); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); flex-shrink: 0;
 }
 .footer-text { color: #adb5bd; font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
