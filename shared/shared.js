@@ -125,5 +125,8 @@ window.acceptCookies = function() {
     const banner = document.getElementById('cookieBanner');
     if (banner) {
         banner.classList.remove('show');
+        setTimeout(() => {
+            banner.style.display = 'none';
+        }, 500);
     }
 }
