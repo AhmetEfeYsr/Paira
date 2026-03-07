@@ -175,7 +175,7 @@ body {
 /* Index Category Sections */
 .category-section {
     width: 100%;
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
     animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
 }
@@ -199,7 +199,7 @@ body {
 .games-grid.single-column {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
     width: 100%;
 }
 
