@@ -2,30 +2,68 @@
 
 :root, [data-theme="paira"] {
     --bg-deep: #0a0816; --bg-navy: #151236; --bg-panel: rgba(21, 18, 54, 0.85);
-    --card-bg: rgba(0, 0, 0, 0.2);
-    --footer-bg: rgba(0, 0, 0, 0.25);
-    --primary-purple: #8a2be2; --neon-purple: #a64dff; --lilac: #c8a2c8;
+    --card-bg: var(--card-bg);
+    --footer-bg: var(--footer-bg);
+    --primary-purple: var(--primary-purple); --neon-purple: var(--neon-purple); --lilac: var(--lilac);
     --lilac-muted: rgba(200, 162, 200, 0.4); --text-main: #f8f9fa;
-    --text-muted: #adb5bd; --glass-border: 1px solid rgba(200, 162, 200, 0.2);
-    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
-    --neon-glow-rgba: rgba(166, 77, 255, 0.4);
+    --text-muted: #adb5bd; --glass-border: 1px solid var(--lilac-muted);
+    --glass-shadow: 0 10px 40px 0 var(--glass-shadow);
+    --neon-glow-rgba: var(--neon-glow-rgba);
     --primary-rgb: 138, 43, 226;
     --gradient-end: #ff79c6;
-    --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f;
+    --success: var(--success); --danger: var(--danger); --warning: var(--warning);
+    --input-bg: var(--input-bg);
+    --item-bg: var(--item-bg);
+    --item-hover-bg: var(--item-hover-bg);
+    --msg-bg: var(--input-bg);
+    --msg-self-bg: rgba(var(--primary-rgb), 0.2);
+    --btn-secondary-bg: var(--btn-secondary-bg);
+    --btn-secondary-border: var(--btn-secondary-border);
+    --btn-secondary-hover: var(--btn-secondary-border);
+    --overlay-bg: var(--overlay-bg);
+    --modal-bg: var(--modal-bg);
+    --toast-bg: var(--toast-bg);
+    --code-bg: var(--code-bg);
+    --header-bg: rgba(var(--primary-rgb), 0.2);
+    --success-bg: rgba(46, 204, 113, 0.2);
+    --success-hover: rgba(46, 204, 113, 0.3);
+    --danger-bg: rgba(231, 76, 60, 0.2);
+    --danger-hover: rgba(231, 76, 60, 0.3);
+    --warning-bg: rgba(241, 196, 15, 0.2);
+    --warning-hover: rgba(241, 196, 15, 0.3);
 }
 
 [data-theme="space"] {
     --bg-deep: #040a1f; --bg-navy: #09142e; --bg-panel: rgba(9, 20, 46, 0.85);
-    --card-bg: rgba(0, 0, 0, 0.2);
-    --footer-bg: rgba(0, 0, 0, 0.25);
+    --card-bg: var(--card-bg);
+    --footer-bg: var(--footer-bg);
     --primary-purple: #00d2ff; --neon-purple: #3aedaf; --lilac: #a8f0d5;
     --lilac-muted: rgba(58, 237, 175, 0.3); --text-main: #eaf1fa;
     --text-muted: #8397c4; --glass-border: 1px solid rgba(58, 237, 175, 0.2);
-    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+    --glass-shadow: 0 10px 40px 0 var(--glass-shadow);
     --neon-glow-rgba: rgba(58, 237, 175, 0.4);
     --primary-rgb: 0, 210, 255;
     --gradient-end: #00ffcc;
     --success: #3aedaf; --danger: #ff4d4d; --warning: #ffd166;
+    --input-bg: var(--input-bg);
+    --item-bg: var(--item-bg);
+    --item-hover-bg: var(--item-hover-bg);
+    --msg-bg: var(--input-bg);
+    --msg-self-bg: rgba(var(--primary-rgb), 0.2);
+    --btn-secondary-bg: var(--btn-secondary-bg);
+    --btn-secondary-border: var(--btn-secondary-border);
+    --btn-secondary-hover: var(--btn-secondary-border);
+    --overlay-bg: rgba(4, 10, 31, 0.8);
+    --modal-bg: rgba(9, 20, 46, 0.95);
+    --toast-bg: rgba(9, 20, 46, 0.95);
+    --code-bg: var(--code-bg);
+    --header-bg: rgba(var(--primary-rgb), 0.2);
+    --success-bg: rgba(58, 237, 175, 0.2);
+    --success-hover: rgba(58, 237, 175, 0.3);
+    --danger-bg: rgba(255, 77, 77, 0.2);
+    --danger-hover: rgba(255, 77, 77, 0.3);
+    --warning-bg: rgba(255, 209, 102, 0.2);
+    --warning-hover: rgba(255, 209, 102, 0.3);
 }
 
 [data-theme="light"] {
@@ -35,16 +73,35 @@
     --primary-purple: #3a86ff; --neon-purple: #4ea8de; --lilac: #48cae4;
     --lilac-muted: rgba(58, 134, 255, 0.3); --text-main: #2b2d42;
     --text-muted: #6c757d; --glass-border: 1px solid rgba(58, 134, 255, 0.3);
-    --glass-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+    --glass-shadow: 0 10px 30px 0 var(--btn-secondary-bg);
     --neon-glow-rgba: rgba(78, 168, 222, 0.3);
     --primary-rgb: 58, 134, 255;
     --gradient-end: #90e0ef;
     --success: #2a9d8f; --danger: #e63946; --warning: #e9c46a;
+    --input-bg: rgba(0, 0, 0, 0.03);
+    --item-bg: rgba(0, 0, 0, 0.03);
+    --item-hover-bg: rgba(0, 0, 0, 0.06);
+    --msg-bg: rgba(0, 0, 0, 0.05);
+    --msg-self-bg: rgba(var(--primary-rgb), 0.15);
+    --btn-secondary-bg: rgba(0, 0, 0, 0.05);
+    --btn-secondary-border: var(--btn-secondary-bg);
+    --btn-secondary-hover: var(--btn-secondary-bg);
+    --overlay-bg: rgba(255, 255, 255, 0.8);
+    --modal-bg: rgba(255, 255, 255, 0.95);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --code-bg: rgba(0, 0, 0, 0.05);
+    --header-bg: rgba(var(--primary-rgb), 0.1);
+    --success-bg: rgba(42, 157, 143, 0.2);
+    --success-hover: rgba(42, 157, 143, 0.3);
+    --danger-bg: rgba(230, 57, 70, 0.2);
+    --danger-hover: rgba(230, 57, 70, 0.3);
+    --warning-bg: rgba(233, 196, 106, 0.2);
+    --warning-hover: rgba(233, 196, 106, 0.3);
 }
 
 .rule-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(200, 162, 200, 0.2);
+    background: var(--item-bg);
+    border: 1px solid var(--lilac-muted);
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -56,7 +113,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, rgba(166, 77, 255, 0.05), transparent);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: 0;
@@ -111,7 +168,7 @@
 
 /* Global Inputs & Buttons Enhanced */
 input[type="text"], input[type="password"], input[type="number"], select {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--input-bg);
     border: 1px solid var(--lilac-muted);
     color: var(--text-main);
     border-radius: 12px;
@@ -132,12 +189,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 
 [data-theme="light"] input[type="text"], [data-theme="light"] input[type="password"], [data-theme="light"] input[type="number"], [data-theme="light"] select {
     background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--btn-secondary-bg);
     color: var(--text-main);
 }
 
 [data-theme="light"] input[type="text"]:focus, [data-theme="light"] input[type="password"]:focus, [data-theme="light"] input[type="number"]:focus, [data-theme="light"] select:focus {
-    background: #ffffff;
+    background: var(--text-main);
     border-color: var(--neon-purple);
     box-shadow: 0 0 15px var(--neon-glow-rgba);
 }
@@ -156,14 +213,14 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 
 .btn-primary {
     background: linear-gradient(45deg, var(--primary-purple), var(--neon-purple));
-    color: white;
+    color: var(--text-main);
     box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 8px 25px var(--neon-glow-rgba);
-    background: linear-gradient(45deg, var(--neon-purple), #c8a2c8);
+    background: linear-gradient(45deg, var(--neon-purple), var(--lilac));
 }
 
 .btn-primary:active {
@@ -171,13 +228,13 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary-bg);
     color: var(--text-main);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--btn-secondary-border);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--btn-secondary-border);
     border-color: rgba(255, 255, 255, 0.4);
     transform: translateY(-3px) scale(1.02);
 }
@@ -190,15 +247,15 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 .app-footer {
     width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
     padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: var(--footer-bg); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
-    border: 1px solid rgba(200, 162, 200, 0.2); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); flex-shrink: 0;
+    border: 1px solid var(--lilac-muted); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px var(--card-bg); flex-shrink: 0;
 }
-.footer-text { color: #adb5bd; font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
+.footer-text { color: var(--text-muted); font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
 .footer-links { display: flex; gap: clamp(0.6rem, 1.5vw, 1.2rem); flex-wrap: wrap; justify-content: center; align-items: center; margin: 0.2rem 0; }
 .social-link {
     display: inline-flex; align-items: center; gap: 6px; color: #f8f9fa; text-decoration: none;
-    background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 10px; transition: all 0.3s ease; font-weight: 600; font-size: clamp(0.85rem, 1.5vw, 0.95rem); border: 1px solid transparent; cursor: pointer;
+    background: var(--input-bg); padding: 6px 14px; border-radius: 10px; transition: all 0.3s ease; font-weight: 600; font-size: clamp(0.85rem, 1.5vw, 0.95rem); border: 1px solid transparent; cursor: pointer;
 }
-.social-link:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+.social-link:hover { background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border); transform: translateY(-2px); box-shadow: 0 3px 8px var(--card-bg); }
 .social-link.kick-link span:first-child { color: #53fc18; font-weight: 900; font-size: clamp(0.9rem, 1.5vw, 1rem); letter-spacing: 0.45px; }
 .social-link.kick-link span:last-child { color: #bb88d0; font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(1rem, 2vw, 1.2rem); letter-spacing: 1.5px; line-height: 1; }
 
@@ -211,7 +268,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 8, 22, 0.8);
+    background: var(--overlay-bg);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     z-index: 99999;
@@ -228,15 +285,15 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .modal-content {
-    background: rgba(21, 18, 54, 0.95);
-    border: 1px solid rgba(200, 162, 200, 0.3);
+    background: var(--modal-bg);
+    border: 1px solid var(--lilac-muted);
     border-radius: 16px;
     width: 100%;
     max-width: 600px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 50px var(--overlay-bg);
     transform: translateY(20px);
     transition: transform 0.3s ease;
     color: #f8f9fa;
@@ -252,19 +309,19 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     justify-content: space-between;
     align-items: center;
     padding: 1.2rem 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--btn-secondary-bg);
 }
 
 .modal-header h2 {
     margin: 0;
     font-size: 1.4rem;
-    color: #c8a2c8;
+    color: var(--lilac);
 }
 
 .modal-close {
     background: transparent;
     border: none;
-    color: #adb5bd;
+    color: var(--text-muted);
     font-size: 1.8rem;
     cursor: pointer;
     line-height: 1;
@@ -272,7 +329,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .modal-close:hover {
-    color: #e74c3c;
+    color: var(--danger);
 }
 
 .modal-body {
@@ -280,11 +337,11 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     overflow-y: auto;
     font-size: 0.95rem;
     line-height: 1.6;
-    color: #adb5bd;
+    color: var(--text-muted);
 }
 
 .modal-body h3 {
-    color: #a64dff;
+    color: var(--neon-purple);
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
@@ -300,8 +357,8 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 
 /* Scrollbar for modal */
 .modal-body::-webkit-scrollbar { width: 6px; }
-.modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-.modal-body::-webkit-scrollbar-thumb { background: #a64dff; border-radius: 4px; }
+.modal-body::-webkit-scrollbar-track { background: var(--card-bg); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 4px; }
 
 /* Cookie Banner */
 .cookie-banner {
@@ -311,8 +368,8 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     transform: translateX(-50%);
     width: 90%;
     max-width: 800px;
-    background: rgba(30, 25, 70, 0.95);
-    border: 1px solid #a64dff;
+    background: var(--modal-bg);
+    border: 1px solid var(--neon-purple);
     border-radius: 12px;
     padding: 1rem 1.5rem;
     display: flex;
@@ -320,7 +377,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     align-items: center;
     gap: 1rem;
     z-index: 99998;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px var(--overlay-bg);
     transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
     color: #f8f9fa;
     font-family: 'Poppins', sans-serif;
@@ -338,12 +395,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 .cookie-text {
     flex: 1;
     font-size: 0.9rem;
-    color: #adb5bd;
+    color: var(--text-muted);
     min-width: 250px;
 }
 
 .cookie-text a {
-    color: #a64dff;
+    color: var(--neon-purple);
     text-decoration: none;
 }
 
@@ -352,8 +409,8 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .cookie-btn {
-    background: #8a2be2;
-    color: white;
+    background: var(--primary-purple);
+    color: var(--text-main);
     border: none;
     padding: 10px 20px;
     border-radius: 8px;
@@ -364,7 +421,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .cookie-btn:hover {
-    background: #a64dff;
+    background: var(--neon-purple);
 }
 
 @media (max-width: 600px) {

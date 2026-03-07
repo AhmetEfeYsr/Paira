@@ -24,7 +24,7 @@
 }
 
 .danger-btn-small {
-    background-color: rgba(231, 76, 60, 0.1);
+    background-color: var(--danger-bg);
     color: var(--danger-color);
     border: 1px solid var(--danger-color);
     padding: 5px 15px;
@@ -36,12 +36,12 @@
 }
 .danger-btn-small:hover {
     background-color: var(--danger-color);
-    color: white;
+    color: var(--text-main);
 }
 
 .secondary-btn-small {
     background-color: var(--primary-purple);
-    color: white;
+    color: var(--text-main);
     border: none;
     padding: 5px 15px;
     border-radius: 8px;
@@ -74,7 +74,7 @@
 .player-list li {
     padding: 10px 12px;
     margin-bottom: 8px;
-    background: rgba(255,255,255,0.03);
+    background: var(--item-bg);
     border-radius: 8px;
     border-left: 3px solid var(--secondary-color);
     display: flex;
@@ -129,9 +129,9 @@
 .control-group input[type="number"], .control-group select {
     width: 100%;
     padding: 10px;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--code-bg);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     border-radius: 10px;
     font-family: var(--font-main);
     outline: none;
@@ -151,7 +151,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255,255,255,0.03);
+    background: var(--item-bg);
     padding: 8px;
     border-radius: 8px;
     cursor: pointer;
@@ -169,9 +169,9 @@
 .custom-category-add input {
     flex: 1;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--code-bg);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     border-radius: 8px;
     outline: none;
 }
@@ -181,7 +181,7 @@
 .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid rgba(255,255,255,0.1);
+    border: 4px solid var(--btn-secondary-bg);
     border-top-color: var(--primary-purple);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -209,7 +209,7 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--secondary-color);
-    background: rgba(200, 162, 200, 0.1);
+    background: var(--lilac-muted);
     padding: 5px 15px;
     border-radius: 10px;
     border: 1px solid var(--glass-border);
@@ -231,9 +231,9 @@
 .game-input-wrapper input {
     width: 100%;
     padding: 12px;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--input-bg);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     border-radius: 10px;
     font-size: 1.1rem;
     box-sizing: border-box;
@@ -241,12 +241,12 @@
 }
 .game-input-wrapper input:focus {
     border-color: var(--primary-purple);
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--glass-shadow);
     outline: none;
 }
 .game-input-wrapper input:disabled {
     opacity: 0.6;
-    background: rgba(0,0,0,0.2);
+    background: var(--card-bg);
 }
 
 .game-actions {
@@ -273,7 +273,7 @@
     border-bottom: 1px solid var(--glass-border);
 }
 .scoreboard-table th { color: var(--secondary-color); font-weight: 600; }
-.scoreboard-table tr:hover { background: rgba(255,255,255,0.05); }
+.scoreboard-table tr:hover { background: var(--input-bg); }
 
 /* Voting Screen */
 .voting-container {
@@ -287,11 +287,11 @@
 }
 
 .voting-container::-webkit-scrollbar { width: 6px; }
-.voting-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+.voting-container::-webkit-scrollbar-track { background: var(--card-bg); border-radius: 4px; }
 .voting-container::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 4px; }
 
 .vote-category-block {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 15px;
     border: 1px solid var(--glass-border);
@@ -302,7 +302,7 @@
     color: var(--secondary-color);
     margin-top: 0;
     margin-bottom: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--input-bg);
     padding-bottom: 5px;
 }
 
@@ -311,7 +311,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px dashed rgba(255,255,255,0.1);
+    border-bottom: 1px dashed var(--btn-secondary-bg);
     flex-wrap: wrap;
     gap: 10px;
 }
@@ -319,7 +319,7 @@
 
 .vote-info { flex: 1; min-width: 200px; }
 .vote-player { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
-.vote-word { font-size: 1.15rem; font-weight: 600; color: #fff; }
+.vote-word { font-size: 1.15rem; font-weight: 600; color: var(--text-main); }
 
 .vote-counts-display {
     display: flex;
@@ -329,7 +329,7 @@
     margin-top: 6px;
 }
 .vote-count-pill {
-    background: rgba(255,255,255,0.05);
+    background: var(--input-bg);
     padding: 2px 8px;
     border-radius: 12px;
     border: 1px solid var(--glass-border);
@@ -340,9 +340,9 @@
     gap: 8px;
 }
 .vote-btn {
-    background: rgba(0,0,0,0.3);
+    background: var(--code-bg);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     padding: 6px 16px;
     border-radius: 8px;
     cursor: pointer;
@@ -350,7 +350,7 @@
     font-weight: 600;
     transition: all 0.2s;
 }
-.vote-btn:hover { background: rgba(255,255,255,0.1); }
+.vote-btn:hover { background: var(--btn-secondary-bg); }
 .vote-btn.selected {
     box-shadow: 0 0 10px rgba(138,43,226, 0.3);
 }
