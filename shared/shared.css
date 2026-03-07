@@ -5,7 +5,7 @@
     --card-bg: rgba(0, 0, 0, 0.2);
     --primary-purple: #8a2be2; --neon-purple: #a64dff; --lilac: #c8a2c8;
     --lilac-muted: rgba(200, 162, 200, 0.4); --text-main: #f8f9fa;
-    --text-muted: #adb5bd; --glass-border: 1px solid rgba(200, 162, 200, 0.2);
+    --text-muted: #adb5bd; --glass-border: 1px solid var(--lilac-muted);
     --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
     --neon-glow-rgba: rgba(166, 77, 255, 0.4);
     --primary-rgb: 138, 43, 226;
@@ -31,7 +31,7 @@
     --card-bg: rgba(255, 255, 255, 0.6);
     --primary-purple: #3a86ff; --neon-purple: #4ea8de; --lilac: #48cae4;
     --lilac-muted: rgba(58, 134, 255, 0.3); --text-main: #2b2d42;
-    --text-muted: #6c757d; --glass-border: 1px solid rgba(58, 134, 255, 0.3);
+    --text-muted: #495057; --glass-border: 1px solid rgba(58, 134, 255, 0.3);
     --glass-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
     --neon-glow-rgba: rgba(78, 168, 222, 0.3);
     --primary-rgb: 58, 134, 255;
@@ -40,8 +40,8 @@
 }
 
 .rule-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(200, 162, 200, 0.2);
+    background: color-mix(in srgb, var(--text-main) 3%, transparent);
+    border: 1px solid var(--lilac-muted);
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -53,7 +53,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, rgba(166, 77, 255, 0.05), transparent);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: 0;
@@ -108,7 +108,7 @@
 
 /* Global Inputs & Buttons Enhanced */
 input[type="text"], input[type="password"], input[type="number"], select {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--text-main) 5%, transparent);
     border: 1px solid var(--lilac-muted);
     color: var(--text-main);
     border-radius: 12px;
@@ -153,14 +153,14 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 
 .btn-primary {
     background: linear-gradient(45deg, var(--primary-purple), var(--neon-purple));
-    color: white;
+    color: #fff;
     box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 8px 25px var(--neon-glow-rgba);
-    background: linear-gradient(45deg, var(--neon-purple), #c8a2c8);
+    background: linear-gradient(45deg, var(--neon-purple), var(--lilac));
 }
 
 .btn-primary:active {
@@ -168,14 +168,14 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--text-main) 10%, transparent);
     color: var(--text-main);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid color-mix(in srgb, var(--text-main) 20%, transparent);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: color-mix(in srgb, var(--text-main) 20%, transparent);
+    border-color: color-mix(in srgb, var(--text-main) 40%, transparent);
     transform: translateY(-3px) scale(1.02);
 }
 
@@ -186,16 +186,16 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 /* Footer */
 .app-footer {
     width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
-    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: rgba(0,0,0,0.25); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
-    border: 1px solid rgba(200, 162, 200, 0.2); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); flex-shrink: 0;
+    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: var(--card-bg); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
+    border: 1px solid var(--lilac-muted); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); flex-shrink: 0;
 }
-.footer-text { color: #adb5bd; font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
+.footer-text { color: var(--text-muted); font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
 .footer-links { display: flex; gap: clamp(0.6rem, 1.5vw, 1.2rem); flex-wrap: wrap; justify-content: center; align-items: center; margin: 0.2rem 0; }
 .social-link {
-    display: inline-flex; align-items: center; gap: 6px; color: #f8f9fa; text-decoration: none;
-    background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 10px; transition: all 0.3s ease; font-weight: 600; font-size: clamp(0.85rem, 1.5vw, 0.95rem); border: 1px solid transparent; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); text-decoration: none; position: relative; z-index: 5;
+    background: color-mix(in srgb, var(--text-main) 5%, transparent); padding: 6px 14px; border-radius: 10px; transition: all 0.3s ease; font-weight: 600; font-size: clamp(0.85rem, 1.5vw, 0.95rem); border: 1px solid transparent; cursor: pointer;
 }
-.social-link:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+.social-link:hover { background: color-mix(in srgb, var(--text-main) 10%, transparent); border-color: color-mix(in srgb, var(--text-main) 20%, transparent); transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2); }
 .social-link.kick-link span:first-child { color: #53fc18; font-weight: 900; font-size: clamp(0.9rem, 1.5vw, 1rem); letter-spacing: 0.45px; }
 .social-link.kick-link span:last-child { color: #bb88d0; font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(1rem, 2vw, 1.2rem); letter-spacing: 1.5px; line-height: 1; }
 
@@ -208,7 +208,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 8, 22, 0.8);
+    background: var(--bg-deep);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     z-index: 99999;
@@ -225,18 +225,18 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .modal-content {
-    background: rgba(21, 18, 54, 0.95);
-    border: 1px solid rgba(200, 162, 200, 0.3);
+    background: var(--bg-panel);
+    border: 1px solid var(--lilac-muted);
     border-radius: 16px;
     width: 100%;
     max-width: 600px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     transform: translateY(20px);
     transition: transform 0.3s ease;
-    color: #f8f9fa;
+    color: var(--text-main);
     font-family: 'Poppins', sans-serif;
 }
 
@@ -249,19 +249,19 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     justify-content: space-between;
     align-items: center;
     padding: 1.2rem 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid color-mix(in srgb, var(--text-main) 10%, transparent);
 }
 
 .modal-header h2 {
     margin: 0;
     font-size: 1.4rem;
-    color: #c8a2c8;
+    color: var(--lilac);
 }
 
 .modal-close {
     background: transparent;
     border: none;
-    color: #adb5bd;
+    color: var(--text-muted);
     font-size: 1.8rem;
     cursor: pointer;
     line-height: 1;
@@ -269,7 +269,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .modal-close:hover {
-    color: #e74c3c;
+    color: var(--danger);
 }
 
 .modal-body {
@@ -277,11 +277,11 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     overflow-y: auto;
     font-size: 0.95rem;
     line-height: 1.6;
-    color: #adb5bd;
+    color: var(--text-muted);
 }
 
 .modal-body h3 {
-    color: #a64dff;
+    color: var(--neon-purple);
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
@@ -297,8 +297,8 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 
 /* Scrollbar for modal */
 .modal-body::-webkit-scrollbar { width: 6px; }
-.modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-.modal-body::-webkit-scrollbar-thumb { background: #a64dff; border-radius: 4px; }
+.modal-body::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 4px; }
 
 /* Cookie Banner */
 .cookie-banner {
@@ -308,18 +308,18 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     transform: translateX(-50%);
     width: 90%;
     max-width: 800px;
-    background: rgba(30, 25, 70, 0.95);
-    border: 1px solid #a64dff;
+    background: var(--bg-panel);
+    border: 1px solid var(--neon-purple);
     border-radius: 12px;
     padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    z-index: 99998;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 10;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
-    color: #f8f9fa;
+    color: var(--text-main);
     font-family: 'Poppins', sans-serif;
     flex-wrap: wrap;
     opacity: 0;
@@ -335,12 +335,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 .cookie-text {
     flex: 1;
     font-size: 0.9rem;
-    color: #adb5bd;
+    color: var(--text-muted);
     min-width: 250px;
 }
 
 .cookie-text a {
-    color: #a64dff;
+    color: var(--neon-purple);
     text-decoration: none;
 }
 
@@ -349,8 +349,8 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .cookie-btn {
-    background: #8a2be2;
-    color: white;
+    background: var(--primary-purple);
+    color: #fff;
     border: none;
     padding: 10px 20px;
     border-radius: 8px;
@@ -361,7 +361,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 .cookie-btn:hover {
-    background: #a64dff;
+    background: var(--neon-purple);
 }
 
 @media (max-width: 600px) {

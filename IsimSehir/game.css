@@ -36,12 +36,12 @@
 }
 .danger-btn-small:hover {
     background-color: var(--danger-color);
-    color: white;
+    color: var(--text-main);
 }
 
 .secondary-btn-small {
     background-color: var(--primary-purple);
-    color: white;
+    color: var(--text-main);
     border: none;
     padding: 5px 15px;
     border-radius: 8px;
@@ -131,7 +131,7 @@
     padding: 10px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     border-radius: 10px;
     font-family: var(--font-main);
     outline: none;
@@ -171,7 +171,7 @@
     padding: 8px 12px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     border-radius: 8px;
     outline: none;
 }
@@ -233,7 +233,7 @@
     padding: 12px;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     border-radius: 10px;
     font-size: 1.1rem;
     box-sizing: border-box;
@@ -319,7 +319,7 @@
 
 .vote-info { flex: 1; min-width: 200px; }
 .vote-player { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
-.vote-word { font-size: 1.15rem; font-weight: 600; color: #fff; }
+.vote-word { font-size: 1.15rem; font-weight: 600; color: var(--text-main); }
 
 .vote-counts-display {
     display: flex;
@@ -342,7 +342,7 @@
 .vote-btn {
     background: rgba(0,0,0,0.3);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--text-main);
     padding: 6px 16px;
     border-radius: 8px;
     cursor: pointer;

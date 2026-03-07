@@ -66,7 +66,7 @@ body {
 .form-group label { font-size: 0.95rem; font-weight: 500; color: var(--text-main); letter-spacing: 0.5px; }
 input[type="text"], input[type="number"] {
     width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(147, 197, 253, 0.2);
-    border-radius: 10px; color: white; font-size: 1rem; font-family: inherit; transition: all 0.3s ease;
+    border-radius: 10px; color: var(--text-main); font-size: 1rem; font-family: inherit; transition: all 0.3s ease;
 }
 input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: var(--neon-purple); background: rgba(0,0,0,0.5); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 
@@ -74,7 +74,7 @@ input[type="text"]:focus, input[type="number"]:focus { outline: none; border-col
     padding: 12px 20px; min-height: 40px; border: none; border-radius: 10px;
     font-size: clamp(0.9rem, 2vw, 1rem); font-weight: 600; cursor: pointer; transition: all 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    color: white; touch-action: manipulation; white-space: nowrap;
+    color: var(--text-main); touch-action: manipulation; white-space: nowrap;
 }
 .btn-primary { background: var(--primary-purple); }
 .btn-primary:hover:not(.disabled) { background: var(--neon-purple); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3); }
@@ -89,7 +89,7 @@ input[type="text"]:focus, input[type="number"]:focus { outline: none; border-col
 .btn-block { width: 100%; }
 
 .card {
-    background: rgba(0, 0, 0, 0.25); border: var(--glass-border);
+    background: var(--card-bg); border: var(--glass-border);
     border-radius: clamp(12px, 2vw, 16px); padding: clamp(1rem, 2.5vw, 1.5rem);
     overflow: hidden; display: flex; flex-direction: column; min-height: 0;
 }
@@ -116,7 +116,7 @@ input[type="text"]:focus, input[type="number"]:focus { outline: none; border-col
 
 /* Toast */
 .toast-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 10000; }
-.toast { background: rgba(20, 15, 50, 0.95); color: white; padding: 12px 20px; border-radius: 10px; border-left: 4px solid var(--primary-purple); box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; font-weight: 500; font-size: clamp(0.85rem, 2vw, 0.95rem); }
+.toast { background: rgba(20, 15, 50, 0.95); color: #fff; padding: 12px 20px; border-radius: 10px; border-left: 4px solid var(--primary-purple); box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; font-weight: 500; font-size: clamp(0.85rem, 2vw, 0.95rem); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 #mobile-warning {
@@ -126,7 +126,7 @@ input[type="text"]:focus, input[type="number"]:focus { outline: none; border-col
 }
 #mobile-warning.active { display: flex !important; }
 #mobile-warning h1 { color: var(--danger); font-size: 2rem; margin-bottom: 1rem; }
-#mobile-warning p { color: white; font-size: 1.1rem; }
+#mobile-warning p { color: var(--text-main); font-size: 1.1rem; }
 
 .toggle-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
 .toggle-btn:hover { opacity: 1; }

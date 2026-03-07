@@ -52,7 +52,7 @@ html, body {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--glass-border);
     border-radius: 10px;
-    color: white;
+    color: var(--text-main);
     outline: none;
     transition: all 0.3s;
     font-family: var(--font-main);
@@ -84,7 +84,7 @@ button {
 
 .primary-btn {
     background: linear-gradient(135deg, var(--primary-purple), var(--neon-purple));
-    color: white;
+    color: var(--text-main);
     width: 100%;
     box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
 }
@@ -180,7 +180,7 @@ button {
 
 .toast {
     background: rgba(20, 15, 50, 0.95);
-    color: white;
+    color: var(--text-main);
     padding: 12px 24px;
     border-radius: 10px;
     border-left: 4px solid var(--primary-purple);

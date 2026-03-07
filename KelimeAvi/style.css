@@ -50,7 +50,7 @@ body {
 .seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: 0.5rem; margin-bottom: 1rem; }
 
 .seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; overflow-y: visible; }
-.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: #fff; }
+.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: var(--text-main); }
 
 .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
 .rule-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
@@ -74,7 +74,7 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 .form-group label { display: block; margin-bottom: 0.5rem; color: var(--lilac); font-weight: 600; font-size: 0.9rem; }
 
 input[type="text"], input[type="number"], select {
-    width: 100%; padding: 12px 16px; min-height: 40px; background: rgba(0, 0, 0, 0.25);
+    width: 100%; padding: 12px 16px; min-height: 40px; background: var(--card-bg);
     border: 1px solid var(--lilac-muted); border-radius: 10px;
     color: var(--text-main); font-family: inherit; font-size: 16px;
     outline: none; transition: all 0.3s ease;
@@ -86,7 +86,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
     padding: 12px 20px; min-height: 40px; border: none; border-radius: 10px;
     font-size: clamp(0.9rem, 2vw, 1rem); font-weight: 600; cursor: pointer; transition: all 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    color: white; touch-action: manipulation; white-space: nowrap;
+    color: var(--text-main); touch-action: manipulation; white-space: nowrap;
 }
 .btn-primary { background: var(--primary-purple); }
 .btn-primary:hover:not(.disabled) { background: var(--neon-purple); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3); }
@@ -101,7 +101,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 .btn-block { width: 100%; }
 
 .card {
-    background: rgba(0, 0, 0, 0.25); border: var(--glass-border);
+    background: var(--card-bg); border: var(--glass-border);
     border-radius: clamp(12px, 2vw, 16px); padding: clamp(1rem, 2.5vw, 1.5rem);
     overflow: hidden; display: flex; flex-direction: column; min-height: 0;
 }
@@ -141,7 +141,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 }
 
 .toast-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 10000; }
-.toast { background: rgba(10, 17, 40, 0.95); color: white; padding: 12px 20px; border-radius: 10px; border-left: 4px solid var(--primary-purple); box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; font-weight: 500; font-size: clamp(0.85rem, 2vw, 0.95rem); }
+.toast { background: rgba(10, 17, 40, 0.95); color: #fff; padding: 12px 20px; border-radius: 10px; border-left: 4px solid var(--primary-purple); box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; font-weight: 500; font-size: clamp(0.85rem, 2vw, 0.95rem); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 .toggle-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }

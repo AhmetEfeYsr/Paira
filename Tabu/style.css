@@ -51,7 +51,7 @@ body {
 .seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: -1rem; margin-bottom: 1rem; }
 
 .seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; overflow-y: visible; }
-.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: #fff; }
+.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: var(--text-main); }
 
 .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
 .rule-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
@@ -74,7 +74,7 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 .form-group label { display: block; margin-bottom: 0.5rem; color: var(--lilac); font-weight: 600; font-size: 0.9rem; }
 
 input[type="text"], input[type="number"], select {
-    width: 100%; padding: 12px 16px; min-height: 40px; background: rgba(0, 0, 0, 0.25); 
+    width: 100%; padding: 12px 16px; min-height: 40px; background: var(--card-bg);
     border: 1px solid var(--lilac-muted); border-radius: 10px;
     color: var(--text-main); font-family: inherit; font-size: 16px; 
     outline: none; transition: all 0.3s ease; 
@@ -91,13 +91,13 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
     display: inline-flex; align-items: center;
 }
 .category-pill input[type="checkbox"] { display: none; }
-.category-pill:has(input:checked) { background: rgba(138, 43, 226, 0.4); border-color: var(--neon-purple); color: white; box-shadow: 0 4px 10px rgba(138, 43, 226, 0.2); }
+.category-pill:has(input:checked) { background: rgba(138, 43, 226, 0.4); border-color: var(--neon-purple); color: var(--text-main); box-shadow: 0 4px 10px rgba(138, 43, 226, 0.2); }
 
 .btn { 
     padding: 12px 20px; min-height: 40px; border: none; border-radius: 10px; 
     font-size: clamp(0.9rem, 2vw, 1rem); font-weight: 600; cursor: pointer; transition: all 0.2s ease; 
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
-    color: white; touch-action: manipulation; white-space: nowrap; 
+    color: var(--text-main); touch-action: manipulation; white-space: nowrap;
 }
 .btn-primary { background: var(--primary-purple); }
 .btn-primary:hover:not(.disabled) { background: var(--neon-purple); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(138, 43, 226, 0.3); }
@@ -112,7 +112,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 .btn-block { width: 100%; }
 
 .card { 
-    background: rgba(0, 0, 0, 0.25); border: var(--glass-border); 
+    background: var(--card-bg); border: var(--glass-border);
     border-radius: clamp(12px, 2vw, 16px); padding: clamp(1rem, 2.5vw, 1.5rem); 
     overflow: hidden; display: flex; flex-direction: column; min-height: 0;
 }
@@ -181,7 +181,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 }
 
 .card-header { background: rgba(138, 43, 226, 0.2); padding: clamp(1rem, 2.5vw, 1.4rem); border-bottom: 2px solid var(--primary-purple); border-radius: 14px 14px 0 0; flex-shrink: 0; }
-.card-header h2 { font-size: clamp(1.4rem, 3.5vw, 1.8rem); color: #fff; margin: 0; letter-spacing: 1px; }
+.card-header h2 { font-size: clamp(1.4rem, 3.5vw, 1.8rem); color: var(--text-main); margin: 0; letter-spacing: 1px; }
 
 /* 4. KURAL: Eğer kart çok uzarsa SADECE KELİMELER kendi içinde kaydırılır. */
 #forbidden-words { 
@@ -219,7 +219,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 .chat-input-wrapper input { flex-grow: 1; min-height: 36px; padding: 10px 14px; font-size: 15px; }
 
 .toast-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 10000; }
-.toast { background: rgba(20, 15, 50, 0.95); color: white; padding: 12px 20px; border-radius: 10px; border-left: 4px solid var(--primary-purple); box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; font-weight: 500; font-size: clamp(0.85rem, 2vw, 0.95rem); }
+.toast { background: rgba(20, 15, 50, 0.95); color: #fff; padding: 12px 20px; border-radius: 10px; border-left: 4px solid var(--primary-purple); box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; font-weight: 500; font-size: clamp(0.85rem, 2vw, 0.95rem); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 .guesser-mode { border-color: var(--success); background: rgba(46, 204, 113, 0.1); color: var(--success); }
@@ -232,7 +232,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: rgba(0
 
 .app-footer {
     width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
-    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: rgba(0,0,0,0.25); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
+    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: var(--card-bg); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
     border: var(--glass-border); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); flex-shrink: 0;
 }
 .footer-text { color: var(--text-muted); font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }

@@ -15,7 +15,7 @@
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(200, 162, 200, 0.4);
     border-radius: 12px;
-    color: #fff;
+    color: var(--text-main);
     outline: none;
     transition: all 0.2s ease;
 }
@@ -32,7 +32,7 @@
 }
 
 .history-panel {
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--card-bg);
     border: 1px solid rgba(200, 162, 200, 0.2);
     border-radius: 16px;
     display: flex;
@@ -71,7 +71,7 @@
     padding: 14px 20px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    color: var(--text-main);
     font-weight: 500;
     font-size: 1.05rem;
     transition: background 0.2s;
@@ -122,7 +122,7 @@
     text-align: center;
     margin-bottom: 20px;
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    color: #fff;
+    color: var(--text-main);
 }
 
 .hidden {
