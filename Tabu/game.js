@@ -277,6 +277,8 @@ function endTurn() {
     playSound('end');
     broadcast({ type: 'PLAY_SOUND', sound: 'end' });
 
+    advanceWord();
+
     if (state.turnIndex >= state.turnOrder.length) {
         state.turnIndex = 0;
         state.round++;
