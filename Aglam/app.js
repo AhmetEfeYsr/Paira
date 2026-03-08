@@ -83,7 +83,7 @@ async function initGame(selectedDateStr = null) {
             isToday = true;
         }
 
-        const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID";
+        const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID"; // BURAYA KENDI FIREBASE PROJE ID'NIZI YAZIN
         const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${fetchDateStr}.json?alt=media`;
 
         let response = await fetch(fileUrl);

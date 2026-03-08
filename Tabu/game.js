@@ -463,11 +463,19 @@ function updateUI() {
         const sa = document.getElementById('score-a'), sb = document.getElementById('score-b');
         if (sa) sa.innerText = state.scoreA; if (sb) sb.innerText = state.scoreB;
 
+
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) {
             btnPause.classList.toggle('hidden', state.isWaitingForReady);
             btnPause.innerText = state.isPaused ? '▶' : '⏸';
+            // Everyone should be able to click it, visual cue
+            if(state.isPaused) {
+                btnPause.style.background = 'var(--danger)';
+            } else {
+                btnPause.style.background = 'var(--btn-bg)';
+            }
         }
+
 
         const tPlayer = state.players[state.turnId];
         const fw = document.getElementById('forbidden-words'), mainWord = document.getElementById('main-word');
