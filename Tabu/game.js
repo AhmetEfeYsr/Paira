@@ -201,10 +201,14 @@ document.getElementById('btn-start-game').addEventListener('click', () => {
     state.isPaused = false;
 
     state.turnOrder = [];
-    const maxLen = Math.max(teamA.length, teamB.length);
-    for (let i = 0; i < maxLen; i++) {
-        if (teamA[i % teamA.length]) state.turnOrder.push(teamA[i % teamA.length]);
-        if (teamB[i % teamB.length]) state.turnOrder.push(teamB[i % teamB.length]);
+    // Her iki takımdaki HERKESİN oynamasını garanti etmek için EKOK (LCM) kullanıyoruz
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    const lcm = (a, b) => (a * b) / gcd(a, b);
+    const totalCycles = lcm(teamA.length, teamB.length);
+
+    for (let i = 0; i < totalCycles; i++) {
+        if (teamA.length > 0) state.turnOrder.push(teamA[i % teamA.length]);
+        if (teamB.length > 0) state.turnOrder.push(teamB[i % teamB.length]);
     }
 
     state.turnIndex = 0;
