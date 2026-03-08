@@ -26,7 +26,7 @@ let state = {
     isPaused: false
 };
 
-// Fuzzy Matcher implementation for Turkish characters (from KelimeAvi/Aglam concept)
+// Fuzzy Matcher implementation for Turkish characters (from KelimeAvi/Bagnam concept)
 const normalizeTurkish = (str) => {
     return str.replace(/İ/g, 'I').replace(/ı/g, 'I')
               .replace(/Ş/g, 'S').replace(/ş/g, 'S')
