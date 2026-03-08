@@ -54,8 +54,8 @@ body {
 .seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: var(--text-main); }
 
 .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
-.rule-card { background: var(--card-bg); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.2s ease; }
-.rule-card:hover { transform: translateY(-5px); border-color: var(--neon-purple); background: rgba(var(--primary-rgb), 0.1); }
+.rule-card { background: var(--card-bg); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+.rule-card:hover { transform: translateY(-5px); border-color: var(--neon-purple); background: rgba(var(--primary-rgb), 0.1); box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.15); }
 .rule-card h3 { font-size: 1.1rem; color: var(--neon-purple); margin-bottom: 0.5rem; }
 .rule-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
@@ -100,15 +100,15 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
     color: var(--text-main); touch-action: manipulation; white-space: nowrap;
 }
 .btn-primary { background: var(--primary-purple); }
-.btn-primary:hover:not(.disabled) { background: var(--neon-purple); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(var(--primary-rgb), 0.3); }
+.btn-primary:hover:not(.disabled) { background: var(--neon-purple); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.4); }
 .btn-secondary { background: var(--input-bg); border: 1px solid var(--lilac-muted); }
-.btn-secondary:hover { background: var(--btn-secondary-bg); border-color: var(--lilac); transform: translateY(-2px); }
+.btn-secondary:hover { background: var(--btn-secondary-bg); border-color: var(--lilac); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
 .btn-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
-.btn-success:hover { background: var(--success-hover); transform: translateY(-2px); }
+.btn-success:hover { background: var(--success-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(46, 204, 113, 0.2); }
 .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
-.btn-danger:hover { background: var(--danger-hover); transform: translateY(-2px); }
+.btn-danger:hover { background: var(--danger-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(231, 76, 60, 0.2); }
 .btn-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
-.btn-warning:hover { background: var(--warning-hover); transform: translateY(-2px); }
+.btn-warning:hover { background: var(--warning-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(241, 196, 15, 0.2); }
 .btn-block { width: 100%; }
 
 .card {
