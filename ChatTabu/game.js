@@ -2,16 +2,16 @@
 
 // Fallback Word List (same as Tabu fallback)
 const fallbackWords = [
-    { id:1, kelime:"ARABA", yasakli_kelimeler:["TAŞIT","MOTOR","DİREKSİYON","TEKERLEK","VİTES"], kategori:"Genel", zorluk:1 },
-    { id:2, kelime:"BİLGİSAYAR", yasakli_kelimeler:["KLAVYE","FARE","EKRAN","İNTERNET","TEKNOLOJİ"], kategori:"Genel", zorluk:1 },
-    { id:3, kelime:"GÜNEŞ", yasakli_kelimeler:["SICAK","YAZ","GÖKYÜZÜ","SARI","IŞIK"], kategori:"Doğa", zorluk:1 },
-    { id:4, kelime:"KALEM", yasakli_kelimeler:["YAZI","KAĞIT","SİLGİ","OKUL","MÜREKKEP"], kategori:"Eğitim", zorluk:1 },
-    { id:5, kelime:"DENİZ", yasakli_kelimeler:["SU","MAVİ","YÜZMEK","KUM","DALGA"], kategori:"Doğa", zorluk:1 },
-    { id:6, kelime:"KİTAP", yasakli_kelimeler:["OKUMAK","SAYFA","YAZAR","KÜTÜPHANE","ROMAN"], kategori:"Eğitim", zorluk:1 },
-    { id:7, kelime:"TELEFON", yasakli_kelimeler:["ARAMAK","MESAJ","CEP","EKRAN","İLETİŞİM"], kategori:"Teknoloji", zorluk:1 },
-    { id:8, kelime:"EV", yasakli_kelimeler:["YAŞAMAK","AİLE","ODALAR","KAPI","PENCERE"], kategori:"Genel", zorluk:1 },
-    { id:9, kelime:"AĞAÇ", yasakli_kelimeler:["YEŞİL","YAPRAK","ORMAN","DOĞA","DAL"], kategori:"Doğa", zorluk:1 },
-    { id:10, kelime:"KEDİ", yasakli_kelimeler:["MİYAV","HAYVAN","EVVCİL","TÜY","KUYRUK"], kategori:"Hayvanlar", zorluk:1 }
+    { ana_kelime: "ARABA", yasakli_kelimeler: ["TAŞIT","MOTOR","DİREKSİYON","TEKERLEK","VİTES"], kategori: "Genel", zorluk: 10 },
+    { ana_kelime: "BİLGİSAYAR", yasakli_kelimeler: ["KLAVYE","FARE","EKRAN","İNTERNET","TEKNOLOJİ"], kategori: "Genel", zorluk: 10 },
+    { ana_kelime: "GÜNEŞ", yasakli_kelimeler: ["SICAK","YAZ","GÖKYÜZÜ","SARI","IŞIK"], kategori: "Doğa", zorluk: 10 },
+    { ana_kelime: "KALEM", yasakli_kelimeler: ["YAZI","KAĞIT","SİLGİ","OKUL","MÜREKKEP"], kategori: "Eğitim", zorluk: 10 },
+    { ana_kelime: "DENİZ", yasakli_kelimeler: ["SU","MAVİ","YÜZMEK","KUM","DALGA"], kategori: "Doğa", zorluk: 10 },
+    { ana_kelime: "KİTAP", yasakli_kelimeler: ["OKUMAK","SAYFA","YAZAR","KÜTÜPHANE","ROMAN"], kategori: "Eğitim", zorluk: 10 },
+    { ana_kelime: "TELEFON", yasakli_kelimeler: ["ARAMAK","MESAJ","CEP","EKRAN","İLETİŞİM"], kategori: "Teknoloji", zorluk: 10 },
+    { ana_kelime: "EV", yasakli_kelimeler: ["YAŞAMAK","AİLE","ODALAR","KAPI","PENCERE"], kategori: "Genel", zorluk: 10 },
+    { ana_kelime: "AĞAÇ", yasakli_kelimeler: ["YEŞİL","YAPRAK","ORMAN","DOĞA","DAL"], kategori: "Doğa", zorluk: 10 },
+    { ana_kelime: "KEDİ", yasakli_kelimeler: ["MİYAV","HAYVAN","EVCİL","TÜY","KUYRUK"], kategori: "Hayvanlar", zorluk: 10 }
 ];
 
 let wordDatabase = [];
@@ -120,7 +120,7 @@ async function initGame() {
 
     // Load Words
     try {
-        const response = await fetch('../Tabu/words.json');
+        const response = await fetch('../Tabu/tr.json');
         if (response.ok) {
             wordDatabase = await response.json();
         } else {
@@ -174,7 +174,7 @@ function nextWord() {
     const mainEl = document.getElementById('main-word');
     const fbEl = document.getElementById('forbidden-words');
 
-    mainEl.textContent = currentWord.kelime;
+    mainEl.textContent = currentWord.ana_kelime;
     fbEl.innerHTML = currentWord.yasakli_kelimeler.map(w => `<li>${w}</li>`).join('');
 
     state.isPaused = false;
@@ -199,7 +199,7 @@ function handleChatMessage(username, message) {
     msgDiv.appendChild(textSpan);
 
     // Check if match
-    if (isMatch(message, currentWord.kelime)) {
+    if (isMatch(message, currentWord.ana_kelime)) {
         msgDiv.classList.add('correct');
         textSpan.textContent += ' (🎉 DOĞRU BİLDİ!)';
 

@@ -1,0 +1,14 @@
+[
+    {
+        "ana_kelime": "kontrol",
+        "kategori": "Soyut Kavramlar",
+        "yasakli_kelimeler": [
+            "Denetim",
+            "Hakimiyet",
+            "Kumanda",
+            "Yönetmek",
+            "Sınamak"
+        ],
+        "zorluk": 85
+    }
+]

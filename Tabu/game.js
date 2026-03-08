@@ -33,11 +33,11 @@ let state = {
 
 // Yedek Kelime Havuzu (Fetch başarısız olursa diye)
 const fallbackWords = [
-    { kelime: "GÜNEŞ", yasakli: ["SARI", "SICAK", "GÖKYÜZÜ", "YILDIZ", "YAZ"], kategori: "Genel", zorluk: 10 },
-    { kelime: "TELEFON", yasakli: ["KONUŞMAK", "AKILLI", "EKRAN", "MESAJ", "ARAMAK"], kategori: "Teknoloji", zorluk: 20 },
-    { kelime: "KİTAP", yasakli: ["OKUMAK", "SAYFA", "KÜTÜPHANE", "YAZAR", "HİKAYE"], kategori: "Genel", zorluk: 15 },
-    { kelime: "BİLGİSAYAR", yasakli: ["KLAVYE", "İNTERNET", "OYUN", "EKRAN", "YAZILIM"], kategori: "Teknoloji", zorluk: 30 },
-    { kelime: "PİZZA", yasakli: ["HAMUR", "PEYNİR", "İTALYAN", "YEMEK", "DİLİM"], kategori: "Yemek", zorluk: 10 }
+    { ana_kelime: "GÜNEŞ", yasakli_kelimeler: ["SARI", "SICAK", "GÖKYÜZÜ", "YILDIZ", "YAZ"], kategori: "Genel", zorluk: 10 },
+    { ana_kelime: "TELEFON", yasakli_kelimeler: ["KONUŞMAK", "AKILLI", "EKRAN", "MESAJ", "ARAMAK"], kategori: "Teknoloji", zorluk: 20 },
+    { ana_kelime: "KİTAP", yasakli_kelimeler: ["OKUMAK", "SAYFA", "KÜTÜPHANE", "YAZAR", "HİKAYE"], kategori: "Genel", zorluk: 15 },
+    { ana_kelime: "BİLGİSAYAR", yasakli_kelimeler: ["KLAVYE", "İNTERNET", "OYUN", "EKRAN", "YAZILIM"], kategori: "Teknoloji", zorluk: 30 },
+    { ana_kelime: "PİZZA", yasakli_kelimeler: ["HAMUR", "PEYNİR", "İTALYAN", "YEMEK", "DİLİM"], kategori: "Yemek", zorluk: 10 }
 ];
 
 // --- SES YÖNETİMİ ---
@@ -481,9 +481,9 @@ function updateUI() {
             let wordObj = state.currentWord || (state.activeWords?.[state.wordIndex]);
 
             if (wordObj && (amINarrator || isOpponent)) {
-                mainWord.innerText = wordObj.kelime;
+                mainWord.innerText = wordObj.ana_kelime;
                 fw.innerHTML = '';
-                wordObj.yasakli.forEach(w => { const li = document.createElement('li'); li.innerText = w; fw.appendChild(li); });
+                wordObj.yasakli_kelimeler.forEach(w => { const li = document.createElement('li'); li.innerText = w; fw.appendChild(li); });
             }
 
             if (amINarrator) {
