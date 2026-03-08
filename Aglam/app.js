@@ -6,13 +6,34 @@ let targetWord = "";
 let guesses = []; // Store user's guesses: { word: string, rank: number, score: number }
 let hasWon = false;
 
+
 document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-start');
     const btnGuess = document.getElementById('btn-guess');
     const wordInput = document.getElementById('word-input');
     const btnGiveup = document.getElementById('btn-giveup');
+    const btnPlayPast = document.getElementById('btn-play-past');
+    const datePicker = document.getElementById('past-date-picker');
 
-    if(btnStart) btnStart.addEventListener('click', initGame);
+    // Set max date to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    if (datePicker) {
+        datePicker.max = `${yyyy}-${mm}-${dd}`;
+    }
+
+    if(btnStart) btnStart.addEventListener('click', () => initGame());
+    if(btnPlayPast && datePicker) {
+        btnPlayPast.addEventListener('click', () => {
+            if(!datePicker.value) {
+                showToast("Lütfen bir tarih seçin.", "warning");
+                return;
+            }
+            initGame(datePicker.value);
+        });
+    }
     if(btnGuess) btnGuess.addEventListener('click', handleGuess);
     if(wordInput) {
         wordInput.addEventListener('keypress', (e) => {
@@ -22,34 +43,55 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnGiveup) btnGiveup.addEventListener('click', handleGiveup);
 });
 
-async function initGame() {
+function resetGameState() {
+    wordData = {};
+    targetWord = "";
+    guesses = [];
+    hasWon = false;
+
+    document.getElementById('guess-count').textContent = "0";
+    document.getElementById('word-input').value = "";
+    document.getElementById('word-input').disabled = false;
+    document.getElementById('btn-guess').disabled = false;
+    document.getElementById('btn-giveup').classList.remove('hidden');
+    document.getElementById('success-message').classList.add('hidden');
+    document.getElementById('guess-history').innerHTML = "";
+}
+
+async function initGame(selectedDateStr = null) {
     const btnStart = document.getElementById('btn-start');
+    const btnPlayPast = document.getElementById('btn-play-past');
     const loading = document.getElementById('loading-indicator');
 
-    btnStart.classList.add('hidden');
+    if (btnStart) btnStart.classList.add('hidden');
+    if (btnPlayPast) btnPlayPast.disabled = true;
     loading.classList.remove('hidden');
 
+    resetGameState();
+
     try {
+        let fetchDateStr = selectedDateStr;
+        let isToday = false;
 
-        // 1. Get today's date in YYYY-MM-DD format (Istanbul timezone expected, but we'll use local/UTC approximation)
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${yyyy}-${mm}-${dd}`;
+        if (!fetchDateStr) {
+            // Get today's date
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            fetchDateStr = `${yyyy}-${mm}-${dd}`;
+            isToday = true;
+        }
 
-        // Replace 'YOUR_PROJECT_ID' with your actual Firebase project ID
         const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID";
-
-        // Construct the URL to the public Firebase Storage bucket
-        // Ensure your Storage bucket has read access and CORS configured for this path
-        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${todayStr}.json?alt=media`;
+        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${fetchDateStr}.json?alt=media`;
 
         let response = await fetch(fileUrl);
 
-        // If today's file is not found (e.g. at 00:00 right before function finishes), try yesterday's file
-        if (!response.ok && response.status === 404) {
+        // If it's a today query and today's file is not found, try yesterday
+        if (!response.ok && response.status === 404 && isToday) {
             console.warn("Bugünün verisi bulunamadı, dünün verisi çekiliyor...");
+            const today = new Date();
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
             const y_yyyy = yesterday.getFullYear();
@@ -62,8 +104,12 @@ async function initGame() {
         }
 
         if (!response.ok) {
+            if (response.status === 404) {
+                 throw new Error("Seçilen tarihe ait veri bulunamadı.");
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
 
         const jsonData = await response.json();
 
@@ -91,9 +137,10 @@ async function initGame() {
 
     } catch (error) {
         console.error("Veri yüklenirken hata:", error);
-        showToast("Veriler yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.", "error");
+        showToast(error.message === "Seçilen tarihe ait veri bulunamadı." ? error.message : "Veriler yüklenemedi. Lütfen bağlantınızı kontrol edin.", "error");
         loading.classList.add('hidden');
-        btnStart.classList.remove('hidden');
+        if(btnStart) btnStart.classList.remove('hidden');
+        if(document.getElementById('btn-play-past')) document.getElementById('btn-play-past').disabled = false;
     }
 }
 

@@ -55,12 +55,23 @@
                 <p class="seo-description">Yapay zeka tarafından anlamsal yakınlıklarına göre sıralanmış on binlerce kelime arasından <strong>günün gizli hedefini</strong> bulmaya çalışın. Ne kadar yakınsanız, sıra o kadar küçülür!</p>
             </div>
 
+
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
-                <button id="btn-start" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.2rem;">Oyuna Başla</button>
+                <button id="btn-start" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.2rem; margin-bottom: 12px;">Günün Kelimesini Oyna</button>
+
+                <div class="past-games-container" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <label for="past-date-picker" style="font-size: 0.9rem; color: var(--text-muted); text-align: center;">Veya geçmiş bir tarihi oynayın:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="date" id="past-date-picker" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--lilac-muted); background: var(--input-bg); color: var(--text-main); color-scheme: dark;">
+                        <button id="btn-play-past" class="btn btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Oyna</button>
+                    </div>
+                </div>
+
                 <div id="loading-indicator" class="hidden" style="text-align: center; color: var(--text-muted); margin-top: 1rem;">
-                    Günlük veriler yükleniyor... Lütfen bekleyin.
+                    Veriler yükleniyor... Lütfen bekleyin.
                 </div>
             </div>
+
 
             <div class="seo-rules-container custom-scrollbar">
                 <h2>Nasıl Oynanır?</h2>
