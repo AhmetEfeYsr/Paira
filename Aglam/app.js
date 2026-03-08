@@ -6,13 +6,34 @@ let targetWord = "";
 let guesses = []; // Store user's guesses: { word: string, rank: number, score: number }
 let hasWon = false;
 
+
 document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-start');
     const btnGuess = document.getElementById('btn-guess');
     const wordInput = document.getElementById('word-input');
     const btnGiveup = document.getElementById('btn-giveup');
+    const btnPlayPast = document.getElementById('btn-play-past');
+    const datePicker = document.getElementById('past-date-picker');
 
-    if(btnStart) btnStart.addEventListener('click', initGame);
+    // Set max date to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    if (datePicker) {
+        datePicker.max = `${yyyy}-${mm}-${dd}`;
+    }
+
+    if(btnStart) btnStart.addEventListener('click', () => initGame());
+    if(btnPlayPast && datePicker) {
+        btnPlayPast.addEventListener('click', () => {
+            if(!datePicker.value) {
+                showToast("Lütfen bir tarih seçin.", "warning");
+                return;
+            }
+            initGame(datePicker.value);
+        });
+    }
     if(btnGuess) btnGuess.addEventListener('click', handleGuess);
     if(wordInput) {
         wordInput.addEventListener('keypress', (e) => {
@@ -22,56 +43,104 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnGiveup) btnGiveup.addEventListener('click', handleGiveup);
 });
 
-async function initGame() {
+function resetGameState() {
+    wordData = {};
+    targetWord = "";
+    guesses = [];
+    hasWon = false;
+
+    document.getElementById('guess-count').textContent = "0";
+    document.getElementById('word-input').value = "";
+    document.getElementById('word-input').disabled = false;
+    document.getElementById('btn-guess').disabled = false;
+    document.getElementById('btn-giveup').classList.remove('hidden');
+    document.getElementById('success-message').classList.add('hidden');
+    document.getElementById('guess-history').innerHTML = "";
+}
+
+async function initGame(selectedDateStr = null) {
     const btnStart = document.getElementById('btn-start');
+    const btnPlayPast = document.getElementById('btn-play-past');
     const loading = document.getElementById('loading-indicator');
 
-    btnStart.classList.add('hidden');
+    if (btnStart) btnStart.classList.add('hidden');
+    if (btnPlayPast) btnPlayPast.disabled = true;
     loading.classList.remove('hidden');
 
+    resetGameState();
+
     try {
-        // Simulating fetch with mock data for now, since we don't have the actual Firebase URL
-        // In production, this would be:
-        // const response = await fetch("YOUR_FIREBASE_URL_HERE");
-        // const data = await response.json();
+        let fetchDateStr = selectedDateStr;
+        let isToday = false;
 
-        // Mock data loading:
-        const data = [
-            { kelime: "gemi", sira: 1, skor: 1.00 },
-            { kelime: "gemicilik", sira: 2, skor: 0.94 },
-            { kelime: "gemiler", sira: 3, skor: 0.91 },
-            { kelime: "kaptan", sira: 4, skor: 0.88 },
-            { kelime: "filo", sira: 5, skor: 0.85 },
-            { kelime: "deniz", sira: 12, skor: 0.75 },
-            { kelime: "su", sira: 150, skor: 0.45 },
-            { kelime: "araba", sira: 1500, skor: 0.20 },
-            { kelime: "uzay", sira: 15000, skor: 0.05 },
-            { kelime: "elma", sira: 80000, skor: 0.01 }
-        ];
-
-        // Process data
-        wordData = {};
-        data.forEach(item => {
-            const cleanWord = item.kelime.toLowerCase().trim();
-            wordData[cleanWord] = { rank: item.sira, score: item.skor };
-            if (item.sira === 1) targetWord = cleanWord;
-        });
-
-        // Add dummy logic for unlisted words just so testing works
-        // Remove this when actual 99k DB is live
-        if(!wordData["gemi"]) {
-             wordData["gemi"] = { rank: 1, score: 1.00 };
-             targetWord = "gemi";
+        if (!fetchDateStr) {
+            // Get today's date
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            fetchDateStr = `${yyyy}-${mm}-${dd}`;
+            isToday = true;
         }
+
+        const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID"; // BURAYA KENDI FIREBASE PROJE ID'NIZI YAZIN
+        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${fetchDateStr}.json?alt=media`;
+
+        let response = await fetch(fileUrl);
+
+        // If it's a today query and today's file is not found, try yesterday
+        if (!response.ok && response.status === 404 && isToday) {
+            console.warn("Bugünün verisi bulunamadı, dünün verisi çekiliyor...");
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const y_yyyy = yesterday.getFullYear();
+            const y_mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+            const y_dd = String(yesterday.getDate()).padStart(2, '0');
+            const yesterdayStr = `${y_yyyy}-${y_mm}-${y_dd}`;
+
+            const yesterdayUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${yesterdayStr}.json?alt=media`;
+            response = await fetch(yesterdayUrl);
+        }
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                 throw new Error("Seçilen tarihe ait veri bulunamadı.");
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+
+        const jsonData = await response.json();
+
+        // Process data according to the Python Cloud Function's structure
+        // The expected structure is: { "date": "2023-10-25", "targetWord": "gemi", "totalWords": 50000, "words": { "gemi": { "rank": 1, "score": 100.0 }, ... } }
+
+        wordData = {};
+        if (jsonData && jsonData.words) {
+            targetWord = jsonData.targetWord || "";
+            for (const [kelime, info] of Object.entries(jsonData.words)) {
+                // Info contains { rank: number, score: number (percentage) }
+                // We normalize score to 0.0 - 1.0 range for the UI
+                wordData[kelime.toLowerCase().trim()] = {
+                    rank: info.rank,
+                    score: info.score / 100.0
+                };
+            }
+        } else {
+             throw new Error("Invalid data format received from server.");
+        }
+
 
         switchScreen('game-screen');
         document.getElementById('word-input').focus();
 
     } catch (error) {
         console.error("Veri yüklenirken hata:", error);
-        showToast("Veriler yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.", "error");
+        showToast(error.message === "Seçilen tarihe ait veri bulunamadı." ? error.message : "Veriler yüklenemedi. Lütfen bağlantınızı kontrol edin.", "error");
         loading.classList.add('hidden');
-        btnStart.classList.remove('hidden');
+        if(btnStart) btnStart.classList.remove('hidden');
+        if(document.getElementById('btn-play-past')) document.getElementById('btn-play-past').disabled = false;
     }
 }
 
