@@ -22,6 +22,12 @@ def verify_tabu_fallback():
         # Wait for PeerJS connection and room code to be generated
         page1.wait_for_selector("#display-room-code", state="attached", timeout=10000)
 
+        # Click the cookie consent banner to dismiss it
+        try:
+            page1.get_by_text("Anladım").click(timeout=1000)
+        except Exception:
+            pass
+
         # Click the reveal code button to make it visible
         page1.click("#btn-toggle-code")
 

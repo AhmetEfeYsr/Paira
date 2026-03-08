@@ -168,26 +168,27 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 
 /* 3. KURAL: Kelime Kartı esnek yapıya büründü. Kalan tüm boşluğa yayılır. */
 .taboo-card {
-    background: linear-gradient(145deg, var(--modal-bg), var(--toast-bg));
+    background: linear-gradient(145deg, var(--bg-panel), var(--card-bg));
     border: 2px solid var(--neon-purple); border-radius: 16px;
     width: 100%; max-width: 450px; text-align: center;
     box-shadow: 0 8px 25px var(--input-bg);
 
     display: flex;
     flex-direction: column;
-    flex: 1; /* Boşluğu kaplar */
+    flex-grow: 1;
     min-height: 0; /* Küçülmesine ve sığmasına tam izin verir */
     margin-bottom: clamp(0.6rem, 1.5vw, 1rem);
+    overflow: hidden;
 }
 
-.card-header { background: var(--header-bg); padding: clamp(1rem, 2.5vw, 1.4rem); border-bottom: 2px solid var(--primary-purple); border-radius: 14px 14px 0 0; flex-shrink: 0; }
+.card-header { background: var(--header-bg); padding: clamp(1rem, 2.5vw, 1.4rem); border-bottom: 2px solid var(--primary-purple); flex-shrink: 0; }
 .card-header h2 { font-size: clamp(1.4rem, 3.5vw, 1.8rem); color: var(--text-main); margin: 0; letter-spacing: 1px; }
 
 /* 4. KURAL: Eğer kart çok uzarsa SADECE KELİMELER kendi içinde kaydırılır. */
 #forbidden-words {
     list-style: none; padding: clamp(1rem, 2.5vw, 1.4rem);
     overflow-y: auto; /* Magic Touch: Kelimeler çoksa burası scrolldur */
-    flex: 1;
+    flex-grow: 1;
     min-height: 0;
 }
 #forbidden-words li { font-size: clamp(1rem, 2.5vw, 1.2rem); margin-bottom: 8px; color: var(--lilac); font-weight: 600; letter-spacing: 0.5px; }
