@@ -33,11 +33,11 @@ let state = {
 
 // Yedek Kelime Havuzu (Fetch başarısız olursa diye)
 const fallbackWords = [
-    { ana_kelime: "GÜNEŞ", yasakli_kelimeler: ["SARI", "SICAK", "GÖKYÜZÜ", "YILDIZ", "YAZ"], kategori: "Genel", zorluk: 10 },
-    { ana_kelime: "TELEFON", yasakli_kelimeler: ["KONUŞMAK", "AKILLI", "EKRAN", "MESAJ", "ARAMAK"], kategori: "Teknoloji", zorluk: 20 },
-    { ana_kelime: "KİTAP", yasakli_kelimeler: ["OKUMAK", "SAYFA", "KÜTÜPHANE", "YAZAR", "HİKAYE"], kategori: "Genel", zorluk: 15 },
-    { ana_kelime: "BİLGİSAYAR", yasakli_kelimeler: ["KLAVYE", "İNTERNET", "OYUN", "EKRAN", "YAZILIM"], kategori: "Teknoloji", zorluk: 30 },
-    { ana_kelime: "PİZZA", yasakli_kelimeler: ["HAMUR", "PEYNİR", "İTALYAN", "YEMEK", "DİLİM"], kategori: "Yemek", zorluk: 10 }
+    { ana_kelime: "güneş", yasakli_kelimeler: ["Sarı", "Sıcak", "Gökyüzü", "Yıldız", "Yaz"], kategori: "Genel", zorluk: 10 },
+    { ana_kelime: "telefon", yasakli_kelimeler: ["Konuşmak", "Akıllı", "Ekran", "Mesaj", "Aramak"], kategori: "Teknoloji", zorluk: 20 },
+    { ana_kelime: "kitap", yasakli_kelimeler: ["Okumak", "Sayfa", "Kütüphane", "Yazar", "Hikaye"], kategori: "Genel", zorluk: 15 },
+    { ana_kelime: "bilgisayar", yasakli_kelimeler: ["Klavye", "İnternet", "Oyun", "Ekran", "Yazılım"], kategori: "Teknoloji", zorluk: 30 },
+    { ana_kelime: "pizza", yasakli_kelimeler: ["Hamur", "Peynir", "İtalyan", "Yemek", "Dilim"], kategori: "Yemek", zorluk: 10 }
 ];
 
 // --- SES YÖNETİMİ ---
@@ -481,9 +481,9 @@ function updateUI() {
             let wordObj = state.currentWord || (state.activeWords?.[state.wordIndex]);
 
             if (wordObj && (amINarrator || isOpponent)) {
-                mainWord.innerText = wordObj.ana_kelime;
+                mainWord.innerText = wordObj.ana_kelime.toLocaleUpperCase('tr-TR');
                 fw.innerHTML = '';
-                wordObj.yasakli_kelimeler.forEach(w => { const li = document.createElement('li'); li.innerText = w; fw.appendChild(li); });
+                wordObj.yasakli_kelimeler.forEach(w => { const li = document.createElement('li'); li.innerText = w.toLocaleUpperCase('tr-TR'); fw.appendChild(li); });
             }
 
             if (amINarrator) {
