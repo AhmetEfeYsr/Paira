@@ -30,39 +30,61 @@ async function initGame() {
     loading.classList.remove('hidden');
 
     try {
-        // Simulating fetch with mock data for now, since we don't have the actual Firebase URL
-        // In production, this would be:
-        // const response = await fetch("YOUR_FIREBASE_URL_HERE");
-        // const data = await response.json();
 
-        // Mock data loading:
-        const data = [
-            { kelime: "gemi", sira: 1, skor: 1.00 },
-            { kelime: "gemicilik", sira: 2, skor: 0.94 },
-            { kelime: "gemiler", sira: 3, skor: 0.91 },
-            { kelime: "kaptan", sira: 4, skor: 0.88 },
-            { kelime: "filo", sira: 5, skor: 0.85 },
-            { kelime: "deniz", sira: 12, skor: 0.75 },
-            { kelime: "su", sira: 150, skor: 0.45 },
-            { kelime: "araba", sira: 1500, skor: 0.20 },
-            { kelime: "uzay", sira: 15000, skor: 0.05 },
-            { kelime: "elma", sira: 80000, skor: 0.01 }
-        ];
+        // 1. Get today's date in YYYY-MM-DD format (Istanbul timezone expected, but we'll use local/UTC approximation)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
 
-        // Process data
-        wordData = {};
-        data.forEach(item => {
-            const cleanWord = item.kelime.toLowerCase().trim();
-            wordData[cleanWord] = { rank: item.sira, score: item.skor };
-            if (item.sira === 1) targetWord = cleanWord;
-        });
+        // Replace 'YOUR_PROJECT_ID' with your actual Firebase project ID
+        const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID";
 
-        // Add dummy logic for unlisted words just so testing works
-        // Remove this when actual 99k DB is live
-        if(!wordData["gemi"]) {
-             wordData["gemi"] = { rank: 1, score: 1.00 };
-             targetWord = "gemi";
+        // Construct the URL to the public Firebase Storage bucket
+        // Ensure your Storage bucket has read access and CORS configured for this path
+        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${todayStr}.json?alt=media`;
+
+        let response = await fetch(fileUrl);
+
+        // If today's file is not found (e.g. at 00:00 right before function finishes), try yesterday's file
+        if (!response.ok && response.status === 404) {
+            console.warn("Bugünün verisi bulunamadı, dünün verisi çekiliyor...");
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const y_yyyy = yesterday.getFullYear();
+            const y_mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+            const y_dd = String(yesterday.getDate()).padStart(2, '0');
+            const yesterdayStr = `${y_yyyy}-${y_mm}-${y_dd}`;
+
+            const yesterdayUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${yesterdayStr}.json?alt=media`;
+            response = await fetch(yesterdayUrl);
         }
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const jsonData = await response.json();
+
+        // Process data according to the Python Cloud Function's structure
+        // The expected structure is: { "date": "2023-10-25", "targetWord": "gemi", "totalWords": 50000, "words": { "gemi": { "rank": 1, "score": 100.0 }, ... } }
+
+        wordData = {};
+        if (jsonData && jsonData.words) {
+            targetWord = jsonData.targetWord || "";
+            for (const [kelime, info] of Object.entries(jsonData.words)) {
+                // Info contains { rank: number, score: number (percentage) }
+                // We normalize score to 0.0 - 1.0 range for the UI
+                wordData[kelime.toLowerCase().trim()] = {
+                    rank: info.rank,
+                    score: info.score / 100.0
+                };
+            }
+        } else {
+             throw new Error("Invalid data format received from server.");
+        }
+
 
         switchScreen('game-screen');
         document.getElementById('word-input').focus();
