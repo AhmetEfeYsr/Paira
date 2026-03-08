@@ -204,7 +204,13 @@ document.getElementById('btn-start-game').addEventListener('click', () => {
     // Her iki takımdaki HERKESİN oynamasını garanti etmek için EKOK (LCM) kullanıyoruz
     const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
     const lcm = (a, b) => (a * b) / gcd(a, b);
-    const totalCycles = lcm(teamA.length, teamB.length);
+
+    let totalCycles = 0;
+    if (teamA.length === 0 || teamB.length === 0) {
+        totalCycles = Math.max(teamA.length, teamB.length);
+    } else {
+        totalCycles = lcm(teamA.length, teamB.length);
+    }
 
     for (let i = 0; i < totalCycles; i++) {
         if (teamA.length > 0) state.turnOrder.push(teamA[i % teamA.length]);
@@ -257,16 +263,20 @@ function beginTimer() {
 
 // Mola Fonksiyonu
 document.getElementById('btn-pause')?.addEventListener('click', () => {
-    if (!isHost || state.status !== 'playing' || state.isWaitingForReady) return;
+    if (state.status !== 'playing' || state.isWaitingForReady) return;
 
-    state.isPaused = !state.isPaused;
-    if (state.isPaused) {
-        pauseOffset = localTurnEndTime - Date.now();
+    if (isHost) {
+        state.isPaused = !state.isPaused;
+        if (state.isPaused) {
+            pauseOffset = localTurnEndTime - Date.now();
+        } else {
+            localTurnEndTime = Date.now() + pauseOffset;
+        }
+        broadcastSync();
+        updateUI();
     } else {
-        localTurnEndTime = Date.now() + pauseOffset;
+        sendAction('TOGGLE_PAUSE');
     }
-    broadcastSync();
-    updateUI();
 });
 
 function endTurn() {
@@ -329,13 +339,25 @@ document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
 });
 
 function processAction(action) {
-    if (state.isPaused) return;
-
     // Anlatıcı hazır olduğunu host'a ilettiğinde
     if (action === 'NARRATOR_READY' && state.isWaitingForReady) {
         beginTimer();
         return;
     }
+
+    if (action === 'TOGGLE_PAUSE') {
+        state.isPaused = !state.isPaused;
+        if (state.isPaused) {
+            pauseOffset = localTurnEndTime - Date.now();
+        } else {
+            localTurnEndTime = Date.now() + pauseOffset;
+        }
+        broadcastSync();
+        updateUI();
+        return;
+    }
+
+    if (state.isPaused) return;
 
     ensureActiveWords();
     const player = state.players[state.turnId];
@@ -443,7 +465,7 @@ function updateUI() {
 
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) {
-            btnPause.classList.toggle('hidden', !isHost || state.isWaitingForReady);
+            btnPause.classList.toggle('hidden', state.isWaitingForReady);
             btnPause.innerText = state.isPaused ? '▶' : '⏸';
         }
 

@@ -58,8 +58,8 @@ if (btnToggleCode) {
         isCodeVisible = !isCodeVisible;
         const codeDisplay = document.getElementById('display-room-code');
         btnToggleCode.innerText = isCodeVisible ? '🙈' : '👁️';
-        if (codeDisplay) { 
-            codeDisplay.innerText = isCodeVisible ? (codeDisplay.dataset.code || '') : '••••••••'; 
+        if (codeDisplay) {
+            codeDisplay.innerText = isCodeVisible ? (codeDisplay.dataset.code || '') : '••••••••';
         }
     });
 }
@@ -75,11 +75,11 @@ document.getElementById('btn-copy-room').addEventListener('click', () => {
 
 // --- PEERJS AĞ ALTYAPISI ---
 function initPeer(customId = null) {
-    peer = new Peer(customId, { 
+    peer = new Peer(customId, {
         config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] },
         debug: 1
     });
-    
+
     peer.on('open', (id) => {
         myId = id;
         if (isHost) {
@@ -96,10 +96,10 @@ function initPeer(customId = null) {
     });
 
     peer.on('connection', setupConnection);
-    
+
     peer.on('error', (err) => {
         console.error("PeerJS Error:", err);
-        if (err.type === 'peer-unavailable') { 
+        if (err.type === 'peer-unavailable') {
             showToast("Oda bulunamadı veya kapandı. Lütfen ana sayfaya dönün.", "error");
             setTimeout(() => { window.location.href = 'index.html'; }, 2000);
         } else if (err.type === 'unavailable-id' && isHost) {
@@ -121,7 +121,7 @@ function setupConnection(conn) {
     conn.on('open', () => {
         connections[conn.peer] = conn;
         if (isHost) {
-            broadcastSync(); 
+            broadcastSync();
         } else {
             conn.send({ type: 'JOIN', id: myId, name: myName });
         }
@@ -132,7 +132,7 @@ function setupConnection(conn) {
 
 // --- VERİ İLETİM FONKSİYONLARI ---
 function broadcast(data) {
-    Object.values(connections).forEach(conn => { 
+    Object.values(connections).forEach(conn => {
         if (conn.open) conn.send(data);
     });
 }
@@ -146,13 +146,13 @@ function broadcastSync() {
     stateCopy.currentWord = currentWord || null;
 
     const durationLeft = state.isPaused ? pauseOffset : Math.max(0, localTurnEndTime - Date.now());
-    
-    broadcast({ 
-        type: 'SYNC', 
-        state: stateCopy, 
-        hostId, 
+
+    broadcast({
+        type: 'SYNC',
+        state: stateCopy,
+        hostId,
         durationLeft,
-        serverTime: Date.now() 
+        serverTime: Date.now()
     });
 }
 
@@ -162,19 +162,26 @@ function handleData(data, peerId) {
     if (data.type === 'JOIN' && isHost) {
         const countA = Object.values(state.players).filter(p => p.team === 'A').length;
         const countB = Object.values(state.players).filter(p => p.team === 'B').length;
-        state.players[data.id] = { 
-            id: data.id, 
-            name: data.name, 
-            team: countA <= countB ? 'A' : 'B', 
-            isHost: false 
+        state.players[data.id] = {
+            id: data.id,
+            name: data.name,
+            team: countA <= countB ? 'A' : 'B',
+            isHost: false
         };
-        broadcastSync(); 
+        broadcastSync();
         updateUI();
+    }
+    else if (data.type === 'SWITCH_TEAM' && isHost) {
+        if (state.players[peerId]) {
+            state.players[peerId].team = state.players[peerId].team === 'A' ? 'B' : 'A';
+            broadcastSync();
+            updateUI();
+        }
     }
     else if (data.type === 'SYNC') {
         state = data.state;
         hostId = data.hostId;
-        
+
         // Zaman senkronizasyonu
         if (data.durationLeft > 0) {
             localTurnEndTime = Date.now() + data.durationLeft;
@@ -184,11 +191,11 @@ function handleData(data, peerId) {
         if (state.status === 'playing') showScreen('game-screen');
         else if (state.status === 'finished') showScreen('winner-screen');
         else showScreen('lobby-screen');
-        
+
         updateUI();
     }
     else if (data.type === 'ACTION' && isHost) {
-        if (state.turnId === peerId) processAction(data.action);
+        if (state.turnId === peerId || data.action === 'TOGGLE_PAUSE' || data.action === 'NARRATOR_READY') processAction(data.action);
     }
     else if (data.type === 'CHAT') {
         displayChat(data.sender, data.msg);
@@ -232,7 +239,7 @@ function handleDisconnect(peerId) {
 
 // Oyun İçi Aksiyonlar
 function sendAction(action) {
-    if (state.turnId !== myId) return;
+    if (state.turnId !== myId && action !== 'TOGGLE_PAUSE' && action !== 'NARRATOR_READY') return;
     if (isHost) processAction(action);
     else connections[hostId]?.send({ type: 'ACTION', action });
 }
@@ -240,6 +247,18 @@ function sendAction(action) {
 document.getElementById('btn-correct').addEventListener('click', () => sendAction('CORRECT'));
 document.getElementById('btn-taboo').addEventListener('click', () => sendAction('TABOO'));
 document.getElementById('btn-pass').addEventListener('click', () => sendAction('PASS'));
+
+document.getElementById('btn-switch-team').addEventListener('click', () => {
+    if (isHost) {
+        if (state.players[myId]) {
+            state.players[myId].team = state.players[myId].team === 'A' ? 'B' : 'A';
+            broadcastSync();
+            updateUI();
+        }
+    } else {
+        connections[hostId]?.send({ type: 'SWITCH_TEAM' });
+    }
+});
 
 function sendChat() {
     const input = document.getElementById('chat-input');
