@@ -1,5 +1,5 @@
-// Aglam Game Logic
-const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/AglamMockData/main/daily_words.json"; // Placeholder for now
+// Bagnam Game Logic
+const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/BagnamMockData/main/daily_words.json"; // Placeholder for now
 
 let wordData = {}; // Object to hold the daily dataset: { "gemi": { rank: 1, score: 1.00 }, "filo": { rank: 5, score: 0.85 } }
 let targetWord = "";
@@ -84,7 +84,7 @@ async function initGame(selectedDateStr = null) {
         }
 
         const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID"; // BURAYA KENDI FIREBASE PROJE ID'NIZI YAZIN
-        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${fetchDateStr}.json?alt=media`;
+        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/bagnam_history%2F${fetchDateStr}.json?alt=media`;
 
         let response = await fetch(fileUrl);
 
@@ -99,7 +99,7 @@ async function initGame(selectedDateStr = null) {
             const y_dd = String(yesterday.getDate()).padStart(2, '0');
             const yesterdayStr = `${y_yyyy}-${y_mm}-${y_dd}`;
 
-            const yesterdayUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/aglam_history%2F${yesterdayStr}.json?alt=media`;
+            const yesterdayUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/bagnam_history%2F${yesterdayStr}.json?alt=media`;
             response = await fetch(yesterdayUrl);
         }
 

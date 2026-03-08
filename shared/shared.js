@@ -19,7 +19,7 @@ function updateLogos(themeName) {
     logos.forEach(img => {
         const src = img.getAttribute('src');
         if (src && src.includes('logolar/')) {
-            // Find the base name (e.g. logolar/aglam.svg or logolar/aglam_paira.svg)
+            // Find the base name (e.g. logolar/bagnam.svg or logolar/bagnam_paira.svg)
             const parts = src.split('/');
             const filename = parts[parts.length - 1];
             const base = filename.split('_')[0].split('.')[0];
