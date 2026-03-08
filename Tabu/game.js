@@ -467,6 +467,8 @@ function updateUI() {
         if (btnPause) {
             btnPause.classList.toggle('hidden', state.isWaitingForReady);
             btnPause.innerText = state.isPaused ? '▶' : '⏸';
+            // Play ikonu asimetrik olduğu için optik hizalama yapıyoruz
+            btnPause.style.paddingLeft = state.isPaused ? '3px' : '0';
         }
 
         const tPlayer = state.players[state.turnId];
