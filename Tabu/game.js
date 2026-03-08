@@ -274,6 +274,10 @@ function endTurn() {
 
     localTurnEndTime = 0;
     state.turnIndex++;
+
+    // Süre bittiğinde veya tur atladığında bir sonraki takıma aynı kelime kalmaması için kelimeyi değiştiriyoruz.
+    advanceWord();
+
     playSound('end');
     broadcast({ type: 'PLAY_SOUND', sound: 'end' });
 
