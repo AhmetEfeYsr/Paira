@@ -1,9 +1,8 @@
 // Bagnam Game Logic
 const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/BagnamMockData/main/daily_words.json"; // Placeholder for now
 
-let wordData = {}; // Object to hold the daily dataset: { "gemi": { rank: 1, score: 1.00 }, "filo": { rank: 5, score: 0.85 } }
-let targetWord = "";
-let guesses = []; // Store user's guesses: { word: string, rank: number, score: number }
+let targetDate = ""; // Hedeflenen tarih (YYYY-MM-DD)
+let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, score: number }
 let hasWon = false;
 
 
@@ -40,12 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if(e.key === 'Enter') handleGuess();
         });
     }
-    if(btnGiveup) btnGiveup.addEventListener('click', handleGiveup);
 });
 
 function resetGameState() {
-    wordData = {};
-    targetWord = "";
+    targetDate = "";
     guesses = [];
     hasWon = false;
 
@@ -53,9 +50,20 @@ function resetGameState() {
     document.getElementById('word-input').value = "";
     document.getElementById('word-input').disabled = false;
     document.getElementById('btn-guess').disabled = false;
-    document.getElementById('btn-giveup').classList.remove('hidden');
     document.getElementById('success-message').classList.add('hidden');
     document.getElementById('guess-history').innerHTML = "";
+}
+
+function getTodayDateTR() {
+    const today = new Date();
+    // UTC+3 (Türkiye Saati) ayarı yapıp tarihi YYYY-MM-DD olarak döndür
+    const utc = today.getTime() + (today.getTimezoneOffset() * 60000);
+    const trDate = new Date(utc + (3600000 * 3)); // UTC + 3 saat
+
+    const yyyy = trDate.getFullYear();
+    const mm = String(trDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(trDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 async function initGame(selectedDateStr = null) {
@@ -69,103 +77,39 @@ async function initGame(selectedDateStr = null) {
 
     resetGameState();
 
-    try {
-        let fetchDateStr = selectedDateStr;
-        let isToday = false;
+    // Artık veri önden yüklenmiyor, sadece tarihi ayarlayıp UI'ı değiştiriyoruz
+    targetDate = selectedDateStr || getTodayDateTR();
 
-        if (!fetchDateStr) {
-            // Get today's date
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            fetchDateStr = `${yyyy}-${mm}-${dd}`;
-            isToday = true;
-        }
+    switchScreen('game-screen');
+    document.getElementById('word-input').focus();
 
-        const FIREBASE_PROJECT_ID = "YOUR_PROJECT_ID"; // BURAYA KENDI FIREBASE PROJE ID'NIZI YAZIN
-        const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/bagnam_history%2F${fetchDateStr}.json?alt=media`;
-
-        let response = await fetch(fileUrl);
-
-        // If it's a today query and today's file is not found, try yesterday
-        if (!response.ok && response.status === 404 && isToday) {
-            console.warn("Bugünün verisi bulunamadı, dünün verisi çekiliyor...");
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const y_yyyy = yesterday.getFullYear();
-            const y_mm = String(yesterday.getMonth() + 1).padStart(2, '0');
-            const y_dd = String(yesterday.getDate()).padStart(2, '0');
-            const yesterdayStr = `${y_yyyy}-${y_mm}-${y_dd}`;
-
-            const yesterdayUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_PROJECT_ID}.appspot.com/o/bagnam_history%2F${yesterdayStr}.json?alt=media`;
-            response = await fetch(yesterdayUrl);
-        }
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                 throw new Error("Seçilen tarihe ait veri bulunamadı.");
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-
-        const jsonData = await response.json();
-
-        // Process data according to the Python Cloud Function's structure
-        // The expected structure is: { "date": "2023-10-25", "targetWord": "gemi", "totalWords": 50000, "words": { "gemi": { "rank": 1, "score": 100.0 }, ... } }
-
-        wordData = {};
-        if (jsonData && jsonData.words) {
-            targetWord = jsonData.targetWord || "";
-            for (const [kelime, info] of Object.entries(jsonData.words)) {
-                // Info contains { rank: number, score: number (percentage) }
-                // We normalize score to 0.0 - 1.0 range for the UI
-                wordData[kelime.toLowerCase().trim()] = {
-                    rank: info.rank,
-                    score: info.score / 100.0
-                };
-            }
-        } else {
-             throw new Error("Invalid data format received from server.");
-        }
-
-
-        switchScreen('game-screen');
-        document.getElementById('word-input').focus();
-
-    } catch (error) {
-        console.error("Veri yüklenirken hata:", error);
-        showToast(error.message === "Seçilen tarihe ait veri bulunamadı." ? error.message : "Veriler yüklenemedi. Lütfen bağlantınızı kontrol edin.", "error");
-        loading.classList.add('hidden');
-        if(btnStart) btnStart.classList.remove('hidden');
-        if(document.getElementById('btn-play-past')) document.getElementById('btn-play-past').disabled = false;
-    }
+    // Temizle loading
+    loading.classList.add('hidden');
 }
 
-function handleGuess() {
+// Logaritmik skor hesaplayıcı (UI gösterimi için)
+function calculateLogarithmicScore(rank, maxWords = 30000) {
+    if (rank === 1) return 1.0;
+    if (rank > maxWords) return 0.0;
+
+    // Logaritmik düşüş: Rank büyüdükçe puan yavaşça azalır, rank küçükken puan yüksektir
+    const logMax = Math.log(maxWords);
+    const logRank = Math.log(rank);
+    let score = 1 - (logRank / logMax);
+
+    // Yüzdelik olarak (0.0 - 1.0 aralığına sıkıştırıyoruz)
+    return Math.max(0, Math.min(1, score));
+}
+
+async function handleGuess() {
     if(hasWon) return;
 
     const inputEl = document.getElementById('word-input');
+    const btnGuess = document.getElementById('btn-guess');
     let rawWord = inputEl.value;
     let word = rawWord.toLowerCase().trim();
 
     if(!word) return;
-
-    // Check if word exists in our dataset
-    const wordInfo = wordData[word];
-
-    if(!wordInfo) {
-        // Word not found in the 99k list
-        showToast(`"${rawWord}" kelimesi sözlükte bulunamadı.`, "warning");
-        inputEl.value = "";
-        inputEl.focus();
-        // Visual shake feedback
-        inputEl.classList.add('error-shake');
-        setTimeout(() => inputEl.classList.remove('error-shake'), 400);
-        return;
-    }
 
     // Check if already guessed
     if(guesses.some(g => g.word === word)) {
@@ -175,26 +119,65 @@ function handleGuess() {
         return;
     }
 
-    // Add guess
-    guesses.push({
-        word: word,
-        rank: wordInfo.rank,
-        score: wordInfo.score
-    });
+    // Disable inputs while fetching
+    inputEl.disabled = true;
+    btnGuess.disabled = true;
 
-    // Update UI
-    document.getElementById('guess-count').textContent = guesses.length;
-    inputEl.value = "";
+    try {
+        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${word}.json`;
+        const response = await fetch(url);
 
-    // Re-render history list
-    renderHistory();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    // Check win condition
-    if(wordInfo.rank === 1) {
-        hasWon = true;
-        handleWin();
-    } else {
-        inputEl.focus();
+        const rank = await response.json();
+
+        if (rank === null) {
+            // Word not found in the dataset
+            showToast(`"${rawWord}" kelimesi sözlükte bulunamadı.`, "warning");
+            inputEl.value = "";
+            inputEl.focus();
+            // Visual shake feedback
+            inputEl.classList.add('error-shake');
+            setTimeout(() => inputEl.classList.remove('error-shake'), 400);
+        } else if (typeof rank === "number") {
+            const score = calculateLogarithmicScore(rank);
+
+            // Add guess
+            guesses.push({
+                word: word,
+                rank: rank,
+                score: score
+            });
+
+            // Update UI
+            document.getElementById('guess-count').textContent = guesses.length;
+            inputEl.value = "";
+
+            // Re-render history list
+            renderHistory();
+
+            // Check win condition
+            if(rank === 1) {
+                hasWon = true;
+                handleWin();
+            } else {
+                inputEl.focus();
+            }
+        } else {
+             throw new Error("Geçersiz veri formatı döndü.");
+        }
+
+    } catch (error) {
+        console.error("Tahmin yapılırken hata:", error);
+        showToast("Bir hata oluştu. Lütfen tekrar deneyin.", "error");
+    } finally {
+        if (!hasWon) {
+            inputEl.disabled = false;
+            btnGuess.disabled = false;
+            inputEl.focus();
+        }
     }
 }
 
@@ -245,34 +228,12 @@ function getColorClass(rank) {
 function handleWin() {
     document.getElementById('word-input').disabled = true;
     document.getElementById('btn-guess').disabled = true;
-    document.getElementById('btn-giveup').classList.add('hidden');
 
     const successMsg = document.getElementById('success-message');
     document.getElementById('final-guess-count').textContent = guesses.length;
     successMsg.classList.remove('hidden');
 
     showToast("Tebrikler! Günün kelimesini buldunuz.", "success");
-}
-
-function handleGiveup() {
-    if(confirm("Pes etmek istediğinize emin misiniz? Hedef kelime gösterilecektir.")) {
-        hasWon = true;
-        document.getElementById('word-input').disabled = true;
-        document.getElementById('btn-guess').disabled = true;
-        document.getElementById('btn-giveup').classList.add('hidden');
-
-        // Add target word to top of list as a "guess" but highlight it
-        if(!guesses.some(g => g.word === targetWord)) {
-            guesses.push({
-                word: targetWord + " (PES ETTİNİZ)",
-                rank: 1,
-                score: 1.00
-            });
-            renderHistory();
-        }
-
-        showToast(`Günün kelimesi: ${targetWord.toUpperCase()}`, "info");
-    }
 }
 
 // Utils
