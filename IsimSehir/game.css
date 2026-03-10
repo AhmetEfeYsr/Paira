@@ -115,18 +115,45 @@
 .text-center { text-align: center; }
 .text-muted { color: var(--text-muted); }
 
-/* Lobby Controls */
-.control-group {
-    margin-bottom: 20px;
-    text-align: left;
+/* Tabu-like Lobby Styles */
+.view-state { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.4s ease; min-height: 0; overflow: hidden; background: transparent; padding: 0;}
+.view-state:not(.active) { display: none; }
+
+.card {
+    background: var(--footer-bg); border: var(--glass-border);
+    border-radius: clamp(12px, 2vw, 16px); padding: clamp(1rem, 2.5vw, 1.5rem);
+    overflow: hidden; display: flex; flex-direction: column; min-height: 0;
 }
-.control-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: var(--secondary-color);
+
+.lobby-header {
+    display: flex; justify-content: center; align-items: center;
+    gap: clamp(0.8rem, 2vw, 1.2rem); margin-bottom: clamp(1rem, 2.5vw, 2rem);
+    background: var(--card-bg); padding: clamp(0.6rem, 1.5vw, 1rem);
+    border-radius: 15px; flex-wrap: wrap; flex-shrink: 0;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
 }
-.control-group input[type="number"], .control-group select {
+.code-container { display: flex; align-items: center; gap: 10px; background: var(--code-bg); padding: 6px 14px; border-radius: 10px; }
+
+.lobby-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+    flex-grow: 1; min-height: 0; overflow-y: auto;
+}
+
+.players-panel ul { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin-top: 10px; margin-bottom: 0;}
+.players-panel li { padding: 10px 12px; margin-bottom: 8px; background: var(--item-bg); border-radius: 8px; border-left: 3px solid var(--lilac); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; transition: background 0.2s; font-size: 0.95rem; }
+.players-panel li:hover { background: var(--item-hover-bg); }
+
+.toggle-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
+.toggle-btn:hover { opacity: 1; }
+
+.form-group { margin-bottom: clamp(1rem, 2.5vw, 1.5rem); width: 100%; text-align: left; }
+.form-group label { display: block; margin-bottom: 0.5rem; color: var(--lilac); font-weight: 600; font-size: 0.9rem; }
+
+/* Lobby Controls specific overrides */
+.form-group input[type="number"], .form-group select {
     width: 100%;
     padding: 10px;
     background: var(--code-bg);
@@ -136,31 +163,25 @@
     font-family: var(--font-main);
     outline: none;
 }
-.control-group input[type="number"]:focus, .control-group select:focus {
+.form-group input[type="number"]:focus, .form-group select:focus {
     border-color: var(--primary-purple);
 }
 
 .category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.4rem; overflow-y: auto; max-height: 150px; padding-right: 5px;
 }
-
 .cat-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--item-bg);
-    padding: 8px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    font-size: 0.9rem;
+    background: var(--input-bg); border: 1px solid var(--lilac-muted); border-radius: 20px;
+    padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2.5vw, 16px);
+    font-size: clamp(0.8rem, 2vw, 0.85rem); font-weight: 600;
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; user-select: none;
+    display: inline-flex; align-items: center; gap: 6px;
 }
 .cat-checkbox:hover { border-color: var(--primary-purple); }
-.cat-checkbox input { accent-color: var(--primary-purple); }
+.cat-checkbox input { accent-color: var(--primary-purple); display: none; }
+.cat-checkbox:has(input:checked) {
+    background: rgba(var(--primary-rgb), 0.4); border-color: var(--neon-purple); color: var(--text-main); box-shadow: 0 4px 10px var(--header-bg);
+}
 
 .custom-category-add {
     display: flex;
