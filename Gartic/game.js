@@ -1,21 +1,7 @@
 // --- ÇizBil (Gartic) Logic ---
 
-const garticWords = [
-    "AĞAÇ", "GÜNEŞ", "ARABA", "KEDİ", "KÖPEK", "EV", "TELEFON", "BİLGİSAYAR",
-    "KİTAP", "GÖZLÜK", "SAAT", "MASA", "SANDALYE", "ELMA", "ARMUT", "MUZ",
-    "DENİZ", "BALIK", "KUŞ", "UÇAK", "BİSİKLET", "AYAKKABI", "ŞAPKA", "PANTOLON",
-    "GÖMLEK", "KAPI", "PENCERE", "TELEVİZYON", "KOLTUK", "YATAK", "YILDIZ", "AY",
-    "BULUT", "YAĞMUR", "KAR", "KARDAN ADAM", "ÇİÇEK", "GÜL", "PAPATYA", "AĞ",
-    "ÖRÜMCEK", "YILAN", "KAPLUMBAĞA", "TAVŞAN", "FARE", "PİLYON", "KALEM", "SİLGİ",
-    "DEFTER", "OKUL", "ÖĞRETMEN", "ÖĞRENCİ", "HASTANE", "DOKTOR", "HEMŞİRE", "İĞNE",
-    "POLİS", "HIRSIZ", "HAPİSHANE", "Ateş", "SU", "TOPRAK", "RÜZGAR", "KILIÇ",
-    "KALKAN", "OK", "YAY", "SİLAH", "BOMBA", "BAYRAK", "HARİTA", "DÜNYA", "KÜRE",
-    "GEZEGEN", "UZAYLI", "ROBOT", "MONSTER", "HAYALET", "ZOMBİ", "VAMPİR", "CADI",
-    "SÜPÜRGE", "KAZAN", "BÜYÜ", "ŞATO", "PRENSES", "PRENS", "KRAL", "KRALİÇE",
-    "TAÇ", "ALTIN", "ELMAS", "YÜZÜK", "KOLYE", "KÜPE", "SAAT", "GÜZEL", "ÇİRKİN"
-];
-
-let wordDatabase = garticWords;
+// cizbilWords is loaded globally from shared/cizbil_words.js
+let wordDatabase = [...window.cizbilWords];
 let currentWordIndex = 0;
 let currentWord = "";
 let chatListener = null;

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>ÇizBil | Oyun Odası</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    <main id="app-container" class="glass-panel custom-scrollbar">
+
+        <header class="app-header" style="position: relative;">
+            <h1 class="gradient-text" style="font-size: 2rem;">ÇizBil</h1>
+            <button id="btn-leave" class="btn btn-secondary btn-sm" style="position: absolute; right: 0; top: 0;">Çıkış</button>
+        </header>
+
+        <!-- LOBİ EKRANI -->
+        <section id="lobby-screen" class="view-state active">
+            <header class="lobby-header">
+                <div class="code-container">
+                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
+                </div>
+                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
+            </header>
+
+            <div class="lobby-grid">
+                <!-- Sol Panel: Oyuncular -->
+                <aside class="players-panel card">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar"></ul>
+                </aside>
+
+                <!-- Sağ Panel: Kurucu Ayarları -->
+                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyun Ayarları</h3>
+                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Hedef Puan</label><input type="number" id="target-score" value="50" min="10" max="200"></div>
+                    </div>
+
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Oyunu Başlat (Min 2 Kişi)</button>
+                </section>
+
+                <!-- Katılımcı Bekleme Paneli -->
+                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
+                    <div style="color: var(--primary-purple); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu oyunu başlatacak.</p>
+                </section>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI -->
+        <section id="game-screen" class="view-state hidden">
+            <header class="game-topbar card">
+                <div style="display:flex; flex-direction:column; gap:5px; text-align:left;">
+                    <div id="game-status-message" style="font-weight: bold; color: var(--primary);">Hazırlanıyor...</div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">Çizen: <span id="current-drawer" style="color:var(--warning); font-weight:bold;">...</span></div>
+                </div>
+
+                <div class="word-display" id="main-word" style="font-size: 1.5rem; font-weight: bold; letter-spacing: 2px;">***</div>
+
+                <!-- Süre -->
+                <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center;">
+                    <div id="timer-display" class="timer" style="font-size: 2rem; font-weight: bold; color: var(--warning);">00:00</div>
+                </div>
+            </header>
+
+            <div class="cizbil-layout">
+                <div class="game-area">
+                    <div class="canvas-container" style="position: relative; width: 100%; background: #fff; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; border: 4px solid var(--border-color);">
+                        <canvas id="drawing-board" width="800" height="450" style="display: block; width: 100%; height: auto; aspect-ratio: 16/9;"></canvas>
+                        <!-- Canvas overlay for guessers indicating they can't draw -->
+                        <div id="canvas-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; pointer-events:all; cursor:not-allowed;"></div>
+                    </div>
+
+                    <!-- Only visible to drawer -->
+                    <div class="toolbar card" id="toolbar" style="display: none; width: 100%; margin-top: 1rem; padding: 1rem; flex-direction: row; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                        <div class="color-picker" id="color-picker" style="display: flex; gap: 8px;">
+                            <div class="color-swatch active" style="background: #000000; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #fff;" data-color="#000000"></div>
+                            <div class="color-swatch" style="background: #e74c3c; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#e74c3c"></div>
+                            <div class="color-swatch" style="background: #3498db; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#3498db"></div>
+                            <div class="color-swatch" style="background: #2ecc71; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#2ecc71"></div>
+                            <div class="color-swatch" style="background: #f1c40f; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#f1c40f"></div>
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#ffffff"></div> <!-- Eraser -->
+                        </div>
+
+                        <div class="size-picker" id="size-picker" style="display: flex; gap: 8px; align-items: center;">
+                            <div class="size-btn" data-size="3" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 4px; height: 4px; background: white; border-radius: 50%;"></div></div>
+                            <div class="size-btn active" data-size="8" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid white; display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>
+                            <div class="size-btn" data-size="15" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 14px; height: 14px; background: white; border-radius: 50%;"></div></div>
+                            <div class="size-btn" data-size="25" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 20px; height: 20px; background: white; border-radius: 50%;"></div></div>
+                        </div>
+
+                        <div class="tools">
+                            <button class="btn btn-secondary btn-sm" id="btn-clear">Temizle</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <div class="chat-panel card" style="display: flex; flex-direction: column; height: 300px; padding: 1rem;">
+                        <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Tahminler</div>
+                        <div class="messages-container custom-scrollbar" id="messages-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;"></div>
+                        <div class="chat-input-wrapper" style="display: flex; gap: 5px;">
+                            <input type="text" id="chat-input" class="game-input" placeholder="Tahmin yaz..." autocomplete="off" style="flex: 1; min-height: 36px;">
+                            <button id="btn-send-chat" class="btn btn-primary">Gönder</button>
+                        </div>
+                    </div>
+
+                    <div class="leaderboard card" style="margin-top: 1rem; padding: 1rem;">
+                        <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Skorlar</div>
+                        <ul class="leaderboard-list custom-scrollbar" id="game-scores-list" style="list-style: none; padding: 0; max-height: 200px; overflow-y: auto;"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BİTİŞ EKRANI -->
+        <section id="winner-screen" class="view-state hidden">
+            <h1 class="gradient-text">Oyun Bitti!</h1>
+            <div class="card" style="max-width: 500px; width: 100%; text-align: center; margin: 0 auto; display: flex; flex-direction: column;">
+                <h2 style="font-size: 2rem; margin-bottom: 20px; color: var(--neon-purple);">Sıralama Tablosu</h2>
+
+                <div id="final-scores" style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;" class="custom-scrollbar">
+                    <!-- Skorlar buraya basılacak -->
+                </div>
+
+                <button id="btn-back-to-lobby" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.15rem; margin-top: auto;">Lobiye Dön</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/cizbil_words.js"></script>
+    <script src="network.js" type="module"></script>
+    <script src="game.js" type="module"></script>
+
+</body>
+</html>
