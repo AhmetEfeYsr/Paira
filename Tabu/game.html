@@ -80,32 +80,23 @@
 
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
-            <header class="game-topbar card" style="align-items: center;">
-                <div class="round-indicator" id="round-indicator" style="font-weight: 600; font-size: 1.1rem; color: var(--text-muted); background: var(--header-bg); padding: 6px 14px; border-radius: 10px;">Tur 1 / 3</div>
+            <header class="game-topbar card">
+                <div class="round-indicator" id="round-indicator">Tur 1 / 3</div>
 
-                <div class="score-board" style="display: flex; gap: 2rem; background: var(--header-bg); padding: 6px 20px; border-radius: 10px;">
-                    <div class="team team-a" style="display: flex; gap: 8px; align-items: center;">
-                        <span style="font-size: 0.9rem; color: var(--text-muted);">T-A</span>
-                        <strong id="score-a" style="font-size: 1.4rem;">0</strong>
-                    </div>
-                    <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
-                    <div class="team team-b" style="display: flex; gap: 8px; align-items: center;">
-                        <span style="font-size: 0.9rem; color: var(--text-muted);">T-B</span>
-                        <strong id="score-b" style="font-size: 1.4rem;">0</strong>
-                    </div>
+                <div class="score-board">
+                    <div class="team team-a">Takım A: <span id="score-a">0</span></div>
+                    <div class="team team-b">Takım B: <span id="score-b">0</span></div>
                 </div>
 
-                <div id="current-player-indicator" style="font-size: 1.05rem; background: var(--header-bg); padding: 8px 20px; border-radius: 10px; display: flex; align-items: center; gap: 8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    Sıra: <strong id="turn-name" style="color: var(--neon-purple); letter-spacing: 0.5px; min-width: 120px; text-align: left;">...</strong>
+                <div id="current-player-indicator" style="font-size: 1.15rem; background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 12px;">
+                    Sıra: <strong id="turn-name" style="color: var(--neon-purple); letter-spacing: 0.5px;">...</strong>
                 </div>
 
-                <div class="timer-wrapper" style="display: flex; align-items: center; gap: 15px; background: var(--header-bg); padding: 6px 8px 6px 16px; border-radius: 10px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <div id="timer-display" class="timer" style="line-height: 1; font-size: 1.8rem;">00:00</div>
-                    <button id="btn-pause" class="btn btn-secondary btn-icon hidden" title="Oyunu Duraklat" style="padding: 8px; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                        <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="hidden"><path d="M5 3l14 9-14 9V3z"></path></svg>
+                <div class="timer-wrapper" style="position: relative; display: flex; align-items: center; justify-content: center; min-width: 120px; padding-right: 50px;">
+                    <div id="timer-display" class="timer" style="line-height: 1; text-align: center; width: 100%;">00:00</div>
+                    <button id="btn-pause" class="btn btn-secondary btn-icon hidden" title="Oyunu Duraklat" style="position: absolute; right: 0; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; padding: 0 !important; background: var(--input-bg);">
+                        <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="hidden" style="margin-left: 3px;"><path d="M5 3l14 9-14 9V3z"></path></svg>
                     </button>
                 </div>
             </header>
