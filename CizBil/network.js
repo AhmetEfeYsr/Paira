@@ -1,5 +1,5 @@
 // CizBil/network.js
-import { initGameUI, drawLocal, clearCanvas, showToast, updateGameStateUI, startTimer, stopTimer, addChatMessage, isMatch } from './game.js';
+import { initGameUI, syncCanvasEvent, clearCanvas, showToast, updateGameStateUI, startTimer, stopTimer, addChatMessage, isMatch } from './game.js';
 
 let peer = null;
 let connections = {}; // For Host
@@ -140,7 +140,7 @@ function setupClient(playerName, roomCode) {
                 networkState = data.state;
                 if (networkState.state === 'LOBBY') updateLobbyUI();
                 else if (networkState.state === 'PLAYING') handlePlayingState(data.lastAction);
-            } else if (data.type === 'DRAW_START' || data.type === 'DRAW_MOVE' || data.type === 'DRAW_END' || data.type === 'DRAW_CLEAR' || data.type === 'GUESS') {
+            } else if (data.type === 'DRAW_EVENT' || data.type === 'GUESS') {
                  handleAction(data, null);
             }
         });
@@ -173,7 +173,7 @@ export function broadcastAction(action) {
 function handleAction(data, senderId) {
     if (isHost) {
         // If it's a draw command from the current drawer, broadcast to everyone else
-        if (data.type.startsWith('DRAW') && senderId === networkState.currentDrawer) {
+        if (data.type === 'DRAW_EVENT' && senderId === networkState.currentDrawer) {
             Object.values(connections).forEach(c => {
                  if(c.peer !== senderId) c.send(data);
             });
@@ -206,18 +206,14 @@ function handleAction(data, senderId) {
         }
     } else {
         // Client receiving action
-        if (data.type.startsWith('DRAW')) handleDrawEvent(data);
+        if (data.type === 'DRAW_EVENT') handleDrawEvent(data);
         else if (data.type === 'GUESS') handleChatEvent(data);
     }
 }
 
 function handleDrawEvent(data) {
-    if (data.type === 'DRAW_START' || data.type === 'DRAW_MOVE') {
-        const lx = data.lastPos ? data.lastPos.x : data.pos.x;
-        const ly = data.lastPos ? data.lastPos.y : data.pos.y;
-        drawLocal(lx, ly, data.pos.x, data.pos.y, data.color, data.size);
-    } else if (data.type === 'DRAW_CLEAR') {
-        clearCanvas();
+    if (data.type === 'DRAW_EVENT' && data.data) {
+        syncCanvasEvent(data.data);
     }
 }
 
