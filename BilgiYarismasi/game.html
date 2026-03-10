@@ -8,7 +8,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
@@ -21,49 +21,49 @@
         <section id="lobby-screen" class="view-state active">
             <header class="lobby-header">
                 <div class="code-container">
-                    <h2 class="auto-style-15">Oda Kodu:</h2>
-                    <span id="display-room-code" data-code="" class="auto-style-16">••••••••</span>
+                    <h2 >Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" >••••••••</span>
                     <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
                 </div>
                 <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
             </header>
             <div class="lobby-grid">
                 <aside class="players-panel card">
-                    <h3 class="auto-style-17">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 >Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
-                <section class="settings-panel card custom-scrollbar auto-style-19" id="host-settings">
-                    <h3 class="auto-style-17">Ayarlar</h3>
-                    <div class="settings-grid auto-style-20">
-                        <div class="form-group auto-style-13"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="20" min="5" max="180"></div>
-                        <div class="form-group auto-style-13"><label>Soru Sayısı</label><input type="number" id="round-count" value="10" min="1" max="50"></div>
+                <section class="settings-panel card custom-scrollbar" id="host-settings">
+                    <h3 >Ayarlar</h3>
+                    <div class="settings-grid">
+                        <div class="form-group"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="20" min="5" max="180"></div>
+                        <div class="form-group"><label>Soru Sayısı</label><input type="number" id="round-count" value="10" min="1" max="50"></div>
                     </div>
 
-                    <div class="form-group auto-style-129">
-                        <label class="auto-style-130">
-                            <input type="checkbox" id="wrong-penalty" checked class="auto-style-131">
+                    <div class="form-group">
+                        <label >
+                            <input type="checkbox" id="wrong-penalty" checked >
                             Yanlış Cevap Cezası (-5 Puan)
                         </label>
                     </div>
 
                     <div class="form-group">
                         <label>Zorluk (1-100)</label>
-                        <div class="difficulty-row auto-style-12">
+                        <div class="difficulty-row">
                             <input type="number" id="min-difficulty" value="1" placeholder="Min"><input type="number" id="max-difficulty" value="100" placeholder="Max">
                         </div>
                     </div>
-                    <div class="form-group auto-style-21">
+                    <div class="form-group">
                         <label>Kategoriler</label>
-                        <div class="category-grid" id="category-selection"><div class="auto-style-22">Yükleniyor...</div></div>
+                        <div class="category-grid" id="category-selection"><div >Yükleniyor...</div></div>
                     </div>
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled auto-style-23">Başlat</button>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled">Başlat</button>
                 </section>
 
-                <section class="settings-panel card hidden auto-style-24" id="client-waiting">
-                    <div class="auto-style-25">⏳</div>
+                <section class="settings-panel card hidden" id="client-waiting">
+                    <div >⏳</div>
                     <h3>Bekleniyor...</h3>
-                    <p class="auto-style-26">Kurucu ayarları yapıyor.</p>
+                    <p >Kurucu ayarları yapıyor.</p>
                 </section>
             </div>
         </section>
@@ -72,30 +72,30 @@
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card">
                 <div class="round-indicator" id="round-indicator">Soru 1 / 10</div>
-                <div class="score-board auto-style-132" id="in-game-scoreboard">
+                <div class="score-board" id="in-game-scoreboard">
                     <!-- Player scores injected here -->
                 </div>
 
-                <div class="timer-wrapper auto-style-29">
+                <div class="timer-wrapper">
                     <div id="timer-display" class="timer">00:00</div>
                 </div>
             </header>
 
-            <div class="game-layout auto-style-133">
-                <div id="game-status-message" class="status-badge auto-style-134">Hazırlanıyor...</div>
+            <div class="game-layout">
+                <div id="game-status-message" class="status-badge">Hazırlanıyor...</div>
 
-                <div id="question-card" class="taboo-card hidden auto-style-135">
-                    <header class="card-header auto-style-136">
-                        <span id="question-category" class="auto-style-137">Kategori</span>
-                        <h2 id="main-question" class="auto-style-138">...</h2>
+                <div id="question-card" class="taboo-card hidden">
+                    <header class="card-header">
+                        <span id="question-category" >Kategori</span>
+                        <h2 id="main-question" >...</h2>
                     </header>
 
-                    <div class="choices-grid auto-style-139" id="choices-container">
+                    <div class="choices-grid" id="choices-container">
                         <!-- Dinamik Şıklar Gelecek -->
-                        <button class="btn btn-secondary choice-btn auto-style-140" data-choice="0">A) ...</button>
-                        <button class="btn btn-secondary choice-btn auto-style-140" data-choice="1">B) ...</button>
-                        <button class="btn btn-secondary choice-btn auto-style-140" data-choice="2">C) ...</button>
-                        <button class="btn btn-secondary choice-btn auto-style-140" data-choice="3">D) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="0">A) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="1">B) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="2">C) ...</button>
+                        <button class="btn btn-secondary choice-btn" data-choice="3">D) ...</button>
                     </div>
                 </div>
             </div>
@@ -104,14 +104,14 @@
         <!-- SONUÇ EKRANI -->
         <section id="winner-screen" class="view-state hidden">
             <h1 class="gradient-text">Oyun Bitti!</h1>
-            <div class="card auto-style-141">
-                <h2 class="auto-style-38">Sıralama</h2>
+            <div class="card">
+                <h2 >Sıralama</h2>
 
-                <ul id="final-scoreboard-list" class="auto-style-142">
+                <ul id="final-scoreboard-list" >
                     <!-- Final sıralama dinamik eklenecek -->
                 </ul>
 
-                <button id="btn-back-to-lobby" class="btn btn-primary btn-block auto-style-143">Lobiye Dön</button>
+                <button id="btn-back-to-lobby" class="btn btn-primary btn-block">Lobiye Dön</button>
             </div>
         </section>
     </main>
@@ -120,5 +120,11 @@
     <script src="game.js"></script>
     <script src="network.js"></script>
 
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>

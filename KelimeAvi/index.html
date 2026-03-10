@@ -46,7 +46,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
@@ -54,25 +54,25 @@
     <div id="toast-container" class="toast-container"></div>
     <main id="app-container" class="glass-panel custom-scrollbar">
         <!-- GİRİŞ EKRANI -->
-        <section id="login-screen" class="view-state active auto-style-43">
+        <section id="login-screen" class="view-state active">
             <div class="hero-content">
                 <div class="game-logo-container" ><img src="../logolar/kelime-avi.svg" alt="KelimeAvi Logo" ></div>
                 <h1 class="gradient-text">Kelime Avı</h1>
-                <p class="subtitle auto-style-44">Ebe Uyanmadan Eşleş!</p>
+                <p class="subtitle">Ebe Uyanmadan Eşleş!</p>
                 <p class="seo-description">Aramızda bir Ebe var! Masumlarla gizlice anlaşarak aynı kelimeyi yazın, ama dikkat: Fazla açık verirseniz Ebe sizi avlar. Taktik ve blöf dolu bu oyunu arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz oynayın!</p>
             </div>
 
-            <div class="auto-style-9">
+            <div >
                 <div class="form-group">
                     <label for="username-input">Oyuncu Adı</label>
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
                 </div>
-                <div class="auto-style-10">
+                <div >
                     <button id="btn-host" class="btn btn-primary btn-block">Yeni Oda Kur</button>
-                    <div class="auto-style-11">VEYA</div>
-                    <div class="join-row auto-style-12">
-                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" class="auto-style-13">
-                        <button id="btn-join" class="btn btn-secondary auto-style-14">Katıl</button>
+                    <div >VEYA</div>
+                    <div class="join-row">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" >
+                        <button id="btn-join" class="btn btn-secondary">Katıl</button>
                     </div>
                 </div>
             </div>
@@ -104,5 +104,11 @@
     <!-- index.js only handles username, connection setup and redirection -->
 
     <script src="index.js"></script>
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>

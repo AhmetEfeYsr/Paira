@@ -8,7 +8,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
@@ -21,44 +21,44 @@
         <section id="lobby-screen" class="view-state active">
             <header class="lobby-header">
                 <div class="code-container">
-                    <h2 class="auto-style-15">Oda Kodu:</h2>
-                    <span id="display-room-code" data-code="" class="auto-style-16">••••••••</span>
+                    <h2 >Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" >••••••••</span>
                     <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
                 </div>
                 <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
             </header>
             <div class="lobby-grid">
                 <aside class="players-panel card">
-                    <h3 class="auto-style-17">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 >Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
-                    <button id="btn-switch-team" class="btn btn-secondary btn-block mt-auto auto-style-18">Takım Değiştir</button>
+                    <button id="btn-switch-team" class="btn btn-secondary btn-block mt-auto">Takım Değiştir</button>
                 </aside>
 
-                <section class="settings-panel card custom-scrollbar auto-style-19" id="host-settings">
-                    <h3 class="auto-style-17">Ayarlar</h3>
-                    <div class="settings-grid auto-style-20">
-                        <div class="form-group auto-style-13"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="10" max="180"></div>
-                        <div class="form-group auto-style-13"><label>Pas Hakkı</label><input type="number" id="pass-limit" value="3" min="0" max="10"></div>
-                        <div class="form-group auto-style-13"><label>Tabu Cezası</label><input type="number" id="taboo-penalty" value="1" min="0" max="5"></div>
-                        <div class="form-group auto-style-13"><label>Toplam Tur</label><input type="number" id="round-count" value="3" min="1" max="10"></div>
+                <section class="settings-panel card custom-scrollbar" id="host-settings">
+                    <h3 >Ayarlar</h3>
+                    <div class="settings-grid">
+                        <div class="form-group"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="10" max="180"></div>
+                        <div class="form-group"><label>Pas Hakkı</label><input type="number" id="pass-limit" value="3" min="0" max="10"></div>
+                        <div class="form-group"><label>Tabu Cezası</label><input type="number" id="taboo-penalty" value="1" min="0" max="5"></div>
+                        <div class="form-group"><label>Toplam Tur</label><input type="number" id="round-count" value="3" min="1" max="10"></div>
                     </div>
                     <div class="form-group">
                         <label>Zorluk (1-100)</label>
-                        <div class="difficulty-row auto-style-12">
+                        <div class="difficulty-row">
                             <input type="number" id="min-difficulty" value="1" placeholder="Min"><input type="number" id="max-difficulty" value="100" placeholder="Max">
                         </div>
                     </div>
-                    <div class="form-group auto-style-21">
+                    <div class="form-group">
                         <label>Kategoriler</label>
-                        <div class="category-grid" id="category-selection"><div class="auto-style-22">Yükleniyor...</div></div>
+                        <div class="category-grid" id="category-selection"><div >Yükleniyor...</div></div>
                     </div>
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled auto-style-23">Başlat</button>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled">Başlat</button>
                 </section>
 
-                <section class="settings-panel card hidden auto-style-24" id="client-waiting">
-                    <div class="auto-style-25">⏳</div>
+                <section class="settings-panel card hidden" id="client-waiting">
+                    <div >⏳</div>
                     <h3>Bekleniyor...</h3>
-                    <p class="auto-style-26">Kurucu ayarları yapıyor.</p>
+                    <p >Kurucu ayarları yapıyor.</p>
                 </section>
             </div>
         </section>
@@ -71,13 +71,13 @@
                     <div class="team team-a">Takım A: <span id="score-a">0</span></div>
                     <div class="team team-b">Takım B: <span id="score-b">0</span></div>
                 </div>
-                <div id="current-player-indicator" class="auto-style-27">
-                    Sıra: <strong id="turn-name" class="auto-style-28">...</strong>
+                <div id="current-player-indicator" >
+                    Sıra: <strong id="turn-name" >...</strong>
                 </div>
 
-                <div class="timer-wrapper auto-style-29">
-                    <div id="timer-display" class="timer auto-style-30">00:00</div>
-                    <button id="btn-pause" class="btn btn-secondary hidden auto-style-31" title="Oyunu Duraklat">⏸</button>
+                <div class="timer-wrapper">
+                    <div id="timer-display" class="timer">00:00</div>
+                    <button id="btn-pause" class="btn btn-secondary hidden" title="Oyunu Duraklat">⏸</button>
                 </div>
             </header>
 
@@ -85,8 +85,8 @@
                 <main class="play-area">
                     <div id="game-status-message" class="status-badge">Yükleniyor...</div>
 
-                    <div id="start-turn-container" class="hidden auto-style-32">
-                        <button id="btn-start-narrating" class="btn btn-primary pop-animation auto-style-33">
+                    <div id="start-turn-container" class="hidden">
+                        <button id="btn-start-narrating" class="btn btn-primary pop-animation">
                             🚀 Süreyi Başlat ve Kelimeleri Gör
                         </button>
                     </div>
@@ -97,18 +97,18 @@
                     </div>
 
                     <div class="narrator-actions hidden" id="narrator-actions">
-                        <button id="btn-correct" class="btn btn-success auto-style-34">✓ Doğru</button>
-                        <button id="btn-taboo" class="btn btn-danger auto-style-34">✗ Tabu</button>
-                        <button id="btn-pass" class="btn btn-warning auto-style-34">⟳ Pas</button>
+                        <button id="btn-correct" class="btn btn-success">✓ Doğru</button>
+                        <button id="btn-taboo" class="btn btn-danger">✗ Tabu</button>
+                        <button id="btn-pass" class="btn btn-warning">⟳ Pas</button>
                     </div>
                 </main>
 
                 <aside class="chat-panel card">
-                    <div class="auto-style-35">Sohbet</div>
+                    <div >Sohbet</div>
                     <div id="chat-messages" class="messages-container custom-scrollbar"></div>
                     <div class="chat-input-wrapper">
                         <input type="text" id="chat-input" autocomplete="off" placeholder="Mesaj yazın...">
-                        <button id="btn-send-chat" class="btn btn-primary auto-style-36" aria-label="Gönder">➤</button>
+                        <button id="btn-send-chat" class="btn btn-primary" aria-label="Gönder">➤</button>
                     </div>
                 </aside>
             </div>
@@ -117,13 +117,13 @@
         <!-- SONUÇ EKRANI -->
         <section id="winner-screen" class="view-state hidden">
             <h1 class="gradient-text">Oyun Bitti!</h1>
-            <div class="card auto-style-37">
-                <h2 id="winner-team-name" class="auto-style-38">...</h2>
-                <div class="auto-style-39">
-                    <div class="team-a">Takım A<br><strong id="final-score-a" class="auto-style-40">0</strong></div>
-                    <div class="team-b">Takım B<br><strong id="final-score-b" class="auto-style-41">0</strong></div>
+            <div class="card">
+                <h2 id="winner-team-name" >...</h2>
+                <div >
+                    <div class="team-a">Takım A<br><strong id="final-score-a" >0</strong></div>
+                    <div class="team-b">Takım B<br><strong id="final-score-b" >0</strong></div>
                 </div>
-                <button id="btn-back-to-lobby" class="btn btn-primary btn-block auto-style-42">Lobiye Dön</button>
+                <button id="btn-back-to-lobby" class="btn btn-primary btn-block">Lobiye Dön</button>
             </div>
         </section>
     </main>
@@ -132,5 +132,11 @@
     <script src="game.js"></script>
     <script src="network.js"></script>
 
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>

@@ -31,7 +31,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css">
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- PeerJS -->
@@ -55,7 +55,7 @@
             <button id="host-btn" class="primary-btn">Oda Kur</button>
             <div class="divider">veya</div>
             <div class="join-group">
-                <input type="text" id="room-input" placeholder="Oda Kodu" maxlength="10" autocomplete="off" class="auto-style-87">
+                <input type="text" id="room-input" placeholder="Oda Kodu" maxlength="10" autocomplete="off" >
                 <button id="join-btn" class="secondary-btn">Katıl</button>
             </div>
         </div>
@@ -86,5 +86,11 @@
 
 
     <script src="login.js"></script>
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>

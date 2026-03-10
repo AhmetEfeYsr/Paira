@@ -10,8 +10,8 @@
 
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
-    <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="style.css">
+
+
 
     <style>
         .cizbil-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
@@ -62,8 +62,8 @@
             <div class="header-bar">
                 <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış</button>
                 <div class="word-display" id="main-word">Yükleniyor...</div>
-                <div class="auto-style-155">
-                    <span id="status-badge" class="auto-style-7">Bağlanıyor...</span>
+                <div >
+                    <span id="status-badge" >Bağlanıyor...</span>
                 </div>
             </div>
 
@@ -73,20 +73,20 @@
 
             <div class="toolbar">
                 <div class="color-picker" id="color-picker">
-                    <div class="color-swatch active auto-style-156" data-color="#000000"></div>
-                    <div class="color-swatch auto-style-157" data-color="#e74c3c"></div>
-                    <div class="color-swatch auto-style-158" data-color="#3498db"></div>
-                    <div class="color-swatch auto-style-159" data-color="#2ecc71"></div>
-                    <div class="color-swatch auto-style-160" data-color="#f1c40f"></div>
-                    <div class="color-swatch auto-style-161" data-color="#9b59b6"></div>
-                    <div class="color-swatch auto-style-162" data-color="#ffffff"></div> <!-- Eraser essentially -->
+                    <div class="color-swatch active" data-color="#000000"></div>
+                    <div class="color-swatch" data-color="#e74c3c"></div>
+                    <div class="color-swatch" data-color="#3498db"></div>
+                    <div class="color-swatch" data-color="#2ecc71"></div>
+                    <div class="color-swatch" data-color="#f1c40f"></div>
+                    <div class="color-swatch" data-color="#9b59b6"></div>
+                    <div class="color-swatch" data-color="#ffffff"></div> <!-- Eraser essentially -->
                 </div>
 
                 <div class="size-picker" id="size-picker">
-                    <div class="size-btn" data-size="3"><div class="size-dot auto-style-163"></div></div>
-                    <div class="size-btn active" data-size="8"><div class="size-dot auto-style-164"></div></div>
-                    <div class="size-btn" data-size="15"><div class="size-dot auto-style-165"></div></div>
-                    <div class="size-btn" data-size="25"><div class="size-dot auto-style-166"></div></div>
+                    <div class="size-btn" data-size="3"><div class="size-dot"></div></div>
+                    <div class="size-btn active" data-size="8"><div class="size-dot"></div></div>
+                    <div class="size-btn" data-size="15"><div class="size-dot"></div></div>
+                    <div class="size-btn" data-size="25"><div class="size-dot"></div></div>
                 </div>
 
                 <div class="tools">
@@ -113,5 +113,11 @@
     <script src="../shared/chat.js"></script>
     <script src="../shared/cizbil_words.js"></script>
     <script src="game.js" type="module"></script>
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>

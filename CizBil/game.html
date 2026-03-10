@@ -10,23 +10,23 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
-    <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
     <main id="app-container" class="glass-panel custom-scrollbar">
 
-        <header class="app-header auto-style-45">
-            <h1 class="gradient-text auto-style-46">ÇizBil</h1>
-            <button id="btn-leave" class="btn btn-secondary btn-sm auto-style-47">Çıkış</button>
+        <header class="app-header">
+            <h1 class="gradient-text">ÇizBil</h1>
+            <button id="btn-leave" class="btn btn-secondary btn-sm">Çıkış</button>
         </header>
 
         <!-- LOBİ EKRANI -->
         <section id="lobby-screen" class="view-state active">
             <header class="lobby-header">
                 <div class="code-container">
-                    <h2 class="auto-style-15">Oda Kodu:</h2>
-                    <span id="display-room-code" data-code="" class="auto-style-16">••••••••</span>
+                    <h2 >Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" >••••••••</span>
                     <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
                 </div>
                 <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
@@ -35,26 +35,26 @@
             <div class="lobby-grid">
                 <!-- Sol Panel: Oyuncular -->
                 <aside class="players-panel card">
-                    <h3 class="auto-style-17">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 >Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
                 <!-- Sağ Panel: Kurucu Ayarları -->
-                <section class="settings-panel card custom-scrollbar auto-style-19" id="host-settings">
-                    <h3 class="auto-style-17">Oyun Ayarları</h3>
-                    <div class="settings-grid auto-style-48">
-                        <div class="form-group auto-style-13"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
-                        <div class="form-group auto-style-13"><label>Hedef Puan</label><input type="number" id="target-score" value="50" min="10" max="200"></div>
+                <section class="settings-panel card custom-scrollbar" id="host-settings">
+                    <h3 >Oyun Ayarları</h3>
+                    <div class="settings-grid">
+                        <div class="form-group"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
+                        <div class="form-group"><label>Hedef Puan</label><input type="number" id="target-score" value="50" min="10" max="200"></div>
                     </div>
 
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto auto-style-49">Oyunu Başlat (Min 2 Kişi)</button>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto">Oyunu Başlat (Min 2 Kişi)</button>
                 </section>
 
                 <!-- Katılımcı Bekleme Paneli -->
-                <section class="settings-panel card hidden auto-style-24" id="client-waiting">
-                    <div class="auto-style-50">⏳</div>
+                <section class="settings-panel card hidden" id="client-waiting">
+                    <div >⏳</div>
                     <h3>Bekleniyor...</h3>
-                    <p class="auto-style-26">Kurucu oyunu başlatacak.</p>
+                    <p >Kurucu oyunu başlatacak.</p>
                 </section>
             </div>
         </section>
@@ -62,43 +62,43 @@
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card">
-                <div class="auto-style-51">
-                    <div id="game-status-message" class="auto-style-52">Hazırlanıyor...</div>
-                    <div class="auto-style-53">Çizen: <span id="current-drawer" class="auto-style-54">...</span></div>
+                <div >
+                    <div id="game-status-message" >Hazırlanıyor...</div>
+                    <div >Çizen: <span id="current-drawer" >...</span></div>
                 </div>
 
-                <div class="word-display auto-style-55" id="main-word">***</div>
+                <div class="word-display" id="main-word">***</div>
 
                 <!-- Süre -->
-                <div class="timer-wrapper auto-style-56">
-                    <div id="timer-display" class="timer auto-style-57">00:00</div>
+                <div class="timer-wrapper">
+                    <div id="timer-display" class="timer">00:00</div>
                 </div>
             </header>
 
             <div class="cizbil-layout">
                 <div class="game-area">
-                    <div class="canvas-container auto-style-58">
-                        <canvas id="drawing-board" width="800" height="450" class="auto-style-59"></canvas>
+                    <div class="canvas-container">
+                        <canvas id="drawing-board" width="800" height="450" ></canvas>
                         <!-- Canvas overlay for guessers indicating they can't draw -->
-                        <div id="canvas-overlay" class="auto-style-60"></div>
+                        <div id="canvas-overlay" ></div>
                     </div>
 
                     <!-- Only visible to drawer -->
-                    <div class="toolbar card auto-style-61" id="toolbar">
-                        <div class="color-picker auto-style-62" id="color-picker">
-                            <div class="color-swatch active auto-style-63" data-color="#000000"></div>
-                            <div class="color-swatch auto-style-64" data-color="#e74c3c"></div>
-                            <div class="color-swatch auto-style-65" data-color="#3498db"></div>
-                            <div class="color-swatch auto-style-66" data-color="#2ecc71"></div>
-                            <div class="color-swatch auto-style-67" data-color="#f1c40f"></div>
-                            <div class="color-swatch auto-style-68" data-color="#ffffff"></div> <!-- Eraser -->
+                    <div class="toolbar card" id="toolbar">
+                        <div class="color-picker" id="color-picker">
+                            <div class="color-swatch active" data-color="#000000"></div>
+                            <div class="color-swatch" data-color="#e74c3c"></div>
+                            <div class="color-swatch" data-color="#3498db"></div>
+                            <div class="color-swatch" data-color="#2ecc71"></div>
+                            <div class="color-swatch" data-color="#f1c40f"></div>
+                            <div class="color-swatch" data-color="#ffffff"></div> <!-- Eraser -->
                         </div>
 
-                        <div class="size-picker auto-style-69" id="size-picker">
-                            <div class="size-btn auto-style-70" data-size="3"><div class="auto-style-71"></div></div>
-                            <div class="size-btn active auto-style-72" data-size="8"><div class="auto-style-73"></div></div>
-                            <div class="size-btn auto-style-70" data-size="15"><div class="auto-style-74"></div></div>
-                            <div class="size-btn auto-style-70" data-size="25"><div class="auto-style-75"></div></div>
+                        <div class="size-picker" id="size-picker">
+                            <div class="size-btn" data-size="3"><div ></div></div>
+                            <div class="size-btn active" data-size="8"><div ></div></div>
+                            <div class="size-btn" data-size="15"><div ></div></div>
+                            <div class="size-btn" data-size="25"><div ></div></div>
                         </div>
 
                         <div class="tools">
@@ -108,18 +108,18 @@
                 </div>
 
                 <div class="sidebar">
-                    <div class="chat-panel card auto-style-76">
-                        <div class="auto-style-77">Tahminler</div>
-                        <div class="messages-container custom-scrollbar auto-style-78" id="messages-container"></div>
-                        <div class="chat-input-wrapper auto-style-79">
-                            <input type="text" id="chat-input" class="game-input auto-style-80" placeholder="Tahmin yaz..." autocomplete="off">
+                    <div class="chat-panel card">
+                        <div >Tahminler</div>
+                        <div class="messages-container custom-scrollbar" id="messages-container"></div>
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="chat-input" class="game-input" placeholder="Tahmin yaz..." autocomplete="off">
                             <button id="btn-send-chat" class="btn btn-primary">Gönder</button>
                         </div>
                     </div>
 
-                    <div class="leaderboard card auto-style-81">
-                        <div class="auto-style-77">Skorlar</div>
-                        <ul class="leaderboard-list custom-scrollbar auto-style-82" id="game-scores-list"></ul>
+                    <div class="leaderboard card">
+                        <div >Skorlar</div>
+                        <ul class="leaderboard-list custom-scrollbar" id="game-scores-list"></ul>
                     </div>
                 </div>
             </div>
@@ -128,14 +128,14 @@
         <!-- BİTİŞ EKRANI -->
         <section id="winner-screen" class="view-state hidden">
             <h1 class="gradient-text">Oyun Bitti!</h1>
-            <div class="card auto-style-83">
-                <h2 class="auto-style-84">Sıralama Tablosu</h2>
+            <div class="card">
+                <h2 >Sıralama Tablosu</h2>
 
-                <div id="final-scores" class="custom-scrollbar auto-style-85">
+                <div id="final-scores" class="custom-scrollbar">
                     <!-- Skorlar buraya basılacak -->
                 </div>
 
-                <button id="btn-back-to-lobby" class="btn btn-primary btn-block auto-style-86">Lobiye Dön</button>
+                <button id="btn-back-to-lobby" class="btn btn-primary btn-block">Lobiye Dön</button>
             </div>
         </section>
     </main>
@@ -145,5 +145,11 @@
     <script src="network.js" type="module"></script>
     <script src="game.js" type="module"></script>
 
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>
