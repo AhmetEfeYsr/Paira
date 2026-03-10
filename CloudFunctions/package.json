@@ -1,7 +1,7 @@
 {
   "name": "kick-cloud-function",
   "version": "1.0.0",
-  "description": "Kick API Fetcher using Puppeteer Stealth",
+  "description": "Kick API Fetcher using TLS fingerprinting (got-scraping)",
   "main": "KickApi.js",
   "scripts": {
     "start": "node KickApi.js"
@@ -9,8 +9,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "puppeteer": "^21.0.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "got-scraping": "^3.2.14"
   }
 }
