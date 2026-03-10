@@ -23,6 +23,7 @@
             <h2 class="round-display">Tur: <span id="current-round">1</span> / <span id="total-rounds">?</span></h2>
         </div>
         <div class="header-right">
+            <button id="toggle-chat-btn" class="secondary-btn-small" style="margin-right: 15px;">💬 Sohbet</button>
             <span id="player-name-display">---</span>
             <button id="leave-btn" class="danger-btn-small">Çık</button>
         </div>
@@ -105,25 +106,40 @@
             </div>
 
             <!-- GAMEPLAY SCREEN -->
-            <div id="game-screen" class="screen glass-panel">
-                <div class="game-top-bar">
-                    <div class="letter-display">
-                        Harf: <span id="current-letter" class="huge-letter">A</span>
-                        <button id="change-letter-btn" class="host-only hidden secondary-btn-small">Değiştir</button>
+            <div id="game-screen" class="screen glass-panel game-layout">
+                <div class="play-area custom-scrollbar" style="flex: 1; overflow-y: auto;">
+                    <div class="game-top-bar">
+                        <div class="letter-display">
+                            Harf: <span id="current-letter" class="huge-letter">A</span>
+                            <button id="change-letter-btn" class="host-only hidden secondary-btn-small">Değiştir</button>
+                        </div>
+                        <div class="timer-display">
+                            Kalan Süre: <span id="time-left">--:--</span>
+                        </div>
                     </div>
-                    <div class="timer-display">
-                        Kalan Süre: <span id="time-left">--:--</span>
+
+                    <div class="game-grid" id="game-inputs-container">
+                        <!-- Inputs will be injected here based on selected categories -->
+                    </div>
+
+                    <div class="game-actions">
+                        <button id="finish-turn-btn" class="primary-btn pulse">Bitir!</button>
+                        <p id="finish-status-text" class="text-muted"></p>
                     </div>
                 </div>
 
-                <div class="game-grid" id="game-inputs-container">
-                    <!-- Inputs will be injected here based on selected categories -->
-                </div>
-
-                <div class="game-actions">
-                    <button id="finish-turn-btn" class="primary-btn pulse">Bitir!</button>
-                    <p id="finish-status-text" class="text-muted"></p>
-                </div>
+                <!-- Chat Panel -->
+                <aside id="chat-panel" class="chat-panel card hidden">
+                    <div style="color: var(--lilac); font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        Sohbet
+                        <button id="close-chat-btn" class="toggle-btn" style="font-size: 1rem;">❌</button>
+                    </div>
+                    <div id="chat-messages" class="messages-container custom-scrollbar"></div>
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chat-input" autocomplete="off" placeholder="Mesaj yazın...">
+                        <button id="btn-send-chat" class="btn btn-primary" style="padding: 12px 18px;" aria-label="Gönder">➤</button>
+                    </div>
+                </aside>
             </div>
 
             <!-- VOTING SCREEN -->

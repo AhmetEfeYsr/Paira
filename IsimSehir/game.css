@@ -237,26 +237,61 @@
     font-variant-numeric: tabular-nums;
 }
 
+.game-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    overflow: hidden;
+    height: 100%;
+}
+
+.play-area {
+    padding-right: 10px;
+}
+
+.chat-panel {
+    display: flex; flex-direction: column; width: 320px; flex-shrink: 0; padding: clamp(0.8rem, 2vw, 1.2rem); background: var(--card-bg); height: 100%; transition: width 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+}
+.chat-panel.hidden {
+    width: 0; padding: 0; opacity: 0; border: none; overflow: hidden; pointer-events: none;
+}
+.messages-container { flex-grow: 1; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; padding-right: 5px; }
+.chat-msg { background: var(--input-bg); padding: 8px 12px; border-radius: 8px; border-bottom-left-radius: 0; align-self: flex-start; max-width: 90%; word-break: break-word; line-height: 1.35; }
+.chat-msg.self { background: var(--header-bg); border-bottom-left-radius: 8px; border-bottom-right-radius: 0; align-self: flex-end; }
+.chat-input-wrapper { display: flex; gap: 8px; flex-shrink: 0; }
+.chat-input-wrapper input { flex-grow: 1; min-height: 36px; padding: 10px 14px; font-size: 15px; }
+
+@media (max-width: 900px) {
+    .game-layout {
+        flex-direction: column;
+    }
+    .chat-panel {
+        width: 100%;
+        min-height: 250px;
+    }
+}
+
 .game-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
     margin-bottom: 30px;
 }
 .game-input-wrapper label {
     display: block;
-    margin-bottom: 5px;
-    font-size: 0.9rem;
+    margin-bottom: 8px;
+    font-size: 1rem;
     color: var(--text-muted);
+    font-weight: 500;
 }
 .game-input-wrapper input {
     width: 100%;
-    padding: 12px;
+    padding: 16px;
     background: var(--input-bg);
     border: 1px solid var(--glass-border);
     color: var(--text-main);
-    border-radius: 10px;
-    font-size: 1.1rem;
+    border-radius: 12px;
+    font-size: 1.25rem;
     box-sizing: border-box;
     transition: border-color 0.2s, background 0.2s;
 }

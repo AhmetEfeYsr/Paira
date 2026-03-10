@@ -34,6 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
         votingScreen: document.getElementById('voting-screen'),
         scoreScreen: document.getElementById('score-screen'),
 
+        // Chat Elements
+        toggleChatBtn: document.getElementById('toggle-chat-btn'),
+        closeChatBtn: document.getElementById('close-chat-btn'),
+        chatPanel: document.getElementById('chat-panel'),
+        chatMessages: document.getElementById('chat-messages'),
+        chatInput: document.getElementById('chat-input'),
+        btnSendChat: document.getElementById('btn-send-chat'),
+
         // Host Controls
         hostControls: document.getElementById('host-controls'),
         clientWaiting: document.getElementById('client-waiting'),
@@ -470,6 +478,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return answers;
     }
+
+    // --- Chat Logic ---
+    function toggleChat() {
+        if (ui.chatPanel) {
+            ui.chatPanel.classList.toggle('hidden');
+        }
+    }
+
+    if (ui.toggleChatBtn) {
+        ui.toggleChatBtn.addEventListener('click', toggleChat);
+    }
+
+    if (ui.closeChatBtn) {
+        ui.closeChatBtn.addEventListener('click', toggleChat);
+    }
+
+    function sendChat() {
+        if (!ui.chatInput) return;
+        const msg = ui.chatInput.value.trim();
+        if (!msg) return;
+
+        displayChat("Sen", msg, true);
+        network.broadcast({ type: 'CHAT', sender: username, msg: msg });
+        ui.chatInput.value = '';
+    }
+
+    if (ui.btnSendChat) {
+        ui.btnSendChat.addEventListener('click', sendChat);
+    }
+
+    if (ui.chatInput) {
+        ui.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+    }
+
+    function displayChat(sender, msg, isSelf = false) {
+        if (!ui.chatMessages) return;
+
+        const div = document.createElement('div');
+        div.className = `chat-msg ${isSelf ? 'self' : ''}`;
+
+        // Escape HTML to prevent XSS
+        const safeSender = document.createTextNode(sender + ": ");
+        const safeMsg = document.createTextNode(msg);
+
+        const strong = document.createElement('strong');
+        strong.appendChild(safeSender);
+
+        div.appendChild(strong);
+        div.appendChild(safeMsg);
+
+        ui.chatMessages.appendChild(div);
+        ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
+    }
+
+    // Expose displayChat for network handler
+    window.displayIsimSehirChat = displayChat;
 
     // --- Interactions ---
     // Initialize layout for the lobby
