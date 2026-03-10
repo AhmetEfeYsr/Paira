@@ -1,16 +1,16 @@
 /**
- * Kick Cloud Function Endpoint
+ * Kick Cloud Function Endpoint (TLS Fingerprint Edition)
  *
- * Google Cloud Function (Node.js) or AWS Lambda example to fetch Kick channel data
- * and bypass Cloudflare blocks.
+ * Google Cloud Function (Node.js) to fetch Kick channel data
+ * and bypass Cloudflare blocks using TLS fingerprinting (`got-scraping`).
+ * This approach is extremely lightweight compared to running a headless browser.
  *
- * Deployment:
- * 1. Initialize a Node.js project (npm init -y)
- * 2. Install dependencies: npm install cloudscraper express cors
- * 3. Deploy to Google Cloud Functions or run as a simple Express server.
+ * Deployment (Google Cloud Functions):
+ * 1. Deploy using Google Cloud Console or gcloud CLI.
+ *    (Default memory 256MB is more than enough).
  */
 
-const cloudscraper = require('cloudscraper');
+const { gotScraping } = require('got-scraping');
 
 /**
  * HTTP Cloud Function.
@@ -38,23 +38,35 @@ exports.getKickInfo = async (req, res) => {
     try {
         const url = `https://kick.com/api/v1/channels/${channel}`;
 
-        // Use cloudscraper to bypass basic Cloudflare checks
-        const responseString = await cloudscraper.get(url);
-        const data = JSON.parse(responseString);
+        // got-scraping automatically handles TLS fingerprinting and header rotation
+        // to mimic a real browser (Chrome/Firefox/Safari) and bypass Cloudflare WAF/Bot Management.
+        const response = await gotScraping({
+            url: url,
+            responseType: 'json',
+            // Setting a header generator to mimic a realistic browser request
+            headerGeneratorOptions: {
+                browsers: [{ name: 'chrome', minVersion: 110 }],
+                devices: ['desktop'],
+                locales: ['en-US', 'en'],
+                operatingSystems: ['windows', 'macos']
+            }
+        });
+
+        const data = response.body;
 
         if (!data || !data.chatroom) {
-            return res.status(404).json({ error: 'Channel or chatroom not found.' });
+            return res.status(404).json({ error: 'Channel or chatroom not found. It might be blocked by Cloudflare or invalid channel name.' });
         }
 
         const chatroomId = data.chatroom.id;
 
-        // Extract pusher info from the response or use known defaults if Kick moves it
-        // Note: Sometimes Kick removes pusher cluster info from v1 endpoint,
-        // default to 'us2' and key '32cbd69e4b950bf97679' if missing.
+        // Pusher Key and Cluster extraction strategy:
+        // 1. Try to get it from the API response directly (Kick sometimes adds it back)
+        // 2. Fallback to hardcoded known values (currently active for Kick)
+
         let pusherCluster = 'us2';
         let pusherKey = '32cbd69e4b950bf97679';
 
-        // Attempt to dynamically fetch if available in future API updates
         if (data.pusher_key && data.pusher_cluster) {
             pusherKey = data.pusher_key;
             pusherCluster = data.pusher_cluster;
@@ -68,10 +80,10 @@ exports.getKickInfo = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error fetching Kick channel:', error);
+        console.error('Error fetching Kick channel:', error.message);
         res.status(500).json({
             error: 'Failed to fetch channel data due to network or Cloudflare blocking.',
-            details: error.message
+            details: error.response ? error.response.body : error.message
         });
     }
 };
