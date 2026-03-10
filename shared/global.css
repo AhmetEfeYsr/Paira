@@ -255,3 +255,53 @@
 .max-w-500 { max-width: 500px !important; width: 100% !important; }
 .max-w-600 { max-width: 600px !important; width: 100% !important; }
 .max-w-800 { max-width: 800px !important; width: 100% !important; }
+
+/* --- GLOBAL UI COMPONENTS --- */
+
+.form-group { margin-bottom: clamp(1rem, 2.5vw, 1.5rem); width: 100%; }
+.form-group label { display: block; margin-bottom: 0.5rem; color: var(--lilac); font-weight: 600; font-size: 0.9rem; }
+
+input[type="text"], input[type="number"], select {
+    width: 100%; padding: 12px 16px; min-height: 40px; background: var(--footer-bg);
+    border: 1px solid var(--lilac-muted); border-radius: 10px;
+    color: var(--text-main); font-family: inherit; font-size: 16px;
+    outline: none; transition: all 0.3s ease;
+}
+
+input:focus, select:focus { border-color: var(--neon-purple); background: var(--input-bg); box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.2); }
+
+.btn {
+    padding: 12px 20px; min-height: 40px; border: none; border-radius: 10px;
+    font-size: clamp(0.9rem, 2vw, 1rem); font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    color: var(--text-main); touch-action: manipulation; white-space: nowrap;
+}
+.btn-primary { background: var(--primary-purple); }
+.btn-primary:hover:not(.disabled) { background: var(--neon-purple); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.4); }
+.btn-secondary { background: var(--input-bg); border: 1px solid var(--lilac-muted); }
+.btn-secondary:hover { background: var(--btn-secondary-bg); border-color: var(--lilac); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+.btn-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+.btn-success:hover { background: var(--success-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(46, 204, 113, 0.2); }
+.btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: var(--danger-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(231, 76, 60, 0.2); }
+.btn-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
+.btn-warning:hover { background: var(--warning-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(241, 196, 15, 0.2); }
+.btn-block { width: 100%; }
+
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
+.rule-card { background: var(--card-bg); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 1.2rem; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+.rule-card:hover { transform: translateY(-5px); border-color: var(--neon-purple); background: rgba(var(--primary-rgb), 0.1); box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.15); }
+.rule-card h3 { font-size: 1.1rem; color: var(--neon-purple); margin-bottom: 0.5rem; }
+.rule-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] select,
+[data-theme="light"] input[type="password"] {
+    background: #ffffff; color: #2b2d42; border-color: rgba(58, 134, 255, 0.4);
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus {
+    background: #fdfdfd;
+}
