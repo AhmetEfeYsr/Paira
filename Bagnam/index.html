@@ -39,17 +39,17 @@
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css"> <!-- Portal style for glassmorphism -->
+     <!-- Portal style for glassmorphism -->
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
-    <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
         <!-- LOGIN / LANDING SCREEN -->
-        <section id="login-screen" class="view-state active auto-style-3">
+        <section id="login-screen" class="view-state active">
             <div class="hero-content">
                 <div class="game-logo-container" ><img src="../logolar/bagnam.svg" alt="Bagnam Logo" ></div>
                 <h1 class="gradient-text">Bağnam</h1>
@@ -57,18 +57,18 @@
             </div>
 
 
-            <div class="auto-style-9">
-                <button id="btn-start" class="btn btn-primary btn-block auto-style-144">Günün Kelimesini Oyna</button>
+            <div >
+                <button id="btn-start" class="btn btn-primary btn-block">Günün Kelimesini Oyna</button>
 
-                <div class="past-games-container auto-style-145">
-                    <label for="past-date-picker" class="auto-style-146">Veya geçmiş bir tarihi oynayın:</label>
-                    <div class="auto-style-62">
-                        <input type="date" id="past-date-picker" class="auto-style-147">
-                        <button id="btn-play-past" class="btn btn-secondary auto-style-148">Oyna</button>
+                <div class="past-games-container">
+                    <label for="past-date-picker" >Veya geçmiş bir tarihi oynayın:</label>
+                    <div >
+                        <input type="date" id="past-date-picker" >
+                        <button id="btn-play-past" class="btn btn-secondary">Oyna</button>
                     </div>
                 </div>
 
-                <div id="loading-indicator" class="hidden auto-style-149">
+                <div id="loading-indicator" class="hidden">
                     Veriler yükleniyor... Lütfen bekleyin.
                 </div>
             </div>
@@ -98,15 +98,15 @@
         </section>
 
         <!-- GAMEPLAY SCREEN -->
-        <section id="game-screen" class="view-state auto-style-150">
+        <section id="game-screen" class="view-state">
             <div class="game-topbar">
-                <div class="score-board auto-style-151">
+                <div class="score-board">
                     <span>Tahmin Sayısı: <span id="guess-count" class="timer">0</span></span>
-                    <button id="btn-giveup" class="btn btn-secondary auto-style-152">Pes Et</button>
+                    <button id="btn-giveup" class="btn btn-secondary">Pes Et</button>
                 </div>
             </div>
 
-            <div class="play-area auto-style-153">
+            <div class="play-area">
                 <!-- Input Area -->
                 <div class="guess-input-wrapper">
                     <input type="text" id="word-input" placeholder="Bir kelime girin..." autocomplete="off">
@@ -115,7 +115,7 @@
 
                 <!-- Feedback / Success Message -->
                 <div id="success-message" class="hidden success-banner">
-                    <h2 class="auto-style-154">Tebrikler! 🎉</h2>
+                    <h2 >Tebrikler! 🎉</h2>
                     <p>Günün kelimesini <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p>
                 </div>
 
@@ -135,5 +135,11 @@
 
 
     <script src="app.js"></script>
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>

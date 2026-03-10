@@ -11,8 +11,8 @@
 
     <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
-    <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="style.css">
+
+
     <style>
         .chat-tabu-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
         .game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
@@ -54,10 +54,10 @@
     <div class="chat-tabu-layout">
         <!-- Main Game Area (Streamer View) -->
         <div class="game-area">
-            <div class="auto-style-5">
+            <div >
                 <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış Yap</button>
-                <div class="auto-style-6">
-                    Bağlantı: <span id="status-badge" class="auto-style-7">Bağlanıyor...</span>
+                <div >
+                    Bağlantı: <span id="status-badge" >Bağlanıyor...</span>
                 </div>
             </div>
 
@@ -83,7 +83,7 @@
             </div>
 
             <div class="leaderboard">
-                <div class="sidebar-header auto-style-8">Liderlik Tablosu</div>
+                <div class="sidebar-header">Liderlik Tablosu</div>
                 <div class="leaderboard-list custom-scrollbar" id="leaderboard-list">
                     <!-- Scores -->
                 </div>
@@ -96,5 +96,11 @@
     <script src="../shared/chat.js"></script>
     <script src="../Tabu/words.js"></script> <!-- Reusing Tabu words database -->
     <script src="game.js" type="module"></script>
+<script>
+        (function() {
+            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </body>
 </html>
