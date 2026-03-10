@@ -40,25 +40,56 @@ function playSound(type) {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
+
+    // Add a lowpass filter to make all sounds softer/less piercing
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1200; // soft treble
+
+    osc.connect(filter);
+    filter.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
+    const now = audioCtx.currentTime;
+
     if (type === 'correct') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now); // A4
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // up to A5
+        gainNode.gain.setValueAtTime(0.0, now);
+        gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
     } else if (type === 'taboo' || type === 'wrong') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.3);
+        gainNode.gain.setValueAtTime(0.0, now);
+        gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
     } else if (type === 'tick') {
-        osc.type = 'square'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        gainNode.gain.setValueAtTime(0.0, now);
+        gainNode.gain.linearRampToValueAtTime(0.05, now + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
     } else if (type === 'end') {
-        osc.type = 'square'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 1);
-        osc.start(); osc.stop(audioCtx.currentTime + 1);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.5);
+        gainNode.gain.setValueAtTime(0.0, now);
+        gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+        osc.start(now); osc.stop(now + 1.0);
+    } else if (type === 'pass') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        gainNode.gain.setValueAtTime(0.0, now);
+        gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
     }
 }
 
@@ -430,10 +461,27 @@ function updateUI() {
                         btn.classList.add('btn-selected');
                     }
                 } else {
-                    btn.onclick = () => {
-                        sendAnswer(idx);
+
+                    // Hızlı tepki için pointerdown ve click olaylarını dinle.
+                    // touch cihazlarda pointerdown çok daha hızlı çalışır.
+                    const handleChoice = (e) => {
+                        e.preventDefault(); // Olası scroll/double-tap sorunlarını önler
+                        if (btn.classList.contains('disabled')) return;
+
+                        // Tıklandığı an UI geri bildirimi ver (Hızlı tepki)
+                        btn.classList.add('btn-selected');
                         playSound('pass'); // Basit bir tık sesi
+
+                        sendAnswer(idx);
+
+                        // Sadece bir kere çalışsın diye kendisini kaldırıyoruz
+                        btn.removeEventListener('pointerdown', handleChoice);
+                        btn.removeEventListener('click', handleChoice);
                     };
+
+                    btn.addEventListener('pointerdown', handleChoice);
+                    btn.addEventListener('click', handleChoice);
+
                 }
 
                 choicesContainer.appendChild(btn);
