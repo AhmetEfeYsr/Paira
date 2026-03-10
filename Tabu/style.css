@@ -110,6 +110,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 .btn-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
 .btn-warning:hover { background: var(--warning-hover); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(241, 196, 15, 0.2); }
 .btn-block { width: 100%; }
+.btn-icon { padding: 8px !important; display: inline-flex; align-items: center; justify-content: center; min-height: 0; }
 
 .card {
     background: var(--footer-bg); border: var(--glass-border);
@@ -224,8 +225,8 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 
 .guesser-mode { border-color: var(--success); background: var(--success-bg); color: var(--success); }
 .opponent-mode { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
-.toggle-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
-.toggle-btn:hover { opacity: 1; }
+.toggle-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; color: var(--text-muted); }
+.toggle-btn:hover { opacity: 1; color: var(--neon-purple); }
 
 .pop-animation { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 @keyframes popIn { 0% { transform: scale(0.95); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }

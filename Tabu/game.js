@@ -467,12 +467,22 @@ function updateUI() {
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) {
             btnPause.classList.toggle('hidden', state.isWaitingForReady);
-            btnPause.innerText = state.isPaused ? '▶' : '⏸';
-            // Everyone should be able to click it, visual cue
-            if(state.isPaused) {
+
+            const iconPause = document.getElementById('icon-pause');
+            const iconPlay = document.getElementById('icon-play');
+
+            if (state.isPaused) {
+                iconPause?.classList.add('hidden');
+                iconPlay?.classList.remove('hidden');
                 btnPause.style.background = 'var(--danger)';
+                btnPause.style.borderColor = 'var(--danger)';
+                btnPause.style.color = 'white';
             } else {
-                btnPause.style.background = 'var(--btn-bg)';
+                iconPlay?.classList.add('hidden');
+                iconPause?.classList.remove('hidden');
+                btnPause.style.background = 'var(--input-bg)';
+                btnPause.style.borderColor = 'var(--lilac-muted)';
+                btnPause.style.color = 'var(--text-main)';
             }
         }
 
@@ -493,9 +503,12 @@ function updateUI() {
         const amINarrator = state.turnId === myId;
         const isOpponent = myTeam !== tPlayer.team;
 
+        const passText = document.getElementById('pass-text');
         const btnPass = document.getElementById('btn-pass');
+        if (passText) {
+            passText.innerText = `Pas (${state.passesLeft})`;
+        }
         if (btnPass) {
-            btnPass.innerText = `⟳ Pas (${state.passesLeft})`;
             btnPass.classList.toggle('disabled', state.passesLeft <= 0);
         }
 

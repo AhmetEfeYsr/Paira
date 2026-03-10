@@ -57,7 +57,18 @@ if (btnToggleCode) {
     btnToggleCode.addEventListener('click', () => {
         isCodeVisible = !isCodeVisible;
         const codeDisplay = document.getElementById('display-room-code');
-        btnToggleCode.innerText = isCodeVisible ? '🙈' : '👁️';
+
+        const iconOpen = document.getElementById('icon-eye-open');
+        const iconClosed = document.getElementById('icon-eye-closed');
+
+        if (isCodeVisible) {
+            iconOpen?.classList.remove('hidden');
+            iconClosed?.classList.add('hidden');
+        } else {
+            iconOpen?.classList.add('hidden');
+            iconClosed?.classList.remove('hidden');
+        }
+
         if (codeDisplay) {
             codeDisplay.innerText = isCodeVisible ? (codeDisplay.dataset.code || '') : '••••••••';
         }
