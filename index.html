@@ -38,6 +38,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="shared/global.css">
     <link rel="stylesheet" href="shared/shared.css">
 </head>
 <body>
@@ -45,15 +46,15 @@
 
     <main id="app-container" class="glass-panel custom-scrollbar">
         <!-- Theme Switcher -->
-        <div class="theme-switcher" style="position: absolute; top: clamp(1rem, 2.5vw, 2rem); right: clamp(1rem, 2.5vw, 2rem); z-index: 10;">
-            <select id="theme-select" class="game-input" style="padding: 8px 12px; font-size: 0.9rem; min-width: 120px; cursor: pointer;" onchange="switchTheme(this.value)">
+        <div class="theme-switcher auto-style-1">
+            <select id="theme-select" class="game-input auto-style-2" onchange="switchTheme(this.value)">
                 <option value="paira">Paira</option>
                 <option value="space">Space</option>
                 <option value="light">Light</option>
             </select>
         </div>
 
-        <section id="portal-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
+        <section id="portal-screen" class="view-state active auto-style-3">
             <div class="hero-content">
                 <h1 class="gradient-text">Paira Games</h1>
                 <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online parti oyunları ve günlük zeka oyunları oynayın! Eğlenceye hemen katılın.</p>

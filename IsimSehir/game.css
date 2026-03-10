@@ -106,8 +106,7 @@
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+
 
 .hidden { display: none !important; }
 .mt-20 { margin-top: 20px; }
@@ -208,7 +207,7 @@
     animation: spin 1s linear infinite;
     margin: 0 auto 20px auto;
 }
-@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes spin {
 
 /* Game Screen */
 .game-top-bar {
@@ -314,8 +313,7 @@
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.7); }
     70% { box-shadow: 0 0 0 15px rgba(138, 43, 226, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(138, 43, 226, 0); }
-}
+
 
 /* Scoreboard */
 .scoreboard-table {
@@ -410,6 +408,6 @@
 .vote-btn.selected {
     box-shadow: 0 0 10px rgba(138,43,226, 0.3);
 }
-.vote-btn[data-val="0"].selected { background: var(--danger-color); border-color: #c0392b; }
-.vote-btn[data-val="5"].selected { background: #e67e22; border-color: #d35400; }
-.vote-btn[data-val="10"].selected { background: var(--success-color); border-color: #27ae60; }
+.vote-btn[data-val="0"].selected { background: var(--danger-color); border-color: var(--danger-hover); }
+.vote-btn[data-val="5"].selected { background: var(--warning); border-color: var(--warning-hover); }
+.vote-btn[data-val="10"].selected { background: var(--success-color); border-color: var(--success-hover); }
