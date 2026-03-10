@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLetter: document.getElementById('current-letter'),
         btnChangeLetter: document.getElementById('btn-change-letter'),
         timerDisplay: document.getElementById('timer-display'),
+        timerStatusText: document.getElementById('timer-status-text'),
         gameInputsContainer: document.getElementById('game-inputs-container'),
         btnFinishTurn: document.getElementById('btn-finish-turn'),
         finishStatusText: document.getElementById('finish-status-text'),
@@ -412,7 +413,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if(ui.totalRounds) ui.totalRounds.textContent = config.rounds;
         if(ui.currentLetter) ui.currentLetter.textContent = letter;
         if(ui.finishStatusText) ui.finishStatusText.textContent = '';
-        if(ui.timerDisplay) ui.timerDisplay.textContent = '--:--';
+        if(ui.timerDisplay) {
+            if (config.endCondition === 'all_finish') {
+                ui.timerDisplay.textContent = '∞';
+            } else {
+                ui.timerDisplay.textContent = '--:--';
+            }
+        }
+
+        if(ui.timerStatusText) {
+            if (config.endCondition === 'first_finish') {
+                ui.timerStatusText.style.display = 'block';
+                ui.timerStatusText.textContent = 'Henüz bitiren olmadı';
+            } else {
+                ui.timerStatusText.style.display = 'none';
+            }
+        }
 
         generateGameInputs(config.categories);
         switchScreen('game-screen');
@@ -462,6 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
         const s = (secondsLeft % 60).toString().padStart(2, '0');
         ui.timerDisplay.textContent = `${m}:${s}`;
+
+        if (ui.timerStatusText && gameConfig.endCondition === 'first_finish') {
+            ui.timerStatusText.textContent = 'Süre başladı!';
+        }
     }
 
     function getPlayerAnswers() {
@@ -553,6 +573,10 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (data.type === 'TIMER_SYNC') {
             if (!isHost) {
                 clearInterval(currentTimer);
+                if (gameConfig.endCondition === 'first_finish' && ui.timerStatusText) {
+                    ui.timerStatusText.style.display = 'block';
+                    ui.timerStatusText.textContent = 'Süre başladı!';
+                }
                 const initialLeft = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
                 updateTimerDisplay(initialLeft); // Immediate update
                 currentTimer = setInterval(() => {
