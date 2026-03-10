@@ -6,21 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
     <title>Kelime Avı | Sosyal Çıkarım Oyunu</title>
-    <meta name="description" content="Aramızda bir Ebe var! Masumlarla gizlice anlaşarak aynı kelimeyi yazın, ama dikkat: Fazla açık verirseniz Ebe sizi avlar. Herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz oynayabileceğiniz sosyal çıkarım parti oyunu.">
-    <meta name="keywords" content="ebe masum oyunu, kelime avı, sosyal çıkarım, social deduction, browser game, ücretsiz oyun, arkadaş grupları için oyun, webrtc oyun, online kelime tahmin">
+    <meta name="description" content="Gizli ebeyi uyandırma! Sadece baş harfi verilen kelimede diğer masumlarla üstü kapalı anlaşarak eşleşmeye çalış. Çok açık konuşursan ebe sizi avlar! Herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz parti oyunu.">
+    <meta name="keywords" content="ebe masum oyunu, kelime avı, sosyal çıkarım, şifreli kelime bulma, browser game, ücretsiz oyun, arkadaş grupları için oyun, webrtc oyun, online kelime tahmin">
     <meta name="author" content="Paira">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Facebook / Discord -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Kelime Avı | Sosyal Çıkarım Parti Oyunu">
-    <meta property="og:description" content="Aramızda bir Ebe var! Masumlarla gizlice anlaşarak aynı kelimeyi yazın, ama dikkat: Fazla açık verirseniz Ebe sizi avlar. Arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz oynayın!">
+    <meta property="og:title" content="Kelime Avı | Gizli Ebe Parti Oyunu">
+    <meta property="og:description" content="Gizli ebeyi uyandırma! Sadece baş harfi verilen kelimede diğer oyuncularla üstü kapalı anlaşarak eşleşmeye çalış. Çok açık konuşursan ebe sizi dinler ve avlar!">
     <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="Kelime Avı | Sosyal Çıkarım Parti Oyunu">
-    <meta property="twitter:description" content="Aramızda bir Ebe var! Masumlarla gizlice anlaşarak aynı kelimeyi yazın, ama dikkat: Fazla açık verirseniz Ebe sizi avlar.">
+    <meta property="twitter:title" content="Kelime Avı | Gizli Ebe Parti Oyunu">
+    <meta property="twitter:description" content="Gizli ebeyi uyandırma! Sadece baş harfi verilen kelimede diğer masumlarla üstü kapalı anlaşarak eşleşmeye çalış.">
 
     <!-- Schema.org (JSON-LD) for Google Search -->
     <script type="application/ld+json">
@@ -31,7 +31,7 @@
       "operatingSystem": "Web Browser",
       "applicationCategory": "GameApplication",
       "genre": "Social Deduction Game",
-      "description": "Ebe ve Masumlar konseptine dayalı, kelime tahmin etme ve sosyal çıkarım mekaniklerini birleştiren online parti oyunu.",
+      "description": "Gizli ebeyi uyandırmadan şifreli konuşarak kelime eşleştirme konseptine dayalı, sosyal çıkarım mekaniklerini barındıran parti oyunu.",
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -53,47 +53,50 @@
     <div id="toast-container" class="toast-container"></div>
     <main id="app-container" class="glass-panel custom-scrollbar">
         <!-- GİRİŞ EKRANI -->
-        <section id="login-screen" class="view-state active" style="justify-content: flex-start; padding-top: 5vh; align-items: center;">
+        <section id="login-screen" class="view-state active" style="justify-content: center; align-items: center;">
             <div class="hero-content">
-                <div class="game-logo-container" ><img src="../logolar/kelime-avi.svg" alt="KelimeAvi Logo" ></div>
+                <div class="game-logo-container"><img src="../logolar/kelime-avi.svg" alt="KelimeAvi Logo"></div>
                 <h1 class="gradient-text">Kelime Avı</h1>
-                <p class="subtitle" style="margin-bottom: 0.5rem;">Ebe Uyanmadan Eşleş!</p>
-                <p class="seo-description">Aramızda bir Ebe var! Masumlarla gizlice anlaşarak aynı kelimeyi yazın, ama dikkat: Fazla açık verirseniz Ebe sizi avlar. Taktik ve blöf dolu bu oyunu arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz oynayın!</p>
+                <p class="seo-description">Gizli Ebeyi uyandırma! Sadece baş harfi verilen kelimede diğer oyuncularla üstü kapalı anlaşarak eşleşmeye çalış. Çok açık konuşursan Ebe sizi dinler ve avlar!</p>
             </div>
 
-            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2rem;">
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
                 <div class="form-group">
                     <label for="username-input">Oyuncu Adı</label>
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                    <button id="btn-host" class="btn btn-primary btn-block">Yeni Oda Kur</button>
-                    <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin: 0.5rem 0;">VEYA</div>
-                    <div class="join-row" style="display: flex; gap: 12px;">
-                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="50" style="margin-bottom: 0;">
-                        <button id="btn-join" class="btn btn-secondary" style="padding: 14px 28px;">Katıl</button>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="margin-bottom: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="padding: 0 24px; font-size: 1.05rem; white-space: nowrap;">Katıl</button>
                     </div>
                 </div>
             </div>
 
-            <div class="seo-rules-container custom-scrollbar">
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
                 <h2>Nasıl Oynanır?</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
                         <h3>1. Roller Dağıtılır</h3>
-                        <p>Oyun başladığında sistem rastgele birini gizli <strong>Ebe</strong> seçer. Odadaki diğer herkes <strong>Masum</strong>'dur. Ebe tüm kelimeyi görür, masumlar sadece baş harfini.</p>
+                        <p>Oyun başladığında sistem rastgele bir <strong>Ebe</strong> seçer (O tüm kelimeyi görür). Kalan herkes <strong>Masum</strong> olur (Sadece baş harfi görürler).</p>
                     </div>
                     <div class="rule-card">
-                        <h3>2. Şifreli Konuşun</h3>
-                        <p>Masumlar süre bitmeden aralarında sesli iletişim kurarak, o harfle başlayan bir kelimede anlaşmalıdır. Ancak dikkat edin: Kelimeyi çok açık ederseniz ebe duyar!</p>
+                        <h3>2. Şifreli Eşleşme (Masum)</h3>
+                        <p>Masumların amacı verilen baş harfle başlayan bir kelime bulup diğer masumlarla eşleşmektir. Ancak kelimeyi çok belli ederlerse aralarındaki Ebe onları dinleyip avlar!</p>
                     </div>
                     <div class="rule-card">
-                        <h3>3. Tahmin ve Av</h3>
-                        <p>Süre bitiminde herkes anlaştığı kelimeyi yazar. Ebe de dinlediklerinden yola çıkarak 5 tahmin yapar. Masumlar eşleşirse kazanır, Ebe masumların kelimesini tahmin ederse onları avlar!</p>
+                        <h3>3. Sohbeti Dinle (Ebe)</h3>
+                        <p>Ebenin amacı konuşmaları dinleyerek masum taklidi yapmak ve masumların hangi kelimede eşleşeceğini bulup onlardan önce 5 tahmin kutusuna o kelimeyi yazmaktır.</p>
                     </div>
                     <div class="rule-card">
                         <h3>4. Büyük Vurgun (Jackpot)</h3>
-                        <p>Masumlardan biri risk alıp, doğrudan Ebenin tuttuğu asıl kelimeyi bulursa anında Jackpot yapar ve büyük puan kazanır!</p>
+                        <p>Eğer çok eminseniz (masumken) doğrudan Ebenin tuttuğu asıl ana kelimeyi yazarak Jackpot yapıp büyük puanı kırabilirsiniz. Ya da yanılıp elenebilirsiniz!</p>
                     </div>
                 </div>
             </div>
