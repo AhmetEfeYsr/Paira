@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GarticPhone | Paira Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .setup-container { max-width: 500px; width: 100%; margin: 0 auto; text-align: center; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: pointer; transition: 0.3s; font-weight: bold; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--primary-purple); border-bottom-color: var(--primary-purple); background: rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
+    <div class="glass-bg"></div>
+    <main class="setup-container card">
+        <h1 class="gradient-text" style="font-size: 2.5rem; margin-bottom: 5px;">GarticPhone</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Kulaktan kulağa çizim oyunu!</p>
+
+        <div style="display: flex; border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
+            <button class="tab-btn active" id="tab-join">Katıl</button>
+            <button class="tab-btn" id="tab-host">Kur</button>
+        </div>
+
+        <div id="join-form">
+            <input type="text" id="join-name" class="game-input" placeholder="Kullanıcı Adınız" maxlength="15" autocomplete="off">
+            <input type="text" id="join-code" class="game-input" placeholder="Oda Kodu" maxlength="6" autocomplete="off" style="text-transform: uppercase;">
+            <button id="btn-join" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; margin-top: 10px;">Oyuna Katıl</button>
+        </div>
+
+        <div id="host-form" style="display: none;">
+            <input type="text" id="host-name" class="game-input" placeholder="Kurucu Adınız" maxlength="15" autocomplete="off">
+            <button id="btn-create" class="btn btn-success btn-block" style="padding: 14px; font-size: 1.1rem; margin-top: 10px;">Oda Kur</button>
+        </div>
+
+        <a href="../index.html" style="display: inline-block; margin-top: 20px; color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">&larr; Ana Sayfaya Dön</a>
+    </main>
+
+    <script src="../shared/shared.js"></script>
+    <script>
+        document.getElementById('tab-join').addEventListener('click', () => {
+            document.getElementById('tab-join').classList.add('active');
+            document.getElementById('tab-host').classList.remove('active');
+            document.getElementById('join-form').style.display = 'block';
+            document.getElementById('host-form').style.display = 'none';
+        });
+
+        document.getElementById('tab-host').addEventListener('click', () => {
+            document.getElementById('tab-host').classList.add('active');
+            document.getElementById('tab-join').classList.remove('active');
+            document.getElementById('host-form').style.display = 'block';
+            document.getElementById('join-form').style.display = 'none';
+        });
+
+        document.getElementById('btn-join').addEventListener('click', () => {
+            const name = document.getElementById('join-name').value.trim();
+            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            if(!name || !code || code.length !== 6) return alert("Geçerli bir ad ve 6 haneli oda kodu girin.");
+            sessionStorage.setItem('playerName', name);
+            sessionStorage.setItem('roomCode', code);
+            sessionStorage.setItem('isHost', 'false');
+            window.location.href = 'game.html';
+        });
+
+        document.getElementById('btn-create').addEventListener('click', () => {
+            const name = document.getElementById('host-name').value.trim();
+            if(!name) return alert("Lütfen bir ad girin.");
+            sessionStorage.setItem('playerName', name);
+            sessionStorage.setItem('isHost', 'true');
+            window.location.href = 'game.html';
+        });
+    </script>
+</body>
+</html>

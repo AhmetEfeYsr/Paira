@@ -14,24 +14,7 @@ let state = {
 };
 
 // Canvas variables
-const canvas = document.getElementById('drawing-board');
-const ctx = canvas.getContext('2d');
-let isDrawing = false;
-let currentColor = '#000000';
-let currentSize = 8;
-let lastX = 0;
-let lastY = 0;
-
-// Set up Canvas internal scale for high DPI and CSS scaling
-function resizeCanvas() {
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.width * (9/16); // 16:9 aspect ratio
-
-    // Fill white
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
+let drawingBoard;
 
 // Fuzzy Matcher implementation
 const normalizeTurkish = (str) => {
@@ -71,74 +54,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initCanvas() {
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Touch & Mouse Events
-    const startDrawing = (e) => {
-        isDrawing = true;
-        const pos = getPos(e);
-        lastX = pos.x;
-        lastY = pos.y;
-        draw(e);
-    };
-
-    const draw = (e) => {
-        if (!isDrawing) return;
-        e.preventDefault();
-        const pos = getPos(e);
-
-        ctx.beginPath();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = currentSize;
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-
-        lastX = pos.x;
-        lastY = pos.y;
-    };
-
-    const stopDrawing = () => {
-        isDrawing = false;
-        ctx.beginPath();
-    };
-
-    const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        // Calculate scale because CSS width != internal canvas width
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        if (e.touches && e.touches.length > 0) {
-            return {
-                x: (e.touches[0].clientX - rect.left) * scaleX,
-                y: (e.touches[0].clientY - rect.top) * scaleY
-            };
-        }
-        return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
-        };
-    };
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    canvas.addEventListener('touchstart', startDrawing, {passive: false});
-    canvas.addEventListener('touchmove', draw, {passive: false});
-    canvas.addEventListener('touchend', stopDrawing);
+    const canvasElement = document.getElementById('drawing-board');
+    drawingBoard = new AdvancedDrawingBoard(canvasElement, {
+        defaultColor: '#000000',
+        defaultSize: 8
+    });
 
     // Toolbar logic
     document.querySelectorAll('.color-swatch').forEach(swatch => {
         swatch.addEventListener('click', (e) => {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
             e.target.classList.add('active');
-            currentColor = e.target.dataset.color;
+            drawingBoard.setColor(e.target.dataset.color);
+            if (e.target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
+            else drawingBoard.setTool('brush');
         });
     });
 
@@ -147,14 +76,30 @@ function initCanvas() {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             const target = e.target.closest('.size-btn');
             target.classList.add('active');
-            currentSize = parseInt(target.dataset.size);
+            drawingBoard.setSize(parseInt(target.dataset.size));
+        });
+    });
+
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const target = e.target.closest('.tool-btn');
+            target.classList.add('active');
+            drawingBoard.setTool(target.dataset.tool);
         });
     });
 
     document.getElementById('btn-clear').addEventListener('click', () => {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawingBoard.clear(false);
     });
+
+    // Check if btn-undo exists in HTML
+    const btnUndo = document.getElementById('btn-undo');
+    if (btnUndo) {
+        btnUndo.addEventListener('click', () => {
+            drawingBoard.undo(false);
+        });
+    }
 }
 
 function initGame() {
@@ -206,8 +151,9 @@ function nextWord() {
     document.getElementById('main-word').textContent = currentWord;
 
     // Clear canvas
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (drawingBoard) {
+        drawingBoard.clear(false);
+    }
 
     state.isPaused = false;
     document.getElementById('btn-next').style.display = 'none';

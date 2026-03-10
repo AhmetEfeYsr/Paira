@@ -88,8 +88,17 @@
                     <div class="size-btn" data-size="25"><div class="size-dot" style="width: 20px; height: 20px;"></div></div>
                 </div>
 
-                <div class="tools">
-                    <button class="btn btn-secondary btn-sm" id="btn-clear">Temizle</button>
+                <div class="tool-picker" id="tool-picker" style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-sm tool-btn active" data-tool="brush" title="Fırça">🖌️</button>
+                    <button class="btn btn-secondary btn-sm tool-btn" data-tool="fill" title="Doldur">🪣</button>
+                    <button class="btn btn-secondary btn-sm tool-btn" data-tool="rect" title="Kare">⬛</button>
+                    <button class="btn btn-secondary btn-sm tool-btn" data-tool="circle" title="Daire">⚫</button>
+                    <button class="btn btn-secondary btn-sm tool-btn" data-tool="line" title="Çizgi">➖</button>
+                </div>
+
+                <div class="tools" style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-sm" id="btn-undo" title="Geri Al">↩️</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-clear">🗑️</button>
                     <button class="btn btn-primary btn-sm" id="btn-skip">Pas Geç</button>
                     <button class="btn btn-success btn-sm" id="btn-next" style="display: none;">Sonraki</button>
                 </div>
@@ -109,6 +118,7 @@
 
     <!-- Scripts -->
     <script src="../shared/shared.js"></script>
+    <script src="../shared/drawing.js"></script>
     <script src="../shared/chat.js"></script>
     <script src="../shared/cizbil_words.js"></script>
     <script src="game.js" type="module"></script>

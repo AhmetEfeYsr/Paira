@@ -2,11 +2,7 @@
 
 import { networkState, broadcastAction, isHost, myId } from './network.js';
 
-let canvas, ctx;
-let isDrawing = false;
-let currentColor = '#000000';
-let currentSize = 8;
-let lastX = 0, lastY = 0;
+let drawingBoard;
 
 let timerInterval;
 
@@ -37,18 +33,34 @@ export const isMatch = (guess, target) => {
 };
 
 export function initGameUI() {
-    canvas = document.getElementById('drawing-board');
-    ctx = canvas.getContext('2d');
+    const canvasElement = document.getElementById('drawing-board');
+    drawingBoard = new AdvancedDrawingBoard(canvasElement, {
+        defaultColor: '#000000',
+        defaultSize: 8,
+        onDrawEvent: (eventData) => {
+            if (networkState.currentDrawer === myId) {
+                // Stream drawing events in real-time
+                broadcastAction({ type: 'DRAW_EVENT', data: eventData });
+            }
+        }
+    });
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    // To prevent non-drawers from interacting visually
+    document.getElementById('canvas-overlay').addEventListener('mousedown', (e) => {
+        if (networkState.currentDrawer !== myId) e.stopPropagation();
+    }, true);
+    document.getElementById('canvas-overlay').addEventListener('touchstart', (e) => {
+        if (networkState.currentDrawer !== myId) e.stopPropagation();
+    }, {passive: false, capture: true});
 
     // Tools
     document.querySelectorAll('.color-swatch').forEach(swatch => {
         swatch.addEventListener('click', (e) => {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
             e.target.classList.add('active');
-            currentColor = e.target.dataset.color;
+            drawingBoard.setColor(e.target.dataset.color);
+            if (e.target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
+            else drawingBoard.setTool('brush'); // default fallback if a tool was active
         });
     });
 
@@ -57,56 +69,33 @@ export function initGameUI() {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             const target = e.target.closest('.size-btn');
             target.classList.add('active');
-            currentSize = parseInt(target.dataset.size);
+            drawingBoard.setSize(parseInt(target.dataset.size));
+        });
+    });
+
+    // Add missing tool listeners if UI gets updated to have tool buttons
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const target = e.target.closest('.tool-btn');
+            target.classList.add('active');
+            drawingBoard.setTool(target.dataset.tool);
         });
     });
 
     document.getElementById('btn-clear').addEventListener('click', () => {
         if(networkState.currentDrawer === myId) {
-            clearCanvas();
-            broadcastAction({ type: 'DRAW_CLEAR' });
+            drawingBoard.clear(true); // true means emit event
         }
     });
 
-    // Drawing Events
-    const startDrawing = (e) => {
-        if (networkState.currentDrawer !== myId) return;
-        isDrawing = true;
-        const pos = getPos(e);
-        lastX = pos.x;
-        lastY = pos.y;
-
-        broadcastAction({ type: 'DRAW_START', pos: {x: lastX, y: lastY}, color: currentColor, size: currentSize });
-        drawLocal(lastX, lastY, lastX, lastY, currentColor, currentSize);
-    };
-
-    const draw = (e) => {
-        if (!isDrawing || networkState.currentDrawer !== myId) return;
-        e.preventDefault();
-        const pos = getPos(e);
-
-        broadcastAction({ type: 'DRAW_MOVE', pos: {x: pos.x, y: pos.y}, lastPos: {x: lastX, y: lastY}, color: currentColor, size: currentSize });
-        drawLocal(lastX, lastY, pos.x, pos.y, currentColor, currentSize);
-
-        lastX = pos.x;
-        lastY = pos.y;
-    };
-
-    const stopDrawing = () => {
-        if (networkState.currentDrawer !== myId) return;
-        isDrawing = false;
-        ctx.beginPath();
-        broadcastAction({ type: 'DRAW_END' });
-    };
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    canvas.addEventListener('touchstart', startDrawing, {passive: false});
-    canvas.addEventListener('touchmove', draw, {passive: false});
-    canvas.addEventListener('touchend', stopDrawing);
+    // Check if btn-undo exists in HTML, if so add listener
+    const btnUndo = document.getElementById('btn-undo');
+    if (btnUndo) {
+        btnUndo.addEventListener('click', () => {
+            if(networkState.currentDrawer === myId) drawingBoard.undo(true);
+        });
+    }
 
     // Chat
     document.getElementById('btn-send-chat').addEventListener('click', sendGuess);
@@ -115,45 +104,13 @@ export function initGameUI() {
     });
 }
 
-function resizeCanvas() {
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.width * (9/16);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    if (e.touches && e.touches.length > 0) {
-        return {
-            x: (e.touches[0].clientX - rect.left) * scaleX,
-            y: (e.touches[0].clientY - rect.top) * scaleY
-        };
-    }
-    return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-    };
-}
-
-export function drawLocal(lx, ly, x, y, color, size) {
-    ctx.beginPath();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = size;
-    ctx.moveTo(lx, ly);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+// Global exported sync function used by network.js to replay events
+export function syncCanvasEvent(data) {
+    if(drawingBoard) drawingBoard.replayEvent(data);
 }
 
 export function clearCanvas() {
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if(drawingBoard) drawingBoard.clear(false);
 }
 
 export function showToast(msg, type = "info") {
