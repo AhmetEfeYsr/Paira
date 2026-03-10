@@ -92,9 +92,10 @@
                     Sıra: <strong id="turn-name" style="color: var(--neon-purple); letter-spacing: 0.5px;">...</strong>
                 </div>
 
-                <div class="timer-wrapper" style="position: relative; display: flex; align-items: center; justify-content: center; min-width: 120px; padding-right: 50px;">
-                    <div id="timer-display" class="timer" style="line-height: 1; text-align: center; width: 100%;">00:00</div>
-                    <button id="btn-pause" class="btn btn-secondary btn-icon hidden" title="Oyunu Duraklat" style="position: absolute; right: 0; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; padding: 0 !important; background: var(--input-bg);">
+                <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <div style="width: 42px; height: 42px;"></div> <!-- Spacer -->
+                    <div id="timer-display" class="timer" style="line-height: 1; text-align: center; display: flex; align-items: center; justify-content: center;">00:00</div>
+                    <button id="btn-pause" class="btn btn-secondary btn-icon hidden" title="Oyunu Duraklat" style="border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; padding: 0 !important; background: var(--input-bg);">
                         <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
                         <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="hidden" style="margin-left: 3px;"><path d="M5 3l14 9-14 9V3z"></path></svg>
                     </button>
