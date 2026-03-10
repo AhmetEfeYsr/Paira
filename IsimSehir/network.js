@@ -18,11 +18,22 @@ class NetworkManager {
         this.onError = onError;
     }
 
+    generateClientId() {
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let code = '';
+        const array = new Uint32Array(9);
+        window.crypto.getRandomValues(array);
+        for (let i = 0; i < 9; i++) {
+            code += chars[array[i] % chars.length];
+        }
+        return code;
+    }
+
     init(isHost, roomCode, username) {
         this.isHost = isHost === 'true' || isHost === true;
         this.roomCode = roomCode;
         this.username = username;
-        this.myId = this.isHost ? `isimsehir-host-${this.roomCode}` : `isimsehir-client-${Math.random().toString(36).substr(2, 9)}`;
+        this.myId = this.isHost ? `isimsehir-host-${this.roomCode}` : `isimsehir-client-${this.generateClientId()}`;
 
         this.peer = new Peer(this.myId, {
             debug: 2
@@ -141,20 +152,6 @@ class NetworkManager {
 
         // Pass payload to game logic
         this.onStateUpdate(senderId, data);
-
-        if (data.type === 'CHAT') {
-            if (window.displayIsimSehirChat) {
-                window.displayIsimSehirChat(data.sender, data.msg);
-            }
-            if (this.isHost) {
-                // Relay chat to other clients
-                Object.values(this.connections).forEach(conn => {
-                    if (conn.open && conn.peer !== senderId) {
-                        conn.send(data);
-                    }
-                });
-            }
-        }
     }
 
     sendToHost(data) {
