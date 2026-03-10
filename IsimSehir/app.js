@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isHost = sessionStorage.getItem('isHost') === 'true';
     const roomCode = sessionStorage.getItem('roomCode');
     const username = sessionStorage.getItem('username');
+    let isCodeVisible = false;
 
     if (!roomCode || !username) {
         window.location.href = 'index.html';
@@ -16,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI Elements ---
     const ui = {
         roomCodeTxt: document.getElementById('room-code-txt'),
+        displayRoomCode: document.getElementById('display-room-code'),
+        btnToggleCode: document.getElementById('btn-toggle-code'),
+        btnCopyRoom: document.getElementById('btn-copy-room'),
+        lobbyPlayersList: document.getElementById('lobby-players-list'),
+        lobbyPlayerCount: document.getElementById('lobby-player-count'),
         networkStatus: document.getElementById('network-status'),
         playerNameDisplay: document.getElementById('player-name-display'),
         playerCount: document.getElementById('player-count'),
@@ -27,6 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
         gameScreen: document.getElementById('game-screen'),
         votingScreen: document.getElementById('voting-screen'),
         scoreScreen: document.getElementById('score-screen'),
+
+        // Chat Elements
+        toggleChatBtn: document.getElementById('toggle-chat-btn'),
+        closeChatBtn: document.getElementById('close-chat-btn'),
+        chatPanel: document.getElementById('chat-panel'),
+        chatMessages: document.getElementById('chat-messages'),
+        chatInput: document.getElementById('chat-input'),
+        btnSendChat: document.getElementById('btn-send-chat'),
 
         // Host Controls
         hostControls: document.getElementById('host-controls'),
@@ -65,12 +79,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize UI Text
     ui.roomCodeTxt.textContent = roomCode;
     ui.playerNameDisplay.textContent = username;
+    if (ui.displayRoomCode) {
+        ui.displayRoomCode.dataset.code = roomCode;
+        ui.displayRoomCode.textContent = '••••••••';
+    }
 
     if (isHost) {
         ui.hostControls.classList.remove('hidden');
         ui.clientWaiting.classList.add('hidden');
         document.querySelectorAll('.host-only').forEach(el => el.classList.remove('hidden'));
         document.querySelectorAll('.client-only').forEach(el => el.classList.add('hidden'));
+    } else {
+        if (ui.hostControls) ui.hostControls.classList.add('hidden');
+        if (ui.clientWaiting) ui.clientWaiting.classList.remove('hidden');
+        document.querySelectorAll('.host-only').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.client-only').forEach(el => el.classList.remove('hidden'));
+    }
+
+    if (ui.btnToggleCode) {
+        ui.btnToggleCode.addEventListener('click', () => {
+            isCodeVisible = !isCodeVisible;
+            ui.btnToggleCode.textContent = isCodeVisible ? '🙈' : '👁️';
+            if (ui.displayRoomCode) {
+                ui.displayRoomCode.textContent = isCodeVisible ? (ui.displayRoomCode.dataset.code || '') : '••••••••';
+            }
+        });
+    }
+
+    if (ui.btnCopyRoom) {
+        ui.btnCopyRoom.addEventListener('click', () => {
+            const codeToCopy = ui.displayRoomCode?.dataset?.code;
+            if (codeToCopy) {
+                navigator.clipboard.writeText(codeToCopy)
+                    .then(() => {
+                        const container = document.getElementById('toast-container');
+                        if (container) {
+                            const toast = document.createElement('div');
+                            toast.className = 'toast success';
+                            toast.style.borderLeftColor = 'var(--success-color)';
+                            toast.textContent = 'Oda kodu kopyalandı!';
+                            container.appendChild(toast);
+                            setTimeout(() => toast.remove(), 4000);
+                        }
+                    })
+                    .catch(() => console.error('Kopyalanamadı'));
+            }
+        });
     }
 
     // --- Default Categories List ---
@@ -93,8 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let gameConfig = {
         rounds: 3,
-        endCondition: 'first_finish', // first_finish, time_limit, all_finish
-        endValue: 15, // seconds or count
+        endCondition: 'time_limit', // first_finish, time_limit, all_finish
+        endValue: 90, // seconds or count
         categories: []
     };
 
@@ -120,26 +174,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePlayerList() {
         ui.playerList.innerHTML = '';
+        if (ui.lobbyPlayersList) ui.lobbyPlayersList.innerHTML = '';
         let count = 0;
         let hostName = 'Kurucu';
 
         for (const [id, p] of Object.entries(network.players)) {
             count++;
             const li = document.createElement('li');
+            const lobbyLi = document.createElement('li');
+
+            let displayName = p.name;
+            if (id === network.myId) {
+                displayName += ' (Sen)';
+            }
             if (p.isHost) {
                 li.classList.add('is-host');
                 hostName = p.name;
+                displayName = '👑 ' + displayName;
             }
+
             if (id === network.myId) {
-                const strong = document.createElement('strong');
-                strong.textContent = `${p.name} (Sen)`;
-                li.appendChild(strong);
+                const strong1 = document.createElement('strong');
+                strong1.textContent = displayName;
+                li.appendChild(strong1);
+
+                const strong2 = document.createElement('strong');
+                strong2.textContent = displayName;
+                lobbyLi.appendChild(strong2);
             } else {
-                li.textContent = p.name;
+                li.textContent = displayName;
+                lobbyLi.textContent = displayName;
             }
+
             ui.playerList.appendChild(li);
+            if (ui.lobbyPlayersList) ui.lobbyPlayersList.appendChild(lobbyLi);
         }
+
         ui.playerCount.textContent = count;
+        if (ui.lobbyPlayerCount) ui.lobbyPlayerCount.textContent = count;
         if (ui.hostNameDisplay) ui.hostNameDisplay.textContent = hostName;
     }
 
@@ -201,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isHost) return;
         gameConfig.rounds = parseInt(ui.settingRounds.value, 10) || 3;
         gameConfig.endCondition = ui.settingEndCondition.value;
-        gameConfig.endValue = parseInt(ui.settingEndValue.value, 10) || 15;
+        gameConfig.endValue = parseInt(ui.settingEndValue.value, 10) || 90;
 
         const selected = Array.from(ui.categoryGrid.querySelectorAll('input:checked'));
         gameConfig.categories = selected.map(cb => ({
@@ -292,6 +364,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(id).classList.remove('active');
         });
         document.getElementById(screenId).classList.add('active');
+
+        // Toggle global layout visibility
+        const isLobby = screenId === 'lobby-screen';
+        const gameHeader = document.querySelector('.game-header');
+        const sidebar = document.querySelector('.sidebar');
+
+        if (gameHeader) gameHeader.style.display = isLobby ? 'none' : 'flex';
+        if (sidebar) sidebar.style.display = isLobby ? 'none' : 'flex';
+
+        // Ensure content area takes full width in lobby
+        const mainContainer = document.querySelector('.main-container');
+        if (mainContainer) {
+            mainContainer.style.display = isLobby ? 'block' : 'flex';
+        }
     }
 
     function generateGameInputs(categories) {
@@ -367,6 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         clearInterval(currentTimer);
+        updateTimerDisplay(seconds); // Immediate update
         currentTimer = setInterval(() => {
             const left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
             updateTimerDisplay(left);
@@ -392,7 +479,68 @@ document.addEventListener('DOMContentLoaded', () => {
         return answers;
     }
 
+    // --- Chat Logic ---
+    function toggleChat() {
+        if (ui.chatPanel) {
+            ui.chatPanel.classList.toggle('hidden');
+        }
+    }
+
+    if (ui.toggleChatBtn) {
+        ui.toggleChatBtn.addEventListener('click', toggleChat);
+    }
+
+    if (ui.closeChatBtn) {
+        ui.closeChatBtn.addEventListener('click', toggleChat);
+    }
+
+    function sendChat() {
+        if (!ui.chatInput) return;
+        const msg = ui.chatInput.value.trim();
+        if (!msg) return;
+
+        displayChat("Sen", msg, true);
+        network.broadcast({ type: 'CHAT', sender: username, msg: msg });
+        ui.chatInput.value = '';
+    }
+
+    if (ui.btnSendChat) {
+        ui.btnSendChat.addEventListener('click', sendChat);
+    }
+
+    if (ui.chatInput) {
+        ui.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+    }
+
+    function displayChat(sender, msg, isSelf = false) {
+        if (!ui.chatMessages) return;
+
+        const div = document.createElement('div');
+        div.className = `chat-msg ${isSelf ? 'self' : ''}`;
+
+        // Escape HTML to prevent XSS
+        const safeSender = document.createTextNode(sender + ": ");
+        const safeMsg = document.createTextNode(msg);
+
+        const strong = document.createElement('strong');
+        strong.appendChild(safeSender);
+
+        div.appendChild(strong);
+        div.appendChild(safeMsg);
+
+        ui.chatMessages.appendChild(div);
+        ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
+    }
+
+    // Expose displayChat for network handler
+    window.displayIsimSehirChat = displayChat;
+
     // --- Interactions ---
+    // Initialize layout for the lobby
+    switchScreen('lobby-screen');
+
     if (isHost) {
         ui.startGameBtn.addEventListener('click', () => {
             updateLocalConfig();
@@ -459,6 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (data.type === 'TIMER_SYNC') {
             if (!isHost) {
                 clearInterval(currentTimer);
+                const initialLeft = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
+                updateTimerDisplay(initialLeft); // Immediate update
                 currentTimer = setInterval(() => {
                     const left = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
                     updateTimerDisplay(left);

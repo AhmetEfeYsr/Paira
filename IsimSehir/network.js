@@ -142,8 +142,19 @@ class NetworkManager {
         // Pass payload to game logic
         this.onStateUpdate(senderId, data);
 
-        // If host, maybe broadcast data to other clients (like chat, state syncs)
-        // Handled in app.js for explicit routing.
+        if (data.type === 'CHAT') {
+            if (window.displayIsimSehirChat) {
+                window.displayIsimSehirChat(data.sender, data.msg);
+            }
+            if (this.isHost) {
+                // Relay chat to other clients
+                Object.values(this.connections).forEach(conn => {
+                    if (conn.open && conn.peer !== senderId) {
+                        conn.send(data);
+                    }
+                });
+            }
+        }
     }
 
     sendToHost(data) {
