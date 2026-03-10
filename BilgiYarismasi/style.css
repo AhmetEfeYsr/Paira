@@ -213,3 +213,7 @@ input[type="checkbox"] { accent-color: var(--neon-purple); cursor: pointer; }
     border-color: var(--danger) !important;
     color: var(--danger) !important;
 }
+
+
+/* Optimize tap delay and highlighting */
+.choice-btn { touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
