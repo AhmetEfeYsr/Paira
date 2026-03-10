@@ -8,6 +8,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="style.css">
@@ -61,8 +62,8 @@
             <div class="header-bar">
                 <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış</button>
                 <div class="word-display" id="main-word">Yükleniyor...</div>
-                <div style="font-size: 1rem; font-weight: bold; color: var(--text-main);">
-                    <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
+                <div class="auto-style-155">
+                    <span id="status-badge" class="auto-style-7">Bağlanıyor...</span>
                 </div>
             </div>
 
@@ -72,26 +73,26 @@
 
             <div class="toolbar">
                 <div class="color-picker" id="color-picker">
-                    <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
-                    <div class="color-swatch" style="background: #e74c3c;" data-color="#e74c3c"></div>
-                    <div class="color-swatch" style="background: #3498db;" data-color="#3498db"></div>
-                    <div class="color-swatch" style="background: #2ecc71;" data-color="#2ecc71"></div>
-                    <div class="color-swatch" style="background: #f1c40f;" data-color="#f1c40f"></div>
-                    <div class="color-swatch" style="background: #9b59b6;" data-color="#9b59b6"></div>
-                    <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;" data-color="#ffffff"></div> <!-- Eraser essentially -->
+                    <div class="color-swatch active auto-style-156" data-color="#000000"></div>
+                    <div class="color-swatch auto-style-157" data-color="#e74c3c"></div>
+                    <div class="color-swatch auto-style-158" data-color="#3498db"></div>
+                    <div class="color-swatch auto-style-159" data-color="#2ecc71"></div>
+                    <div class="color-swatch auto-style-160" data-color="#f1c40f"></div>
+                    <div class="color-swatch auto-style-161" data-color="#9b59b6"></div>
+                    <div class="color-swatch auto-style-162" data-color="#ffffff"></div> <!-- Eraser essentially -->
                 </div>
 
                 <div class="size-picker" id="size-picker">
-                    <div class="size-btn" data-size="3"><div class="size-dot" style="width: 4px; height: 4px;"></div></div>
-                    <div class="size-btn active" data-size="8"><div class="size-dot" style="width: 8px; height: 8px;"></div></div>
-                    <div class="size-btn" data-size="15"><div class="size-dot" style="width: 14px; height: 14px;"></div></div>
-                    <div class="size-btn" data-size="25"><div class="size-dot" style="width: 20px; height: 20px;"></div></div>
+                    <div class="size-btn" data-size="3"><div class="size-dot auto-style-163"></div></div>
+                    <div class="size-btn active" data-size="8"><div class="size-dot auto-style-164"></div></div>
+                    <div class="size-btn" data-size="15"><div class="size-dot auto-style-165"></div></div>
+                    <div class="size-btn" data-size="25"><div class="size-dot auto-style-166"></div></div>
                 </div>
 
                 <div class="tools">
                     <button class="btn btn-secondary btn-sm" id="btn-clear">Temizle</button>
                     <button class="btn btn-primary btn-sm" id="btn-skip">Pas Geç</button>
-                    <button class="btn btn-success btn-sm" id="btn-next" style="display: none;">Sonraki</button>
+                    <button class="btn btn-success btn-sm" id="btn-next">Sonraki</button>
                 </div>
             </div>
         </div>

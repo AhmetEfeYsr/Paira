@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="game.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
 <body>
@@ -23,7 +24,7 @@
             <h2 class="round-display">Tur: <span id="current-round">1</span> / <span id="total-rounds">?</span></h2>
         </div>
         <div class="header-right">
-            <button id="toggle-chat-btn" class="secondary-btn-small" style="margin-right: 15px;">💬 Sohbet</button>
+            <button id="toggle-chat-btn" class="secondary-btn-small auto-style-88">💬 Sohbet</button>
             <span id="player-name-display">---</span>
             <button id="leave-btn" class="danger-btn-small">Çık</button>
         </div>
@@ -47,26 +48,26 @@
             <div id="lobby-screen" class="screen view-state active">
                 <header class="lobby-header">
                     <div class="code-container">
-                        <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
-                        <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                        <h2 class="auto-style-15">Oda Kodu:</h2>
+                        <span id="display-room-code" data-code="" class="auto-style-16">••••••••</span>
                         <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
                     </div>
                     <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
                 </header>
                 <div class="lobby-grid">
                     <aside class="players-panel card">
-                        <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-top: 0; color: var(--lilac);">Oyuncular (<span id="lobby-player-count">0</span>)</h3>
+                        <h3 class="auto-style-89">Oyuncular (<span id="lobby-player-count">0</span>)</h3>
                         <ul id="lobby-players-list" class="custom-scrollbar"></ul>
                     </aside>
 
-                    <section class="settings-panel card custom-scrollbar host-only hidden" id="host-controls" style="overflow-y: auto;">
-                        <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-top: 0; color: var(--lilac);">Ayarlar</h3>
-                        <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1.5rem;">
-                            <div class="form-group" style="margin-bottom: 0;">
+                    <section class="settings-panel card custom-scrollbar host-only hidden auto-style-19" id="host-controls">
+                        <h3 class="auto-style-89">Ayarlar</h3>
+                        <div class="settings-grid auto-style-20">
+                            <div class="form-group auto-style-13">
                                 <label>Tur Sayısı</label>
                                 <input type="number" id="setting-rounds" min="1" max="10" value="3">
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auto-style-13">
                                 <label>Bitiş Şartı</label>
                                 <select id="setting-end-condition">
                                     <option value="time_limit" selected>Zaman Sınırı (Sn)</option>
@@ -74,31 +75,31 @@
                                     <option value="all_finish">X Kişi Bitirince</option>
                                 </select>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;" id="setting-end-value-group">
+                            <div class="form-group auto-style-13" id="setting-end-value-group">
                                 <label id="setting-end-label">Saniye (X):</label>
                                 <input type="number" id="setting-end-value" min="5" max="300" value="90">
                             </div>
                         </div>
 
-                        <div class="form-group" style="flex-grow: 1;">
+                        <div class="form-group auto-style-21">
                             <label>Kategoriler</label>
                             <div class="category-grid" id="category-selection-grid">
                                 <!-- Checkboxes will be injected here -->
                             </div>
-                            <div class="custom-category-add" style="margin-top: 10px;">
+                            <div class="custom-category-add auto-style-4">
                                 <input type="text" id="custom-cat-input" placeholder="Özel Kategori Ekle..." maxlength="20">
-                                <button id="add-custom-cat-btn" class="btn btn-secondary" style="padding: 10px 15px;">+</button>
+                                <button id="add-custom-cat-btn" class="btn btn-secondary auto-style-90">+</button>
                             </div>
                         </div>
 
-                        <button id="start-game-btn" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 25px; letter-spacing: 1px;">Oyunu Başlat</button>
+                        <button id="start-game-btn" class="btn btn-primary btn-block mt-auto auto-style-23">Oyunu Başlat</button>
                     </section>
 
-                    <section class="settings-panel card client-only text-center hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
-                        <div style="color: var(--lilac); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <section class="settings-panel card client-only text-center hidden auto-style-24" id="client-waiting">
+                        <div class="auto-style-25">⏳</div>
                         <h3>Bekleniyor...</h3>
-                        <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu (<span id="host-name-display">Host</span>) ayarları yapıyor.</p>
-                        <div class="selected-categories-preview" id="client-cats-preview" style="margin-top: 15px; color: var(--text-muted); font-size: 0.9rem;">
+                        <p class="auto-style-26">Kurucu (<span id="host-name-display">Host</span>) ayarları yapıyor.</p>
+                        <div class="selected-categories-preview auto-style-91" id="client-cats-preview">
                             <!-- Preview categories -->
                         </div>
                     </section>
@@ -107,7 +108,7 @@
 
             <!-- GAMEPLAY SCREEN -->
             <div id="game-screen" class="screen glass-panel game-layout">
-                <div class="play-area custom-scrollbar" style="flex: 1; overflow-y: auto;">
+                <div class="play-area custom-scrollbar auto-style-92">
                     <div class="game-top-bar">
                         <div class="letter-display">
                             Harf: <span id="current-letter" class="huge-letter">A</span>
@@ -130,14 +131,14 @@
 
                 <!-- Chat Panel -->
                 <aside id="chat-panel" class="chat-panel card hidden">
-                    <div style="color: var(--lilac); font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="auto-style-93">
                         Sohbet
-                        <button id="close-chat-btn" class="toggle-btn" style="font-size: 1rem;">❌</button>
+                        <button id="close-chat-btn" class="toggle-btn auto-style-94">❌</button>
                     </div>
                     <div id="chat-messages" class="messages-container custom-scrollbar"></div>
                     <div class="chat-input-wrapper">
                         <input type="text" id="chat-input" autocomplete="off" placeholder="Mesaj yazın...">
-                        <button id="btn-send-chat" class="btn btn-primary" style="padding: 12px 18px;" aria-label="Gönder">➤</button>
+                        <button id="btn-send-chat" class="btn btn-primary auto-style-36" aria-label="Gönder">➤</button>
                     </div>
                 </aside>
             </div>
@@ -178,7 +179,7 @@
                 <div class="score-actions mt-20 host-only hidden">
                     <button id="next-round-btn" class="primary-btn">Sonraki Tura Geç</button>
                     <div class="extend-game-group hidden" id="extend-game-group">
-                        <input type="number" id="extend-rounds-input" min="1" max="5" value="1" style="width: 60px;">
+                        <input type="number" id="extend-rounds-input" min="1" max="5" value="1" class="auto-style-95">
                         <button id="extend-game-btn" class="secondary-btn">Tur Uzat</button>
                     </div>
                 </div>

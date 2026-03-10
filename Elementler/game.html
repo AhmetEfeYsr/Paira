@@ -9,19 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/global.css">
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar" style="display: flex; flex-direction: column;">
+    <main id="app-container" class="glass-panel custom-scrollbar auto-style-111">
 
         <!-- LOBİ EKRANI -->
         <section id="lobby-screen" class="view-state active">
             <header class="lobby-header">
                 <div class="code-container">
-                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
-                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                    <h2 class="auto-style-15">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" class="auto-style-16">••••••••</span>
                     <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
                 </div>
                 <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
@@ -30,27 +31,27 @@
             <div class="lobby-grid">
                 <!-- Oyuncular ve Elementler -->
                 <aside class="players-panel card">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Maceracılar (<span id="player-count">0</span>)</h3>
+                    <h3 class="auto-style-17">Maceracılar (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
                 <!-- Kurucu Ayarları -->
-                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 10px;">
-                        <h3 style="margin: 0;">Macera Haritası</h3>
-                        <button id="btn-reset-progress" class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5); display: none;">İlerlemeyi Sıfırla</button>
+                <section class="settings-panel card custom-scrollbar auto-style-112" id="host-settings">
+                    <div class="auto-style-113">
+                        <h3 class="auto-style-114">Macera Haritası</h3>
+                        <button id="btn-reset-progress" class="btn auto-style-115">İlerlemeyi Sıfırla</button>
                     </div>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;">Oynamak istediğiniz bölüme tıklayın. Altın renkli bölümler tamamlanmış, mavi renkli olanlar kilidi açılmış bölümlerdir.</p>
+                    <p class="auto-style-116">Oynamak istediğiniz bölüme tıklayın. Altın renkli bölümler tamamlanmış, mavi renkli olanlar kilidi açılmış bölümlerdir.</p>
 
                     <!-- Scroll edilebilir kapsayıcı -->
-                    <div id="level-tree-scroll-container" class="custom-scrollbar" style="width: 100%; min-height: 500px; max-height: 700px; overflow: auto; background: #0f172a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; position: relative;">
+                    <div id="level-tree-scroll-container" class="custom-scrollbar auto-style-117">
                         <!-- İçerik kapsayıcısı (boyutu JS ile dinamik ayarlanacak) -->
-                        <div id="level-tree-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; flex-shrink: 0;">
+                        <div id="level-tree-container" class="auto-style-118">
                             <!-- SVG for lines connecting nodes -->
-                            <svg id="level-tree-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;" preserveAspectRatio="none"></svg>
+                            <svg id="level-tree-lines" class="auto-style-119" preserveAspectRatio="none"></svg>
 
                             <!-- Container for HTML nodes -->
-                            <div id="level-tree-nodes" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                            <div id="level-tree-nodes" class="auto-style-120">
                                 <!-- JS ile doldurulacak -->
                             </div>
                         </div>
@@ -58,26 +59,26 @@
 
                 </section>
 
-                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
-                    <div style="color: var(--primary-purple); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                <section class="settings-panel card hidden auto-style-24" id="client-waiting">
+                    <div class="auto-style-50">⏳</div>
                     <h3>Bekleniyor...</h3>
-                    <p style="color: var(--text-muted); font-size: 1.05rem;">Oda kurucusu macerayı başlatacak.</p>
+                    <p class="auto-style-26">Oda kurucusu macerayı başlatacak.</p>
                 </section>
             </div>
         </section>
 
         <!-- OYUN EKRANI (CANVAS) -->
-        <section id="game-screen" class="view-state hidden" style="flex-grow: 1; padding: 0; margin: 0; background: transparent;">
+        <section id="game-screen" class="view-state hidden auto-style-121">
             <!-- UI Overlay (Can, Ölüm vs) -->
-            <div id="game-ui-overlay" style="position: absolute; top: 20px; left: 20px; z-index: 100; pointer-events: none;">
-                <div id="fps-counter" style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace;">FPS: 60</div>
-                <div id="death-counter" style="color: var(--danger); font-weight: 600; font-size: 1.2rem; margin-top: 5px;">Ölümler: <span id="death-val">0</span></div>
+            <div id="game-ui-overlay" class="auto-style-122">
+                <div id="fps-counter" class="auto-style-123">FPS: 60</div>
+                <div id="death-counter" class="auto-style-124">Ölümler: <span id="death-val">0</span></div>
             </div>
 
-            <div id="winner-banner" class="hidden" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background: rgba(0,0,0,0.8); padding: 30px 50px; border-radius: 20px; border: 2px solid var(--success); text-align: center;">
-                <h1 style="color: var(--success); font-size: 3rem; margin-bottom: 10px;">Bölüm Tamamlandı!</h1>
-                <p id="winner-msg" style="color: white; font-size: 1.2rem;">Tüm karakterler kendi kapısına ulaştı.</p>
-                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+            <div id="winner-banner" class="hidden auto-style-125">
+                <h1 class="auto-style-126">Bölüm Tamamlandı!</h1>
+                <p id="winner-msg" class="auto-style-127">Tüm karakterler kendi kapısına ulaştı.</p>
+                <div class="auto-style-128">
                     <button id="btn-next-level" class="btn btn-primary">Ağaca Dön</button>
                 </div>
             </div>
