@@ -139,14 +139,21 @@ function connectToPeer(targetId) {
 }
 
 function setupConnection(conn) {
-    conn.on('open', () => {
+    const handleOpen = () => {
         connections[conn.peer] = conn;
         if (isHost) {
             broadcastSync();
         } else {
             conn.send({ type: 'JOIN', id: myId, name: myName });
         }
-    });
+    };
+
+    if (conn.open) {
+        handleOpen();
+    } else {
+        conn.on('open', handleOpen);
+    }
+
     conn.on('data', (data) => handleData(data, conn.peer));
     conn.on('close', () => handleDisconnect(conn.peer));
 }
