@@ -141,7 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'marka', name: 'Marka' },
         { id: 'yiyecek', name: 'Yiyecek' },
         { id: 'oyun', name: 'Oyun' },
-        { id: 'muzik', name: 'Müzik' }
+        { id: 'muzik', name: 'Müzik' },
+        { id: 'araba', name: 'Araba' },
+        { id: 'spor', name: 'Spor' },
+        { id: 'hastalik', name: 'Hastalık' },
+        { id: 'yazar', name: 'Yazar' },
+        { id: 'sarkici', name: 'Şarkıcı' }
     ];
 
     let gameConfig = {
@@ -499,6 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Also update self
                 gameState.letter = newLetter;
                 if(ui.currentLetter) ui.currentLetter.textContent = newLetter;
+                document.querySelectorAll('.game-input-wrapper input').forEach(input => {
+                    input.value = '';
+                });
             });
         }
     }
@@ -537,6 +545,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isHost) {
                 gameState.letter = data.letter;
                 if(ui.currentLetter) ui.currentLetter.textContent = data.letter;
+                document.querySelectorAll('.game-input-wrapper input').forEach(input => {
+                    input.value = '';
+                });
             }
         }
         else if (data.type === 'TIMER_SYNC') {
