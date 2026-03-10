@@ -69,7 +69,7 @@ class NetworkManager {
     }
 
     setupConnection(conn) {
-        conn.on('open', () => {
+        const handleOpen = () => {
             console.log('Connected to:', conn.peer);
             this.connections[conn.peer] = conn;
 
@@ -88,7 +88,13 @@ class NetworkManager {
             } else {
                 // I am client, send a hello if needed, or just wait for SYNC_PLAYERS
             }
-        });
+        };
+
+        if (conn.open) {
+            handleOpen();
+        } else {
+            conn.on('open', handleOpen);
+        }
 
         conn.on('data', (data) => {
             this.handleData(conn.peer, data);
