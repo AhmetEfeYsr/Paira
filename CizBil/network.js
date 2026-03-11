@@ -126,8 +126,6 @@ function setupHost(playerName, storedMyId) {
 }
 
 function setupHostConnectionHandlers(conn) {
-        connections[conn.peer] = conn;
-
     connections[conn.peer] = conn;
 
     conn.on('data', (data) => {
@@ -253,7 +251,9 @@ function handleAction(data, senderId) {
             Object.values(connections).forEach(c => {
                  if(c.peer !== senderId) c.send(data);
             });
-            handleDrawEvent(data); // Draw locally
+            if (senderId !== myId) {
+                handleDrawEvent(data); // Draw locally
+            }
         }
         else if (data.type === 'GUESS') {
             const senderName = networkState.players[senderId].name;
