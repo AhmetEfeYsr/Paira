@@ -23,8 +23,8 @@ let state = {
 
 // Yedek Soru Havuzu (Fetch başarısız olursa diye)
 const fallbackQuestions = [
-    { category: "Genel Kültür", question_text: "Türkiye'nin başkenti neresidir?", correct_answer: "Ankara", wrong1: "İstanbul", wrong2: "İzmir", wrong3: "Bursa", difficulty: 10 },
-    { category: "Bilim", question_text: "Su hangi iki elementten oluşur?", correct_answer: "Hidrojen ve Oksijen", wrong1: "Azot ve Oksijen", wrong2: "Helyum ve Hidrojen", wrong3: "Kükürt ve Oksijen", difficulty: 20 }
+    { kategori: ["Genel Kültür"], soru_metni: "Türkiye'nin başkenti neresidir?", dogru_cevap: "Ankara", yanlis_secenekler: ["İstanbul", "İzmir", "Bursa"], zorluk: 10 },
+    { kategori: ["Bilim"], soru_metni: "Su hangi iki elementten oluşur?", dogru_cevap: "Hidrojen ve Oksijen", yanlis_secenekler: ["Azot ve Oksijen", "Helyum ve Hidrojen", "Kükürt ve Oksijen"], zorluk: 20 }
 ];
 
 // --- SES YÖNETİMİ ---
@@ -150,7 +150,7 @@ function seededShuffle(arr, seed) {
 function populateCategories() {
     const container = document.getElementById('category-selection');
     if (!container) return;
-    const cats = [...new Set(allQuestions.map(w => w.category).filter(Boolean))];
+    const cats = [...new Set(allQuestions.flatMap(w => w.kategori).filter(Boolean))];
     container.innerHTML = '';
     cats.forEach(cat => {
         const lbl = document.createElement('label');
@@ -174,7 +174,11 @@ document.getElementById('btn-start-game')?.addEventListener('click', () => {
     if (minD > maxD) [minD, maxD] = [maxD, minD];
     const selCats = Array.from(document.querySelectorAll('.category-pill input:checked')).map(cb => cb.value);
 
-    let filtered = allQuestions.filter(q => (selCats.length === 0 || selCats.includes(q.category)) && (q.difficulty >= minD && q.difficulty <= maxD));
+    let filtered = allQuestions.filter(q => {
+        const matchesCategory = selCats.length === 0 || (q.kategori && q.kategori.some(cat => selCats.includes(cat)));
+        const matchesDifficulty = q.zorluk >= minD && q.zorluk <= maxD;
+        return matchesCategory && matchesDifficulty;
+    });
 
     if (filtered.length === 0) {
         showToast("Seçilen kategorilerde soru bulunamadı, tüm sorular yükleniyor.", "info");
@@ -202,10 +206,10 @@ document.getElementById('btn-start-game')?.addEventListener('click', () => {
 function getShuffledChoices(questionObj, seed) {
     const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
     const choices = [
-        questionObj.correct_answer,
-        questionObj.wrong1,
-        questionObj.wrong2,
-        questionObj.wrong3
+        questionObj.dogru_cevap,
+        questionObj.yanlis_secenekler[0],
+        questionObj.yanlis_secenekler[1],
+        questionObj.yanlis_secenekler[2]
     ];
     // İndisleri karıştır, böylece doğru cevabın yeni indeksini bulabiliriz
     let indices = [0, 1, 2, 3];
@@ -233,8 +237,8 @@ function startTurn() {
     const { shuffledTexts, correctIndex } = getShuffledChoices(currentQData, seed);
 
     state.currentQuestion = {
-        category: currentQData.category,
-        question_text: currentQData.question_text,
+        category: currentQData.kategori ? currentQData.kategori.join(', ') : "",
+        question_text: currentQData.soru_metni,
         shuffled_choices: shuffledTexts,
         correct_answer_index: correctIndex // Sadece Host'ta kalacak (network.js'te clienta giderken silinir)
     };
