@@ -26,6 +26,7 @@ function setupUserRole() {
     const storedName = sessionStorage.getItem('playerName');
     const storedIsHost = sessionStorage.getItem('isHost') === 'true';
     const storedRoomCode = sessionStorage.getItem('roomCode');
+    const storedMyId = sessionStorage.getItem('myId');
 
     if (!storedName) {
         window.location.href = 'index.html'; // Fallback
@@ -44,7 +45,7 @@ function setupUserRole() {
     if (isHost) {
         document.getElementById('host-settings').classList.remove('hidden');
         document.getElementById('client-waiting').classList.add('hidden');
-        initPeer(generateRoomCode()); // Kurucu için kısa kod üret
+        initPeer(storedMyId || generateRoomCode()); // Kurucu için kısa kod üret veya eskisini kullan
     } else {
         if (!storedRoomCode) {
             window.location.href = 'index.html';
@@ -53,7 +54,7 @@ function setupUserRole() {
         hostId = storedRoomCode;
         document.getElementById('host-settings').classList.add('hidden');
         document.getElementById('client-waiting').classList.remove('hidden');
-        initPeer(); // Katılımcı için rastgele PeerID, sonra Host'a bağlanacak
+        initPeer(storedMyId || null); // Katılımcı için rastgele PeerID veya eskisini kullan
     }
 }
 
@@ -98,18 +99,32 @@ function initPeer(customId = null) {
 
     peer.on('open', (id) => {
         myId = id;
+        sessionStorage.setItem('myId', myId);
         if (isHost) {
             hostId = myId;
-            // Host olarak kendimizi oyunculara ekle
+            // Host olarak kendimizi oyunculara ekle veya güncelle
             if(window.gameApp && window.gameApp.state) {
-                window.gameApp.state.players[myId] = { id: myId, name: myName, role: 'masum', isHost: true, score: 0 };
+                if (window.gameApp.state.players[myId]) {
+                    window.gameApp.state.players[myId].name = myName;
+                } else {
+                    window.gameApp.state.players[myId] = { id: myId, name: myName, role: 'masum', isHost: true, score: 0 };
+                }
             }
             const codeDisplay = document.getElementById('display-room-code');
             if(codeDisplay) {
                 codeDisplay.dataset.code = myId;
                 codeDisplay.innerText = typeof isCodeVisible !== 'undefined' && isCodeVisible ? myId : '••••••••';
             }
-            if(typeof showScreen === 'function') showScreen('lobby-screen');
+
+            if(window.gameApp && window.gameApp.state.status === 'playing') {
+                if(typeof showScreen === 'function') showScreen('game-screen');
+                if(window.gameApp.syncRoundData) window.gameApp.syncRoundData();
+            } else if (window.gameApp && window.gameApp.state.status === 'finished') {
+                if(typeof showScreen === 'function') showScreen('winner-screen');
+            } else {
+                if(typeof showScreen === 'function') showScreen('lobby-screen');
+            }
+
             if(typeof updateUI === 'function') updateUI();
         } else {
             connectToPeer(hostId);
@@ -184,15 +199,40 @@ function handleData(data, peerId) {
     const appState = window.gameApp.state;
 
     if (data.type === 'JOIN' && isHost) {
-        appState.players[data.id] = {
-            id: data.id,
-            name: data.name,
-            role: 'masum', // Başlangıçta herkes masum, oyun başlayınca ebe seçilir
-            isHost: false,
-            score: 0
-        };
+        if (appState.players[data.id]) {
+            appState.players[data.id].name = data.name; // Reconnect
+        } else {
+            appState.players[data.id] = {
+                id: data.id,
+                name: data.name,
+                role: 'masum', // Başlangıçta herkes masum, oyun başlayınca ebe seçilir
+                isHost: false,
+                score: 0
+            };
+        }
         broadcastSync();
         if(typeof updateUI === 'function') updateUI();
+    }
+    else if (data.type === 'LEAVE' && isHost) {
+        if (appState.players[data.id]) {
+            if(typeof showToast === 'function') showToast(`${appState.players[data.id].name} odadan ayrıldı.`, "info");
+            delete appState.players[data.id];
+
+            if (appState.currentEbe === data.id && appState.status === 'playing') {
+                window.gameApp.endRoundPrematurely("Ebe oyundan ayrıldığı için tur iptal edildi.");
+            }
+
+            broadcastSync();
+            if(typeof updateUI === 'function') updateUI();
+        }
+    }
+    else if (data.type === 'HOST_LEAVE' && !isHost) {
+        if(typeof showToast === 'function') showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
+        setTimeout(() => {
+            sessionStorage.removeItem('myId');
+            sessionStorage.removeItem('roomCode');
+            window.location.href = 'index.html';
+        }, 2000);
     }
     else if (data.type === 'SYNC') {
         window.gameApp.state = data.state;
@@ -231,28 +271,45 @@ function handleDisconnect(peerId) {
     if (!window.gameApp || !window.gameApp.state.players[peerId]) return;
 
     const lostPlayer = window.gameApp.state.players[peerId];
-    if(typeof showToast === 'function') showToast(`${lostPlayer.name} ayrıldı.`, "warning");
-    delete window.gameApp.state.players[peerId];
+    if(typeof showToast === 'function') showToast(`${lostPlayer.name} bağlantısı koptu.`, "warning");
 
-    if (isHost) {
-        // Eğer ayrılan kişi ebe ise turu iptal et veya sonlandır
-        if (window.gameApp.state.currentEbe === peerId && window.gameApp.state.status === 'playing') {
-            window.gameApp.endRoundPrematurely("Ebe oyundan ayrıldığı için tur iptal edildi.");
-        }
-        broadcastSync();
-    } else if (lostPlayer.isHost) {
-        // HOST MIGRATION (Oda Devri)
-        const activeIds = Object.keys(window.gameApp.state.players).sort();
-        if (activeIds[0] === myId) {
-            isHost = true;
-            window.gameApp.state.players[myId].isHost = true;
-            document.getElementById('host-settings').classList.remove('hidden');
-            document.getElementById('client-waiting').classList.add('hidden');
-            if(typeof showToast === 'function') showToast("Oda kurucusu sensin!", "success");
-            broadcastSync();
+    // We don't immediately delete the player to allow for reconnect.
+
+    if (!isHost && lostPlayer.isHost) {
+        if(typeof showToast === 'function') showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
+        setTimeout(() => {
+            sessionStorage.removeItem('myId');
+            sessionStorage.removeItem('roomCode');
+            window.location.href = 'index.html';
+        }, 3000);
+    } else if (isHost) {
+        // As a host, if someone disconnected, we can just warn for now.
+        // If they don't return before turn ends, they are ghosted.
+        if (window.gameApp.state.status === 'playing' && window.gameApp.state.currentEbe !== peerId) {
+             window.gameApp.checkAllSubmissions(); // Re-check without them
         }
     }
     if(typeof updateUI === 'function') updateUI();
+}
+
+// Güvenli Çıkış Butonları için Event Listener ekleyelim
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-leave-lobby')?.addEventListener('click', leaveRoom);
+});
+
+function leaveRoom() {
+    if (peer) {
+        if (!isHost && hostId && connections[hostId]) {
+            connections[hostId].send({ type: 'LEAVE', id: myId });
+        } else if (isHost) {
+            broadcast({ type: 'HOST_LEAVE' });
+        }
+        peer.destroy();
+        peer = null;
+    }
+    sessionStorage.removeItem('myId');
+    sessionStorage.removeItem('roomCode');
+    window.location.href = 'index.html';
 }
 
 // Global network objesi, game.js içinden erişebilmek için

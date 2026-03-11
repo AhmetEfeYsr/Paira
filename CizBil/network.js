@@ -32,14 +32,25 @@ function initLobby() {
         return;
     }
 
+    const storedMyId = sessionStorage.getItem('myId');
+
     if (isHost) {
-        setupHost(playerName);
+        setupHost(playerName, storedMyId);
     } else {
-        setupClient(playerName, targetRoomCode);
+        setupClient(playerName, targetRoomCode, storedMyId);
     }
 
     document.getElementById('btn-leave').addEventListener('click', () => {
-        if(peer) peer.destroy();
+        if(peer) {
+            if (!isHost && networkState.hostId && hostConnection) {
+                hostConnection.send({ type: 'LEAVE', id: myId });
+            } else if (isHost) {
+                Object.values(connections).forEach(c => c.send({ type: 'HOST_LEAVE' }));
+            }
+            peer.destroy();
+        }
+        sessionStorage.removeItem('myId');
+        sessionStorage.removeItem('roomCode');
         window.location.href = 'index.html';
     });
 
@@ -73,8 +84,8 @@ function generateRoomCode() {
     return code;
 }
 
-function setupHost(playerName) {
-    const roomCode = generateRoomCode();
+function setupHost(playerName, storedMyId) {
+    const roomCode = storedMyId || generateRoomCode();
     myId = roomCode;
 
     peer = new Peer(roomCode, {
@@ -83,60 +94,120 @@ function setupHost(playerName) {
     });
 
     peer.on('open', (id) => {
+        sessionStorage.setItem('myId', id);
         document.getElementById('display-room-code').dataset.code = id;
         document.getElementById('host-settings').style.display = 'flex';
 
         networkState.hostId = id;
-        networkState.players[id] = { id: id, name: playerName + " 👑", score: 0 };
-        updateLobbyUI();
+        if (!networkState.players[id]) {
+            networkState.players[id] = { id: id, name: playerName + " 👑", score: 0, isHost: true };
+        } else {
+            networkState.players[id].name = playerName + " 👑";
+        }
+
+        if (networkState.state === 'PLAYING') handlePlayingState();
+        else updateLobbyUI();
     });
 
     peer.on('connection', (conn) => {
-        connections[conn.peer] = conn;
+        if (conn.open) {
+            setupHostConnectionHandlers(conn);
+        } else {
+            conn.on('open', () => setupHostConnectionHandlers(conn));
+        }
+    });
 
-        conn.on('data', (data) => {
-            if (data.type === 'JOIN') {
-                networkState.players[conn.peer] = { id: conn.peer, name: data.name, score: 0 };
-                broadcastState();
-                updateLobbyUI();
-            } else {
-                handleAction(data, conn.peer);
-            }
-        });
-
-        conn.on('close', () => {
-            delete connections[conn.peer];
-            if(networkState.players[conn.peer]) {
-                delete networkState.players[conn.peer];
-                broadcastState();
-                updateLobbyUI();
-            }
-        });
+    peer.on('error', (err) => {
+        console.error("PeerJS Error:", err);
+        if (err.type === 'unavailable-id') {
+            setupHost(playerName, generateRoomCode());
+        }
     });
 }
 
-function setupClient(playerName, roomCode) {
-    peer = new Peer({
+function setupHostConnectionHandlers(conn) {
+        connections[conn.peer] = conn;
+
+    connections[conn.peer] = conn;
+
+    conn.on('data', (data) => {
+        if (data.type === 'JOIN') {
+            if (networkState.players[conn.peer]) {
+                networkState.players[conn.peer].name = data.name; // Reconnect
+            } else {
+                networkState.players[conn.peer] = { id: conn.peer, name: data.name, score: 0, isHost: false };
+            }
+            broadcastState();
+            updateLobbyUI();
+        } else if (data.type === 'LEAVE') {
+            handlePlayerLeave(data.id);
+        } else {
+            handleAction(data, conn.peer);
+        }
+    });
+
+    conn.on('close', () => {
+        delete connections[conn.peer];
+        // Don't immediately delete player state to allow reconnect, but UI could reflect disconnect
+        showToast(`${networkState.players[conn.peer]?.name || 'Oyuncu'} bağlantısı koptu.`, "warning");
+
+        // Let's remove them after a short delay if they don't return (or keep them as ghosts if needed, but the prompt asks to remove ghosts from turns)
+        // For CizBil, if they are the current drawer, we should skip turn.
+        if (networkState.currentDrawer === conn.peer) {
+            checkWinOrNextRound(); // Skip their turn
+        }
+        broadcastState();
+    });
+}
+
+function handlePlayerLeave(id) {
+    if (networkState.players[id]) {
+        showToast(`${networkState.players[id].name} odadan ayrıldı.`, "info");
+        delete networkState.players[id];
+        if (networkState.currentDrawer === id && networkState.state === 'PLAYING') {
+            checkWinOrNextRound(); // Skip turn
+        }
+        broadcastState();
+        updateLobbyUI();
+    }
+}
+
+function setupClient(playerName, roomCode, storedMyId) {
+    peer = new Peer(storedMyId || null, {
         debug: 2,
         config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
 
     peer.on('open', (id) => {
         myId = id;
+        sessionStorage.setItem('myId', myId);
         document.getElementById('display-room-code').dataset.code = roomCode;
         document.getElementById('display-room-code').textContent = roomCode;
         document.getElementById('btn-toggle-code').style.display = 'none';
 
         hostConnection = peer.connect(roomCode, { reliable: true });
 
-        hostConnection.on('open', () => {
+        const setupHostConn = () => {
             document.getElementById('client-waiting').style.display = 'flex';
             document.getElementById('client-waiting').classList.remove('hidden');
             hostConnection.send({ type: 'JOIN', name: playerName });
-        });
+        };
+
+        if (hostConnection.open) {
+            setupHostConn();
+        } else {
+            hostConnection.on('open', setupHostConn);
+        }
 
         hostConnection.on('data', (data) => {
-            if (data.type === 'SYNC_STATE') {
+            if (data.type === 'HOST_LEAVE') {
+                showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
+                setTimeout(() => {
+                    sessionStorage.removeItem('myId');
+                    sessionStorage.removeItem('roomCode');
+                    window.location.href = 'index.html';
+                }, 2000);
+            } else if (data.type === 'SYNC_STATE') {
                 networkState = data.state;
                 if (networkState.state === 'LOBBY') updateLobbyUI();
                 else if (networkState.state === 'PLAYING') handlePlayingState(data.lastAction);
@@ -146,8 +217,13 @@ function setupClient(playerName, roomCode) {
         });
 
         hostConnection.on('close', () => {
-            showToast("Kurucu odadan ayrıldı.", "error");
-            setTimeout(() => window.location.href = 'index.html', 2000);
+            showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
+
+            setTimeout(() => {
+                sessionStorage.removeItem('myId');
+                sessionStorage.removeItem('roomCode');
+                window.location.href = 'index.html';
+            }, 3000);
         });
     });
 }
@@ -274,11 +350,19 @@ let turnTimeout;
 function startRound() {
     if (!isHost) return;
 
+    // Ensure we only pick active players
+    const activePlayers = Object.keys(networkState.players).filter(id => connections[id]?.open || id === myId);
+
+    if (activePlayers.length === 0) {
+        networkState.state = 'END';
+        broadcastState({ action: 'END_GAME', winner: {name: 'Kimse'} });
+        return;
+    }
+
     // Pick next drawer (round robin)
-    const pKeys = Object.keys(networkState.players);
-    let dIndex = pKeys.indexOf(networkState.currentDrawer);
-    dIndex = (dIndex + 1) % pKeys.length;
-    networkState.currentDrawer = pKeys[dIndex];
+    let dIndex = activePlayers.indexOf(networkState.currentDrawer);
+    dIndex = (dIndex + 1) % activePlayers.length;
+    networkState.currentDrawer = activePlayers[dIndex];
 
     // Pick word
     if (networkState.wordsLeft.length === 0) {

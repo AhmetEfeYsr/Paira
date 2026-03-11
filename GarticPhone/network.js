@@ -157,8 +157,12 @@ function setupClient(playerName, roomCode) {
         });
 
         hostConnection.on('close', () => {
-            showToast("Kurucu odadan ayrıldı.", "error");
-            setTimeout(() => window.location.href = 'index.html', 2000);
+            showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
+            setTimeout(() => {
+                sessionStorage.removeItem('myId');
+                sessionStorage.removeItem('roomCode');
+                window.location.href = 'index.html';
+            }, 3000);
         });
     });
 }
@@ -198,8 +202,11 @@ function handleAction(data, senderId) {
 
             networkState.completedTasks[senderId] = true;
 
-            // Check if all players completed
-            const allCompleted = Object.keys(networkState.players).every(pid => networkState.completedTasks[pid]);
+            // Check if all active players completed
+            const allCompleted = Object.keys(networkState.players).every(pid => {
+                if (pid === networkState.hostId) return networkState.completedTasks[pid];
+                return networkState.completedTasks[pid] || (!connections[pid]?.open);
+            });
             if (allCompleted) {
                 clearTimeout(turnTimeout);
                 passBooksAndNextRound();
