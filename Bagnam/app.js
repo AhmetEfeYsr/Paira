@@ -15,12 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const datePicker = document.getElementById('past-date-picker');
 
     // Set max date to today
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
     if (datePicker) {
-        datePicker.max = `${yyyy}-${mm}-${dd}`;
+        datePicker.max = getTodayDateTR();
     }
 
     if(btnStart) btnStart.addEventListener('click', () => initGame());
