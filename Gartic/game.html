@@ -55,28 +55,37 @@
 
         .word-choice-modal {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
+            top: 10px; left: 10px;
+            background: rgba(0,0,0,0.85);
             z-index: 100;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: flex-start;
+            align-items: flex-start;
             border-radius: 1rem;
-            backdrop-filter: blur(5px);
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 300px;
         }
         .word-choice-title {
             color: #fff;
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
             font-weight: bold;
-            text-align: center;
+            text-align: left;
         }
         .word-choice-buttons {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-direction: column;
+            gap: 0.8rem;
+            width: 100%;
+        }
+        .word-choice-buttons button {
+            width: 100%;
+            text-align: left;
+            padding: 10px 15px;
         }
     </style>
 </head>
@@ -85,11 +94,15 @@
 
     <div class="cizbil-layout">
         <div class="game-area">
-            <div class="header-bar">
-                <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış</button>
-                <div class="word-display" id="main-word">Yükleniyor...</div>
-                <div style="font-size: 1rem; font-weight: bold; color: var(--text-main);">
-                    <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
+            <div class="header-bar" style="justify-content: flex-start; gap: 1rem;">
+                <!-- Word display is moved to the far left for OBS hiding -->
+                <div class="word-display" id="main-word" style="font-size: 1.5rem; padding: 0.5rem 1.5rem;">Yükleniyor...</div>
+
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 1rem;">
+                    <div style="font-size: 1rem; font-weight: bold; color: var(--text-main);">
+                        <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış</button>
                 </div>
             </div>
 
