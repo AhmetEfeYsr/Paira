@@ -249,12 +249,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 .app-footer {
     width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
     padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: var(--footer-bg); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
-    border: 1px solid var(--lilac-muted); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px var(--card-bg); flex-shrink: 0;
+    border: var(--glass-border); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px var(--card-bg); flex-shrink: 0;
 }
 .footer-text { color: var(--text-muted); font-size: clamp(0.8rem, 1.5vw, 0.9rem); letter-spacing: 0.5px; margin: 0.2rem 0; font-weight: 400; text-align: center; }
 .footer-links { display: flex; gap: clamp(0.6rem, 1.5vw, 1.2rem); flex-wrap: wrap; justify-content: center; align-items: center; margin: 0.2rem 0; }
 .social-link {
-    display: inline-flex; align-items: center; gap: 6px; color: #f8f9fa; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); text-decoration: none;
     background: var(--input-bg); padding: 6px 14px; border-radius: 10px; transition: all 0.3s ease; font-weight: 600; font-size: clamp(0.85rem, 1.5vw, 0.95rem); border: 1px solid transparent; cursor: pointer;
 }
 .social-link:hover { background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border); transform: translateY(-2px); box-shadow: 0 3px 8px var(--card-bg); }
