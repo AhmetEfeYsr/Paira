@@ -36,23 +36,48 @@
             <p class="subtitle seo-description">Yayıncı anlatır, chat bilir! İzleyicilerinle canlı yayında interaktif tabu oyna.</p>
         </header>
 
-        <div class="card login-card">
-            <div class="input-group">
+        <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem; margin-left: auto; margin-right: auto;">
+            <div class="form-group">
+                <label for="game-mode-select">Oyun Modu</label>
+                <select id="game-mode-select">
+                    <option value="solo">Tek Oyunculu (Klasik)</option>
+                    <option value="streamer_vs_streamer">Streamer vs Streamer</option>
+                    <option value="chat_vs_chat">Chat vs Chat</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label for="platform-select">Platform Seçimi</label>
-                <select id="platform-select" class="game-input">
+                <select id="platform-select">
                     <option value="twitch">Twitch</option>
                     <option value="kick">Kick</option>
                 </select>
             </div>
 
-            <div class="input-group">
+            <div class="form-group">
                 <label for="channel-input">Kanal Adı</label>
-                <input type="text" id="channel-input" class="game-input" placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
+                <input type="text" id="channel-input" placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
             </div>
 
-            <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
+            <div id="solo-actions">
+                <button id="btn-start-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Oyunu Başlat</button>
+            </div>
+
+            <div id="multiplayer-actions" style="display: none; flex-direction: column; gap: 1rem;">
+                <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                    <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    <span>VEYA</span>
+                    <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                </div>
+                <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                    <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="margin-bottom: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                    <button id="btn-join" class="btn btn-secondary" style="padding: 0 24px; font-size: 1.05rem; white-space: nowrap;">Katıl</button>
+                </div>
+            </div>
+
             <button id="btn-back" class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="window.location.href='../index.html'">Ana Menüye Dön</button>
-            <div id="login-status" class="status-msg"></div>
+            <div id="login-status" class="status-msg" style="margin-top: 10px; text-align: center; color: var(--danger);"></div>
         </div>
 
         <div class="rules-section card">

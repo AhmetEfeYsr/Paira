@@ -13,87 +13,174 @@
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .chat-tabu-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
-        .game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
-        .sidebar { flex: 1; min-width: 300px; max-width: 400px; background: rgba(0,0,0,0.3); border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; padding: 1rem; }
+        /* Style Reset applied by base already. Adding Layout specific */
+        .chat-tabu-layout { display: flex; flex-grow: 1; width: 100%; overflow: hidden; border-radius: 12px; gap: 1rem; min-height: 0; }
+        .game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; min-height: 0; overflow: hidden; }
+        .sidebar { flex: 1; min-width: 300px; max-width: 350px; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; display: flex; flex-direction: column; padding: 1rem; overflow: hidden; }
 
-        .card-tabu { background: var(--card-bg); border-radius: 1.5rem; border: 1px solid var(--border-color); width: 100%; max-width: 500px; padding: 2rem; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; }
+        .card-tabu { background: var(--card-bg); border-radius: 1.5rem; border: 1px solid var(--border-color); width: 100%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; margin-bottom: 1rem; overflow: hidden; }
+        .card-header { background: var(--header-bg); padding: 1rem; border-bottom: 2px solid var(--primary-purple); }
+        .main-word { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 15px var(--glow-primary); margin: 0; }
 
-        .main-word { font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 15px var(--glow-primary); }
-        .forbidden-words-list { list-style: none; padding: 0; margin-top: 1.5rem; }
-        .forbidden-words-list li { font-size: 1.5rem; font-weight: 500; color: var(--danger); margin: 0.5rem 0; text-transform: uppercase; }
+        .forbidden-words-list { list-style: none; padding: 1rem; overflow-y: auto; flex: 1; }
+        .forbidden-words-list li { font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: 500; color: var(--danger); margin: 0.5rem 0; text-transform: uppercase; }
 
-        .controls { display: flex; gap: 1rem; margin-top: 2rem; width: 100%; justify-content: center; }
+        .controls { display: flex; gap: 1rem; width: 100%; max-width: 500px; justify-content: center; flex-shrink: 0; }
+        .controls .btn { flex: 1; padding: 12px !important; }
 
-        .sidebar-header { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
-        .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; }
-        .chat-msg { background: rgba(255,255,255,0.05); padding: 0.8rem 1rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+        .sidebar-header { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; flex-shrink: 0; }
+        .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; margin-bottom: 1rem; }
+        .chat-msg { background: var(--input-bg); padding: 0.8rem 1rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
         .chat-msg strong { color: var(--primary); }
         .chat-msg.correct { background: rgba(46, 204, 113, 0.2); border: 1px solid var(--success); animation: pulse 1s infinite alternate; }
 
-        .leaderboard { height: 30%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; display: flex; flex-direction: column; }
-        .leaderboard-list { overflow-y: auto; flex: 1; }
-        .leaderboard-item { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .leaderboard { height: 35%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; display: flex; flex-direction: column; flex-shrink: 0; }
+        .leaderboard-list { overflow-y: auto; flex: 1; padding-right: 5px; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
+
+        .status-badge { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-main); padding: 10px 20px; background: var(--header-bg); border-radius: 10px; border: 1px solid var(--primary-purple); font-weight: 600; text-align: center; width: 100%; max-width: 500px; flex-shrink: 0; }
 
         @keyframes pulse {
             0% { box-shadow: 0 0 5px var(--success); }
             100% { box-shadow: 0 0 15px var(--success); }
         }
 
-        @media (max-width: 768px) {
-            .chat-tabu-layout { flex-direction: column; }
-            .sidebar { max-width: 100%; height: 50vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
-            .leaderboard { display: none; }
+        @media (max-width: 900px) {
+            .chat-tabu-layout { flex-direction: column; overflow: visible; }
+            .game-area { padding: 0.5rem; overflow: visible; min-height: auto; }
+            .sidebar { max-width: 100%; min-height: 400px; flex: none; }
+            .leaderboard { height: auto; min-height: 150px; }
+            #app-container { overflow-y: auto; }
+            .card-tabu { min-height: 300px; flex: none; }
         }
     </style>
 </head>
 <body>
     <div class="glass-bg"></div>
 
-    <div class="chat-tabu-layout">
-        <!-- Main Game Area (Streamer View) -->
-        <div class="game-area">
-            <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                <button class="btn btn-secondary btn-sm" id="btn-leave">Çıkış Yap</button>
-                <div style="font-size: 1.2rem; font-weight: bold; color: var(--text-main);">
-                    Bağlantı: <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
+    <!-- LOBBY SCREEN -->
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="lobby-screen" class="view-state active">
+            <div class="lobby-header">
+                <h2>Lobi Bekleme Odası</h2>
+                <div class="code-container" id="room-code-display" style="display: none;">
+                    Oda Kodu: <span style="color: var(--warning); font-weight: 800; font-size: 1.2rem; letter-spacing: 2px;" id="room-code-val">Yükleniyor...</span>
                 </div>
             </div>
 
-            <div class="card-tabu">
-                <div class="main-word" id="main-word">Yükleniyor...</div>
-                <ul class="forbidden-words-list" id="forbidden-words">
-                    <li>Lütfen</li>
-                    <li>Bekleyiniz</li>
-                </ul>
-            </div>
+            <div class="lobby-grid">
+                <!-- Sol Taraf (Ayarlar) -->
+                <div class="card settings-card" id="settings-card" style="display: none;">
+                    <h3>Oyun Ayarları <span style="font-size: 0.8rem; color: var(--text-muted);">(Sadece Kurucu)</span></h3>
 
-            <div class="controls">
-                <button class="btn btn-danger" id="btn-skip">Pas Geç</button>
-                <button class="btn btn-success" id="btn-next" style="display: none;">Sonraki Kelime</button>
-            </div>
-        </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="timer-select">Tur Süresi</label>
+                        <select id="timer-select">
+                            <option value="60">60 Saniye</option>
+                            <option value="90" selected>90 Saniye</option>
+                            <option value="120">120 Saniye</option>
+                        </select>
+                    </div>
 
-        <!-- Sidebar (Chat Feed & Leaderboard) -->
-        <div class="sidebar">
-            <div class="sidebar-header">Canlı Sohbet Tahminleri (<span id="channel-name-display"></span>)</div>
-            <div class="chat-feed custom-scrollbar" id="chat-feed">
-                <!-- Messages will appear here -->
-            </div>
+                    <div class="form-group">
+                        <label for="round-select">Tur Sayısı</label>
+                        <select id="round-select">
+                            <option value="3">3 Tur</option>
+                            <option value="5" selected>5 Tur</option>
+                            <option value="7">7 Tur</option>
+                        </select>
+                    </div>
 
-            <div class="leaderboard">
-                <div class="sidebar-header" style="font-size: 1.2rem;">Liderlik Tablosu</div>
-                <div class="leaderboard-list custom-scrollbar" id="leaderboard-list">
-                    <!-- Scores -->
+                    <div style="flex-grow: 1;"></div>
+                    <button id="btn-start-game" class="btn btn-primary btn-block" style="padding: 12px; margin-top: 1rem;">Oyunu Başlat</button>
+                </div>
+
+                <!-- Sağ Taraf (Oyuncular) -->
+                <div class="card players-card">
+                    <h3 style="margin-bottom: 0;">Yayıncılar</h3>
+                    <div class="players-panel">
+                        <ul id="players-list" class="custom-scrollbar">
+                            <!-- Players -->
+                        </ul>
+                    </div>
+                    <div id="lobby-status" style="margin-top: auto; font-size: 0.9rem; color: var(--text-muted); text-align: center;">Bekleniyor...</div>
                 </div>
             </div>
-        </div>
-    </div>
+
+            <button class="btn btn-secondary" id="btn-leave-lobby" style="margin-top: 1.5rem; max-width: 200px; align-self: center;">Odadan Çık</button>
+        </section>
+
+        <!-- GAME SCREEN -->
+        <section id="game-screen" class="view-state">
+            <div class="game-topbar">
+                <div class="score-board">
+                    <div class="team-a" style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);" id="p1-name">Yayıncı 1</span>
+                        <span id="p1-score">0 Puan</span>
+                    </div>
+                    <div class="team-b" style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);" id="p2-name">Yayıncı 2</span>
+                        <span id="p2-score">0 Puan</span>
+                    </div>
+                </div>
+
+                <div class="timer" id="timer-display">90</div>
+
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span id="round-display" style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-right: 10px;">Tur 1/5</span>
+                    <button class="btn btn-secondary btn-icon" id="btn-leave-game" title="Çıkış Yap">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-tabu-layout">
+                <!-- Main Game Area (Streamer View) -->
+                <div class="game-area">
+                    <div class="status-badge" id="turn-status">Bekleniyor...</div>
+
+                    <div class="card-tabu taboo-card">
+                        <div class="card-header">
+                            <h2 class="main-word" id="main-word">Hazırlanıyor...</h2>
+                        </div>
+                        <ul class="forbidden-words-list custom-scrollbar" id="forbidden-words">
+                            <li>Lütfen</li>
+                            <li>Bekleyiniz</li>
+                        </ul>
+                    </div>
+
+                    <div class="controls narrator-actions">
+                        <button class="btn btn-danger" id="btn-skip">Pas Geç</button>
+                    </div>
+                </div>
+
+                <!-- Sidebar (Chat Feed & Leaderboard) -->
+                <div class="sidebar">
+                    <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Sohbet (<span id="channel-name-display"></span>)</span>
+                        <span id="chat-status" style="font-size: 0.8rem; color: var(--success);">• Bağlı</span>
+                    </div>
+                    <div class="chat-feed custom-scrollbar" id="chat-feed">
+                        <!-- Messages will appear here -->
+                    </div>
+
+                    <div class="leaderboard">
+                        <div class="sidebar-header" style="font-size: 1.2rem;">Liderlik Tablosu</div>
+                        <div class="leaderboard-list custom-scrollbar" id="leaderboard-list">
+                            <!-- Scores -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- Scripts -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="../shared/shared.js"></script>
     <script src="../shared/chat.js"></script>
     <script src="../Tabu/words.js"></script> <!-- Reusing Tabu words database -->
+    <script src="network.js"></script>
     <script src="game.js" type="module"></script>
 </body>
 </html>
