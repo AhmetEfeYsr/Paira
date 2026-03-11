@@ -21,6 +21,7 @@ function setupUserRole() {
     const storedName = sessionStorage.getItem('playerName');
     const storedIsHost = sessionStorage.getItem('isHost') === 'true';
     const storedRoomCode = sessionStorage.getItem('roomCode');
+    const storedMyId = sessionStorage.getItem('myId');
 
     if (!storedName) {
         window.location.href = 'index.html';
@@ -32,7 +33,8 @@ function setupUserRole() {
     if (isHost) {
         document.getElementById('host-settings').classList.remove('hidden');
         document.getElementById('client-waiting').classList.add('hidden');
-        initPeer(generateRoomCode());
+        // If we already had an ID as host, try to re-use it, else generate new
+        initPeer(storedMyId || generateRoomCode());
     } else {
         if (!storedRoomCode) {
             window.location.href = 'index.html';
@@ -41,7 +43,7 @@ function setupUserRole() {
         hostId = storedRoomCode;
         document.getElementById('host-settings').classList.add('hidden');
         document.getElementById('client-waiting').classList.remove('hidden');
-        initPeer();
+        initPeer(storedMyId || null);
     }
 }
 
@@ -84,6 +86,47 @@ document.getElementById('btn-copy-room').addEventListener('click', () => {
     }
 });
 
+// --- ODADAN GÜVENLİ ÇIKIŞ ---
+function leaveRoom() {
+    if (peer) {
+        if (!isHost && hostId && connections[hostId]) {
+            connections[hostId].send({ type: 'LEAVE', id: myId });
+        } else if (isHost) {
+            broadcast({ type: 'HOST_LEAVE' });
+        }
+
+        peer.destroy();
+        peer = null;
+    }
+
+    sessionStorage.removeItem('myId');
+    sessionStorage.removeItem('roomCode');
+    // We can keep playerName so they don't have to re-type it
+
+    window.location.href = 'index.html';
+}
+
+document.getElementById('btn-leave-lobby')?.addEventListener('click', leaveRoom);
+document.getElementById('btn-leave-game')?.addEventListener('click', leaveRoom);
+
+// --- OYUNCU ATMA (KICK) ---
+function kickPlayer(id) {
+    if (!isHost || id === myId) return;
+    if (connections[id]) {
+        connections[id].send({ type: 'KICKED' });
+        setTimeout(() => {
+            if (connections[id]) connections[id].close();
+        }, 500);
+    }
+    if (state.players[id]) {
+        showToast(`${state.players[id].name} odadan atıldı.`, "info");
+        delete state.players[id];
+        broadcastSync();
+        updateUI();
+    }
+}
+
+
 // --- PEERJS AĞ ALTYAPISI ---
 function initPeer(customId = null) {
     peer = new Peer(customId, {
@@ -93,13 +136,23 @@ function initPeer(customId = null) {
 
     peer.on('open', (id) => {
         myId = id;
+        sessionStorage.setItem('myId', myId);
         if (isHost) {
             hostId = myId;
-            state.players[myId] = { id: myId, name: myName, team: 'A', isHost: true };
+            if (!state.players[myId]) {
+                state.players[myId] = { id: myId, name: myName, team: 'A', isHost: true };
+            } else {
+                state.players[myId].name = myName; // update name just in case
+            }
             const codeDisplay = document.getElementById('display-room-code');
             codeDisplay.dataset.code = myId;
             codeDisplay.innerText = isCodeVisible ? myId : '••••••••';
-            showScreen('lobby-screen');
+
+            // Senkronizasyon durumu var mı kontrol edelim
+            if (state.status === 'playing') showScreen('game-screen');
+            else if (state.status === 'finished') showScreen('winner-screen');
+            else showScreen('lobby-screen');
+
             updateUI();
         } else {
             connectToPeer(hostId);
@@ -178,14 +231,19 @@ function handleData(data, peerId) {
     if (!data.type) return;
 
     if (data.type === 'JOIN' && isHost) {
-        const countA = Object.values(state.players).filter(p => p.team === 'A').length;
-        const countB = Object.values(state.players).filter(p => p.team === 'B').length;
-        state.players[data.id] = {
-            id: data.id,
-            name: data.name,
-            team: countA <= countB ? 'A' : 'B',
-            isHost: false
-        };
+        if (state.players[data.id]) {
+            // Reconnect situation
+            state.players[data.id].name = data.name;
+        } else {
+            const countA = Object.values(state.players).filter(p => p.team === 'A').length;
+            const countB = Object.values(state.players).filter(p => p.team === 'B').length;
+            state.players[data.id] = {
+                id: data.id,
+                name: data.name,
+                team: countA <= countB ? 'A' : 'B',
+                isHost: false
+            };
+        }
         broadcastSync();
         updateUI();
     }
@@ -195,6 +253,28 @@ function handleData(data, peerId) {
             broadcastSync();
             updateUI();
         }
+    }
+    else if (data.type === 'LEAVE' && isHost) {
+        const leavingPlayer = state.players[data.id];
+        if (leavingPlayer) {
+            showToast(`${leavingPlayer.name} odadan ayrıldı.`, "info");
+            delete state.players[data.id];
+
+            // Sıradaki kişi çıkarsa
+            if (state.turnId === data.id && state.status === 'playing') {
+                endTurn();
+            }
+            broadcastSync();
+            updateUI();
+        }
+    }
+    else if (data.type === 'HOST_LEAVE' && !isHost) {
+        showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
+        setTimeout(() => leaveRoom(), 2000);
+    }
+    else if (data.type === 'KICKED' && !isHost) {
+        showToast("Odadan atıldınız.", "error");
+        setTimeout(() => leaveRoom(), 2000);
     }
     else if (data.type === 'SYNC') {
         state = data.state;
@@ -233,12 +313,14 @@ function handleDisconnect(peerId) {
     if (!state.players[peerId]) return;
 
     const lostPlayer = state.players[peerId];
-    showToast(`${lostPlayer.name} ayrıldı.`, "warning");
-    delete state.players[peerId];
+
+    // Geçici kopmaları yönetmek için hemen silmiyoruz, ama uyaralım
+    showToast(`${lostPlayer.name} bağlantısı koptu.`, "warning");
+    // İleride silmek için bir timeout eklenebilir ama şu anki istek reconnect desteği
 
     if (isHost) {
-        // Eğer anlatan kişi çıktıysa turu sonlandır
-        if (state.turnId === peerId) endTurn();
+        // Eğer anlatan kişi koptuysa bekleyebilir veya oyunu duraklatabiliriz, şimdilik basit tutalım.
+        // Eğer oyuncu gerçekten atılmışsa veya çıkmışsa state.players'dan silinir (ileride eklenecek KICK ve LEAVE ile)
         broadcastSync();
     } else if (lostPlayer.isHost) {
         // HOST MIGRATION (Oda Devri)
