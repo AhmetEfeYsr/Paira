@@ -255,9 +255,17 @@ function handleAction(data, senderId) {
                 handleDrawEvent(data); // Draw locally
             }
         }
+        else if (data.type === 'CHOOSE_WORD') {
+            if (senderId === networkState.currentDrawer && networkState.currentWord === "") {
+                officialStartRound(data.word);
+            }
+        }
         else if (data.type === 'GUESS') {
             const senderName = networkState.players[senderId].name;
             const text = data.text;
+
+            // Prevent guessing while word is being chosen
+            if (!networkState.currentWord) return;
 
             if (isMatch(text, networkState.currentWord)) {
                 // Correct guess
@@ -368,12 +376,24 @@ function startRound() {
     dIndex = (dIndex + 1) % activePlayers.length;
     networkState.currentDrawer = activePlayers[dIndex];
 
-    // Pick word
-    if (networkState.wordsLeft.length === 0) {
-        networkState.wordsLeft = window.cizbilWords ? [...window.cizbilWords] : ["YEDEK_KELİME"]; // Reset
+    // Pick words
+    if (networkState.wordsLeft.length < 2) {
+        networkState.wordsLeft = window.cizbilWords ? [...window.cizbilWords].sort(() => Math.random() - 0.5) : ["YEDEK_KELİME", "YEDEK_2"];
     }
-    networkState.currentWord = networkState.wordsLeft.pop();
 
+    // Instead of setting currentWord, we send two choices to everyone.
+    // The currentDrawer will pick one.
+    const word1 = networkState.wordsLeft.pop();
+    const word2 = networkState.wordsLeft.pop();
+    networkState.currentWord = ""; // Not chosen yet
+
+    broadcastState({ action: 'WORD_CHOICE', choices: [word1, word2] });
+}
+
+export function officialStartRound(chosenWord) {
+    if (!isHost) return;
+
+    networkState.currentWord = chosenWord;
     broadcastState({ action: 'START_ROUND' });
 
     clearTimeout(turnTimeout);
@@ -414,11 +434,16 @@ function handlePlayingState(lastAction) {
 
     initGameUI();
 
-    if (lastAction?.action === 'SWITCH_TO_GAME' || lastAction?.action === 'START_ROUND') {
+    if (lastAction?.action === 'WORD_CHOICE') {
         clearCanvas();
-        updateGameStateUI();
+        updateGameStateUI(lastAction.choices);
+    } else if (lastAction?.action === 'START_ROUND') {
+        updateGameStateUI(); // Hide overlay, show actual word
         startTimer(networkState.turnDuration);
         document.getElementById('game-status-message').textContent = 'Tahmin et / Çiz!';
+    } else if (lastAction?.action === 'SWITCH_TO_GAME') {
+        clearCanvas();
+        updateGameStateUI();
     } else if (lastAction?.action === 'ROUND_END') {
         stopTimer();
         document.getElementById('game-status-message').textContent = 'Tur bitti! Kelime: ' + networkState.currentWord;

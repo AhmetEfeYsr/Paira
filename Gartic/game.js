@@ -147,26 +147,45 @@ async function initGame() {
     }, 2000);
 
     // Controls
-    document.getElementById('btn-skip').addEventListener('click', nextWord);
-    document.getElementById('btn-next').addEventListener('click', nextWord);
+    document.getElementById('btn-skip').addEventListener('click', presentWordChoices);
+    document.getElementById('btn-next').addEventListener('click', presentWordChoices);
     document.getElementById('btn-leave').addEventListener('click', () => {
         chatListener.stop();
         window.location.href = 'index.html';
     });
 
-    nextWord();
+    // Setup word choice handlers
+    document.getElementById('btn-choice-1').addEventListener('click', (e) => startWord(e.target.textContent));
+    document.getElementById('btn-choice-2').addEventListener('click', (e) => startWord(e.target.textContent));
+
+    presentWordChoices();
 }
 
-function nextWord() {
+function presentWordChoices() {
+    state.isPaused = true;
+
+    // Pick two random distinct words
+    let word1 = wordDatabase[currentWordIndex];
     currentWordIndex = (currentWordIndex + 1) % wordDatabase.length;
-    currentWord = wordDatabase[currentWordIndex];
+    let word2 = wordDatabase[currentWordIndex];
+    currentWordIndex = (currentWordIndex + 1) % wordDatabase.length;
 
-    document.getElementById('main-word').textContent = currentWord;
+    document.getElementById('btn-choice-1').textContent = word1;
+    document.getElementById('btn-choice-2').textContent = word2;
+    document.getElementById('word-choice-overlay').style.display = 'flex';
+    document.getElementById('main-word').textContent = "SEÇİM YAPILIYOR...";
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('btn-skip').style.display = 'none';
 
-    // Clear canvas
     if (drawingBoard) {
         drawingBoard.clear(false);
     }
+}
+
+function startWord(selectedWord) {
+    document.getElementById('word-choice-overlay').style.display = 'none';
+    currentWord = selectedWord;
+    document.getElementById('main-word').textContent = currentWord;
 
     state.isPaused = false;
     document.getElementById('btn-next').style.display = 'none';
