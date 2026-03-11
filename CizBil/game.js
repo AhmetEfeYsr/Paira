@@ -126,6 +126,14 @@ export function initGameUI() {
     document.getElementById('chat-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendGuess();
     });
+
+    // Word choice listeners
+    document.getElementById('btn-choice-1').addEventListener('click', (e) => {
+        broadcastAction({ type: 'CHOOSE_WORD', word: e.target.textContent });
+    });
+    document.getElementById('btn-choice-2').addEventListener('click', (e) => {
+        broadcastAction({ type: 'CHOOSE_WORD', word: e.target.textContent });
+    });
 }
 
 // Global exported sync function used by network.js to replay events
@@ -154,7 +162,7 @@ export function showToast(msg, type = "info") {
     setTimeout(() => toast.remove(), 4000);
 }
 
-export function updateGameStateUI() {
+export function updateGameStateUI(choices = null) {
     document.getElementById('current-drawer').textContent = networkState.players[networkState.currentDrawer]?.name || '...';
 
     // Update Scoreboard
@@ -173,11 +181,26 @@ export function updateGameStateUI() {
     if (networkState.currentDrawer === myId) {
         document.getElementById('toolbar').style.display = 'flex';
         document.getElementById('canvas-overlay').style.display = 'none';
-        document.getElementById('main-word').textContent = networkState.currentWord;
+
+        if (choices) {
+            document.getElementById('word-choice-overlay').style.display = 'flex';
+            document.getElementById('btn-choice-1').textContent = choices[0];
+            document.getElementById('btn-choice-2').textContent = choices[1];
+            document.getElementById('main-word').textContent = "KELİME SEÇİLİYOR...";
+        } else {
+            document.getElementById('word-choice-overlay').style.display = 'none';
+            document.getElementById('main-word').textContent = networkState.currentWord;
+        }
     } else {
         document.getElementById('toolbar').style.display = 'none';
         document.getElementById('canvas-overlay').style.display = 'block';
-        document.getElementById('main-word').textContent = networkState.currentWord.replace(/[A-ZĞÜŞİÖÇ]/g, '_ ');
+        document.getElementById('word-choice-overlay').style.display = 'none';
+
+        if (choices) {
+            document.getElementById('main-word').textContent = "KELİME SEÇİLİYOR...";
+        } else {
+            document.getElementById('main-word').textContent = networkState.currentWord ? networkState.currentWord.replace(/[A-ZĞÜŞİÖÇ]/g, '_ ') : '...';
+        }
     }
 }
 
