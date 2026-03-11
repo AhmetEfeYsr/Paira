@@ -13,7 +13,7 @@ class ChatListener {
         this.ws = null;
 
         // IMPORTANT: Replace this with your deployed Google Cloud Function URL
-        this.kickCloudFunctionUrl = 'YOUR_GOOGLE_CLOUD_FUNCTION_URL';
+        this.kickCloudFunctionUrl = 'https://us-central1-precise-rune-465721-f3.cloudfunctions.net/getKickInfo';
     }
 
     start() {
@@ -88,7 +88,9 @@ class ChatListener {
         } catch (error) {
             console.error('[Kick] Initialization error:', error);
             // Fallback: If URL is not set or fails, notify the user.
-            if (this.kickCloudFunctionUrl === 'YOUR_GOOGLE_CLOUD_FUNCTION_URL') {
+            if (this.kickCloudFunctionUrl === 'https://us-central1-precise-rune-465721-f3.cloudfunctions.net/getKickInfo') {
+                // Ignore alert if URL is set, unless you want to show it.
+            } else if (this.kickCloudFunctionUrl === 'YOUR_GOOGLE_CLOUD_FUNCTION_URL') {
                 alert('Kick entegrasyonu için lütfen shared/chat.js dosyasındaki "YOUR_GOOGLE_CLOUD_FUNCTION_URL" adresini kendi Cloud Function adresinizle değiştirin.');
             }
         }
