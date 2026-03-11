@@ -18,18 +18,25 @@ export function initGameUI() {
         });
 
         // Tools Setup
+        const bindInteraction = (el, handler) => {
+            el.addEventListener('pointerdown', (e) => { e.preventDefault(); handler(e); });
+            el.addEventListener('click', (e) => { e.preventDefault(); handler(e); });
+            el.style.touchAction = 'none';
+        };
+
         document.querySelectorAll('.color-swatch').forEach(swatch => {
-            swatch.addEventListener('click', (e) => {
+            bindInteraction(swatch, (e) => {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-                e.target.classList.add('active');
-                drawingBoard.setColor(e.target.dataset.color);
-                if (e.target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
+                const target = e.target.closest('.color-swatch');
+                target.classList.add('active');
+                drawingBoard.setColor(target.dataset.color);
+                if (target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
                 else drawingBoard.setTool('brush');
             });
         });
 
         document.querySelectorAll('.size-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            bindInteraction(btn, (e) => {
                 document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
                 const target = e.target.closest('.size-btn');
                 target.classList.add('active');
@@ -37,9 +44,25 @@ export function initGameUI() {
             });
         });
 
-        document.getElementById('btn-clear').addEventListener('click', () => {
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            bindInteraction(btn, (e) => {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                const target = e.target.closest('.tool-btn');
+                target.classList.add('active');
+                drawingBoard.setTool(target.dataset.tool);
+            });
+        });
+
+        bindInteraction(document.getElementById('btn-clear'), () => {
             drawingBoard.clear(false);
         });
+
+        const btnUndo = document.getElementById('btn-undo');
+        if (btnUndo) {
+            bindInteraction(btnUndo, () => {
+                drawingBoard.undo(false);
+            });
+        }
 
         // Submit logic
         document.getElementById('btn-submit-prompt').addEventListener('click', submitPrompt);

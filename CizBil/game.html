@@ -101,16 +101,30 @@
                         </div>
 
                         <div class="tool-picker" id="tool-picker" style="display: flex; gap: 8px;">
-                            <button class="btn btn-secondary btn-sm tool-btn active" data-tool="brush" title="Fırça">🖌️</button>
-                            <button class="btn btn-secondary btn-sm tool-btn" data-tool="fill" title="Doldur">🪣</button>
-                            <button class="btn btn-secondary btn-sm tool-btn" data-tool="rect" title="Kare">⬛</button>
-                            <button class="btn btn-secondary btn-sm tool-btn" data-tool="circle" title="Daire">⚫</button>
-                            <button class="btn btn-secondary btn-sm tool-btn" data-tool="line" title="Çizgi">➖</button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn active" data-tool="brush" title="Fırça" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2l4 4-10 10H8v-4L18 2z"></path><path d="M14 6l4 4"></path><path d="M3 21h18"></path></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="fill" title="Doldur" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2a2 2 0 0 0 2.8 0L19 11Z"></path><path d="M5 2l5 5"></path><path d="M2 13h15"></path><path d="M22 20a2 2 0 1 1-4 0c0-1.6 2-5 2-5s2 3.4 2 5Z"></path></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="rect" title="Kare" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="circle" title="Daire" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="line" title="Çizgi" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
                         </div>
 
                         <div class="tools" style="display: flex; gap: 8px;">
-                            <button class="btn btn-secondary btn-sm" id="btn-undo" title="Geri Al">↩️</button>
-                            <button class="btn btn-secondary btn-sm" id="btn-clear">🗑️</button>
+                            <button class="btn btn-secondary btn-sm btn-icon" id="btn-undo" title="Geri Al" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon" id="btn-clear" title="Temizle" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -119,9 +133,11 @@
                     <div class="chat-panel card" style="display: flex; flex-direction: column; height: 300px; padding: 1rem;">
                         <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Tahminler</div>
                         <div class="messages-container custom-scrollbar" id="messages-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;"></div>
-                        <div class="chat-input-wrapper" style="display: flex; gap: 5px;">
-                            <input type="text" id="chat-input" class="game-input" placeholder="Tahmin yaz..." autocomplete="off" style="flex: 1; min-height: 36px;">
-                            <button id="btn-send-chat" class="btn btn-primary">Gönder</button>
+                        <div class="chat-input-wrapper" style="display: flex; gap: 8px;">
+                            <input type="text" id="chat-input" class="game-input" placeholder="Tahmin yaz..." autocomplete="off" style="flex: 1; padding: 12px; border-radius: 8px;">
+                            <button id="btn-send-chat" class="btn btn-primary btn-icon" style="padding: 0 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center;" aria-label="Gönder">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
                         </div>
                     </div>
 
