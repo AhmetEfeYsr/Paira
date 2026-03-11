@@ -45,7 +45,7 @@ function injectSharedUI() {
                 <span>GitHub</span>
             </a>
             <a href="https://kick.com/Pairaaa" target="_blank" rel="noopener noreferrer" class="social-link kick-link">
-                <svg class="kick-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#53fc18"><path d="M2 3h5.5v3.5h3V10h3.5v4H10.5v3.5H7.5V21H2V3zm16.5 6.5h3.5v5h-3.5v5H15v-3.5h-3.5V10H15V6.5h3.5v3z"/></svg>
+                <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="Kick--Streamline-Simple-Icons" height="18" width="18"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#53fc18" stroke-width="1"></path></svg>
                 <span>Paira</span>
             </a>
             <span class="social-link" onclick="openTermsModal()">

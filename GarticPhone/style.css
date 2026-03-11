@@ -135,6 +135,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 
 .canvas-container { border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 4px solid var(--border-color); width: 100%; background: #fff; touch-action: none; position: relative; }
 .canvas-container canvas { display: block; width: 100%; aspect-ratio: 16/9; }
+[data-theme="light"] .canvas-container { box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-color: var(--lilac-muted); }
 
 .chat-msg {
     padding: 0.5rem 0.8rem;

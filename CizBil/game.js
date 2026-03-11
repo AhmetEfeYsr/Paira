@@ -54,18 +54,25 @@ export function initGameUI() {
     }, {passive: false, capture: true});
 
     // Tools
+    const bindInteraction = (el, handler) => {
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); handler(e); });
+        el.addEventListener('click', (e) => { e.preventDefault(); handler(e); });
+        el.style.touchAction = 'none';
+    };
+
     document.querySelectorAll('.color-swatch').forEach(swatch => {
-        swatch.addEventListener('click', (e) => {
+        bindInteraction(swatch, (e) => {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-            e.target.classList.add('active');
-            drawingBoard.setColor(e.target.dataset.color);
-            if (e.target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
+            const target = e.target.closest('.color-swatch');
+            target.classList.add('active');
+            drawingBoard.setColor(target.dataset.color);
+            if (target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
             else drawingBoard.setTool('brush'); // default fallback if a tool was active
         });
     });
 
     document.querySelectorAll('.size-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        bindInteraction(btn, (e) => {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             const target = e.target.closest('.size-btn');
             target.classList.add('active');
@@ -73,9 +80,8 @@ export function initGameUI() {
         });
     });
 
-    // Add missing tool listeners if UI gets updated to have tool buttons
     document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        bindInteraction(btn, (e) => {
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
             const target = e.target.closest('.tool-btn');
             target.classList.add('active');
@@ -83,16 +89,15 @@ export function initGameUI() {
         });
     });
 
-    document.getElementById('btn-clear').addEventListener('click', () => {
+    bindInteraction(document.getElementById('btn-clear'), () => {
         if(networkState.currentDrawer === myId) {
-            drawingBoard.clear(true); // true means emit event
+            drawingBoard.clear(true);
         }
     });
 
-    // Check if btn-undo exists in HTML, if so add listener
     const btnUndo = document.getElementById('btn-undo');
     if (btnUndo) {
-        btnUndo.addEventListener('click', () => {
+        bindInteraction(btnUndo, () => {
             if(networkState.currentDrawer === myId) drawingBoard.undo(true);
         });
     }
