@@ -81,9 +81,9 @@
                         <!-- Canvas overlay for guessers indicating they can't draw -->
                         <div id="canvas-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; pointer-events:all; cursor:not-allowed;"></div>
                         <!-- Word choice overlay for drawer -->
-                        <div id="word-choice-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-                            <div style="color: #fff; font-size: 1.5rem; margin-bottom: 2rem; font-weight: bold; text-align: center;">Çizeceğin Kelimeyi Seç</div>
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                        <div id="word-choice-overlay" style="position:absolute; top:10px; left:10px; background: rgba(0,0,0,0.8); z-index: 100; display: none; flex-direction: column; justify-content: flex-start; align-items: flex-start; backdrop-filter: blur(5px); padding: 1rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="color: #fff; font-size: 1.2rem; margin-bottom: 1rem; font-weight: bold; text-align: left;">Çizeceğin Kelimeyi Seç</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                                 <button class="btn btn-primary" id="btn-choice-1">Kelime 1</button>
                                 <button class="btn btn-primary" id="btn-choice-2">Kelime 2</button>
                             </div>
