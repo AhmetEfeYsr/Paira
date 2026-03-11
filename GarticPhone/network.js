@@ -251,11 +251,15 @@ function updateLobbyUI() {
 
 let turnTimeout;
 
-function startGame() {
+async function startGame() {
     if (!isHost) return;
 
     const pCount = Object.keys(networkState.players).length;
     if (pCount < 3) return showToast("En az 3 kişi olmalı!", "warning");
+
+    if (window.loadGarticWords) {
+        await window.loadGarticWords();
+    }
 
     networkState.turnDuration = parseInt(document.getElementById('turn-duration').value) || 60;
 

@@ -108,7 +108,7 @@ function initCanvas() {
     }
 }
 
-function initGame() {
+async function initGame() {
     const channel = sessionStorage.getItem('cizbil_channel');
     const platform = sessionStorage.getItem('cizbil_platform');
 
@@ -118,6 +118,13 @@ function initGame() {
     }
 
     document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
+
+    if (window.loadGarticWords) {
+        await window.loadGarticWords();
+    }
+
+    // Update word database after loading
+    wordDatabase = [...window.cizbilWords];
 
     // Shuffle words
     wordDatabase.sort(() => (window.crypto.getRandomValues(new Uint32Array(1))[0] % 100) - 50);

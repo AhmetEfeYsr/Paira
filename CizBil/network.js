@@ -322,11 +322,15 @@ function updateLobbyUI() {
     }
 }
 
-function startGame() {
+async function startGame() {
     if (!isHost || Object.keys(networkState.players).length < 2) return;
 
     networkState.targetScore = parseInt(document.getElementById('target-score').value) || 50;
     networkState.turnDuration = parseInt(document.getElementById('turn-duration').value) || 60;
+
+    if (window.loadGarticWords) {
+        await window.loadGarticWords();
+    }
 
     // Load words from shared global
     if (window.cizbilWords) {

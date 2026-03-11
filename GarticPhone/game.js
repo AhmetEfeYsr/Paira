@@ -165,7 +165,14 @@ export function startTimer(duration) {
 
 function submitPromptFallback() {
     const input = document.getElementById('prompt-input');
-    const text = input.value.trim() || "... (Zamanında yazılamadı)";
+    let text = input.value.trim();
+    if (!text) {
+        if (window.cizbilWords && window.cizbilWords.length > 0) {
+            text = window.cizbilWords[Math.floor(Math.random() * window.cizbilWords.length)];
+        } else {
+            text = "... (Zamanında yazılamadı)";
+        }
+    }
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text });
 }
 
