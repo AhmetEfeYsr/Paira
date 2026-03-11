@@ -18,7 +18,10 @@
 
         <!-- LOBI EKRANI -->
         <section id="lobby-screen" class="view-state active">
-            <header class="lobby-header" style="justify-content: space-between;">
+            <header class="lobby-header" style="justify-content: space-between; align-items: center; display: flex;">
+                <button id="btn-leave-lobby" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
                 <div class="code-container" style="flex-grow: 1; justify-content: center; gap: 12px;">
                     <h2 style="margin:0; font-size: 1.1rem; color: var(--text-muted); font-weight: 500;">Oda Kodu:</h2>
                     <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 4px; font-family: monospace; font-size: 1.5rem; user-select: none; font-weight: bold; min-width: 140px; text-align: center;">••••••••</span>
@@ -81,6 +84,9 @@
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card">
+                <button id="btn-leave-game" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 50%; width: 42px; height: 42px; padding: 0 !important;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
                 <div class="round-indicator" id="round-indicator">Tur 1 / 3</div>
 
                 <div class="score-board">
@@ -93,7 +99,6 @@
                 </div>
 
                 <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <div style="width: 42px; height: 42px;"></div> <!-- Spacer -->
                     <div id="timer-display" class="timer" style="line-height: 1; text-align: center; display: flex; align-items: center; justify-content: center;">00:00</div>
                     <button id="btn-pause" class="btn btn-secondary btn-icon hidden" title="Oyunu Duraklat" style="border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; padding: 0 !important; background: var(--input-bg);">
                         <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>

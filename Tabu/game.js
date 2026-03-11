@@ -200,24 +200,30 @@ document.getElementById('btn-start-game').addEventListener('click', () => {
     state.round = 1;
     state.isPaused = false;
 
-    state.turnOrder = [];
-    // Her iki takımdaki HERKESİN oynamasını garanti etmek için EKOK (LCM) kullanıyoruz
-    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-    const lcm = (a, b) => (a * b) / gcd(a, b);
+    // "turn order oyun sirasinda degismesin"
+    if (!state.turnOrder || state.turnOrder.length === 0) {
+        state.turnOrder = [];
+        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+        const lcm = (a, b) => (a * b) / gcd(a, b);
 
-    let totalCycles = 0;
-    if (teamA.length === 0 || teamB.length === 0) {
-        totalCycles = Math.max(teamA.length, teamB.length);
+        let totalCycles = 0;
+        if (teamA.length === 0 || teamB.length === 0) {
+            totalCycles = Math.max(teamA.length, teamB.length);
+        } else {
+            totalCycles = lcm(teamA.length, teamB.length);
+        }
+
+        for (let i = 0; i < totalCycles; i++) {
+            if (teamA.length > 0) state.turnOrder.push(teamA[i % teamA.length]);
+            if (teamB.length > 0) state.turnOrder.push(teamB[i % teamB.length]);
+        }
+        state.turnIndex = 0;
     } else {
-        totalCycles = lcm(teamA.length, teamB.length);
+        // Zaten bir turnOrder var ise ve oyun baştan başlıyorsa eksik/çıkan kullanıcıları filtrele
+        state.turnOrder = state.turnOrder.filter(id => state.players[id]);
+        state.turnIndex = 0;
     }
 
-    for (let i = 0; i < totalCycles; i++) {
-        if (teamA.length > 0) state.turnOrder.push(teamA[i % teamA.length]);
-        if (teamB.length > 0) state.turnOrder.push(teamB[i % teamB.length]);
-    }
-
-    state.turnIndex = 0;
     state.status = 'playing';
 
     showScreen('game-screen');
@@ -293,6 +299,16 @@ function endTurn() {
 
     advanceWord();
 
+    // Check if player leaving broke the turn index (ghost user)
+    // First, ensure turnOrder only has active players
+    state.turnOrder = state.turnOrder.filter(id => state.players[id]);
+
+    // If no players are left to play, end the game or fallback
+    if (state.turnOrder.length === 0) {
+        showWinnerScreen();
+        return;
+    }
+
     if (state.turnIndex >= state.turnOrder.length) {
         state.turnIndex = 0;
         state.round++;
@@ -332,8 +348,11 @@ function showWinnerScreen() {
 }
 
 document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
+    if (!isHost) return;
     state.status = 'lobby';
     state.scoreA = 0; state.scoreB = 0; state.round = 1;
+    // Lobiye dönüldüğünde oyuncular çıkıp girebileceği için sırayı baştan oluşturacağız.
+    state.turnOrder = [];
     showScreen('lobby-screen');
     broadcastSync();
 });
@@ -454,10 +473,35 @@ function updateUI() {
         pList.innerHTML = '';
         Object.values(state.players).forEach(p => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === myId ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.alignItems = 'center';
+
+            const infoSpan = document.createElement('span');
+            infoSpan.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === myId ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
+            li.appendChild(infoSpan);
+
+            // Host ise ve kendisi değilse, Kick butonu ekle
+            if (isHost && p.id !== myId && state.status !== 'playing') {
+                const kickBtn = document.createElement('button');
+                kickBtn.className = 'btn btn-danger btn-icon';
+                kickBtn.style.padding = '4px 8px';
+                kickBtn.style.marginLeft = '8px';
+                kickBtn.style.fontSize = '0.8rem';
+                kickBtn.title = "Oyuncuyu At";
+                kickBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+                kickBtn.onclick = () => {
+                    if (typeof kickPlayer === 'function') kickPlayer(p.id);
+                };
+                li.appendChild(kickBtn);
+            }
+
             pList.appendChild(li);
         });
     }
+
+    const roundInd = document.getElementById('round-indicator');
+    if (roundInd) roundInd.innerText = `Tur ${Math.min(state.round, state.totalRounds)} / ${state.totalRounds}`;
 
     if (state.status === 'playing') {
         const sa = document.getElementById('score-a'), sb = document.getElementById('score-b');
