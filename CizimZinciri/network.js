@@ -1,4 +1,4 @@
-// GarticPhone/network.js
+// ÇizimZinciri/network.js
 import { initGameUI, showToast, updateGameStateUI, startTimer, stopTimer, showAlbumStep } from './game.js';
 
 let peer = null;

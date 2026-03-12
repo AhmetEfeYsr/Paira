@@ -1,4 +1,4 @@
-// GarticPhone/game.js
+// ÇizimZinciri/game.js
 
 import { networkState, broadcastAction, isHost, myId } from './network.js';
 
