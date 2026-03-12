@@ -1,560 +1,450 @@
-// game.js - Oyun Mantığı, UI Güncellemeleri ve Durum Yönetimi
+/**
+ * TabuGameEngine - Core game logic, state management, and turn rotation.
+ * Pure, testable class independent of DOM manipulation.
+ */
+class TabuGameEngine {
+    constructor() {
+        this.state = {
+            status: 'lobby',
+            players: {},
+            scoreA: 0,
+            scoreB: 0,
+            round: 1,
+            totalRounds: 3,
+            turnDuration: 60,
+            passLimit: 3,
+            tabooPenalty: 1,
+            turnId: null,
+            turnOrder: [],
+            turnIndex: 0,
+            activeWords: [],
+            wordIndex: 0,
+            passesLeft: 3,
+            isPaused: false,
+            isWaitingForReady: false
+        };
+        this.allWords = [];
+        this.gameSeed = Date.now();
+        this.fallbackWords = [
+            { ana_kelime: "güneş", yasakli_kelimeler: ["Sarı", "Sıcak", "Gökyüzü", "Yıldız", "Yaz"], kategori: "Genel", zorluk: 10 },
+            { ana_kelime: "telefon", yasakli_kelimeler: ["Konuşmak", "Akıllı", "Ekran", "Mesaj", "Aramak"], kategori: "Teknoloji", zorluk: 20 },
+            { ana_kelime: "kitap", yasakli_kelimeler: ["Okumak", "Sayfa", "Kütüphane", "Yazar", "Hikaye"], kategori: "Genel", zorluk: 15 },
+            { ana_kelime: "bilgisayar", yasakli_kelimeler: ["Klavye", "İnternet", "Oyun", "Ekran", "Yazılım"], kategori: "Teknoloji", zorluk: 30 },
+            { ana_kelime: "pizza", yasakli_kelimeler: ["Hamur", "Peynir", "İtalyan", "Yemek", "Dilim"], kategori: "Yemek", zorluk: 10 }
+        ];
 
-// --- GLOBAL DEĞİŞKENLER ---
-let allWords = [];
-let turnTimeout = null;
-let lastEndTurnAt = 0;
-let renderFrame = null;
-let localTurnEndTime = 0;
-let lastTickSec = -1;
-let isCodeVisible = false;
-let pauseOffset = 0; // Duraklatma anındaki kalan süreyi tutar
+        this.onStateChange = null;
+        this.onTimerTick = null;
+        this.onSound = null;
+        this.onActionError = null;
 
-// Oyunun ana durumu
-let state = {
-    status: 'lobby',
-    players: {},
-    scoreA: 0,
-    scoreB: 0,
-    round: 1,
-    totalRounds: 3,
-    turnDuration: 60,
-    passLimit: 3,
-    tabooPenalty: 1,
-    turnId: null,
-    turnOrder: [],
-    turnIndex: 0,
-    activeWords: [],
-    wordIndex: 0,
-    passesLeft: 3,
-    isPaused: false,
-    isWaitingForReady: false // Anlatıcının hazır olmasını bekleme durumu
-};
-
-// Yedek Kelime Havuzu (Fetch başarısız olursa diye)
-const fallbackWords = [
-    { ana_kelime: "güneş", yasakli_kelimeler: ["Sarı", "Sıcak", "Gökyüzü", "Yıldız", "Yaz"], kategori: "Genel", zorluk: 10 },
-    { ana_kelime: "telefon", yasakli_kelimeler: ["Konuşmak", "Akıllı", "Ekran", "Mesaj", "Aramak"], kategori: "Teknoloji", zorluk: 20 },
-    { ana_kelime: "kitap", yasakli_kelimeler: ["Okumak", "Sayfa", "Kütüphane", "Yazar", "Hikaye"], kategori: "Genel", zorluk: 15 },
-    { ana_kelime: "bilgisayar", yasakli_kelimeler: ["Klavye", "İnternet", "Oyun", "Ekran", "Yazılım"], kategori: "Teknoloji", zorluk: 30 },
-    { ana_kelime: "pizza", yasakli_kelimeler: ["Hamur", "Peynir", "İtalyan", "Yemek", "Dilim"], kategori: "Yemek", zorluk: 10 }
-];
-
-// --- SES YÖNETİMİ ---
-let audioCtx = null;
-function initAudio() {
-    if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
+        this.localTurnEndTime = 0;
+        this.pauseOffset = 0;
+        this.turnTimeout = null;
+        this.renderFrame = null;
     }
-    if (audioCtx?.state === 'suspended') audioCtx.resume();
-}
 
-function playSound(type) {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    if (type === 'correct') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-    } else if (type === 'taboo') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-    } else if (type === 'pass') {
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-    } else if (type === 'tick') {
-        osc.type = 'square'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-    } else if (type === 'end') {
-        osc.type = 'square'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 1);
-        osc.start(); osc.stop(audioCtx.currentTime + 1);
+    setState(newState) {
+        this.state = { ...this.state, ...newState };
+        if (this.onStateChange) this.onStateChange(this.state);
     }
-}
 
-// --- UI YARDIMCI FONKSİYONLAR ---
-function escapeHtml(text) {
-    if (text == null) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    addPlayer(id, name, isHost, team) {
+        this.state.players[id] = { id, name, isHost, team };
+        this.setState({ players: this.state.players });
+    }
 
-function showScreen(screenId) {
-    document.querySelectorAll('.view-state').forEach(el => {
-        if (el.id === screenId) {
-            el.classList.remove('hidden');
-            el.classList.add('active');
+    removePlayer(id) {
+        delete this.state.players[id];
+        this.setState({ players: this.state.players });
+    }
+
+    switchTeam(id) {
+        if (this.state.players[id]) {
+            this.state.players[id].team = this.state.players[id].team === 'A' ? 'B' : 'A';
+            this.setState({ players: this.state.players });
+        }
+    }
+
+    setWords(words) {
+        this.allWords = words && words.length > 0 ? words : this.fallbackWords;
+    }
+
+    filterWords(category) {
+        let pool = this.allWords;
+        if (category && category !== 'Hepsi') {
+            pool = pool.filter(w => w.kategori === category);
+        }
+        if (pool.length === 0) pool = this.fallbackWords;
+        this.state.activeWords = [...pool];
+        this.seededShuffle(this.state.activeWords, this.gameSeed);
+        this.state.wordIndex = 0;
+    }
+
+    seededShuffle(arr, seed) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            seed = (seed * 16807) % 2147483647;
+            const j = seed % (i + 1);
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    /**
+     * Helper to calculate Least Common Multiple.
+     * Used for perfectly alternating turns even with uneven team sizes.
+     */
+    lcm(a, b) {
+        const gcd = (x, y) => (!y ? x : gcd(y, x % y));
+        return (a * b) / gcd(a, b);
+    }
+
+    generateTurnOrder() {
+        const pList = Object.values(this.state.players);
+        const teamA = pList.filter(p => p.team === 'A').map(p => p.id);
+        const teamB = pList.filter(p => p.team === 'B').map(p => p.id);
+
+        if (teamA.length === 0 && teamB.length === 0) return [];
+
+        const seqLength = (teamA.length > 0 && teamB.length > 0) ? this.lcm(teamA.length, teamB.length) : Math.max(teamA.length, teamB.length);
+        const order = [];
+
+        for (let i = 0; i < seqLength; i++) {
+            if (teamA.length > 0) order.push(teamA[i % teamA.length]);
+            if (teamB.length > 0) order.push(teamB[i % teamB.length]);
+        }
+        return order;
+    }
+
+    startGame(settings) {
+        this.state.status = 'playing';
+        this.state.scoreA = 0;
+        this.state.scoreB = 0;
+        this.state.round = 1;
+        this.state.totalRounds = parseInt(settings.rounds) || 3;
+        this.state.turnDuration = parseInt(settings.duration) || 60;
+        this.state.passLimit = parseInt(settings.passLimit) || 3;
+        this.state.tabooPenalty = parseInt(settings.penalty) || 1;
+
+        this.gameSeed = Date.now();
+        this.filterWords(settings.category);
+
+        this.state.turnOrder = this.generateTurnOrder();
+        this.state.turnIndex = 0;
+
+        this.startNextTurn();
+    }
+
+    startNextTurn() {
+        const order = this.state.turnOrder;
+        if (!order || order.length === 0) {
+            this.endGame();
+            return;
+        }
+
+        let validTurnFound = false;
+        const startIndex = this.state.turnIndex;
+
+        do {
+            const nextId = order[this.state.turnIndex];
+            if (this.state.players[nextId]) {
+                this.state.turnId = nextId;
+                validTurnFound = true;
+                break;
+            }
+            this.state.turnIndex++;
+            if (this.state.turnIndex >= order.length) {
+                this.state.turnIndex = 0;
+                this.state.round++;
+            }
+        } while (this.state.turnIndex !== startIndex && this.state.round <= this.state.totalRounds);
+
+        if (!validTurnFound || this.state.round > this.state.totalRounds) {
+            this.endGame();
+            return;
+        }
+
+        this.state.isWaitingForReady = true;
+        this.state.isPaused = false;
+        this.state.passesLeft = this.state.passLimit;
+
+        clearTimeout(this.turnTimeout);
+        this.setState(this.state);
+    }
+
+    beginTimer() {
+        this.state.isWaitingForReady = false;
+        this.state.isPaused = false;
+        this.localTurnEndTime = Date.now() + (this.state.turnDuration * 1000);
+        this.setState(this.state);
+        this.startRenderTimer();
+
+        if (this.onSound) this.onSound('start');
+    }
+
+    togglePause() {
+        if (this.state.isWaitingForReady) return;
+
+        this.state.isPaused = !this.state.isPaused;
+        if (this.state.isPaused) {
+            clearTimeout(this.turnTimeout);
+            this.pauseOffset = Math.max(0, this.localTurnEndTime - Date.now());
         } else {
-            el.classList.add('hidden');
-            el.classList.remove('active');
+            this.localTurnEndTime = Date.now() + this.pauseOffset;
         }
-    });
-}
-
-function showToast(msg, type = "info") {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-}
-
-// --- BAŞLANGIÇ AYARLARI ---
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const res = await fetch('tr.json');
-        const data = await res.json();
-        allWords = Array.isArray(data) ? data : fallbackWords;
-    } catch {
-        allWords = fallbackWords;
-    }
-    populateCategories();
-    document.body.addEventListener('click', initAudio, { once: true });
-
-    // Enter Tuşu Desteği
-    document.getElementById('username-input').addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') document.getElementById('btn-host').click();
-    });
-    document.getElementById('room-code-input').addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') document.getElementById('btn-join').click();
-    });
-});
-
-function seededShuffle(arr, seed) {
-    const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-function ensureActiveWords() {
-    if (state.activeWords?.length > 0) return;
-    if (!state.filterParams || !allWords.length) return;
-    const { selCats, minD, maxD } = state.filterParams;
-    const catSet = new Set(selCats);
-    let filtered = allWords.filter(w => (selCats.length === 0 || catSet.has(w.kategori)) && (w.zorluk >= minD && w.zorluk <= maxD));
-    if (filtered.length === 0) filtered = [...allWords];
-    state.activeWords = seededShuffle([...filtered], state.gameSeed || 1);
-}
-
-function populateCategories() {
-    const container = document.getElementById('category-selection');
-    if (!container) return;
-    const cats = [...new Set(allWords.map(w => w.kategori).filter(Boolean))];
-    container.innerHTML = '';
-    cats.forEach(cat => {
-        const lbl = document.createElement('label');
-        lbl.className = 'category-pill';
-        lbl.innerHTML = `<input type="checkbox" value="${escapeHtml(cat)}" checked> ${escapeHtml(cat)}`;
-        container.appendChild(lbl);
-    });
-}
-
-// --- OYUN AKIŞI ---
-document.getElementById('btn-start-game').addEventListener('click', () => {
-    if (!isHost) return;
-    if (Object.keys(state.players).length < 2) { showToast("Oyuna başlamak için en az 2 kişi olmalı!", "warning"); return; }
-
-    state.turnDuration = Math.max(10, parseInt(document.getElementById('turn-duration').value) || 60);
-    state.passLimit = Math.max(0, parseInt(document.getElementById('pass-limit').value) || 3);
-    state.tabooPenalty = Math.max(0, parseInt(document.getElementById('taboo-penalty').value) || 1);
-    state.totalRounds = Math.max(1, parseInt(document.getElementById('round-count').value) || 3);
-
-    let minD = parseInt(document.getElementById('min-difficulty').value, 10) || 1;
-    let maxD = parseInt(document.getElementById('max-difficulty').value, 10) || 100;
-    if (minD > maxD) [minD, maxD] = [maxD, minD];
-    const selCats = Array.from(document.querySelectorAll('.category-pill input:checked')).map(cb => cb.value);
-    const catSet = new Set(selCats);
-
-    let filtered = allWords.filter(w => (selCats.length === 0 || catSet.has(w.kategori)) && (w.zorluk >= minD && w.zorluk <= maxD));
-
-    if (filtered.length === 0) {
-        showToast("Seçilen kategorilerde kelime bulunamadı, tüm kelimeler yükleniyor.", "info");
-        filtered = [...allWords];
+        this.setState(this.state);
     }
 
-    const teamA = Object.values(state.players).filter(p => p.team === 'A').map(p => p.id);
-    const teamB = Object.values(state.players).filter(p => p.team === 'B').map(p => p.id);
-    if (teamA.length === 0 || teamB.length === 0) { showToast("Her iki takımda da en az bir oyuncu olmalı!", "warning"); return; }
+    processAction(action) {
+        if (this.state.status !== 'playing' || this.state.isWaitingForReady || this.state.isPaused) return;
 
-    state.gameSeed = (state.gameSeed || 1) * 0x7fff + Date.now();
-    state.filterParams = { selCats: [...selCats], minD, maxD };
-    state.activeWords = seededShuffle([...filtered], state.gameSeed);
-    state.wordIndex = 0;
-    state.scoreA = 0;
-    state.scoreB = 0;
-    state.round = 1;
-    state.isPaused = false;
+        const p = this.state.players[this.state.turnId];
+        if (!p) return;
 
-    // "turn order oyun sirasinda degismesin"
-    if (!state.turnOrder || state.turnOrder.length === 0) {
-        state.turnOrder = [];
-        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-        const lcm = (a, b) => (a * b) / gcd(a, b);
-
-        let totalCycles = 0;
-        if (teamA.length === 0 || teamB.length === 0) {
-            totalCycles = Math.max(teamA.length, teamB.length);
-        } else {
-            totalCycles = lcm(teamA.length, teamB.length);
-        }
-
-        for (let i = 0; i < totalCycles; i++) {
-            if (teamA.length > 0) state.turnOrder.push(teamA[i % teamA.length]);
-            if (teamB.length > 0) state.turnOrder.push(teamB[i % teamB.length]);
-        }
-        state.turnIndex = 0;
-    } else {
-        // Zaten bir turnOrder var ise ve oyun baştan başlıyorsa eksik/çıkan kullanıcıları filtrele
-        state.turnOrder = state.turnOrder.filter(id => state.players[id]);
-        state.turnIndex = 0;
-    }
-
-    state.status = 'playing';
-
-    showScreen('game-screen');
-    startTurn();
-});
-
-// Turu başlatır ama süreyi başlatmaz (Bekleme Modu)
-function startTurn() {
-    if (!isHost || state.turnOrder.length === 0) return;
-    ensureActiveWords();
-    if (turnTimeout) { clearInterval(turnTimeout); turnTimeout = null; }
-
-    state.turnId = state.turnOrder[state.turnIndex];
-    state.passesLeft = state.passLimit;
-    state.isPaused = false;
-    state.isWaitingForReady = true; // Anlatıcının onayını bekle
-    localTurnEndTime = 0;
-    lastTickSec = -1;
-
-    broadcastSync();
-    updateUI();
-}
-
-// Anlatıcı onay verince süreyi başlatır
-function beginTimer() {
-    if (!isHost) return;
-    state.isWaitingForReady = false;
-    localTurnEndTime = Date.now() + (state.turnDuration * 1000);
-
-    broadcastSync();
-    updateUI(); // Host arayüzünü günceller
-    startRenderTimer();
-
-    turnTimeout = setInterval(() => {
-        if (state.isPaused) return;
-        if (Date.now() >= localTurnEndTime) {
-            clearInterval(turnTimeout);
-            turnTimeout = null;
-            if (state.status === 'playing') endTurn();
-        }
-    }, 1000);
-}
-
-// Mola Fonksiyonu
-document.getElementById('btn-pause')?.addEventListener('click', () => {
-    if (state.status !== 'playing' || state.isWaitingForReady) return;
-
-    if (isHost) {
-        state.isPaused = !state.isPaused;
-        if (state.isPaused) {
-            pauseOffset = localTurnEndTime - Date.now();
-        } else {
-            localTurnEndTime = Date.now() + pauseOffset;
-        }
-        broadcastSync();
-        updateUI();
-    } else {
-        sendAction('TOGGLE_PAUSE');
-    }
-});
-
-function endTurn() {
-    if (!isHost) return;
-    const now = Date.now();
-    if (now - lastEndTurnAt < 500) return;
-    lastEndTurnAt = now;
-    if (turnTimeout) { clearInterval(turnTimeout); turnTimeout = null; }
-
-    localTurnEndTime = 0;
-    state.turnIndex++;
-    playSound('end');
-    broadcast({ type: 'PLAY_SOUND', sound: 'end' });
-
-    advanceWord();
-
-    // Check if player leaving broke the turn index (ghost user)
-    // First, ensure turnOrder only has active players
-    state.turnOrder = state.turnOrder.filter(id => state.players[id]);
-
-    // If no players are left to play, end the game or fallback
-    if (state.turnOrder.length === 0) {
-        showWinnerScreen();
-        return;
-    }
-
-    if (state.turnIndex >= state.turnOrder.length) {
-        state.turnIndex = 0;
-        state.round++;
-    }
-
-    if (state.round > state.totalRounds) {
-        showWinnerScreen();
-    } else {
-        state.turnId = null;
-        broadcastSync();
-        setTimeout(() => { if (isHost && state.status === 'playing') startTurn(); }, 3000);
-    }
-}
-
-function showWinnerScreen() {
-    state.status = 'finished';
-    const winnerTitle = document.getElementById('winner-team-name');
-    const finalA = document.getElementById('final-score-a');
-    const finalB = document.getElementById('final-score-b');
-
-    finalA.innerText = state.scoreA;
-    finalB.innerText = state.scoreB;
-
-    if (state.scoreA > state.scoreB) {
-        winnerTitle.innerText = "KAZANAN: TAKIM A";
-        winnerTitle.style.color = "#3498db";
-    } else if (state.scoreB > state.scoreA) {
-        winnerTitle.innerText = "KAZANAN: TAKIM B";
-        winnerTitle.style.color = "#e74c3c";
-    } else {
-        winnerTitle.innerText = "DOSTLUK KAZANDI (BERABERE)";
-        winnerTitle.style.color = "var(--lilac)";
-    }
-
-    showScreen('winner-screen');
-    broadcastSync();
-}
-
-document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
-    if (!isHost) return;
-    state.status = 'lobby';
-    state.scoreA = 0; state.scoreB = 0; state.round = 1;
-    // Lobiye dönüldüğünde oyuncular çıkıp girebileceği için sırayı baştan oluşturacağız.
-    state.turnOrder = [];
-    showScreen('lobby-screen');
-    broadcastSync();
-});
-
-function processAction(action) {
-    // Anlatıcı hazır olduğunu host'a ilettiğinde
-    if (action === 'NARRATOR_READY' && state.isWaitingForReady) {
-        beginTimer();
-        return;
-    }
-
-    if (action === 'TOGGLE_PAUSE') {
-        state.isPaused = !state.isPaused;
-        if (state.isPaused) {
-            pauseOffset = localTurnEndTime - Date.now();
-        } else {
-            localTurnEndTime = Date.now() + pauseOffset;
-        }
-        broadcastSync();
-        updateUI();
-        return;
-    }
-
-    if (state.isPaused) return;
-
-    ensureActiveWords();
-    const player = state.players[state.turnId];
-    if (!player || !state.activeWords || state.activeWords.length === 0) return;
-
-    if (action === 'CORRECT') {
-        if (player.team === 'A') state.scoreA++; else state.scoreB++;
-        playSound('correct'); broadcast({ type: 'PLAY_SOUND', sound: 'correct' }); advanceWord();
-    } else if (action === 'TABOO') {
-        if (player.team === 'A') state.scoreA = Math.max(0, state.scoreA - state.tabooPenalty); else state.scoreB = Math.max(0, state.scoreB - state.tabooPenalty);
-        playSound('taboo'); broadcast({ type: 'PLAY_SOUND', sound: 'taboo' }); advanceWord();
-    } else if (action === 'PASS') {
-        if (state.passesLeft > 0) {
-            state.passesLeft--;
-            playSound('pass'); broadcast({ type: 'PLAY_SOUND', sound: 'pass' }); advanceWord();
-        } else {
-            const btnPass = document.getElementById('btn-pass');
-            btnPass.classList.add('error-shake');
-            setTimeout(() => btnPass.classList.remove('error-shake'), 400);
-        }
-    }
-    broadcastSync();
-    updateUI();
-}
-
-function advanceWord() {
-    state.wordIndex++;
-    if (state.wordIndex >= state.activeWords.length) {
-        state.gameSeed = (state.gameSeed * 16807) % 2147483647;
-        seededShuffle(state.activeWords, state.gameSeed);
-        state.wordIndex = 0;
-    }
-    const cardEl = document.getElementById('word-card');
-    if (cardEl) {
-        cardEl.classList.remove('pop-animation');
-        void cardEl.offsetWidth;
-        cardEl.classList.add('pop-animation');
-    }
-}
-
-function startRenderTimer() {
-    if (renderFrame) cancelAnimationFrame(renderFrame);
-    const timerEl = document.getElementById('timer-display');
-    if (!timerEl) return;
-
-    const tick = () => {
-        if (state.status !== 'playing') return;
-
-        if (state.isWaitingForReady) {
-            timerEl.innerText = "BEKLİYOR";
-            timerEl.style.color = 'var(--lilac)';
-        } else if (!state.isPaused) {
-            const left = Math.max(0, localTurnEndTime - Date.now());
-            const secs = Math.ceil(left / 1000);
-            const m = Math.floor(secs / 60).toString().padStart(2, '0');
-            const s = (secs % 60).toString().padStart(2, '0');
-            timerEl.innerText = `${m}:${s}`;
-
-            if (secs <= 10 && secs > 0) {
-                timerEl.style.color = 'var(--danger)';
-                if (lastTickSec !== secs) { playSound('tick'); lastTickSec = secs; }
+        if (action === 'CORRECT') {
+            if (p.team === 'A') this.state.scoreA++; else this.state.scoreB++;
+            if (this.onSound) this.onSound('correct');
+            this.advanceWord();
+        } else if (action === 'TABOO') {
+            if (p.team === 'A') this.state.scoreA = Math.max(0, this.state.scoreA - this.state.tabooPenalty);
+            else this.state.scoreB = Math.max(0, this.state.scoreB - this.state.tabooPenalty);
+            if (this.onSound) this.onSound('taboo');
+            this.advanceWord();
+        } else if (action === 'PASS') {
+            if (this.state.passesLeft > 0) {
+                this.state.passesLeft--;
+                if (this.onSound) this.onSound('pass');
+                this.advanceWord();
             } else {
-                timerEl.style.color = 'var(--lilac)';
+                if (this.onActionError) this.onActionError('NO_PASSES');
             }
-        } else {
-            timerEl.innerText = "DURDU";
-            timerEl.style.color = 'var(--warning)';
+        }
+        this.setState(this.state);
+    }
+
+    advanceWord() {
+        this.state.wordIndex++;
+        if (this.state.wordIndex >= this.state.activeWords.length) {
+            this.gameSeed = (this.gameSeed * 16807) % 2147483647;
+            this.seededShuffle(this.state.activeWords, this.gameSeed);
+            this.state.wordIndex = 0;
+        }
+        // Force pop animation is now handled in view
+    }
+
+    startRenderTimer() {
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+
+        let lastTickSec = -1;
+
+        const tick = () => {
+            if (this.state.status !== 'playing') return;
+
+            if (!this.state.isWaitingForReady && !this.state.isPaused) {
+                const left = Math.max(0, this.localTurnEndTime - Date.now());
+                const secs = Math.ceil(left / 1000);
+
+                if (this.onTimerTick) this.onTimerTick(secs, 'running');
+
+                if (secs <= 10 && secs > 0 && lastTickSec !== secs) {
+                    if (this.onSound) this.onSound('tick');
+                    lastTickSec = secs;
+                }
+
+                if (left <= 0) {
+                    this.endTurn();
+                    return;
+                }
+            } else if (this.state.isWaitingForReady) {
+                if (this.onTimerTick) this.onTimerTick(0, 'waiting');
+            } else if (this.state.isPaused) {
+                if (this.onTimerTick) this.onTimerTick(0, 'paused');
+            }
+
+            this.renderFrame = requestAnimationFrame(tick);
+        };
+        this.renderFrame = requestAnimationFrame(tick);
+    }
+
+    endTurn() {
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.onSound) this.onSound('timeup');
+
+        this.state.turnIndex++;
+        if (this.state.turnIndex >= this.state.turnOrder.length) {
+            this.state.turnIndex = 0;
+            this.state.round++;
         }
 
-        renderFrame = requestAnimationFrame(tick);
-    };
-    renderFrame = requestAnimationFrame(tick);
-}
-
-// --- UI GÜNCELLEME ---
-// --- UI GÜNCELLEME ---
-function updateUI() {
-    const playerCount = Object.keys(state.players).length;
-    const playerCountEl = document.getElementById('player-count');
-    if (playerCountEl) playerCountEl.innerText = playerCount;
-
-    // YENİ: Oyuncu sayısı 2 veya fazlaysa BAŞLAT butonunu aktifleştir
-    const btnStart = document.getElementById('btn-start-game');
-    if (btnStart) {
-        if (playerCount >= 2) {
-            btnStart.classList.remove('disabled');
+        if (this.state.round > this.state.totalRounds) {
+            this.endGame();
         } else {
-            btnStart.classList.add('disabled');
+            this.startNextTurn();
         }
     }
 
-    const pList = document.getElementById('players-list');
-    if (pList) {
-        pList.innerHTML = '';
-        Object.values(state.players).forEach(p => {
-            const li = document.createElement('li');
-            li.style.display = 'flex';
-            li.style.justifyContent = 'space-between';
-            li.style.alignItems = 'center';
+    endGame() {
+        this.state.status = 'ended';
+        this.setState(this.state);
+    }
+}
 
-            const infoSpan = document.createElement('span');
-            infoSpan.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === myId ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
-            li.appendChild(infoSpan);
+/**
+ * TabuView - Handles all DOM manipulation and UI events.
+ */
+class TabuView {
+    constructor(callbacks) {
+        this.callbacks = callbacks;
+        this.myId = null;
+        this.bindEvents();
+    }
 
-            // Host ise ve kendisi değilse, Kick butonu ekle
-            if (isHost && p.id !== myId && state.status !== 'playing') {
-                const kickBtn = document.createElement('button');
-                kickBtn.className = 'btn btn-danger btn-icon';
-                kickBtn.style.padding = '4px 8px';
-                kickBtn.style.marginLeft = '8px';
-                kickBtn.style.fontSize = '0.8rem';
-                kickBtn.title = "Oyuncuyu At";
-                kickBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-                kickBtn.onclick = () => {
-                    if (typeof kickPlayer === 'function') kickPlayer(p.id);
-                };
-                li.appendChild(kickBtn);
+    setMyId(id) {
+        this.myId = id;
+    }
+
+    bindEvents() {
+        document.getElementById('btn-switch-team')?.addEventListener('click', () => this.callbacks.onSwitchTeam());
+        document.getElementById('btn-start-game')?.addEventListener('click', () => this.callbacks.onStartGame());
+        document.getElementById('btn-start-narrating')?.addEventListener('click', () => this.callbacks.onNarratorReady());
+        document.getElementById('btn-pause')?.addEventListener('click', () => this.callbacks.onTogglePause());
+        document.getElementById('btn-correct')?.addEventListener('click', () => this.callbacks.onAction('CORRECT'));
+        document.getElementById('btn-taboo')?.addEventListener('click', () => this.callbacks.onAction('TABOO'));
+        document.getElementById('btn-pass')?.addEventListener('click', () => this.callbacks.onAction('PASS'));
+        document.getElementById('btn-back-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
+
+        document.getElementById('btn-send-chat')?.addEventListener('click', () => this.sendChat());
+        document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') this.sendChat(); });
+
+        document.getElementById('btn-leave')?.addEventListener('click', () => this.callbacks.onLeave());
+    }
+
+    sendChat() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        this.callbacks.onSendChat(msg);
+        input.value = '';
+    }
+
+    showScreen(screenId) {
+        document.querySelectorAll('.view-state').forEach(el => {
+            if (el.id === screenId) {
+                el.classList.remove('hidden');
+                el.classList.add('active');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('active');
             }
-
-            pList.appendChild(li);
         });
     }
 
-    const roundInd = document.getElementById('round-indicator');
-    if (roundInd) roundInd.innerText = `Tur ${Math.min(state.round, state.totalRounds)} / ${state.totalRounds}`;
+    showToast(msg, type = "info") {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
+        toast.style.borderLeftColor = colors[type] || colors.info;
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
 
-    if (state.status === 'playing') {
-        const sa = document.getElementById('score-a'), sb = document.getElementById('score-b');
-        if (sa) sa.innerText = state.scoreA; if (sb) sb.innerText = state.scoreB;
+    updateUI(state, isHost) {
+        const playerCount = Object.keys(state.players).length;
+        document.getElementById('player-count').innerText = playerCount;
 
+        const btnStart = document.getElementById('btn-start-game');
+        if (btnStart) {
+            if (playerCount >= 2) btnStart.classList.remove('disabled');
+            else btnStart.classList.add('disabled');
+        }
+
+        const pList = document.getElementById('players-list');
+        if (pList) {
+            pList.innerHTML = '';
+            Object.values(state.players).forEach(p => {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+
+                const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const infoSpan = document.createElement('span');
+                infoSpan.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${safeName} ${p.id === this.myId ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
+                li.appendChild(infoSpan);
+
+                if (isHost && p.id !== this.myId && state.status !== 'playing') {
+                    const kickBtn = document.createElement('button');
+                    kickBtn.className = 'btn btn-danger btn-icon';
+                    kickBtn.style.padding = '4px 8px';
+                    kickBtn.style.marginLeft = '8px';
+                    kickBtn.title = "Oyuncuyu At";
+                    kickBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+                    kickBtn.onclick = () => this.callbacks.onKickPlayer(p.id);
+                    li.appendChild(kickBtn);
+                }
+                pList.appendChild(li);
+            });
+        }
+
+        if (state.status === 'lobby') {
+            this.showScreen('lobby-screen');
+        } else if (state.status === 'playing') {
+            this.showScreen('game-screen');
+            this.updateGameUI(state);
+        } else if (state.status === 'ended') {
+            this.showScreen('winner-screen');
+            this.updateWinnerUI(state);
+        }
+    }
+
+    updateGameUI(state) {
+        document.getElementById('round-indicator').innerText = `Tur ${Math.min(state.round, state.totalRounds)} / ${state.totalRounds}`;
+        document.getElementById('score-a').innerText = state.scoreA;
+        document.getElementById('score-b').innerText = state.scoreB;
 
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) {
             btnPause.classList.toggle('hidden', state.isWaitingForReady);
-
-            const iconPause = document.getElementById('icon-pause');
-            const iconPlay = document.getElementById('icon-play');
-
             if (state.isPaused) {
-                iconPause?.classList.add('hidden');
-                iconPlay?.classList.remove('hidden');
+                document.getElementById('icon-pause')?.classList.add('hidden');
+                document.getElementById('icon-play')?.classList.remove('hidden');
                 btnPause.style.background = 'var(--danger)';
-                btnPause.style.borderColor = 'var(--danger)';
                 btnPause.style.color = 'white';
             } else {
-                iconPlay?.classList.add('hidden');
-                iconPause?.classList.remove('hidden');
+                document.getElementById('icon-play')?.classList.add('hidden');
+                document.getElementById('icon-pause')?.classList.remove('hidden');
                 btnPause.style.background = 'var(--input-bg)';
-                btnPause.style.borderColor = 'var(--lilac-muted)';
                 btnPause.style.color = 'var(--text-main)';
             }
         }
 
-
         const tPlayer = state.players[state.turnId];
-        const fw = document.getElementById('forbidden-words'), mainWord = document.getElementById('main-word');
-        const wordCard = document.getElementById('word-card'), narratorActions = document.getElementById('narrator-actions');
-        const gameStatusMessage = document.getElementById('game-status-message');
-        const startTurnContainer = document.getElementById('start-turn-container');
-
         if (!tPlayer) {
             document.getElementById('turn-name').innerText = "Sıra Değişiyor...";
             return;
         }
 
         document.getElementById('turn-name').innerText = `${tPlayer.name} (T-${tPlayer.team})`;
-        const myTeam = state.players[myId]?.team;
-        const amINarrator = state.turnId === myId;
+
+        const myTeam = state.players[this.myId]?.team;
+        const amINarrator = state.turnId === this.myId;
         const isOpponent = myTeam !== tPlayer.team;
 
-        const passText = document.getElementById('pass-text');
-        const btnPass = document.getElementById('btn-pass');
-        if (passText) {
-            passText.innerText = `Pas (${state.passesLeft})`;
-        }
-        if (btnPass) {
-            btnPass.classList.toggle('disabled', state.passesLeft <= 0);
-        }
+        document.getElementById('pass-text').innerText = `Pas (${state.passesLeft})`;
+        document.getElementById('btn-pass').classList.toggle('disabled', state.passesLeft <= 0);
+
+        const wordCard = document.getElementById('word-card');
+        const narratorActions = document.getElementById('narrator-actions');
+        const gameStatusMessage = document.getElementById('game-status-message');
+        const startTurnContainer = document.getElementById('start-turn-container');
 
         if (state.isWaitingForReady) {
             wordCard.classList.add('hidden');
@@ -574,53 +464,96 @@ function updateUI() {
             let wordObj = state.currentWord || (state.activeWords?.[state.wordIndex]);
 
             if (wordObj && (amINarrator || isOpponent)) {
-                mainWord.innerText = wordObj.ana_kelime.toLocaleUpperCase('tr-TR');
+                document.getElementById('main-word').innerText = wordObj.ana_kelime.toLocaleUpperCase('tr-TR');
+                const fw = document.getElementById('forbidden-words');
                 fw.innerHTML = '';
-                wordObj.yasakli_kelimeler.forEach(w => { const li = document.createElement('li'); li.innerText = w.toLocaleUpperCase('tr-TR'); fw.appendChild(li); });
+                wordObj.yasakli_kelimeler.forEach(w => {
+                    const li = document.createElement('li');
+                    li.innerText = w.toLocaleUpperCase('tr-TR');
+                    fw.appendChild(li);
+                });
             }
 
             if (amINarrator) {
-                wordCard.classList.remove('hidden'); narratorActions.classList.remove('hidden');
+                wordCard.classList.remove('hidden');
+                narratorActions.classList.remove('hidden');
                 gameStatusMessage.innerText = "Sıra Sende - Anlatıyorsun!";
                 gameStatusMessage.className = "status-badge guesser-mode";
             } else if (isOpponent) {
-                wordCard.classList.remove('hidden'); narratorActions.classList.add('hidden');
+                wordCard.classList.remove('hidden');
+                narratorActions.classList.add('hidden');
                 gameStatusMessage.innerText = "Rakip Anlatıyor - Kontrol Et!";
                 gameStatusMessage.className = "status-badge opponent-mode";
             } else {
-                wordCard.classList.add('hidden'); narratorActions.classList.add('hidden');
+                wordCard.classList.add('hidden');
+                narratorActions.classList.add('hidden');
                 gameStatusMessage.innerText = "Takım Arkadaşın Anlatıyor - Tahmin Et!";
                 gameStatusMessage.className = "status-badge";
             }
         }
     }
-}
 
-function displayChat(sender, msg, isSelf = false) {
-    const cBox = document.getElementById('chat-messages');
-    if (!cBox) return;
-    const div = document.createElement('div');
-    div.className = `chat-msg ${isSelf ? 'self' : ''}`;
-    div.innerHTML = `<strong>${escapeHtml(sender)}:</strong> ${escapeHtml(msg)}`;
-    cBox.appendChild(div);
-    cBox.scrollTop = cBox.scrollHeight;
-}
-
-
-document.getElementById('btn-start-narrating')?.addEventListener('click', () => {
-    if (state.turnId === myId && state.isWaitingForReady) {
-        sendAction('NARRATOR_READY');
+    updateWinnerUI(state) {
+        let msg = "Berabere!";
+        if (state.scoreA > state.scoreB) msg = "Takım A Kazandı!";
+        else if (state.scoreB > state.scoreA) msg = "Takım B Kazandı!";
+        document.getElementById('winner-message').innerText = msg;
+        document.getElementById('final-score-a').innerText = state.scoreA;
+        document.getElementById('final-score-b').innerText = state.scoreB;
     }
-});
 
-function sendChat() {
-    const input = document.getElementById('chat-input');
-    const msg = input.value.trim();
-    if (!msg) return;
-    displayChat("Sen", msg, true);
-    broadcast({ type: 'CHAT', sender: myName, msg: msg });
-    input.value = '';
+    displayChat(sender, msg, isSelf = false) {
+        const cBox = document.getElementById('chat-messages');
+        if (!cBox) return;
+        const div = document.createElement('div');
+        div.className = `chat-msg ${isSelf ? 'self' : ''}`;
+        const safeSender = sender.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeMsg = msg.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        div.innerHTML = `<strong>${safeSender}:</strong> ${safeMsg}`;
+        cBox.appendChild(div);
+        cBox.scrollTop = cBox.scrollHeight;
+    }
+
+    updateTimer(secs, status) {
+        const timerEl = document.getElementById('timer-display');
+        if (!timerEl) return;
+
+        if (status === 'waiting') {
+            timerEl.innerText = "BEKLİYOR";
+            timerEl.style.color = 'var(--lilac)';
+        } else if (status === 'paused') {
+            timerEl.innerText = "DURDU";
+            timerEl.style.color = 'var(--warning)';
+        } else {
+            const m = Math.floor(secs / 60).toString().padStart(2, '0');
+            const s = (secs % 60).toString().padStart(2, '0');
+            timerEl.innerText = `${m}:${s}`;
+            timerEl.style.color = secs <= 10 && secs > 0 ? 'var(--danger)' : 'var(--lilac)';
+        }
+    }
+
+    triggerWordPop() {
+        const cardEl = document.getElementById('word-card');
+        if (cardEl) {
+            cardEl.classList.remove('pop-animation');
+            void cardEl.offsetWidth;
+            cardEl.classList.add('pop-animation');
+        }
+    }
+
+    triggerPassError() {
+        const btnPass = document.getElementById('btn-pass');
+        if (btnPass) {
+            btnPass.classList.add('error-shake');
+            setTimeout(() => btnPass.classList.remove('error-shake'), 400);
+        }
+    }
 }
 
-document.getElementById('btn-send-chat').addEventListener('click', sendChat);
-document.getElementById('chat-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChat(); });
+// Exports for tests or modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { TabuGameEngine, TabuView };
+} else {
+    window.TabuGameEngine = TabuGameEngine;
+    window.TabuView = TabuView;
+}
