@@ -115,8 +115,6 @@ class PairaSharedUI {
     }
 
     injectSEOFooter() {
-        const isRoot = window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html') && !window.location.pathname.includes('/');
-
         // Let's determine the correct base path using the script source approach for robustness
         const scripts = document.getElementsByTagName('script');
         let basePath = '';
