@@ -1,25 +1,63 @@
+/**
+ * @typedef {Object} Point
+ * @property {number} x - The X coordinate.
+ * @property {number} y - The Y coordinate.
+ */
+
+/**
+ * @typedef {Object} DrawEvent
+ * @property {string} type - Event type: 'START_STROKE', 'MOVE_STROKE', 'END_STROKE', 'FILL', 'SHAPE', 'CLEAR', 'UNDO'.
+ * @property {number} [x] - Normalized X coordinate.
+ * @property {number} [y] - Normalized Y coordinate.
+ * @property {number} [startX] - Normalized start X for shapes.
+ * @property {number} [startY] - Normalized start Y for shapes.
+ * @property {number} [endX] - Normalized end X for shapes.
+ * @property {number} [endY] - Normalized end Y for shapes.
+ * @property {string} [tool] - Tool used ('brush', 'eraser', 'rect', 'circle', 'line').
+ * @property {string} [color] - Hex color string.
+ * @property {number} [size] - Brush size.
+ */
+
 class AdvancedDrawingBoard {
+    /**
+     * @param {HTMLCanvasElement} canvasElement
+     * @param {Object} [options]
+     * @param {string} [options.defaultColor='#000000']
+     * @param {number} [options.defaultSize=8]
+     * @param {function(DrawEvent): void} [options.onDrawEvent]
+     * @param {boolean} [options.readOnly=false]
+     */
     constructor(canvasElement, options = {}) {
         this.canvas = canvasElement;
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
 
+        /** @type {boolean} */
         this.isDrawing = false;
+        /** @type {string} */
         this.currentColor = options.defaultColor || '#000000';
+        /** @type {number} */
         this.currentSize = options.defaultSize || 8;
+        /** @type {string} */
         this.currentTool = 'brush'; // brush, eraser, fill, rect, circle, line
 
+        /** @type {ImageData[]} */
         this.history = []; // Array of ImageData
+        /** @type {number} */
         this.historyStep = -1;
 
-        // Smoothing lines variables
+        /** @type {Point[]} */
         this.points = [];
 
-        // Shape variables
+        /** @type {number} */
         this.startX = 0;
+        /** @type {number} */
         this.startY = 0;
+        /** @type {ImageData|null} */
         this.snapshot = null;
 
+        /** @type {function(DrawEvent): void|null} */
         this.onDrawEvent = options.onDrawEvent || null; // Callback for network sync
+        /** @type {boolean} */
         this.readOnly = options.readOnly || false;
 
         this.initEvents();
@@ -29,43 +67,47 @@ class AdvancedDrawingBoard {
         window.addEventListener('resize', () => this.resize());
     }
 
+    /** Resizes the canvas to match its parent container. */
     resize() {
         if (!this.canvas.parentElement) return;
 
         const rect = this.canvas.parentElement.getBoundingClientRect();
 
-        // Save old content
         let oldImg = null;
         if (this.canvas.width > 0 && this.canvas.height > 0) {
             oldImg = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
         }
 
         this.canvas.width = rect.width;
-        // Gartic/CizBil uses 16:9 aspect ratio scaling
         this.canvas.height = rect.width * (9/16);
 
-        // Restore white background
         this.ctx.fillStyle = "#ffffff";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Restore content if any
         if (oldImg) {
             this.ctx.putImageData(oldImg, 0, 0);
         }
     }
 
+    /** @param {string} color Hex color string. */
     setColor(color) {
         this.currentColor = color;
     }
 
+    /** @param {number} size Brush size. */
     setSize(size) {
         this.currentSize = size;
     }
 
+    /** @param {string} tool Tool name ('brush', 'eraser', 'fill', 'rect', 'circle', 'line'). */
     setTool(tool) {
         this.currentTool = tool;
     }
 
+    /**
+     * @param {MouseEvent|TouchEvent} e
+     * @returns {Point}
+     */
     getPos(e) {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
@@ -94,7 +136,6 @@ class AdvancedDrawingBoard {
             this.startX = pos.x;
             this.startY = pos.y;
 
-            // Take snapshot for both shapes and brush (to enable smooth line redraws without aliasing artifacts)
             this.snapshot = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
             if (this.currentTool === 'fill') {
@@ -137,7 +178,6 @@ class AdvancedDrawingBoard {
                     this.onDrawEvent({ type: 'MOVE_STROKE', x: pos.x / this.canvas.width, y: pos.y / this.canvas.height });
                 }
             } else if (['rect', 'circle', 'line'].includes(this.currentTool)) {
-                // Restore snapshot for live preview
                 this.ctx.putImageData(this.snapshot, 0, 0);
                 this.ctx.strokeStyle = this.currentColor;
                 this.ctx.beginPath();
@@ -193,10 +233,10 @@ class AdvancedDrawingBoard {
         this.canvas.addEventListener('touchend', end);
     }
 
+    /** @param {Point} pos */
     drawSmoothLine(pos) {
         this.points.push({ x: pos.x, y: pos.y });
 
-        // Restore to snapshot to avoid stack-drawing aliased paths
         this.ctx.putImageData(this.snapshot, 0, 0);
 
         this.ctx.beginPath();
@@ -232,6 +272,7 @@ class AdvancedDrawingBoard {
         }
     }
 
+    /** @param {boolean} [sync=true] */
     undo(sync = true) {
         if (this.historyStep > 0) {
             this.historyStep--;
@@ -242,6 +283,7 @@ class AdvancedDrawingBoard {
         }
     }
 
+    /** @param {boolean} [sync=true] */
     clear(sync = true) {
         this.ctx.fillStyle = "#ffffff";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -251,6 +293,10 @@ class AdvancedDrawingBoard {
         }
     }
 
+    /**
+     * @param {string} hex
+     * @returns {{r: number, g: number, b: number, a: number}|null}
+     */
     hexToRgba(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
@@ -261,7 +307,11 @@ class AdvancedDrawingBoard {
         } : null;
     }
 
-    // Optimized Scanline Flood Fill algorithm
+    /**
+     * @param {number} startX
+     * @param {number} startY
+     * @param {string} fillColorHex
+     */
     floodFill(startX, startY, fillColorHex) {
         startX = Math.floor(startX);
         startY = Math.floor(startY);
@@ -313,11 +363,25 @@ class AdvancedDrawingBoard {
         this.ctx.putImageData(imageData, 0, 0);
     }
 
+    /**
+     * @param {Uint8ClampedArray} data
+     * @param {number} width
+     * @param {number} x
+     * @param {number} y
+     * @returns {number[]}
+     */
     getPixelRaw(data, width, x, y) {
         const offset = (y * width + x) * 4;
         return [data[offset], data[offset + 1], data[offset + 2], data[offset + 3]];
     }
 
+    /**
+     * @param {Uint8ClampedArray} data
+     * @param {number} width
+     * @param {number} x
+     * @param {number} y
+     * @param {number[]} colorData
+     */
     setPixelRaw(data, width, x, y, colorData) {
         const offset = (y * width + x) * 4;
         data[offset] = colorData[0];
@@ -326,8 +390,13 @@ class AdvancedDrawingBoard {
         data[offset + 3] = colorData[3];
     }
 
+    /**
+     * @param {number[]} c1
+     * @param {{r: number, g: number, b: number, a: number}|number[]} cRgba
+     * @param {number} [tolerance=30]
+     * @returns {boolean}
+     */
     colorsMatchRaw(c1, cRgba, tolerance = 30) {
-        // Handle array format for targetColor and object format for fillRgba
         const r2 = cRgba.r !== undefined ? cRgba.r : cRgba[0];
         const g2 = cRgba.g !== undefined ? cRgba.g : cRgba[1];
         const b2 = cRgba.b !== undefined ? cRgba.b : cRgba[2];
@@ -339,7 +408,7 @@ class AdvancedDrawingBoard {
                Math.abs(c1[3] - a2) <= tolerance;
     }
 
-    // Network Event Replay
+    /** @param {DrawEvent} data */
     replayEvent(data) {
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
@@ -389,6 +458,7 @@ class AdvancedDrawingBoard {
         }
     }
 
+    /** @returns {string} */
     getDataURL() {
         return this.canvas.toDataURL('image/webp', 0.5);
     }

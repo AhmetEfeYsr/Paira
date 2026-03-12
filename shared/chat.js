@@ -6,10 +6,11 @@
  *       then uses native WebSockets to connect to Pusher.
  */
 class ChatListener {
-    constructor(platform, channel, onMessageCallback) {
+    constructor(platform, channel, onMessageCallback, onErrorCallback = null) {
         this.platform = platform.toLowerCase();
         this.channel = channel.toLowerCase();
         this.onMessage = onMessageCallback;
+        this.onError = onErrorCallback;
         this.ws = null;
 
         // IMPORTANT: Replace this with your deployed Google Cloud Function URL
@@ -22,7 +23,7 @@ class ChatListener {
         } else if (this.platform === 'kick') {
             this.startKick();
         } else {
-            console.error('Unsupported platform. Use "twitch" or "kick".');
+            this.handleError('Unsupported platform. Use "twitch" or "kick".');
         }
     }
 
@@ -30,6 +31,13 @@ class ChatListener {
         if (this.ws) {
             this.ws.close();
             this.ws = null;
+        }
+    }
+
+    handleError(errorMsg) {
+        console.error(errorMsg);
+        if (this.onError) {
+            this.onError(errorMsg);
         }
     }
 
@@ -62,7 +70,7 @@ class ChatListener {
         };
 
         this.ws.onerror = (error) => {
-            console.error('[Twitch] WebSocket error:', error);
+            this.handleError('[Twitch] WebSocket error');
         };
 
         this.ws.onclose = () => {
@@ -88,13 +96,7 @@ class ChatListener {
             this.connectToKickPusher(data.pusher_key, data.pusher_cluster, data.chatroom_id);
 
         } catch (error) {
-            console.error('[Kick] Initialization error:', error);
-            // Fallback: If URL is not set or fails, notify the user.
-            if (this.kickCloudFunctionUrl === 'https://us-central1-precise-rune-465721-f3.cloudfunctions.net/getKickInfo') {
-                // Ignore alert if URL is set, unless you want to show it.
-            } else if (this.kickCloudFunctionUrl === 'YOUR_GOOGLE_CLOUD_FUNCTION_URL') {
-                alert('Kick entegrasyonu için lütfen shared/chat.js dosyasındaki "YOUR_GOOGLE_CLOUD_FUNCTION_URL" adresini kendi Cloud Function adresinizle değiştirin.');
-            }
+            this.handleError(`[Kick] Initialization error: ${error.message}`);
         }
     }
 
@@ -135,7 +137,7 @@ class ChatListener {
         };
 
         this.ws.onerror = (error) => {
-            console.error('[Kick] Pusher WebSocket error:', error);
+            this.handleError('[Kick] Pusher WebSocket error');
         };
 
         this.ws.onclose = () => {
@@ -144,5 +146,4 @@ class ChatListener {
     }
 }
 
-// Export for use in modern script types if needed, or leave it global for simple <script> inclusion.
 window.ChatListener = ChatListener;
