@@ -29,14 +29,15 @@
     <div class="glass-bg"></div>
     <div class="bubble-layer" id="bubble-layer"></div>
 
-    <div class="container main-menu" id="login-container">
-        <div class="game-logo-container" ><img src="../logolar/chat-tabu.svg" alt="Chat Tabu Logo" ></div>
-        <header class="app-header">
-            <h1 class="logo-text gradient-text">Chat <span class="logo-accent">Tabu</span></h1>
-            <p class="subtitle seo-description">Yayıncı anlatır, chat bilir! İzleyicilerinle canlı yayında interaktif tabu oyna.</p>
-        </header>
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+        <div class="hero-content">
+            <div class="game-logo-container"><img src="../logolar/chat-tabu.svg" alt="Chat Tabu Logo"></div>
+            <h1 class="gradient-text">Chat Tabu</h1>
+            <p class="seo-description">Yayıncı anlatır, chat bilir! İzleyicilerinle canlı yayında interaktif tabu oyna.</p>
+        </div>
 
-        <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem; margin-left: auto; margin-right: auto;">
+        <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
             <div class="form-group">
                 <label for="game-mode-select">Oyun Modu</label>
                 <select id="game-mode-select">
@@ -80,40 +81,29 @@
             <div id="login-status" class="status-msg" style="margin-top: 10px; text-align: center; color: var(--danger);"></div>
         </div>
 
-        <div class="rules-section card">
-            <h2>Nasıl Oynanır? 🗣️</h2>
-            <div class="rules-grid">
-                <div class="rule-item">
-                    <div class="rule-icon">🎬</div>
-                    <div class="rule-text">
-                        <h3>Bağlan</h3>
+        <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır? 🗣️</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>🎬 Bağlan</h3>
                         <p>Twitch veya Kick platformunu seçin ve yayıncı adınızı girerek anında bağlanın.</p>
                     </div>
-                </div>
-                <div class="rule-item">
-                    <div class="rule-icon">🎤</div>
-                    <div class="rule-text">
-                        <h3>Anlat</h3>
+                    <div class="rule-card">
+                        <h3>🎤 Anlat</h3>
                         <p>Ekrana gelen kelimeyi, yasaklı kelimeleri kullanmadan izleyicilerinize canlı yayında anlatın.</p>
                     </div>
-                </div>
-                <div class="rule-item">
-                    <div class="rule-icon">💬</div>
-                    <div class="rule-text">
-                        <h3>Tahmin Et</h3>
+                    <div class="rule-card">
+                        <h3>💬 Tahmin Et</h3>
                         <p>Chatinizdekiler anlattığınız kelimeyi doğrudan sohbete yazarak en hızlı şekilde bilmeye çalışır.</p>
                     </div>
-                </div>
-                <div class="rule-item">
-                    <div class="rule-icon">🏆</div>
-                    <div class="rule-text">
-                        <h3>Kazan</h3>
+                    <div class="rule-card">
+                        <h3>🏆 Kazan</h3>
                         <p>Sohbette ilk doğru tahmini yapan izleyici listeye adını yazdırır. Eğlence hiç bitmez!</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <!-- Scripts -->
 
