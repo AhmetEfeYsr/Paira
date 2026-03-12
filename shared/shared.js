@@ -6,6 +6,7 @@ class PairaSharedUI {
         this.initTheme();
         document.addEventListener('DOMContentLoaded', () => {
             this.injectSharedUI();
+            this.injectSEOFooter();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
         });
     }
@@ -15,7 +16,7 @@ class PairaSharedUI {
         document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
-    window.pairaUI.switchTheme(themeName) {
+    switchTheme(themeName) {
         document.documentElement.setAttribute('data-theme', themeName);
         localStorage.setItem('paira_theme', themeName);
         this.updateLogos(themeName);
@@ -110,6 +111,43 @@ class PairaSharedUI {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) this.closeTermsModal();
             });
+        }
+    }
+
+    injectSEOFooter() {
+        const isRoot = window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html') && !window.location.pathname.includes('/');
+
+        // Let's determine the correct base path using the script source approach for robustness
+        const scripts = document.getElementsByTagName('script');
+        let basePath = '';
+        for (let script of scripts) {
+            if (script.src.includes('shared.js')) {
+                // If script src is like "../shared/shared.js", the root is "../"
+                // If it is "shared/shared.js", the root is ""
+                const srcStr = script.getAttribute('src');
+                if (srcStr.startsWith('../')) {
+                    basePath = '../';
+                }
+                break;
+            }
+        }
+
+        const seoFooterHTML = `
+        <footer id="seo-footer" style="width: 100%; text-align: center; padding: 1rem; margin-top: 1rem; background: var(--footer-bg); font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--btn-secondary-bg);">
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <a href="${basePath}gizlilik-politikasi.html" style="color: var(--neon-purple); text-decoration: none;">Gizlilik Politikası</a>
+                <span style="color: var(--text-muted);">|</span>
+                <a href="${basePath}kullanim-kosullari.html" style="color: var(--neon-purple); text-decoration: none;">Kullanım Koşulları</a>
+                <span style="color: var(--text-muted);">|</span>
+                <a href="${basePath}iletisim.html" style="color: var(--neon-purple); text-decoration: none;">İletişim</a>
+            </div>
+            <div style="margin-top: 0.5rem;">Paira Games &copy; ${new Date().getFullYear()}</div>
+        </footer>
+        `;
+
+        // Only append if it doesn't already exist
+        if (!document.getElementById('seo-footer')) {
+            document.body.insertAdjacentHTML('beforeend', seoFooterHTML);
         }
     }
 
