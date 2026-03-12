@@ -1,373 +1,377 @@
-// network.js - WebRTC, PeerJS Bağlantıları ve Veri İletimi
+/**
+ * TabuNetworkManager - Integrates PeerNetworkManager with TabuGameEngine
+ */
+class TabuNetworkManager {
+    constructor(engine, view) {
+        this.engine = engine;
+        this.view = view;
 
-let peer = null;
-let myId = null;
-let myName = null;
-let isHost = false;
-let hostId = null;
-let connections = {};
+        this.myName = sessionStorage.getItem('playerName') || 'Oyuncu';
+        this.isHost = sessionStorage.getItem('isHost') === 'true';
+        this.hostId = sessionStorage.getItem('roomCode');
+        this.myId = null;
 
-// --- KISA ODA KODU ÜRETİCİ ---
-function generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Karışıklık olmasın diye 0,O,1,I hariç
-    let result = '';
-    for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-    return result;
-}
-// --- KULLANICI ROLÜ VE BAĞLANTIYI BAŞLATMA ---
-// --- KULLANICI ROLÜ VE BAĞLANTIYI BAŞLATMA ---
-function setupUserRole() {
-    initAudio();
-    const storedName = sessionStorage.getItem('playerName');
-    const storedIsHost = sessionStorage.getItem('isHost') === 'true';
-    const storedRoomCode = sessionStorage.getItem('roomCode');
-    const storedMyId = sessionStorage.getItem('myId');
+        this.net = new PeerNetworkManager({
+            isHost: this.isHost,
+            onPeerReady: (id) => this.onPeerReady(id),
+            onConnection: (peerId) => this.onConnection(peerId),
+            onDataReceived: (action, payload, senderId) => this.onDataReceived(action, payload, senderId),
+            onDisconnection: (peerId) => this.onDisconnection(peerId),
+            onError: (err) => this.onError(err)
+        });
 
-    if (!storedName) {
-        window.location.href = 'index.html';
-        return;
+        // Link Engine events to Network Broadcasts (Host only)
+        if (this.isHost) {
+            this.engine.onStateChange = (state) => this.broadcastState();
+            this.engine.onSound = (sound) => {
+                this.playSound(sound);
+                this.net.broadcast('PLAY_SOUND', { sound });
+            };
+        } else {
+            this.engine.onSound = (sound) => this.playSound(sound);
+        }
+
+        // Link Engine Errors to UI
+        this.engine.onActionError = (err) => {
+            if (err === 'NO_PASSES') this.view.triggerPassError();
+        };
+
+        // Link View events to Network/Engine
+        this.view.callbacks = {
+            onSwitchTeam: () => {
+                if (this.isHost) {
+                    this.engine.switchTeam(this.myId);
+                } else {
+                    this.net.sendToPeer(this.hostId, 'SWITCH_TEAM');
+                }
+            },
+            onStartGame: () => {
+                if (this.isHost) {
+                    const duration = document.getElementById('round-time')?.value || 60;
+                    const passLimit = document.getElementById('pass-limit')?.value || 3;
+                    const category = document.getElementById('category-select')?.value || 'Hepsi';
+                    const penalty = document.getElementById('taboo-penalty')?.value || 1;
+                    const rounds = document.getElementById('total-rounds')?.value || 3;
+
+                    this.engine.startGame({ duration, passLimit, category, penalty, rounds });
+                }
+            },
+            onNarratorReady: () => {
+                this.sendAction('NARRATOR_READY');
+            },
+            onTogglePause: () => {
+                this.sendAction('TOGGLE_PAUSE');
+            },
+            onAction: (actionType) => {
+                this.sendAction(actionType);
+            },
+            onSendChat: (msg) => {
+                this.view.displayChat("Sen", msg, true);
+                if (this.isHost) {
+                    this.net.broadcast('CHAT', { sender: this.myName, msg }, this.myId);
+                } else {
+                    this.net.sendToPeer(this.hostId, 'CHAT', { sender: this.myName, msg });
+                }
+            },
+            onKickPlayer: (id) => {
+                if (this.isHost && id !== this.myId) {
+                    this.net.sendToPeer(id, 'KICKED');
+                    setTimeout(() => {
+                        this.net._handleDisconnection(id); // Force drop
+                        this.engine.removePlayer(id);
+                        this.view.showToast("Oyuncu atıldı.", "info");
+                    }, 500);
+                }
+            },
+            onBackToLobby: () => {
+                if (this.isHost) {
+                    this.engine.setState({ status: 'lobby' });
+                }
+            },
+            onLeave: () => {
+                this.leaveRoom();
+            }
+        };
+
+        // Fetch words and start
+        this.initGame();
     }
-    myName = storedName.substring(0, 25);
-    isHost = storedIsHost;
 
-    if (isHost) {
-        document.getElementById('host-settings').classList.remove('hidden');
-        document.getElementById('client-waiting').classList.add('hidden');
-        // If we already had an ID as host, try to re-use it, else generate new
-        initPeer(storedMyId || generateRoomCode());
-    } else {
-        if (!storedRoomCode) {
+    async initGame() {
+        this.initAudio();
+
+        try {
+            const resp = await fetch('tr.json');
+            const data = await resp.json();
+            this.engine.setWords(data);
+            this.populateCategories(data);
+        } catch (err) {
+            console.warn("Could not load words, using fallbacks");
+            this.engine.setWords(null);
+            this.populateCategories(this.engine.fallbackWords);
+        }
+
+        if (!sessionStorage.getItem('playerName')) {
             window.location.href = 'index.html';
             return;
         }
-        hostId = storedRoomCode;
-        document.getElementById('host-settings').classList.add('hidden');
-        document.getElementById('client-waiting').classList.remove('hidden');
-        initPeer(storedMyId || null);
-    }
-}
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    setupUserRole();
-});
-
-
-// Lobi Kodu Göster/Gizle ve Kopyala
-const btnToggleCode = document.getElementById('btn-toggle-code');
-if (btnToggleCode) {
-    btnToggleCode.addEventListener('click', () => {
-        isCodeVisible = !isCodeVisible;
-        const codeDisplay = document.getElementById('display-room-code');
-
-        const iconOpen = document.getElementById('icon-eye-open');
-        const iconClosed = document.getElementById('icon-eye-closed');
-
-        if (isCodeVisible) {
-            iconOpen?.classList.remove('hidden');
-            iconClosed?.classList.add('hidden');
+        if (this.isHost) {
+            document.getElementById('host-settings')?.classList.remove('hidden');
+            document.getElementById('client-waiting')?.classList.add('hidden');
+            const customId = sessionStorage.getItem('myId') || this.generateRoomCode();
+            this.net.init(customId);
         } else {
-            iconOpen?.classList.add('hidden');
-            iconClosed?.classList.remove('hidden');
+            document.getElementById('host-settings')?.classList.add('hidden');
+            document.getElementById('client-waiting')?.classList.remove('hidden');
+            if (!this.hostId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            this.net.init();
         }
-
-        if (codeDisplay) {
-            codeDisplay.innerText = isCodeVisible ? (codeDisplay.dataset.code || '') : '••••••••';
-        }
-    });
-}
-
-document.getElementById('btn-copy-room').addEventListener('click', () => {
-    const codeToCopy = document.getElementById('display-room-code')?.dataset?.code;
-    if (codeToCopy) {
-        navigator.clipboard.writeText(codeToCopy)
-            .then(() => showToast("Oda kodu kopyalandı!", "success"))
-            .catch(() => showToast("Kopyalanamadı", "error"));
-    }
-});
-
-// --- ODADAN GÜVENLİ ÇIKIŞ ---
-function leaveRoom() {
-    if (peer) {
-        if (!isHost && hostId && connections[hostId]) {
-            connections[hostId].send({ type: 'LEAVE', id: myId });
-        } else if (isHost) {
-            broadcast({ type: 'HOST_LEAVE' });
-        }
-
-        peer.destroy();
-        peer = null;
     }
 
-    sessionStorage.removeItem('myId');
-    sessionStorage.removeItem('roomCode');
-    // We can keep playerName so they don't have to re-type it
+    onPeerReady(id) {
+        this.myId = id;
+        this.view.setMyId(id);
 
-    window.location.href = 'index.html';
-}
-
-document.getElementById('btn-leave-lobby')?.addEventListener('click', leaveRoom);
-document.getElementById('btn-leave-game')?.addEventListener('click', leaveRoom);
-
-// --- OYUNCU ATMA (KICK) ---
-function kickPlayer(id) {
-    if (!isHost || id === myId) return;
-    if (connections[id]) {
-        connections[id].send({ type: 'KICKED' });
-        setTimeout(() => {
-            if (connections[id]) connections[id].close();
-        }, 500);
-    }
-    if (state.players[id]) {
-        showToast(`${state.players[id].name} odadan atıldı.`, "info");
-        delete state.players[id];
-        broadcastSync();
-        updateUI();
-    }
-}
-
-
-// --- PEERJS AĞ ALTYAPISI ---
-function initPeer(customId = null) {
-    peer = new Peer(customId, {
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] },
-        debug: 1
-    });
-
-    peer.on('open', (id) => {
-        myId = id;
-        sessionStorage.setItem('myId', myId);
-        if (isHost) {
-            hostId = myId;
-            if (!state.players[myId]) {
-                state.players[myId] = { id: myId, name: myName, team: 'A', isHost: true };
+        if (this.isHost) {
+            this.hostId = id;
+            if (!this.engine.state.players[id]) {
+                this.engine.addPlayer(id, this.myName, true, 'A');
             } else {
-                state.players[myId].name = myName; // update name just in case
+                this.engine.state.players[id].name = this.myName;
+                this.engine.setState(this.engine.state);
+                this.engine.setState({});
             }
+
             const codeDisplay = document.getElementById('display-room-code');
-            codeDisplay.dataset.code = myId;
-            codeDisplay.innerText = isCodeVisible ? myId : '••••••••';
-
-            // Senkronizasyon durumu var mı kontrol edelim
-            if (state.status === 'playing') showScreen('game-screen');
-            else if (state.status === 'finished') showScreen('winner-screen');
-            else showScreen('lobby-screen');
-
-            updateUI();
-        } else {
-            connectToPeer(hostId);
-        }
-    });
-
-    peer.on('connection', setupConnection);
-
-    peer.on('error', (err) => {
-        console.error("PeerJS Error:", err);
-        if (err.type === 'peer-unavailable') {
-            showToast("Oda bulunamadı veya kapandı. Lütfen ana sayfaya dönün.", "error");
-            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-        } else if (err.type === 'unavailable-id' && isHost) {
-            // Eğer kısa kod çakışırsa yeniden dene
-            initPeer(generateRoomCode());
-        } else if (err.type === 'network' || err.type === 'server-error') {
-            showToast("Bağlantı hatası. Lütfen sayfayı yenileyin.", "error");
-        }
-    });
-}
-
-function connectToPeer(targetId) {
-    if (!targetId || targetId === myId) return;
-    const conn = peer.connect(targetId, { reliable: true });
-    setupConnection(conn);
-}
-
-function setupConnection(conn) {
-    const handleOpen = () => {
-        connections[conn.peer] = conn;
-        if (isHost) {
-            broadcastSync();
-        } else {
-            conn.send({ type: 'JOIN', id: myId, name: myName });
-        }
-    };
-
-    if (conn.open) {
-        handleOpen();
-    } else {
-        conn.on('open', handleOpen);
-    }
-
-    conn.on('data', (data) => handleData(data, conn.peer));
-    conn.on('close', () => handleDisconnect(conn.peer));
-}
-
-// --- VERİ İLETİM FONKSİYONLARI ---
-function broadcast(data) {
-    Object.values(connections).forEach(conn => {
-        if (conn.open) conn.send(data);
-    });
-}
-
-function broadcastSync() {
-    if (!isHost) return;
-    const stateCopy = { ...state };
-    // Optimizasyon: Büyük kelime listesini yollama, sadece o anki kelimeyi yolla
-    const currentWord = state.activeWords && state.activeWords[state.wordIndex];
-    delete stateCopy.activeWords;
-    stateCopy.currentWord = currentWord || null;
-
-    const durationLeft = state.isPaused ? pauseOffset : Math.max(0, localTurnEndTime - Date.now());
-
-    broadcast({
-        type: 'SYNC',
-        state: stateCopy,
-        hostId,
-        durationLeft,
-        serverTime: Date.now()
-    });
-}
-
-function handleData(data, peerId) {
-    if (!data.type) return;
-
-    if (data.type === 'JOIN' && isHost) {
-        if (state.players[data.id]) {
-            // Reconnect situation
-            state.players[data.id].name = data.name;
-        } else {
-            const countA = Object.values(state.players).filter(p => p.team === 'A').length;
-            const countB = Object.values(state.players).filter(p => p.team === 'B').length;
-            state.players[data.id] = {
-                id: data.id,
-                name: data.name,
-                team: countA <= countB ? 'A' : 'B',
-                isHost: false
-            };
-        }
-        broadcastSync();
-        updateUI();
-    }
-    else if (data.type === 'SWITCH_TEAM' && isHost) {
-        if (state.players[peerId]) {
-            state.players[peerId].team = state.players[peerId].team === 'A' ? 'B' : 'A';
-            broadcastSync();
-            updateUI();
-        }
-    }
-    else if (data.type === 'LEAVE' && isHost) {
-        const leavingPlayer = state.players[data.id];
-        if (leavingPlayer) {
-            showToast(`${leavingPlayer.name} odadan ayrıldı.`, "info");
-            delete state.players[data.id];
-
-            // Sıradaki kişi çıkarsa
-            if (state.turnId === data.id && state.status === 'playing') {
-                endTurn();
+            if (codeDisplay) {
+                codeDisplay.dataset.code = id;
+                codeDisplay.innerText = window.isCodeVisible ? id : '••••••••';
             }
-            broadcastSync();
-            updateUI();
-        }
-    }
-    else if (data.type === 'HOST_LEAVE' && !isHost) {
-        showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
-        setTimeout(() => leaveRoom(), 2000);
-    }
-    else if (data.type === 'KICKED' && !isHost) {
-        showToast("Odadan atıldınız.", "error");
-        setTimeout(() => leaveRoom(), 2000);
-    }
-    else if (data.type === 'SYNC') {
-        state = data.state;
-        hostId = data.hostId;
 
-        // Zaman senkronizasyonu
-        if (data.durationLeft > 0) {
-            localTurnEndTime = Date.now() + data.durationLeft;
-            if (!renderFrame) startRenderTimer();
-        }
-
-        if (state.status === 'playing') showScreen('game-screen');
-        else if (state.status === 'finished') showScreen('winner-screen');
-        else showScreen('lobby-screen');
-
-        updateUI();
-    }
-    else if (data.type === 'ACTION' && isHost) {
-        if (state.turnId === peerId || data.action === 'TOGGLE_PAUSE' || data.action === 'NARRATOR_READY') processAction(data.action);
-    }
-    else if (data.type === 'CHAT') {
-        displayChat(data.sender, data.msg);
-        if (isHost) { // Kurucu mesajları diğerlerine dağıtır (Relay)
-            Object.values(connections).forEach(conn => {
-                if (conn.peer !== peerId) conn.send(data);
+            this.view.updateUI(this.engine.state, this.isHost);
+        } else {
+            this.net.connectToHost(this.hostId).then(() => {
+                this.net.sendToPeer(this.hostId, 'JOIN', { name: this.myName });
+            }).catch(err => {
+                this.view.showToast("Kurucuya bağlanılamadı.", "error");
             });
         }
     }
-    else if (data.type === 'PLAY_SOUND') {
-        playSound(data.sound);
+
+    onConnection(peerId) {
+        // Handled via JOIN action to ensure data payload
     }
-}
 
-function handleDisconnect(peerId) {
-    if (connections[peerId]) delete connections[peerId];
-    if (!state.players[peerId]) return;
+    onDataReceived(action, payload, senderId) {
+        if (action === 'JOIN' && this.isHost) {
+            const state = this.engine.state;
+            if (state.players[senderId]) {
+                state.players[senderId].name = payload.name;
+            } else {
+                const countA = Object.values(state.players).filter(p => p.team === 'A').length;
+                const countB = Object.values(state.players).filter(p => p.team === 'B').length;
+                this.engine.addPlayer(senderId, payload.name, false, countA <= countB ? 'A' : 'B');
+            }
+            this.broadcastState();
+        }
+        else if (action === 'SWITCH_TEAM' && this.isHost) {
+            this.engine.switchTeam(senderId);
+        }
+        else if (action === 'SYNC' && !this.isHost) {
+            this.engine.setState(payload.state);
+            this.hostId = payload.hostId;
 
-    const lostPlayer = state.players[peerId];
-
-    // Geçici kopmaları yönetmek için hemen silmiyoruz, ama uyaralım
-    showToast(`${lostPlayer.name} bağlantısı koptu.`, "warning");
-    // İleride silmek için bir timeout eklenebilir ama şu anki istek reconnect desteği
-
-    if (isHost) {
-        // Eğer anlatan kişi koptuysa bekleyebilir veya oyunu duraklatabiliriz, şimdilik basit tutalım.
-        // Eğer oyuncu gerçekten atılmışsa veya çıkmışsa state.players'dan silinir (ileride eklenecek KICK ve LEAVE ile)
-        broadcastSync();
-    } else if (lostPlayer.isHost) {
-        // HOST MIGRATION (Oda Devri)
-        const activeIds = Object.keys(state.players).sort();
-        if (activeIds[0] === myId) {
-            isHost = true;
-            state.players[myId].isHost = true;
-            document.getElementById('host-settings').classList.remove('hidden');
-            document.getElementById('client-waiting').classList.add('hidden');
-            showToast("Oda kurucusu sensin!", "success");
-            broadcastSync();
+            if (payload.durationLeft > 0) {
+                this.engine.localTurnEndTime = Date.now() + payload.durationLeft;
+            }
+            this.view.updateUI(this.engine.state, this.isHost);
+        }
+        else if (action === 'ACTION' && this.isHost) {
+            if (this.engine.state.turnId === senderId || payload.actionType === 'TOGGLE_PAUSE' || payload.actionType === 'NARRATOR_READY') {
+                if (payload.actionType === 'NARRATOR_READY') this.engine.beginTimer();
+                else if (payload.actionType === 'TOGGLE_PAUSE') this.engine.togglePause();
+                else this.engine.processAction(payload.actionType);
+            }
+        }
+        else if (action === 'CHAT') {
+            this.view.displayChat(payload.sender, payload.msg);
+            if (this.isHost) {
+                this.net.broadcast('CHAT', payload, senderId);
+            }
+        }
+        else if (action === 'PLAY_SOUND') {
+            this.playSound(payload.sound);
+        }
+        else if (action === 'KICKED' && !this.isHost) {
+            this.view.showToast("Odadan atıldınız.", "error");
+            setTimeout(() => this.leaveRoom(), 2000);
+        }
+        else if (action === 'HOST_LEAVE' && !this.isHost) {
+            this.view.showToast("Kurucu odadan ayrıldı.", "warning");
+            setTimeout(() => this.leaveRoom(), 2000);
+        }
+        else if (action === 'LEAVE' && this.isHost) {
+            const p = this.engine.state.players[senderId];
+            if (p) {
+                this.view.showToast(`${p.name} ayrıldı.`, "info");
+                this.engine.removePlayer(senderId);
+                if (this.engine.state.turnId === senderId && this.engine.state.status === 'playing') {
+                    this.engine.endTurn();
+                }
+            }
         }
     }
-    updateUI();
-}
 
-// Oyun İçi Aksiyonlar
-function sendAction(action) {
-    if (state.turnId !== myId && action !== 'TOGGLE_PAUSE' && action !== 'NARRATOR_READY') return;
-    if (isHost) processAction(action);
-    else connections[hostId]?.send({ type: 'ACTION', action });
-}
-
-document.getElementById('btn-correct').addEventListener('click', () => sendAction('CORRECT'));
-document.getElementById('btn-taboo').addEventListener('click', () => sendAction('TABOO'));
-document.getElementById('btn-pass').addEventListener('click', () => sendAction('PASS'));
-
-document.getElementById('btn-switch-team').addEventListener('click', () => {
-    if (isHost) {
-        if (state.players[myId]) {
-            state.players[myId].team = state.players[myId].team === 'A' ? 'B' : 'A';
-            broadcastSync();
-            updateUI();
+    onDisconnection(peerId) {
+        if (this.isHost) {
+            const p = this.engine.state.players[peerId];
+            if (p) this.view.showToast(`${p.name} bağlantısı koptu.`, "warning");
+        } else if (peerId === this.hostId) {
+            this.view.showToast("Kurucu ile bağlantı koptu, lobiye dönülüyor...", "error");
+            setTimeout(() => this.leaveRoom(), 2000);
         }
-    } else {
-        connections[hostId]?.send({ type: 'SWITCH_TEAM' });
+    }
+
+    onError(err) {
+        if (err.type === 'peer-unavailable') {
+            this.view.showToast("Oda bulunamadı veya kapandı.", "error");
+            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        } else {
+            console.error("Network Error:", err);
+        }
+    }
+
+    broadcastState() {
+        if (!this.isHost) return;
+        const stateCopy = { ...this.engine.state };
+        const currentWord = stateCopy.activeWords && stateCopy.activeWords[stateCopy.wordIndex];
+        delete stateCopy.activeWords; // Optimization
+        stateCopy.currentWord = currentWord || null;
+
+        const durationLeft = stateCopy.isPaused ? this.engine.pauseOffset : Math.max(0, this.engine.localTurnEndTime - Date.now());
+
+        this.net.broadcast('SYNC', {
+            state: stateCopy,
+            hostId: this.hostId,
+            durationLeft: durationLeft
+        });
+        this.view.updateUI(this.engine.state, this.isHost);
+    }
+
+    sendAction(actionType) {
+        if (this.engine.state.turnId !== this.myId && actionType !== 'TOGGLE_PAUSE' && actionType !== 'NARRATOR_READY') return;
+
+        if (this.isHost) {
+            if (actionType === 'NARRATOR_READY') this.engine.beginTimer();
+            else if (actionType === 'TOGGLE_PAUSE') this.engine.togglePause();
+            else this.engine.processAction(actionType);
+        } else {
+            this.net.sendToPeer(this.hostId, 'ACTION', { actionType });
+        }
+    }
+
+    leaveRoom() {
+        if (this.isHost) this.net.broadcast('HOST_LEAVE');
+        else if (this.hostId) this.net.sendToPeer(this.hostId, 'LEAVE');
+
+        this.net.destroy();
+        sessionStorage.removeItem('myId');
+        sessionStorage.removeItem('roomCode');
+        window.location.href = 'index.html';
+    }
+
+    generateRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let result = '';
+        for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+        return result;
+    }
+
+    populateCategories(words) {
+        const select = document.getElementById('category-select');
+        if (!select || !words) return;
+        const cats = new Set(words.map(w => w.kategori));
+        select.innerHTML = '<option value="Hepsi">Hepsi</option>';
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c; opt.innerText = c;
+            select.appendChild(opt);
+        });
+    }
+
+    initAudio() {
+        this.audioCtx = null;
+        try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { }
+    }
+
+    playSound(type) {
+        if (!this.audioCtx) return;
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+
+        const now = this.audioCtx.currentTime;
+        if (type === 'correct') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'taboo') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'pass') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'tick') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now);
+            gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'timeup') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+            gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+            osc.start(now); osc.stop(now + 0.8);
+        } else if (type === 'start') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    }
+}
+
+// Bootstrap game on load
+document.addEventListener('DOMContentLoaded', () => {
+    window.isCodeVisible = false;
+    document.getElementById('toggle-code-visibility')?.addEventListener('click', () => {
+        window.isCodeVisible = !window.isCodeVisible;
+        const disp = document.getElementById('display-room-code');
+        if (disp) disp.innerText = window.isCodeVisible ? (disp.dataset.code || '••••••••') : '••••••••';
+    });
+
+    document.getElementById('display-room-code')?.addEventListener('click', () => {
+        const disp = document.getElementById('display-room-code');
+        const code = disp?.dataset?.code;
+        if (code) {
+            navigator.clipboard.writeText(code).then(() => {
+                if(window.tabuNet) window.tabuNet.view.showToast("Oda kodu kopyalandı!", "success");
+            });
+        }
+    });
+
+    // Only run game logic if we are on game.html
+    if (document.getElementById('game-screen')) {
+        const engine = new TabuGameEngine();
+        const view = new TabuView({});
+
+        // Timer tick binding
+        engine.onTimerTick = (secs, status) => view.updateTimer(secs, status);
+
+        window.tabuNet = new TabuNetworkManager(engine, view);
     }
 });
-
-function sendChat() {
-    const input = document.getElementById('chat-input');
-    const msg = input.value.trim();
-    if (!msg) return;
-    displayChat("Sen", msg, true);
-    broadcast({ type: 'CHAT', sender: myName, msg: msg });
-    input.value = '';
-}
-
-document.getElementById('btn-send-chat').addEventListener('click', sendChat);
-document.getElementById('chat-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChat(); });
