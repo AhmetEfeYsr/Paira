@@ -24,7 +24,7 @@ class TabuGameEngine {
             isWaitingForReady: false
         };
         this.allWords = [];
-        this.gameSeed = Date.now();
+        this.gameSeed = window.PairaTime.now();
         this.fallbackWords = [
             { ana_kelime: "güneş", yasakli_kelimeler: ["Sarı", "Sıcak", "Gökyüzü", "Yıldız", "Yaz"], kategori: "Genel", zorluk: 10 },
             { ana_kelime: "telefon", yasakli_kelimeler: ["Konuşmak", "Akıllı", "Ekran", "Mesaj", "Aramak"], kategori: "Teknoloji", zorluk: 20 },
@@ -126,7 +126,7 @@ class TabuGameEngine {
         this.state.passLimit = parseInt(settings.passLimit) || 3;
         this.state.tabooPenalty = parseInt(settings.penalty) || 1;
 
-        this.gameSeed = Date.now();
+        this.gameSeed = window.PairaTime.now();
         this.filterWords(settings.category);
 
         this.state.turnOrder = this.generateTurnOrder();
@@ -175,7 +175,7 @@ class TabuGameEngine {
     beginTimer() {
         this.state.isWaitingForReady = false;
         this.state.isPaused = false;
-        this.localTurnEndTime = Date.now() + (this.state.turnDuration * 1000);
+        this.localTurnEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
         this.setState(this.state);
         this.startRenderTimer();
 
@@ -188,9 +188,9 @@ class TabuGameEngine {
         this.state.isPaused = !this.state.isPaused;
         if (this.state.isPaused) {
             clearTimeout(this.turnTimeout);
-            this.pauseOffset = Math.max(0, this.localTurnEndTime - Date.now());
+            this.pauseOffset = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
         } else {
-            this.localTurnEndTime = Date.now() + this.pauseOffset;
+            this.localTurnEndTime = window.PairaTime.now() + this.pauseOffset;
         }
         this.setState(this.state);
     }
@@ -241,7 +241,7 @@ class TabuGameEngine {
             if (this.state.status !== 'playing') return;
 
             if (!this.state.isWaitingForReady && !this.state.isPaused) {
-                const left = Math.max(0, this.localTurnEndTime - Date.now());
+                const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
                 const secs = Math.ceil(left / 1000);
 
                 if (this.onTimerTick) this.onTimerTick(secs, 'running');

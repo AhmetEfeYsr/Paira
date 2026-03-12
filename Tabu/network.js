@@ -186,7 +186,7 @@ class TabuNetworkManager {
             this.hostId = payload.hostId;
 
             if (payload.durationLeft > 0) {
-                this.engine.localTurnEndTime = Date.now() + payload.durationLeft;
+                this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
             }
             this.view.updateUI(this.engine.state, this.isHost);
         }
@@ -252,7 +252,7 @@ class TabuNetworkManager {
         delete stateCopy.activeWords; // Optimization
         stateCopy.currentWord = currentWord || null;
 
-        const durationLeft = stateCopy.isPaused ? this.engine.pauseOffset : Math.max(0, this.engine.localTurnEndTime - Date.now());
+        const durationLeft = stateCopy.isPaused ? this.engine.pauseOffset : Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
 
         this.net.broadcast('SYNC', {
             state: stateCopy,

@@ -184,7 +184,7 @@ class GameManager {
         // Rastgele Kelime Seçimi
         this.state.targetWord = this.wordList[Math.floor(Math.random() * this.wordList.length)];
 
-        this.state.endTime = Date.now() + (this.state.turnDuration * 1000);
+        this.state.endTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
 
         NetworkManager.broadcastSync();
         this.syncRoundData();
@@ -226,7 +226,7 @@ class GameManager {
         const tick = () => {
             if(this.state.status !== 'playing') return;
 
-            const left = Math.max(0, this.state.endTime - Date.now());
+            const left = Math.max(0, this.state.endTime - window.PairaTime.now());
             const secs = Math.ceil(left / 1000);
             const m = Math.floor(secs / 60).toString().padStart(2, '0');
             const s = (secs % 60).toString().padStart(2, '0');
@@ -401,7 +401,7 @@ class GameManager {
             this.state.round++;
             if(!isJackpot && !isEbeWin && isMasumWin) {
                 // Masum kazandıysa tur devam eder, süre artar
-                this.state.endTime = Date.now() + (this.state.timeIncrease * 1000);
+                this.state.endTime = window.PairaTime.now() + (this.state.timeIncrease * 1000);
                 this.state.submittedWords = {};
                 this.state.ebeGuesses = [];
                 NetworkManager.broadcastSync();
