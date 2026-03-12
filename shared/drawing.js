@@ -20,17 +20,13 @@ class AdvancedDrawingBoard {
         this.snapshot = null;
 
         this.onDrawEvent = options.onDrawEvent || null; // Callback for network sync
-        this.readOnly = options.readOnly || false; // Used for clients who just watch
+        this.readOnly = options.readOnly || false;
 
         this.initEvents();
         this.resize();
         this.saveState();
 
         window.addEventListener('resize', () => this.resize());
-    }
-
-    setReadOnly(val) {
-        this.readOnly = val;
     }
 
     resize() {
@@ -395,18 +391,6 @@ class AdvancedDrawingBoard {
 
     getDataURL() {
         return this.canvas.toDataURL('image/webp', 0.5);
-    }
-
-    loadFromDataURL(dataURL) {
-        if (!dataURL) return;
-        const img = new Image();
-        img.onload = () => {
-            this.ctx.fillStyle = "#ffffff";
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-            this.saveState();
-        };
-        img.src = dataURL;
     }
 }
 window.AdvancedDrawingBoard = AdvancedDrawingBoard;

@@ -34,6 +34,7 @@ class ChatListener {
     }
 
     startTwitch() {
+        this.stop();
         this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
         this.ws.onopen = () => {
@@ -70,6 +71,7 @@ class ChatListener {
     }
 
     async startKick() {
+        this.stop();
         try {
             console.log(`[Kick] Fetching channel data for ${this.channel}...`);
             // Call the cloud function to get pusher key, cluster and chatroom_id
