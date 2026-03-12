@@ -7,6 +7,7 @@ class PairaSharedUI {
         document.addEventListener('DOMContentLoaded', () => {
             this.injectSharedUI();
             this.injectSEOFooter();
+            this.injectGameSEODetails();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
         });
     }
@@ -146,6 +147,70 @@ class PairaSharedUI {
         // Only append if it doesn't already exist
         if (!document.getElementById('seo-footer')) {
             document.body.insertAdjacentHTML('beforeend', seoFooterHTML);
+        }
+    }
+
+    injectGameSEODetails() {
+        const gameSEOData = {
+            'Tabu': `
+                <div class="game-seo-info">
+                    <h2>Tabu: Kelime Anlatma Heyecanı Nasıl Oynanır?</h2>
+                    <p>Tabu, arkadaşlarınızla bir araya geldiğinizde zamanın nasıl geçtiğini anlamayacağınız, kelime dağarcığınızı ve ifade yeteneğinizi sınayan klasik bir takım oyunudur. Oyundaki temel amacınız, takım arkadaşlarınıza ekranınızda beliren ana kelimeyi, altındaki yasaklı (tabu) kelimeleri kesinlikle kullanmadan ve kısıtlı süre içinde anlatmaktır. Eğlence dolu bu <strong>ücretsiz parti oyununda</strong>, eğer yasaklı kelimelerden birini söylerseniz, rakip takımın gözetmeni (veya sistem) sizi uyarır ve o turdaki puanınızı kaybedersiniz.</p>
+                    <h3>Tabu Kuralları</h3>
+                    <ul>
+                        <li>Oda kurucusu tarafından belirlenen tur süresi içinde olabildiğince çok kelime anlatın.</li>
+                        <li>Yasaklı kelimelerin hiçbir ekini, kökünü veya eşanlamlısını doğrudan kullanamazsınız.</li>
+                        <li>Vücut dili veya işaret dili kullanmak (fiziksel ortamda oynanıyorsa) yasaktır. Sadece konuşarak tarif etmelisiniz.</li>
+                        <li>En çok kelimeyi doğru anlatan takım oyunun galibi olur.</li>
+                    </ul>
+                </div>
+            `,
+            'CizBil': `
+                <div class="game-seo-info">
+                    <h2>ÇizBil: Çizim ve Tahmin Oyunu Nasıl Oynanır?</h2>
+                    <p>ÇizBil (Çiz ve Bil), çizim yeteneğinizin, hayal gücünüzün ve arkadaşlarınızın kelime tahmin etme hızının yarıştığı eğlenceli bir parti oyunudur. İnternet tarayıcınızdan <strong>indirmesiz oyunlar</strong> oynamanın keyfini çıkarın. Her turda bir oyuncu seçilen bir kelimeyi (nesne, hayvan, deyim vb.) dijital bir tuval üzerinde çizerek anlatmaya çalışır. Diğer oyuncular ise çizilen şeyin ne olduğunu sohbet paneli veya tahmin kutusu üzerinden en kısa sürede bulmaya çalışırlar. Ne kadar hızlı ve doğru tahmin yaparsanız, o kadar çok puan kazanırsınız!</p>
+                    <h3>ÇizBil Kuralları</h3>
+                    <ul>
+                        <li>Çizer, kelimenin harflerini, rakamlarını veya direkt olarak metin halini tuvale yazamaz. Sadece görsel betimleme yapmalıdır.</li>
+                        <li>Tahminciler, verilen süre bitmeden doğru cevabı yazmalıdır. Yanlış tahminlerinizin bir sınırı yoktur.</li>
+                        <li>Kelimeyi ilk bilen oyuncu en yüksek puanı alırken, çizer de diğer oyuncular kelimeyi bildikçe puan kazanır.</li>
+                        <li>Oyun sonunda en yüksek puana ulaşan kişi birinci olur.</li>
+                    </ul>
+                </div>
+            `,
+            'BilgiYarismasi': `
+                <div class="game-seo-info">
+                    <h2>Bilgi Yarışması: Genel Kültür Kapışması Nasıl Oynanır?</h2>
+                    <p>Bilgi Yarışması, arkadaşlarınızla bir araya gelip kimin daha fazla genel kültür bilgisine sahip olduğunu kanıtlayabileceğiniz hızlı tempolu bir trivia oyunudur. <strong>Arkadaşlarla oynanacak parti oyunları</strong> arayanlar için idealdir. Oyun, tarih, coğrafya, popüler kültür, bilim, spor ve daha pek çok farklı kategoriden çoktan seçmeli sorular sunar. Her soruda oyunculara kısıtlı bir süre verilir. Amaç, doğru cevabı diğer herkesten daha önce ve süre bitmeden bulmaktır.</p>
+                    <h3>Bilgi Yarışması Kuralları</h3>
+                    <ul>
+                        <li>Her sorunun 4 farklı seçeneği bulunur ve bunlardan sadece biri doğrudur.</li>
+                        <li>Doğru cevabı ne kadar hızlı işaretlerseniz, alacağınız puan o kadar yüksek olur.</li>
+                        <li>Yanlış cevap vermek size puan kaybettirmez, ancak o turdan puan alamamanıza neden olur.</li>
+                        <li>Belirlenen soru sayısı bittiğinde, genel sıralamada en fazla puana sahip olan oyuncu gecenin şampiyonu ilan edilir.</li>
+                    </ul>
+                </div>
+            `
+        };
+
+        const path = window.location.pathname;
+        let matchedGame = null;
+
+        for (const gameKey of Object.keys(gameSEOData)) {
+            // Check if the URL path contains the game folder (e.g., "/Tabu/" or "Tabu/index.html")
+            if (path.includes('/' + gameKey + '/') || path.includes(gameKey + '/index.html')) {
+                matchedGame = gameKey;
+                break;
+            }
+        }
+
+        if (matchedGame && !document.querySelector('.game-seo-info')) {
+            const footer = document.querySelector('.app-footer') || document.getElementById('seo-footer');
+            if (footer) {
+                footer.insertAdjacentHTML('beforebegin', gameSEOData[matchedGame]);
+            } else {
+                document.body.insertAdjacentHTML('beforeend', gameSEOData[matchedGame]);
+            }
         }
     }
 

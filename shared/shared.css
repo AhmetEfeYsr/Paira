@@ -265,6 +265,57 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     .app-footer { justify-content: center; flex-direction: column; text-align: center; border-radius: clamp(10px, 1.5vw, 16px); }
 }
 
+/* Game SEO Info */
+.game-seo-info {
+    width: 100%;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: var(--card-bg, rgba(20, 20, 35, 0.4));
+    border: 1px solid var(--glass-border);
+    border-radius: clamp(12px, 2vw, 20px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.game-seo-info h2 {
+    color: var(--neon-purple);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 700;
+}
+
+.game-seo-info h3 {
+    color: var(--lilac);
+    font-size: 1.2rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+}
+
+.game-seo-info p {
+    margin-bottom: 1rem;
+}
+
+.game-seo-info ul {
+    list-style-type: disc;
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.game-seo-info ul li {
+    margin-bottom: 0.5rem;
+}
+
+.game-seo-info strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
 /* Modal */
 .modal-overlay {
     display: none;
