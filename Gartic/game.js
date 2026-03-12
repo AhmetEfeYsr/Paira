@@ -106,6 +106,31 @@ function initCanvas() {
             drawingBoard.undo(false);
         });
     }
+
+    const customColorInput = document.querySelector('.custom-color-input');
+    const customColorBtn = document.querySelector('.custom-color-btn');
+    if (customColorInput && customColorBtn) {
+        customColorInput.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            customColorBtn.dataset.color = newColor;
+            customColorBtn.style.background = newColor;
+            customColorBtn.querySelector('span').style.display = 'none'; // Hide the + icon
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            customColorBtn.classList.add('active');
+            drawingBoard.setColor(newColor);
+            drawingBoard.setTool('brush');
+        });
+        customColorInput.addEventListener('pointerdown', e => {
+            e.stopPropagation();
+            // Proactively set the current custom color in case they just click and dismiss
+            const newColor = customColorInput.value;
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            customColorBtn.classList.add('active');
+            drawingBoard.setColor(newColor);
+            drawingBoard.setTool('brush');
+        });
+        customColorInput.addEventListener('click', e => e.stopPropagation());
+    }
 }
 
 async function initGame() {
