@@ -54,10 +54,10 @@
         }
 
         .word-choice-modal {
-            position: absolute;
-            top: 10px; left: 10px;
+            position: fixed;
+            top: 20px; left: 20px;
             background: rgba(0,0,0,0.85);
-            z-index: 100;
+            z-index: 999;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -94,11 +94,11 @@
 
     <div class="cizbil-layout">
         <div class="game-area">
-            <div class="header-bar" style="justify-content: flex-start; gap: 1rem;">
-                <!-- Word display is moved to the far left for OBS hiding -->
-                <div class="word-display" id="main-word" style="font-size: 1.5rem; padding: 0.5rem 1.5rem;">Yükleniyor...</div>
+            <div class="header-bar" style="justify-content: flex-end; gap: 1rem;">
+                <!-- Word display is moved to absolute top-left for OBS hiding -->
+                <div class="word-display" id="main-word" style="position: fixed; top: 20px; left: 20px; z-index: 998; font-size: 1.5rem; padding: 0.5rem 1.5rem;">Yükleniyor...</div>
 
-                <div style="margin-left: auto; display: flex; align-items: center; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
                     <div style="font-size: 1rem; font-weight: bold; color: var(--text-main);">
                         <span id="status-badge" style="color: var(--warning);">Bağlanıyor...</span>
                     </div>
@@ -106,15 +106,17 @@
                 </div>
             </div>
 
+            <!-- Moved out of canvas-container for fixed positioning across the entire window -->
+            <div id="word-choice-overlay" class="word-choice-modal" style="display: none;">
+                <div class="word-choice-title">Çizeceğin Kelimeyi Seç</div>
+                <div class="word-choice-buttons">
+                    <button class="btn btn-primary" id="btn-choice-1">Kelime 1</button>
+                    <button class="btn btn-primary" id="btn-choice-2">Kelime 2</button>
+                </div>
+            </div>
+
             <div class="canvas-container">
                 <canvas id="drawing-board" width="800" height="450"></canvas>
-                <div id="word-choice-overlay" class="word-choice-modal" style="display: none;">
-                    <div class="word-choice-title">Çizeceğin Kelimeyi Seç</div>
-                    <div class="word-choice-buttons">
-                        <button class="btn btn-primary" id="btn-choice-1">Kelime 1</button>
-                        <button class="btn btn-primary" id="btn-choice-2">Kelime 2</button>
-                    </div>
-                </div>
             </div>
 
             <div class="toolbar">
