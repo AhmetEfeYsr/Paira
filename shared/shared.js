@@ -7,7 +7,6 @@ class PairaSharedUI {
         document.addEventListener('DOMContentLoaded', () => {
             this.injectSharedUI();
             this.injectSEOFooter();
-            this.injectGameSEODetails();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
         });
     }
@@ -38,6 +37,18 @@ class PairaSharedUI {
     }
 
     injectSharedUI() {
+        const scripts = document.getElementsByTagName('script');
+        let basePath = '';
+        for (let script of scripts) {
+            if (script.src.includes('shared.js')) {
+                const srcStr = script.getAttribute('src');
+                if (srcStr.startsWith('../')) {
+                    basePath = '../';
+                }
+                break;
+            }
+        }
+
         const footerHTML = `
         <footer class="app-footer">
             <div class="footer-text">Paira Games &copy; ${new Date().getFullYear()} • Tüm Hakları Saklıdır</div>
@@ -50,10 +61,6 @@ class PairaSharedUI {
                     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="Kick--Streamline-Simple-Icons" height="18" width="18"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#53fc18" stroke-width="1"></path></svg>
                     <span>Paira</span>
                 </a>
-                <span class="social-link" onclick="window.pairaUI.openTermsModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    <span>Kullanım Koşulları & Gizlilik</span>
-                </span>
             </div>
         </footer>
         `;
@@ -65,35 +72,10 @@ class PairaSharedUI {
             document.body.insertAdjacentHTML('beforeend', footerHTML);
         }
 
-        const modalHTML = `
-        <div id="termsModal" class="modal-overlay">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Kullanım Koşulları ve Gizlilik Politikası</h2>
-                    <button class="modal-close" onclick="window.pairaUI.closeTermsModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <h3>1. Kabul Edilme</h3>
-                    <p>Paira Games portalına ve oyunlarına ("Hizmet") erişerek bu kullanım koşullarını kabul etmiş sayılırsınız.</p>
-                    <h3>2. Hizmetin Kullanımı</h3>
-                    <p>Oyunlarımız kişisel ve ticari olmayan kullanım içindir. Çok oyunculu modlarda iletişim kurarken (kullanıcı adları, çizimler, tahminler) saygılı olmanız beklenir.</p>
-                    <h3>3. Gizlilik Politikası</h3>
-                    <p>Hizmetimiz WebRTC tabanlı (sunucusuz/Peer-to-Peer) bir altyapı kullanır. Oyun verileriniz doğrudan oyuncular arasında iletilir. Sunucularımızda kişisel sohbet, çizim veya oyun içi verileriniz <strong>saklanmaz</strong>.</p>
-                    <h3>4. Çerezler ve Yerel Depolama (Cookies & LocalStorage)</h3>
-                    <p>Tarayıcınızın yerel depolama özelliklerini (LocalStorage, SessionStorage) oyun durumunuzu kaydetmek, bağlantı tercihlerinizi hatırlamak ve analiz sağlamak amacıyla kullanmaktayız.</p>
-                    <h3>5. Sorumluluk Reddi</h3>
-                    <p>Hizmet "olduğu gibi" sunulmaktadır. Herhangi bir kesinti, veri kaybı veya kullanımınızdan doğacak doğrudan/dolaylı zararlardan sorumluluk kabul edilmez.</p>
-                    <p style="margin-top: 2rem; font-size: 0.85rem; text-align: center;">Son Güncelleme: 2024</p>
-                </div>
-            </div>
-        </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
         const cookieHTML = `
         <div id="cookieBanner" class="cookie-banner">
             <div class="cookie-text">
-                Sitemiz deneyiminizi geliştirmek için çerezleri (cookies) ve yerel depolama teknolojilerini kullanır. Oyuna devam ederek <a href="#" onclick="event.preventDefault(); window.pairaUI.openTermsModal();">Kullanım Koşulları ve Gizlilik Politikamızı</a> kabul etmiş olursunuz.
+                Sitemiz deneyiminizi geliştirmek için çerezleri (cookies) ve yerel depolama teknolojilerini kullanır. Oyuna devam ederek <a href="${basePath}kullanim-kosullari.html">Kullanım Koşulları ve Gizlilik Politikamızı</a> kabul etmiş olursunuz.
             </div>
             <button class="cookie-btn" onclick="window.pairaUI.acceptCookies()">Anladım</button>
         </div>
@@ -105,13 +87,6 @@ class PairaSharedUI {
                 const banner = document.getElementById('cookieBanner');
                 if (banner) banner.classList.add('show');
             }, 1000);
-        }
-
-        const modal = document.getElementById('termsModal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeTermsModal();
-            });
         }
     }
 
@@ -147,89 +122,6 @@ class PairaSharedUI {
         // Only append if it doesn't already exist
         if (!document.getElementById('seo-footer')) {
             document.body.insertAdjacentHTML('beforeend', seoFooterHTML);
-        }
-    }
-
-    injectGameSEODetails() {
-        const gameSEOData = {
-            'Tabu': `
-                <div class="game-seo-info">
-                    <h2>Tabu: Kelime Anlatma Heyecanı Nasıl Oynanır?</h2>
-                    <p>Tabu, arkadaşlarınızla bir araya geldiğinizde zamanın nasıl geçtiğini anlamayacağınız, kelime dağarcığınızı ve ifade yeteneğinizi sınayan klasik bir takım oyunudur. Oyundaki temel amacınız, takım arkadaşlarınıza ekranınızda beliren ana kelimeyi, altındaki yasaklı (tabu) kelimeleri kesinlikle kullanmadan ve kısıtlı süre içinde anlatmaktır. Eğlence dolu bu <strong>ücretsiz parti oyununda</strong>, eğer yasaklı kelimelerden birini söylerseniz, rakip takımın gözetmeni (veya sistem) sizi uyarır ve o turdaki puanınızı kaybedersiniz.</p>
-                    <h3>Tabu Kuralları</h3>
-                    <ul>
-                        <li>Oda kurucusu tarafından belirlenen tur süresi içinde olabildiğince çok kelime anlatın.</li>
-                        <li>Yasaklı kelimelerin hiçbir ekini, kökünü veya eşanlamlısını doğrudan kullanamazsınız.</li>
-                        <li>Vücut dili veya işaret dili kullanmak (fiziksel ortamda oynanıyorsa) yasaktır. Sadece konuşarak tarif etmelisiniz.</li>
-                        <li>En çok kelimeyi doğru anlatan takım oyunun galibi olur.</li>
-                    </ul>
-                </div>
-            `,
-            'CizBil': `
-                <div class="game-seo-info">
-                    <h2>ÇizBil: Çizim ve Tahmin Oyunu Nasıl Oynanır?</h2>
-                    <p>ÇizBil (Çiz ve Bil), çizim yeteneğinizin, hayal gücünüzün ve arkadaşlarınızın kelime tahmin etme hızının yarıştığı eğlenceli bir parti oyunudur. İnternet tarayıcınızdan <strong>indirmesiz oyunlar</strong> oynamanın keyfini çıkarın. Her turda bir oyuncu seçilen bir kelimeyi (nesne, hayvan, deyim vb.) dijital bir tuval üzerinde çizerek anlatmaya çalışır. Diğer oyuncular ise çizilen şeyin ne olduğunu sohbet paneli veya tahmin kutusu üzerinden en kısa sürede bulmaya çalışırlar. Ne kadar hızlı ve doğru tahmin yaparsanız, o kadar çok puan kazanırsınız!</p>
-                    <h3>ÇizBil Kuralları</h3>
-                    <ul>
-                        <li>Çizer, kelimenin harflerini, rakamlarını veya direkt olarak metin halini tuvale yazamaz. Sadece görsel betimleme yapmalıdır.</li>
-                        <li>Tahminciler, verilen süre bitmeden doğru cevabı yazmalıdır. Yanlış tahminlerinizin bir sınırı yoktur.</li>
-                        <li>Kelimeyi ilk bilen oyuncu en yüksek puanı alırken, çizer de diğer oyuncular kelimeyi bildikçe puan kazanır.</li>
-                        <li>Oyun sonunda en yüksek puana ulaşan kişi birinci olur.</li>
-                    </ul>
-                </div>
-            `,
-            'BilgiYarismasi': `
-                <div class="game-seo-info">
-                    <h2>Bilgi Yarışması: Genel Kültür Kapışması Nasıl Oynanır?</h2>
-                    <p>Bilgi Yarışması, arkadaşlarınızla bir araya gelip kimin daha fazla genel kültür bilgisine sahip olduğunu kanıtlayabileceğiniz hızlı tempolu bir trivia oyunudur. <strong>Arkadaşlarla oynanacak parti oyunları</strong> arayanlar için idealdir. Oyun, tarih, coğrafya, popüler kültür, bilim, spor ve daha pek çok farklı kategoriden çoktan seçmeli sorular sunar. Her soruda oyunculara kısıtlı bir süre verilir. Amaç, doğru cevabı diğer herkesten daha önce ve süre bitmeden bulmaktır.</p>
-                    <h3>Bilgi Yarışması Kuralları</h3>
-                    <ul>
-                        <li>Her sorunun 4 farklı seçeneği bulunur ve bunlardan sadece biri doğrudur.</li>
-                        <li>Doğru cevabı ne kadar hızlı işaretlerseniz, alacağınız puan o kadar yüksek olur.</li>
-                        <li>Yanlış cevap vermek size puan kaybettirmez, ancak o turdan puan alamamanıza neden olur.</li>
-                        <li>Belirlenen soru sayısı bittiğinde, genel sıralamada en fazla puana sahip olan oyuncu gecenin şampiyonu ilan edilir.</li>
-                    </ul>
-                </div>
-            `
-        };
-
-        const path = window.location.pathname;
-        let matchedGame = null;
-
-        for (const gameKey of Object.keys(gameSEOData)) {
-            // Check if the URL path contains the game folder (e.g., "/Tabu/" or "Tabu/index.html")
-            if (path.includes('/' + gameKey + '/') || path.includes(gameKey + '/index.html')) {
-                matchedGame = gameKey;
-                break;
-            }
-        }
-
-        if (matchedGame && !document.querySelector('.game-seo-info')) {
-            const footer = document.querySelector('.app-footer') || document.getElementById('seo-footer');
-            if (footer) {
-                footer.insertAdjacentHTML('beforebegin', gameSEOData[matchedGame]);
-            } else {
-                document.body.insertAdjacentHTML('beforeend', gameSEOData[matchedGame]);
-            }
-        }
-    }
-
-    openTermsModal() {
-        const modal = document.getElementById('termsModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            void modal.offsetWidth;
-            modal.classList.add('show');
-        }
-    }
-
-    closeTermsModal() {
-        const modal = document.getElementById('termsModal');
-        if (modal) {
-            modal.classList.remove('show');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
         }
     }
 
