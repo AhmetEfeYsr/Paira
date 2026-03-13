@@ -49,12 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnChangeLetter: document.getElementById('btn-change-letter'),
         timerDisplay: document.getElementById('timer-display'),
         timerStatusText: document.getElementById('timer-status-text'),
-        gameInputsContainer: document.getElementById('game-inputs-container'),
+        currentCategoryName: document.getElementById('current-category-name'),
+        playersCircle: document.getElementById('players-circle'),
+        compactGameInput: document.getElementById('compact-game-input'),
         btnFinishTurn: document.getElementById('btn-finish-turn'),
         finishStatusText: document.getElementById('finish-status-text'),
-        currentRound: document.getElementById('current-round'),
-        totalRounds: document.getElementById('total-rounds'),
-        roundIndicator: document.getElementById('round-indicator'),
 
         // Voting & Scoreboard
         votingContainer: document.getElementById('voting-container'),
@@ -358,35 +357,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function generateGameInputs(categories) {
-        if(!ui.gameInputsContainer) return;
-        ui.gameInputsContainer.innerHTML = '';
-        categories.forEach(cat => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'game-input-wrapper';
+    function renderPlayersCircle() {
+        if (!ui.playersCircle) return;
+        ui.playersCircle.innerHTML = '';
 
-            const label = document.createElement('label');
-            label.textContent = cat.name;
-            label.setAttribute('for', 'input-' + cat.id);
+        const totalPlayers = Object.keys(network.players).length;
+        const playersArr = Object.values(network.players);
 
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.id = 'input-' + cat.id;
-            input.dataset.catId = cat.id;
-            input.autocomplete = 'off';
-            input.spellcheck = false;
+        // Circular positioning
+        const rx = 40; // horizontal radius %
+        const ry = 38; // vertical radius %
+        const startAngle = 180; // Start at left (so 2 players sit left and right)
 
-            // Auto-capitalize first letter locally
-            input.addEventListener('input', (e) => {
-                let val = e.target.value;
-                if (val.length > 0) {
-                    e.target.value = val.charAt(0).toLocaleUpperCase('tr-TR') + val.slice(1);
-                }
-            });
+        playersArr.forEach((p, index) => {
+            const node = document.createElement('div');
 
-            wrapper.appendChild(label);
-            wrapper.appendChild(input);
-            ui.gameInputsContainer.appendChild(wrapper);
+            const isActive = (index === gameState.currentPlayerIndex);
+            node.className = `player-node ${isActive ? 'active-turn' : ''}`;
+
+            // Calculate angle
+            const angle = startAngle + (index * (360 / totalPlayers));
+            const rad = angle * (Math.PI / 180);
+
+            // Calculate x and y (0,0 is center)
+            const x = Math.cos(rad) * rx;
+            const y = Math.sin(rad) * ry;
+
+            node.style.left = `calc(50% + ${x}%)`;
+            node.style.top = `calc(50% + ${y}%)`;
+
+            node.innerHTML = `
+                <div class="node-avatar">👽</div>
+                <div class="node-name">${p.name}</div>
+                <div class="node-score">${p.score || 0}</div>
+            `;
+
+            ui.playersCircle.appendChild(node);
         });
     }
 
@@ -399,22 +405,25 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.status = 'PLAYING';
         isRoundOver = false;
 
+        renderPlayersCircle();
+
         const playersArr = Object.values(network.players);
         const currentPlayer = playersArr[playerIndex];
         const isMyTurn = currentPlayer && currentPlayer.id === network.myId;
 
-        if(ui.currentRound) ui.currentRound.textContent = roundNum;
-        if(ui.totalRounds) ui.totalRounds.textContent = config.rounds;
         if(ui.currentLetter) ui.currentLetter.textContent = letter;
+        if(ui.currentCategoryName) ui.currentCategoryName.textContent = category.name;
 
         const turnIndicator = document.getElementById('turn-indicator-text');
         if (turnIndicator) {
             if (isMyTurn) {
                 turnIndicator.textContent = "Senin Sıran!";
-                turnIndicator.style.color = "var(--success-color)";
+                turnIndicator.style.color = "var(--lilac)";
+                turnIndicator.style.fontWeight = "bold";
             } else {
                 turnIndicator.textContent = `Sıra: ${currentPlayer ? currentPlayer.name : 'Bekleniyor'}`;
                 turnIndicator.style.color = "var(--text-color)";
+                turnIndicator.style.fontWeight = "normal";
             }
         }
 
@@ -426,15 +435,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.timerStatusText.style.display = 'none';
         }
 
-        generateGameInputs([category]);
         switchScreen('game-screen');
 
-        const inputEl = document.getElementById('input-' + category.id);
-        if (inputEl) {
-            inputEl.value = '';
-            inputEl.disabled = !isMyTurn;
+        if (ui.compactGameInput) {
+            ui.compactGameInput.value = '';
+            ui.compactGameInput.dataset.catId = category.id;
+            ui.compactGameInput.disabled = !isMyTurn;
+
+            // Auto-capitalize first letter locally
+            ui.compactGameInput.oninput = (e) => {
+                let val = e.target.value;
+                if (val.length > 0) {
+                    e.target.value = val.charAt(0).toLocaleUpperCase('tr-TR') + val.slice(1);
+                }
+            };
+
             if (isMyTurn) {
-                setTimeout(() => inputEl.focus(), 100);
+                setTimeout(() => ui.compactGameInput.focus(), 100);
             }
         }
 
@@ -488,9 +505,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getPlayerAnswers() {
         const answers = {};
-        document.querySelectorAll('.game-input-wrapper input').forEach(input => {
-            answers[input.dataset.catId] = input.value.trim().toLocaleLowerCase('tr-TR');
-        });
+        if (ui.compactGameInput && ui.compactGameInput.dataset.catId) {
+            answers[ui.compactGameInput.dataset.catId] = ui.compactGameInput.value.trim().toLocaleLowerCase('tr-TR');
+        }
         return answers;
     }
 
@@ -561,6 +578,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: network.myId,
                 answers: myAnswers
             });
+        });
+    }
+
+    // Submit via Enter key
+    if (ui.compactGameInput) {
+        ui.compactGameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && ui.btnFinishTurn && !ui.btnFinishTurn.disabled) {
+                e.preventDefault();
+                ui.btnFinishTurn.click();
+            }
         });
     }
 
