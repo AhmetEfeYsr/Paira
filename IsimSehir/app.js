@@ -143,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'yiyecek', name: 'Yiyecek' },
         { id: 'oyun', name: 'Oyun' },
         { id: 'muzik', name: 'Müzik' },
-        { id: 'araba', name: 'Araba' },
         { id: 'spor', name: 'Spor' },
         { id: 'hastalik', name: 'Hastalık' },
         { id: 'yazar', name: 'Yazar' },
@@ -655,7 +654,87 @@ document.addEventListener('DOMContentLoaded', () => {
     let receivedVotes = 0;
     let currentResultsData = null;
 
+    async function validateViaApi(catId, word) {
+        if (!word) return false;
+
+        try {
+            if (catId === 'sehir') {
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0' } });
+                const data = await response.json();
+                return data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+            }
+            if (catId === 'ulke') {
+                const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                return Array.isArray(data) && data.length > 0;
+            }
+            if (catId === 'film_dizi') {
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.results) {
+                    for (let item of data.results) {
+                        if (item.wrapperType === 'track' && (item.kind === 'feature-movie' || item.kind === 'tv-episode')) return true;
+                    }
+                }
+
+                // Fallback to Wikipedia TR
+                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+                const wikiRes = await fetch(wikiUrl);
+                const wikiData = await wikiRes.json();
+                if (wikiData.query && wikiData.query.search) {
+                    for (let item of wikiData.query.search) {
+                        const snippet = item.snippet.toLowerCase();
+                        const title = item.title.toLowerCase();
+                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
+                            (snippet.includes('dizi') || snippet.includes('film') || snippet.includes('sinema') || snippet.includes('televizyon') || title.includes('dizi') || title.includes('film'))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            if (catId === 'muzik') {
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.results) {
+                    for (let item of data.results) {
+                        if ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') return true;
+                    }
+                }
+
+                // Fallback to Wikipedia TR
+                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+                const wikiRes = await fetch(wikiUrl);
+                const wikiData = await wikiRes.json();
+                if (wikiData.query && wikiData.query.search) {
+                    for (let item of wikiData.query.search) {
+                        const snippet = item.snippet.toLowerCase();
+                        const title = item.title.toLowerCase();
+                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
+                            (snippet.includes('şarkı') || snippet.includes('albüm') || snippet.includes('müzik') || snippet.includes('tekli') || title.includes('şarkı') || title.includes('albüm'))) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+        } catch (e) {
+            console.error(`API validation error for ${catId} - ${word}:`, e);
+            return false;
+        }
+        return false;
+    }
+
     async function loadDictionary(catId) {
+        if (['sehir', 'ulke', 'film_dizi', 'muzik'].includes(catId)) {
+            return null; // Will use API
+        }
+
         if (validationCache[catId]) return validationCache[catId];
 
         try {
@@ -675,6 +754,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function processAnswersAndGoToVoting() {
         if (!isHost) return;
+
+        if (ui.finishStatusText) ui.finishStatusText.textContent = 'Cevaplar kontrol ediliyor...';
 
         const results = {}; // categoryId -> [ {playerId, word, suggestedScore} ]
 
@@ -702,16 +783,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (word.length > 0 && word.startsWith(gameState.letter.toLocaleLowerCase('tr-TR'))) {
                     const isCustomCat = cat.id.startsWith('custom_');
-                    const isValidInDict = dict.has(word);
 
-                    if (isCustomCat || isValidInDict) {
+                    let isValidInDict = false;
+
+                    if (isCustomCat) {
+                        isValidInDict = true; // Cannot validate custom categories, default to valid
+                    } else if (['sehir', 'ulke', 'film_dizi', 'muzik'].includes(cat.id)) {
+                        isValidInDict = await validateViaApi(cat.id, word);
+                    } else {
+                        isValidInDict = dict && dict.has(word);
+                    }
+
+                    if (isValidInDict) {
                         if (wordFrequency[word] > 1) {
                             score = 5; // Duplicate
                         } else {
                             score = 10; // Unique
                         }
                     } else {
-                        score = 0; // Not in dictionary
+                        score = 0; // Not in dictionary or API
                     }
                 }
 
