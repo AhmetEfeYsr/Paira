@@ -11,127 +11,158 @@
 <body>
     <div id="toast-container" class="toast-container"></div>
 
-    <main class="game-layout custom-scrollbar">
-        <!-- HEADER -->
-        <header class="game-header">
-            <div class="logo-area">
-                <img src="../logolar/gizli-kelimeler.svg" alt="Logo" class="mini-logo">
-                <h2>Gizli Kelimeler</h2>
-            </div>
-            <div class="header-actions">
-                <div class="room-code-badge" id="display-room-code" title="Kopyalamak için tıkla" data-code="">••••••••</div>
-                <button id="toggle-code-visibility" class="btn btn-secondary btn-icon" title="Oda Kodunu Göster/Gizle">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                </button>
-            </div>
-        </header>
+    <main id="app-container" class="glass-panel custom-scrollbar">
 
-        <!-- LOBBY SCREEN -->
+        <!-- LOBI EKRANI -->
         <section id="lobby-screen" class="view-state active">
-            <div class="lobby-card glass-panel">
-                <h3>Oda Lobisi</h3>
-                <div class="player-count-badge"><span id="player-count">1</span> Oyuncu</div>
-
-                <div class="lobby-columns">
-                    <div class="players-column custom-scrollbar">
-                        <h4>Oyuncular</h4>
-                        <ul id="players-list" class="players-list"></ul>
-                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                            <button id="btn-switch-team" class="btn btn-secondary" style="flex: 1;">Takım Değiş</button>
-                            <button id="btn-switch-role" class="btn btn-secondary" style="flex: 1;">Rol Değiş</button>
-                        </div>
-                    </div>
-
-                    <div class="settings-column">
-                        <h4>Oda Ayarları</h4>
-                        <div id="host-settings" class="settings-grid hidden">
-                            <div class="setting-item">
-                                <label for="board-size">Tahta Boyutu</label>
-                                <select id="board-size" class="game-input">
-                                    <option value="16">4x4 (16 Kelime)</option>
-                                    <option value="25" selected>5x5 (25 Kelime)</option>
-                                    <option value="36">6x6 (36 Kelime)</option>
-                                </select>
-                            </div>
-                            <button id="btn-start-game" class="btn btn-primary btn-block" style="margin-top: 1rem;">Oyunu Başlat</button>
-                        </div>
-                        <div id="client-waiting" class="waiting-message">
-                            <div class="spinner"></div>
-                            <p>Kurucunun oyunu başlatması bekleniyor...</p>
-                        </div>
-                        <button id="btn-leave" class="btn btn-danger btn-block" style="margin-top: auto;">Odadan Ayrıl</button>
-                    </div>
+            <header class="lobby-header" style="justify-content: space-between; align-items: center; display: flex;">
+                <button id="btn-leave" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+                <div class="code-container" style="flex-grow: 1; justify-content: center; gap: 12px;">
+                    <h2 style="margin:0; font-size: 1.1rem; color: var(--text-muted); font-weight: 500;">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 4px; font-family: monospace; font-size: 1.5rem; user-select: none; font-weight: bold; min-width: 140px; text-align: center;">••••••••</span>
+                    <button id="toggle-code-visibility" class="btn btn-icon toggle-btn" title="Göster/Gizle" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
+                        <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    </button>
                 </div>
+            </header>
+
+            <div class="lobby-grid">
+                <aside class="players-panel card" style="display: flex; flex-direction: column;">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 0;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar" style="flex-grow: 1; margin: 12px 0;"></ul>
+                    <div style="display: flex; gap: 1rem; margin-top: auto;">
+                        <button id="btn-switch-team" class="btn btn-secondary btn-block" style="flex: 1; display: flex; gap: 8px; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M4 21h5v-5"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+                            Takım Değiş
+                        </button>
+                        <button id="btn-switch-role" class="btn btn-secondary btn-block" style="flex: 1; display: flex; gap: 8px; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Rol Değiş
+                        </button>
+                    </div>
+                </aside>
+
+                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto; display: flex; flex-direction: column;">
+                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 15px;">Oda Ayarları</h3>
+                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="board-size">Tahta Boyutu</label>
+                            <select id="board-size" class="game-input">
+                                <option value="16">4x4 (16 Kelime)</option>
+                                <option value="25" selected>5x5 (25 Kelime)</option>
+                                <option value="36">6x6 (36 Kelime)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="turn-duration">Tur Süresi (Sn)</label>
+                            <input type="number" id="turn-duration" value="90" min="30" max="300" class="game-input">
+                        </div>
+                    </div>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; letter-spacing: 1px; display: flex; gap: 10px; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 3l14 9-14 9V3z"></path></svg>
+                        Oyunu Başlat
+                    </button>
+                </section>
+
+                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
+                    <div class="spinner" style="margin-bottom: 1.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    </div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucunun oyunu başlatması bekleniyor.</p>
+                </section>
             </div>
         </section>
 
         <!-- GAME SCREEN -->
         <section id="game-screen" class="view-state hidden">
-            <div class="play-area" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+            <!-- TOP BAR (Horizontal Layout like Tabu) -->
+            <header class="game-topbar card">
+                <button id="btn-leave-game" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 50%; width: 42px; height: 42px; padding: 0 !important;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
 
-                <!-- TOP BAR -->
-                <div class="top-bar">
-                    <div class="team-score team-a">
-                        <span class="team-name">Takım A</span>
-                        <span class="score-value" id="score-a">9</span>
-                    </div>
-                    <div class="turn-info">
-                        <span class="turn-indicator" id="turn-indicator">Takım A Oynuyor</span>
-                        <div class="game-status-message status-badge" id="game-status-message">Ajan İpucu Veriyor</div>
-                    </div>
-                    <div class="team-score team-b">
-                        <span class="team-name">Takım B</span>
-                        <span class="score-value" id="score-b">8</span>
-                    </div>
+                <div class="score-board">
+                    <div class="team team-a">A Kalan: <span id="score-a">0</span></div>
+                    <div class="team team-b">B Kalan: <span id="score-b">0</span></div>
                 </div>
 
-                <!-- CLUE AREA -->
-                <div class="clue-area glass-panel" id="clue-area">
-                    <div id="clue-input-section" class="hidden">
-                        <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20">
-                        <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px;">
-                        <button id="btn-submit-clue" class="btn btn-primary">Gönder</button>
-                    </div>
-                    <div id="clue-display-section" class="hidden">
-                        <h2 id="current-clue-word" class="gradient-text">İPUCU</h2>
-                        <div class="clue-badge" id="current-clue-count">Sayı: 2</div>
-                        <div class="clue-badge" id="current-clue-rem">Kalan: 3</div>
-                        <button id="btn-end-turn" class="btn btn-secondary hidden">Turu Bitir</button>
-                    </div>
+                <div id="current-player-indicator" style="font-size: 1.15rem; background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                    <span id="turn-indicator" style="font-weight: bold;">Takım A Oynuyor</span>
+                    <span style="width: 1px; height: 20px; background: rgba(255,255,255,0.2);"></span>
+                    <span id="game-status-message" style="color: var(--text-muted); font-size: 1rem;">Ajan İpucu Veriyor</span>
                 </div>
 
-                <!-- BOARD -->
-                <div class="board-container">
-                    <div id="game-board" class="game-board grid-5x5"></div>
+                <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <div id="timer-display" class="timer" style="line-height: 1; text-align: center; display: flex; align-items: center; justify-content: center;">00:00</div>
                 </div>
+            </header>
 
+            <div class="game-layout">
+                <main class="play-area" style="overflow: auto;">
+
+                    <!-- CLUE AREA -->
+                    <div class="clue-area glass-panel" id="clue-area" style="width: 100%; box-sizing: border-box;">
+                        <div id="clue-input-section" class="hidden" style="width: 100%; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20" style="margin: 0; min-width: 200px; flex: 1;">
+                            <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px; margin: 0;">
+                            <button id="btn-submit-clue" class="btn btn-primary" style="margin: 0; white-space: nowrap;">Gönder</button>
+                        </div>
+                        <div id="clue-display-section" class="hidden" style="width: 100%; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                            <h2 id="current-clue-word" class="gradient-text" style="margin: 0;">İPUCU</h2>
+                            <div class="clue-badge" id="current-clue-count">Sayı: 2</div>
+                            <div class="clue-badge" id="current-clue-rem">Kalan: 3</div>
+                            <button id="btn-end-turn" class="btn btn-secondary hidden" style="margin: 0;">Turu Bitir</button>
+                        </div>
+                    </div>
+
+                    <!-- BOARD -->
+                    <div class="board-container" style="width: 100%; box-sizing: border-box;">
+                        <div id="game-board" class="game-board grid-5x5"></div>
+                    </div>
+                </main>
+
+                <aside class="chat-panel card" style="display: flex; flex-direction: column;">
+                    <div style="color: var(--lilac); font-weight: 600; font-size: 1.1rem; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        Oda Sohbeti
+                    </div>
+                    <div id="chat-messages" class="messages-container custom-scrollbar" style="flex-grow: 1; margin-bottom: 12px;"></div>
+                    <div class="chat-input-wrapper" style="display: flex; gap: 8px;">
+                        <input type="text" id="chat-input" autocomplete="off" placeholder="Mesaj yazın..." style="flex-grow: 1; padding: 12px; border-radius: 8px; margin: 0;">
+                        <button id="btn-send-chat" class="btn btn-primary btn-icon" style="padding: 0 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0;" aria-label="Gönder">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
+                </aside>
             </div>
         </section>
 
-        <!-- WINNER SCREEN -->
+        <!-- SONUÇ EKRANI -->
         <section id="winner-screen" class="view-state hidden">
-            <div class="winner-card glass-panel">
-                <h2 id="winner-message" class="gradient-text">Takım A Kazandı!</h2>
-                <div class="final-scores">
-                    <div class="score-box team-a">A Takımı Kalan: <span id="final-score-a">0</span></div>
-                    <div class="score-box team-b">B Takımı Kalan: <span id="final-score-b">0</span></div>
+            <h1 class="gradient-text">Oyun Bitti!</h1>
+            <div class="card" style="max-width: 500px; width: 100%; text-align: center; margin: 0 auto; padding: 2.5rem 2rem;">
+                <h2 id="winner-message" style="font-size: 2.2rem; margin-bottom: 20px;">Takım A Kazandı!</h2>
+                <div style="display: flex; justify-content: space-around; margin: 30px 0; font-size: 1.2rem;">
+                    <div class="team-a" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <span style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Takım A Kalan</span>
+                        <strong id="final-score-a" style="font-size: 3.5rem; color: #e74c3c; line-height: 1;">0</strong>
+                    </div>
+                    <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 10px 0;"></div>
+                    <div class="team-b" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <span style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Takım B Kalan</span>
+                        <strong id="final-score-b" style="font-size: 3.5rem; color: #3498db; line-height: 1;">0</strong>
+                    </div>
                 </div>
-                <button id="btn-back-lobby" class="btn btn-primary btn-block hidden">Lobiye Dön</button>
-            </div>
-        </section>
-
-        <!-- CHAT AREA -->
-        <aside class="chat-area glass-panel custom-scrollbar">
-            <div class="chat-header"><h3>Oda Sohbeti</h3></div>
-            <div class="chat-messages custom-scrollbar" id="chat-messages"></div>
-            <div class="chat-input-wrapper">
-                <input type="text" id="chat-input" class="game-input" placeholder="Mesaj yaz..." maxlength="100">
-                <button id="btn-send-chat" class="btn btn-primary btn-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <button id="btn-back-lobby" class="btn btn-primary btn-block hidden" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    Lobiye Dön
                 </button>
             </div>
-        </aside>
-
+        </section>
     </main>
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
