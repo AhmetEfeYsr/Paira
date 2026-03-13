@@ -74,9 +74,6 @@ const isMatch = (guess, target) => {
 };
 
 // Modals & Timers
-let timerInterval = null;
-let currentTimer = 0;
-
 let gameState = {
     mode: 'solo', // solo, streamer_vs_streamer, chat_vs_chat
     hostName: '',
@@ -85,11 +82,6 @@ let gameState = {
     clientPlatform: '',
     hostScore: 0,
     clientScore: 0,
-    settings: {
-        timer: 90,
-        rounds: 5
-    },
-    currentRound: 1,
     turnId: null, // myId of the current narrator
     isGameStarted: false,
     activeWord: null
@@ -282,10 +274,6 @@ async function initGame() {
             handleCorrectGuessUI(data.username);
             updateGameUI();
         }
-        else if (data.type === 'TIMER_TICK') {
-            currentTimer = data.time;
-            document.getElementById('timer-display').textContent = currentTimer;
-        }
         else if (data.type === 'TURN_END') {
             gameState.turnId = data.nextTurnId;
             updateGameUI();
@@ -325,9 +313,6 @@ async function initGame() {
             return;
         }
 
-        gameState.settings.timer = parseInt(document.getElementById('timer-select').value);
-        gameState.settings.rounds = parseInt(document.getElementById('round-select').value);
-        gameState.currentRound = 1;
         gameState.turnId = window.Network.getMyId(); // Host starts
         gameState.isGameStarted = true;
         gameState.hostScore = 0;
@@ -424,56 +409,9 @@ function soloNextWord() {
 function startTurn() {
     if (!window.Network.isHost()) return;
 
-    currentTimer = gameState.settings.timer;
-    window.Network.broadcastToClients({ type: 'TIMER_TICK', time: currentTimer });
-
     hostNextWord();
-
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        currentTimer--;
-        window.Network.broadcastToClients({ type: 'TIMER_TICK', time: currentTimer });
-        document.getElementById('timer-display').textContent = currentTimer;
-
-        if (currentTimer <= 0) {
-            endTurn();
-        }
-    }, 1000);
 }
 
-function endTurn() {
-    if (!window.Network.isHost()) return;
-    if (timerInterval) clearInterval(timerInterval);
-
-    // Switch turns
-    const hostId = window.Network.getMyId();
-
-    let nextTurnId;
-    if (gameState.turnId === hostId) {
-        nextTurnId = gameState.clientId; // The client's peer id from state
-    } else {
-        nextTurnId = hostId;
-        gameState.currentRound++;
-    }
-
-    if (gameState.currentRound > gameState.settings.rounds) {
-        // Game Over
-        gameState.turnId = null;
-        gameState.isGameStarted = false;
-        window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
-        updateGameUI();
-        alert("Oyun Bitti!"); // TODO: Add better modal
-        return;
-    }
-
-    gameState.turnId = nextTurnId;
-    window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
-
-    // Auto start next turn after 3 seconds
-    setTimeout(() => {
-        startTurn();
-    }, 3000);
-}
 
 function hostNextWord() {
     if (wordDatabase.length === 0) return;
@@ -538,11 +476,6 @@ function updateGameUI() {
         document.getElementById('btn-skip').style.display = 'inline-block';
     }
 
-    if (gameState.mode !== 'solo') {
-        document.getElementById('round-display').textContent = `Tur ${gameState.currentRound}/${gameState.settings.rounds}`;
-    } else {
-        document.getElementById('round-display').style.display = 'none';
-    }
 }
 
 function handleChatMessage(username, message) {
