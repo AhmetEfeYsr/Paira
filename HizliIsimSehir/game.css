@@ -267,6 +267,7 @@
     position: absolute;
     width: 100px;
     height: 100px;
+    transform: translate(-50%, -50%);
     transform-origin: center;
     display: flex;
     flex-direction: column;
@@ -285,7 +286,7 @@
     opacity: 1;
     border-color: var(--primary-color);
     box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.6);
-    transform: scale(1.15);
+    transform: translate(-50%, -50%) scale(1.15);
     z-index: 20;
     animation: activePulse 2s infinite;
 }
