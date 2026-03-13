@@ -189,14 +189,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 8px;
     z-index: 10;
     text-align: center;
     background: rgba(0, 0, 0, 0.4);
-    padding: 30px;
+    padding: 20px;
     border-radius: 50%;
-    width: 280px;
-    height: 280px;
+    width: 320px;
+    height: 320px;
     box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.2);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(var(--primary-rgb), 0.3);
@@ -220,8 +220,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
-    margin-top: 5px;
+    gap: 2px;
+    margin-top: 0;
 }
 
 .center-label {
@@ -232,7 +232,7 @@
 }
 
 .center-letter {
-    font-size: 4rem;
+    font-size: 3rem;
     color: var(--secondary-color);
     line-height: 1;
     text-shadow: 0 0 15px rgba(var(--secondary-rgb), 0.5);
