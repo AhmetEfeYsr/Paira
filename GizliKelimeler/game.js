@@ -362,7 +362,7 @@ class GizliKelimelerView {
 
         state.board.forEach((cell, idx) => {
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = 'board-card';
             card.innerText = cell.word;
 
             if (cell.revealed) {
