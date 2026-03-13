@@ -73,6 +73,8 @@ const isMatch = (guess, target) => {
     return false;
 };
 
+window.PairaTime = window.PairaTime || { now: () => Date.now() };
+
 // Modals & Timers
 let gameState = {
     mode: 'solo', // solo, streamer_vs_streamer, chat_vs_chat
@@ -80,11 +82,16 @@ let gameState = {
     clientName: '',
     hostPlatform: '',
     clientPlatform: '',
+    clientId: null,
     hostScore: 0,
     clientScore: 0,
     turnId: null, // myId of the current narrator
     isGameStarted: false,
-    activeWord: null
+    activeWord: null,
+    currentRound: 1,
+    maxRounds: 5,
+    turnEndTime: null,
+    isGameOver: false
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -245,7 +252,9 @@ async function initGame() {
         else if (data.type === 'CLIENT_INFO') {
             gameState.clientName = data.channel;
             gameState.clientPlatform = data.platform;
-            gameState.clientId = data.myId;
+            // The client's myId is their peerId, but sometimes it might be omitted if old logic.
+            // Better to use sender as a robust fallback since sender IS the peerId in PeerJS handleNetworkData.
+            gameState.clientId = data.myId || sender;
             updatePlayersList();
             document.getElementById('lobby-status').textContent = 'Rakip hazır!';
         }
@@ -274,10 +283,6 @@ async function initGame() {
             handleCorrectGuessUI(data.username);
             updateGameUI();
         }
-        else if (data.type === 'TURN_END') {
-            gameState.turnId = data.nextTurnId;
-            updateGameUI();
-        }
         else if (data.type === 'SKIP_WORD') {
             if (isHost && gameState.turnId !== window.Network.getMyId()) {
                 hostNextWord();
@@ -301,6 +306,24 @@ async function initGame() {
                 checkGuess(data.username, data.message);
             }
         }
+        else if (data.type === 'TABOO_PRESSED') {
+            if (isHost && !gameState.isGameOver && gameState.isGameStarted) {
+                if (gameState.turnId === window.Network.getMyId()) {
+                    gameState.hostScore = Math.max(0, gameState.hostScore - 1);
+                } else {
+                    gameState.clientScore = Math.max(0, gameState.clientScore - 1);
+                }
+                hostNextWord();
+                window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+                updateGameUI();
+            }
+        }
+        else if (data.type === 'TURN_END') {
+            gameState.turnId = data.nextTurnId;
+            gameState.turnEndTime = window.PairaTime.now() + 60000;
+            updateGameUI();
+            startTurn();
+        }
     };
 
     // Controls
@@ -317,6 +340,13 @@ async function initGame() {
         gameState.isGameStarted = true;
         gameState.hostScore = 0;
         gameState.clientScore = 0;
+        gameState.currentRound = 1;
+        gameState.isGameOver = false;
+
+        // Set initial timer for 60 seconds
+        if (gameState.mode !== 'solo') {
+            gameState.turnEndTime = window.PairaTime.now() + 60000;
+        }
 
         window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
         window.Network.broadcastToClients({ type: 'START_GAME' });
@@ -333,6 +363,20 @@ async function initGame() {
             hostNextWord();
         } else {
             window.Network.sendToHost({ type: 'SKIP_WORD' });
+        }
+    });
+
+    document.getElementById('btn-taboo').addEventListener('click', () => {
+        if (gameState.mode === 'solo' || gameState.turnId === window.Network.getMyId() || gameState.isGameOver) return;
+
+        if (window.Network.isHost()) {
+            // Deduct client score, since it's client's turn if host is pressing it
+            gameState.clientScore = Math.max(0, gameState.clientScore - 1);
+            hostNextWord();
+            window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+            updateGameUI();
+        } else {
+            window.Network.sendToHost({ type: 'TABOO_PRESSED' });
         }
     });
 
@@ -406,12 +450,77 @@ function soloNextWord() {
 }
 
 // MULTIPLAYER GAME LOOP
-function startTurn() {
-    if (!window.Network.isHost()) return;
+let timerRaf;
+function updateTimer() {
+    if (gameState.mode === 'solo' || !gameState.isGameStarted || gameState.isGameOver) {
+        if (timerRaf) cancelAnimationFrame(timerRaf);
+        return;
+    }
 
-    hostNextWord();
+    const timerEl = document.getElementById('turn-timer');
+    if (gameState.turnEndTime) {
+        const remaining = Math.max(0, gameState.turnEndTime - window.PairaTime.now());
+        const seconds = Math.ceil(remaining / 1000);
+
+        timerEl.textContent = seconds;
+
+        if (remaining <= 0) {
+            timerEl.textContent = "0";
+            if (window.Network.isHost()) {
+                handleTimeUp();
+            }
+        } else {
+            timerRaf = requestAnimationFrame(updateTimer);
+        }
+    } else {
+        timerRaf = requestAnimationFrame(updateTimer);
+    }
 }
 
+function handleTimeUp() {
+    if (!window.Network.isHost()) return;
+    if (gameState.isGameOver) return;
+
+    // Switch turn
+    const isHostTurn = gameState.turnId === window.Network.getMyId();
+
+    if (isHostTurn) {
+        // Switch to client
+        gameState.turnId = gameState.clientId;
+        gameState.turnEndTime = window.PairaTime.now() + 60000;
+        window.Network.broadcastToClients({ type: 'TURN_END', nextTurnId: gameState.turnId });
+        window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+        startTurn();
+    } else {
+        // Round ends
+        gameState.currentRound += 1;
+        if (gameState.currentRound > gameState.maxRounds) {
+            gameState.isGameOver = true;
+            window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+            updateGameUI();
+        } else {
+            // Back to host
+            gameState.turnId = window.Network.getMyId();
+            gameState.turnEndTime = window.PairaTime.now() + 60000;
+            window.Network.broadcastToClients({ type: 'TURN_END', nextTurnId: gameState.turnId });
+            window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+            startTurn();
+        }
+    }
+}
+
+function startTurn() {
+    if (timerRaf) cancelAnimationFrame(timerRaf);
+    if (gameState.mode !== 'solo') {
+        timerRaf = requestAnimationFrame(updateTimer);
+    }
+
+    if (!window.Network.isHost()) return;
+
+    if (!gameState.isGameOver) {
+        hostNextWord();
+    }
+}
 
 function hostNextWord() {
     if (wordDatabase.length === 0) return;
@@ -452,11 +561,40 @@ function updateGameUI() {
     const mainEl = document.getElementById('main-word');
     const fbEl = document.getElementById('forbidden-words');
     const controls = document.querySelector('.narrator-actions');
+    const roundDisplay = document.getElementById('round-display');
+    const turnTimer = document.getElementById('turn-timer');
+
+    if (gameState.mode !== 'solo') {
+        roundDisplay.style.display = 'block';
+        turnTimer.style.display = 'block';
+        roundDisplay.textContent = `Tur: ${gameState.currentRound}/${gameState.maxRounds}`;
+    }
+
+    if (gameState.isGameOver) {
+        statusEl.textContent = "Oyun Bitti!";
+        statusEl.style.borderColor = "var(--warning)";
+        controls.style.display = "none";
+        roundDisplay.textContent = "Oyun Bitti";
+        turnTimer.style.display = "none";
+
+        let winnerText = "Berabere!";
+        if (gameState.hostScore > gameState.clientScore) {
+            winnerText = `${gameState.hostName} Kazandı!`;
+        } else if (gameState.clientScore > gameState.hostScore) {
+            winnerText = `${gameState.clientName} Kazandı!`;
+        }
+        mainEl.textContent = winnerText;
+        fbEl.innerHTML = `<li>Host Puanı: ${gameState.hostScore}</li><li>Rakip Puanı: ${gameState.clientScore}</li>`;
+        return;
+    }
 
     if (isMyTurn) {
         statusEl.textContent = "Sıra Sende! Anlat Bakalım.";
         statusEl.style.borderColor = "var(--success)";
         controls.style.display = "flex";
+
+        document.getElementById('btn-skip').style.display = 'inline-block';
+        if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
 
         if (gameState.activeWord) {
             mainEl.textContent = gameState.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
@@ -465,16 +603,24 @@ function updateGameUI() {
     } else {
         statusEl.textContent = "Diğer Yayıncı Anlatıyor...";
         statusEl.style.borderColor = "var(--danger)";
-        controls.style.display = "none";
 
-        mainEl.textContent = "SANSÜRLÜ";
-        fbEl.innerHTML = "<li>???</li><li>???</li><li>???</li><li>???</li><li>???</li>";
+        if (gameState.mode !== 'solo') {
+            controls.style.display = "flex";
+            document.getElementById('btn-skip').style.display = 'none';
+            if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'inline-block';
+
+            if (gameState.activeWord) {
+                mainEl.textContent = gameState.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
+                fbEl.innerHTML = gameState.activeWord.yasakli_kelimeler.map(w => `<li>${w.toLocaleUpperCase('tr-TR')}</li>`).join('');
+            }
+        } else {
+            controls.style.display = "none";
+            mainEl.textContent = "SANSÜRLÜ";
+            fbEl.innerHTML = "<li>???</li><li>???</li><li>???</li><li>???</li><li>???</li>";
+        }
     }
 
     state.isPaused = false;
-    if (isMyTurn) {
-        document.getElementById('btn-skip').style.display = 'inline-block';
-    }
 
 }
 

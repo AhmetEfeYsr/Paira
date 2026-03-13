@@ -116,6 +116,8 @@
             <div class="chat-tabu-layout">
                 <!-- Main Game Area (Streamer View) -->
                 <div class="game-area">
+                    <div id="round-display" style="display:none; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">Tur: 1/5</div>
+                    <div id="turn-timer" class="timer" style="display:none; margin-bottom: 5px;">60</div>
                     <div class="status-badge" id="turn-status">Bekleniyor...</div>
 
                     <div class="card-tabu taboo-card">
@@ -129,6 +131,7 @@
                     </div>
 
                     <div class="controls narrator-actions">
+                        <button class="btn btn-warning" id="btn-taboo" style="display: none;">Tabu Yaptı</button>
                         <button class="btn btn-danger" id="btn-skip">Pas Geç</button>
                     </div>
                 </div>
