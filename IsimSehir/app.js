@@ -723,6 +723,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 return false;
             }
+            if (catId === 'sarkici') {
+                const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                const data = await response.json();
+                if (data.artists && data.artists.length > 0) {
+                    for (let artist of data.artists) {
+                        if (artist.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR')) ||
+                            (artist.aliases && artist.aliases.some(a => a.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR'))))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            if (catId === 'yazar') {
+                const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                return data.numFound > 0;
+            }
+            if (catId === 'hastalik') {
+                // WHO ICD requires OAuth. Use broad Wikipedia fallback for medical terms.
+                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+                const wikiRes = await fetch(wikiUrl);
+                const wikiData = await wikiRes.json();
+                if (wikiData.query && wikiData.query.search) {
+                    for (let item of wikiData.query.search) {
+                        const snippet = item.snippet.toLowerCase();
+                        const title = item.title.toLowerCase();
+                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
+                            (snippet.includes('hastalık') || snippet.includes('sendrom') || snippet.includes('virüs') || snippet.includes('enfeksiyon') || snippet.includes('tıp') || snippet.includes('belirti') || title.includes('hastalığı'))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            if (catId === 'spor') {
+                // TheSportsDB has poor Turkish translation coverage. Use Wikipedia fallback.
+                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+                const wikiRes = await fetch(wikiUrl);
+                const wikiData = await wikiRes.json();
+                if (wikiData.query && wikiData.query.search) {
+                    for (let item of wikiData.query.search) {
+                        const snippet = item.snippet.toLowerCase();
+                        const title = item.title.toLowerCase();
+                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
+                            (snippet.includes('spor') || snippet.includes('oyun') || snippet.includes('takım') || title.includes('spor'))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
         } catch (e) {
             console.error(`API validation error for ${catId} - ${word}:`, e);
             return false;
@@ -731,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadDictionary(catId) {
-        if (['sehir', 'ulke', 'film_dizi', 'muzik'].includes(catId)) {
+        if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(catId)) {
             return null; // Will use API
         }
 
@@ -788,7 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isCustomCat) {
                         isValidInDict = true; // Cannot validate custom categories, default to valid
-                    } else if (['sehir', 'ulke', 'film_dizi', 'muzik'].includes(cat.id)) {
+                    } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
                         isValidInDict = await validateViaApi(cat.id, word);
                     } else {
                         isValidInDict = dict && dict.has(word);
