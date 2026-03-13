@@ -112,7 +112,7 @@ class ChatListener {
                 event: 'pusher:subscribe',
                 data: {
                     auth: '',
-                    channel: `chatrooms.${chatroomId}.v1`
+                    channel: `chatrooms.${chatroomId}.v2`
                 }
             });
             this.ws.send(subscribeMsg);
