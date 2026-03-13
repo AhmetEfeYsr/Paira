@@ -8,6 +8,8 @@ class GizliKelimelerNetworkManager {
         this.hostId = sessionStorage.getItem('roomCode');
         this.myId = null;
 
+        this.engine.isHostNode = this.isHost;
+
         this.net = new PeerNetworkManager({
             isHost: this.isHost,
             onPeerReady: (id) => this.onPeerReady(id),
@@ -41,7 +43,8 @@ class GizliKelimelerNetworkManager {
             onStartGame: () => {
                 if (this.isHost) {
                     const boardSize = document.getElementById('board-size')?.value || 25;
-                    this.engine.startGame({ boardSize });
+                    const turnDuration = document.getElementById('turn-duration')?.value || 90;
+                    this.engine.startGame({ boardSize, turnDuration });
                 }
             },
             onSubmitClue: (word, count) => {
@@ -174,6 +177,10 @@ class GizliKelimelerNetworkManager {
         else if (action === 'SYNC' && !this.isHost) {
             this.engine.setState(payload.state);
             this.hostId = payload.hostId;
+            if (payload.durationLeft > 0) {
+                this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
+                this.engine.startRenderTimer();
+            }
             this.view.updateUI(this.engine.state, this.isHost);
         }
         else if (action === 'ACTION' && this.isHost) {
@@ -227,6 +234,8 @@ class GizliKelimelerNetworkManager {
     broadcastState() {
         if (!this.isHost) return;
 
+        const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
+
         // We must mask the board for Guessers before sending.
         // We broadcast customized syncs per client depending on their role.
         Object.keys(this.net.connections).forEach(peerId => {
@@ -244,7 +253,8 @@ class GizliKelimelerNetworkManager {
 
             this.net.sendToPeer(peerId, 'SYNC', {
                 state: stateCopy,
-                hostId: this.hostId
+                hostId: this.hostId,
+                durationLeft: durationLeft
             });
         });
 
@@ -327,6 +337,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('game-screen')) {
         const engine = new GizliKelimelerEngine();
         const view = new GizliKelimelerView({});
+
+        engine.onTimerTick = (secs, status) => view.updateTimer(secs, status);
+
         window.gameNet = new GizliKelimelerNetworkManager(engine, view);
     }
 });

@@ -10,13 +10,19 @@ class GizliKelimelerEngine {
             currentClue: null, // { word, count, remaining }
             board: [],
             boardSize: 25,
-            winnerTeam: null
+            winnerTeam: null,
+            turnDuration: 90
         };
         this.allWords = [];
         this.fallbackWords = ["ELMA", "ARMUT", "ARABA", "GÜNEŞ", "AY", "YILDIZ", "KİTAP", "DEFTER", "KALEM", "SU", "ATEŞ", "TOPRAK", "HAVA", "ASLAN", "KAPLAN", "KARTAL", "BİLGİSAYAR", "TELEFON", "MASA", "SANDALYE", "KAPI", "PENCERE", "EV", "OKUL", "OYUN", "DENİZ", "KUM", "GÖZ", "KULAK", "AĞIZ", "BURUN", "BEYİN", "KALP", "SAAT", "GÜZEL", "ÇİRKİN"];
 
         this.onStateChange = null;
         this.onSound = null;
+        this.onTimerTick = null;
+
+        this.localTurnEndTime = 0;
+        this.renderFrame = null;
+        this.isHostNode = false;
     }
 
     setState(newState) {
@@ -66,7 +72,10 @@ class GizliKelimelerEngine {
 
     startGame(settings) {
         const size = parseInt(settings.boardSize) || 25;
+        const duration = parseInt(settings.turnDuration) || 90;
+
         this.state.boardSize = size;
+        this.state.turnDuration = duration;
         this.state.status = 'playing';
         this.state.turnTeam = 'A';
         this.state.phase = 'CLUE';
@@ -76,6 +85,46 @@ class GizliKelimelerEngine {
         this.generateBoard(size);
         this.setState(this.state);
         if (this.onSound) this.onSound('start');
+
+        this.startTimer();
+    }
+
+    startTimer() {
+        this.localTurnEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
+        this.setState(this.state);
+        this.startRenderTimer();
+    }
+
+    startRenderTimer() {
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+
+        let lastTickSec = -1;
+
+        const tick = () => {
+            if (this.state.status !== 'playing') return;
+
+            const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
+            const secs = Math.ceil(left / 1000);
+
+            if (this.onTimerTick) this.onTimerTick(secs, 'running');
+
+            if (secs <= 10 && secs > 0 && lastTickSec !== secs) {
+                if (this.onSound) this.onSound('tick');
+                lastTickSec = secs;
+            }
+
+            if (left <= 0) {
+                if (this.onSound) this.onSound('timeup');
+                if (this.isHostNode) {
+                    this.switchTurn();
+                    this.setState(this.state);
+                }
+                return;
+            }
+
+            this.renderFrame = requestAnimationFrame(tick);
+        };
+        this.renderFrame = requestAnimationFrame(tick);
     }
 
     generateBoard(size) {
@@ -178,11 +227,14 @@ class GizliKelimelerEngine {
         this.state.turnTeam = this.state.turnTeam === 'A' ? 'B' : 'A';
         this.state.phase = 'CLUE';
         this.state.currentClue = null;
+
+        this.startTimer();
     }
 
     endGame(winnerTeam) {
         this.state.status = 'ended';
         this.state.winnerTeam = winnerTeam;
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
     }
 }
 
@@ -219,6 +271,7 @@ class GizliKelimelerView {
 
         document.getElementById('btn-back-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
         document.getElementById('btn-leave')?.addEventListener('click', () => this.callbacks.onLeave());
+        document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
     }
 
     sendChat() {
@@ -314,7 +367,7 @@ class GizliKelimelerView {
 
         const turnInd = document.getElementById('turn-indicator');
         turnInd.innerText = `Takım ${state.turnTeam} Oynuyor`;
-        turnInd.className = `turn-indicator turn-${state.turnTeam.toLowerCase()}`;
+        turnInd.style.color = state.turnTeam === 'A' ? 'var(--primary-purple)' : 'var(--danger)';
 
         const me = state.players[this.myId];
         const amITurnTeam = me && me.team === state.turnTeam;
@@ -331,7 +384,7 @@ class GizliKelimelerView {
                 inputSec.classList.remove('hidden');
                 displaySec.classList.add('hidden');
             } else {
-                statusMsg.innerText = `Takım ${state.turnTeam} Ajanı Bekleniyor...`;
+                statusMsg.innerText = "Ajan İpucu Veriyor...";
                 inputSec.classList.add('hidden');
                 displaySec.classList.add('hidden');
             }
@@ -347,7 +400,7 @@ class GizliKelimelerView {
                 statusMsg.innerText = "Tahmin Yap!";
                 btnEndTurn.classList.remove('hidden');
             } else {
-                statusMsg.innerText = `Takım ${state.turnTeam} Tahmin Ediyor...`;
+                statusMsg.innerText = "Tahmin Ediliyor...";
                 btnEndTurn.classList.add('hidden');
             }
         }
@@ -411,5 +464,15 @@ class GizliKelimelerView {
         div.innerHTML = `<strong>${safeSender}:</strong> ${safeMsg}`;
         cBox.appendChild(div);
         cBox.scrollTop = cBox.scrollHeight;
+    }
+
+    updateTimer(secs, status) {
+        const timerEl = document.getElementById('timer-display');
+        if (!timerEl) return;
+
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+        timerEl.style.color = secs <= 10 && secs > 0 ? 'var(--danger)' : 'var(--lilac)';
     }
 }
