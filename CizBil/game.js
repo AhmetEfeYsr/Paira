@@ -224,10 +224,7 @@ export function updateGameStateUI(choices = null) {
         if (choices) {
             document.getElementById('main-word').textContent = "KELİME SEÇİLİYOR...";
         } else {
-            document.getElementById('main-word').textContent = networkState.currentWord ? networkState.currentWord.replace(/[a-zA-ZğüşıöçĞÜŞİÖÇ]/g, '_ ') : '...';
-        }
-    }
-}
+                        document.getElementById('main-word').textContent = networkState.currentWord ? networkState.currentWord.replace(/[^\s]/g, '_ ') : '...';
 
 export function startTimer(duration) {
     clearInterval(timerInterval);
