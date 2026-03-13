@@ -61,6 +61,15 @@ function resetGameState() {
     document.getElementById('guess-history').innerHTML = "";
 }
 
+function normalizeTurkishChars(str) {
+    const charMap = {
+        'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
+        'Ç': 'C', 'Ğ': 'G', 'İ': 'I', 'Ö': 'O', 'Ş': 'S', 'Ü': 'U',
+        'â': 'a', 'î': 'i', 'û': 'u'
+    };
+    return str.replace(/[çğıöşüÇĞİÖŞÜâîû]/g, char => charMap[char] || char).toLowerCase();
+}
+
 function getTodayDateTR() {
     const today = new Date();
     // UTC+3 (Türkiye Saati) ayarı yapıp tarihi YYYY-MM-DD olarak döndür
@@ -115,6 +124,7 @@ async function handleGuess() {
     const btnGuess = document.getElementById('btn-guess');
     let rawWord = inputEl.value;
     let word = rawWord.toLowerCase().trim();
+    let normalizedWord = normalizeTurkishChars(word);
 
     if(!word) return;
 
@@ -131,16 +141,40 @@ async function handleGuess() {
     btnGuess.disabled = true;
 
     try {
-        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${word}.json`;
-        const response = await fetch(url);
+        const urlOriginal = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${word}.json`;
+        const urlNormalized = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${normalizedWord}.json`;
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const [responseOriginal, responseNormalized] = await Promise.all([
+            fetch(urlOriginal),
+            fetch(urlNormalized)
+        ]);
+
+        if (!responseOriginal.ok || !responseNormalized.ok) {
+            throw new Error(`HTTP error! statuses: Original ${responseOriginal.status}, Normalized ${responseNormalized.status}`);
         }
 
-        const data = await response.json();
+        const [dataOriginal, dataNormalized] = await Promise.all([
+            responseOriginal.json(),
+            responseNormalized.json()
+        ]);
 
-        if (data === null) {
+        let finalData = null;
+
+        if (dataOriginal === null && dataNormalized === null) {
+            finalData = null;
+        } else if (dataOriginal !== null && dataNormalized !== null) {
+            if (dataOriginal.r !== dataNormalized.r || dataOriginal.s !== dataNormalized.s) {
+                finalData = dataOriginal;
+            } else {
+                finalData = dataOriginal;
+            }
+        } else if (dataOriginal !== null) {
+            finalData = dataOriginal;
+        } else if (dataNormalized !== null) {
+            finalData = dataNormalized;
+        }
+
+        if (finalData === null) {
             // Word not found in the dataset
             showToast(`"${rawWord}" kelimesi sözlükte bulunamadı.`, "warning");
             inputEl.value = "";
@@ -148,9 +182,9 @@ async function handleGuess() {
             // Visual shake feedback
             inputEl.classList.add('error-shake');
             setTimeout(() => inputEl.classList.remove('error-shake'), 400);
-        } else if (typeof data === "object" && typeof data.r === "number" && typeof data.s === "number") {
-            const rank = data.r;
-            const score = data.s;
+        } else if (typeof finalData === "object" && typeof finalData.r === "number" && typeof finalData.s === "number") {
+            const rank = finalData.r;
+            const score = finalData.s;
 
             // Add guess
             guesses.push({
