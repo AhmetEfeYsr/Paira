@@ -548,11 +548,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ui.btnFinishTurn.disabled = true;
             ui.btnFinishTurn.classList.remove('pulse');
-            if(ui.finishStatusText) ui.finishStatusText.textContent = 'Cevaplar gönderildi, diğerleri bekleniyor...';
+            if(ui.finishStatusText) ui.finishStatusText.textContent = 'Cevap gönderildi...';
 
-            document.querySelectorAll('.game-input-wrapper input').forEach(input => {
-                input.disabled = true;
-            });
+            if (ui.compactGameInput) {
+                ui.compactGameInput.disabled = true;
+            }
 
             const myAnswers = getPlayerAnswers();
 
@@ -611,6 +611,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isMyTurn = activePlayerObj && activePlayerObj.id === network.myId;
 
                 if (isMyTurn && ui.btnFinishTurn && !ui.btnFinishTurn.disabled) {
+                    if (ui.compactGameInput) {
+                        ui.compactGameInput.disabled = true;
+                    }
                     const myAnswers = getPlayerAnswers();
                     network.sendToHost({
                         type: 'FINAL_ANSWERS',

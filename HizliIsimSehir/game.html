@@ -88,41 +88,42 @@
 
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
-            <header class="game-topbar card" style="flex-wrap: wrap; justify-content: space-around; gap: 1rem;">
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <div class="round-indicator" id="round-indicator" style="font-size: 1.15rem; background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 12px; font-weight: bold;">
-                        Tur <span id="current-round">1</span> / <span id="total-rounds">3</span>
+            <div class="circular-table-layout" id="circular-table-layout">
+
+                <div class="players-circle" id="players-circle">
+                    <!-- Player nodes will be injected here -->
+                </div>
+
+                <div class="center-prompt">
+                    <div class="center-letter-row">
+                        <span class="center-label">Harf:</span>
+                        <strong id="current-letter" class="center-letter">A</strong>
+                        <button id="btn-change-letter" class="btn btn-secondary btn-icon host-only hidden" title="Harfi Değiştir">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
                     </div>
-                    <div id="turn-indicator" style="font-size: 1.05rem; font-weight: 500;">
-                        <span id="turn-indicator-text" style="color: var(--text-color);">Bekleniyor...</span>
+
+                    <div class="center-category-row">
+                        <span class="center-label">Kategori:</span>
+                        <div id="current-category-name" class="center-category-text">Yükleniyor...</div>
+                    </div>
+
+                    <div class="center-timer-row">
+                        <span class="center-label">Süre:</span>
+                        <div id="timer-display" class="center-timer">--:--</div>
+                        <div id="timer-status-text" class="text-muted" style="font-size: 0.8rem; margin-top: 4px; display: none;">Süre başladı!</div>
                     </div>
                 </div>
 
-                <div class="letter-display" style="display: flex; align-items: center; gap: 15px;">
-                    <span style="font-size: 1.2rem; color: var(--text-muted);">Harf:</span>
-                    <strong id="current-letter" style="font-size: 3rem; color: var(--secondary-color); line-height: 1;">A</strong>
-                    <button id="btn-change-letter" class="btn btn-secondary btn-icon host-only hidden" title="Harfi Değiştir" style="border-radius: 50%; width: 36px; height: 36px; padding: 0 !important; background: var(--input-bg);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    </button>
-                </div>
-
-                <div class="timer-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div id="timer-display" class="timer" style="line-height: 1; text-align: center; display: flex; align-items: center; justify-content: center;">--:--</div>
-                    <div id="timer-status-text" class="text-muted" style="font-size: 0.8rem; margin-top: 4px; display: none;">Süre başladı!</div>
-                </div>
-            </header>
-
-            <div class="game-layout">
-                <main class="play-area custom-scrollbar" style="flex: 1; overflow-y: auto; padding-right: 10px;">
-                    <div class="game-grid" id="game-inputs-container">
-                        <!-- Inputs will be injected here -->
+                <div class="compact-input-area">
+                    <p id="finish-status-text" class="text-muted" style="margin-bottom: 8px; font-weight: 500; text-align: center; min-height: 20px;"></p>
+                    <div class="compact-input-group">
+                        <input type="text" id="compact-game-input" class="compact-input" placeholder="Cevabınızı yazın..." autocomplete="off" spellcheck="false" disabled>
+                        <button id="btn-finish-turn" class="btn btn-primary compact-btn" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
                     </div>
-
-                    <div class="game-actions" style="margin-top: 2rem; margin-bottom: 2rem; display: flex; flex-direction: column; align-items: center;">
-                        <button id="btn-finish-turn" class="btn btn-primary pulse" style="padding: 16px 40px; font-size: 1.25rem; min-width: 200px;">Bitir!</button>
-                        <p id="finish-status-text" class="text-muted" style="margin-top: 15px; font-weight: 500; text-align: center;"></p>
-                    </div>
-                </main>
+                </div>
             </div>
         </section>
 
