@@ -190,7 +190,7 @@ function broadcastSync() {
         type: 'SYNC',
         state: stateCopy,
         hostId,
-        serverTime: Date.now()
+        serverTime: window.PairaTime.now()
     });
 }
 

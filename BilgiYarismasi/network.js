@@ -155,14 +155,14 @@ function broadcastSync() {
         stateCopy.currentQuestion = null;
     }
 
-    const durationLeft = Math.max(0, localTurnEndTime - Date.now());
+    const durationLeft = Math.max(0, localTurnEndTime - window.PairaTime.now());
 
     broadcast({
         type: 'SYNC',
         state: stateCopy,
         hostId,
         durationLeft,
-        serverTime: Date.now()
+        serverTime: window.PairaTime.now()
     });
 }
 
@@ -179,7 +179,7 @@ function handleData(data, peerId) {
         hostId = data.hostId;
 
         if (data.durationLeft > 0) {
-            localTurnEndTime = Date.now() + data.durationLeft;
+            localTurnEndTime = window.PairaTime.now() + data.durationLeft;
             if (!renderFrame) startRenderTimer();
         }
 

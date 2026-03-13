@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(ui.btnAddCustomCat) ui.btnAddCustomCat.addEventListener('click', () => {
             const val = ui.customCatInput.value.trim();
             if (val) {
-                const id = 'custom_' + Date.now();
+                const id = 'custom_' + window.PairaTime.now();
                 const label = document.createElement('label');
                 label.className = 'cat-checkbox';
 
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startHostTimer(seconds) {
         if (!isHost) return;
 
-        const endTime = Date.now() + (seconds * 1000);
+        const endTime = window.PairaTime.now() + (seconds * 1000);
 
         network.broadcast({
             type: 'TIMER_SYNC',
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(currentTimer);
         updateTimerDisplay(seconds); // Immediate update
         currentTimer = setInterval(() => {
-            const left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+            const left = Math.max(0, Math.floor((endTime - window.PairaTime.now()) / 1000));
             updateTimerDisplay(left);
 
             if (left <= 0) {
@@ -577,10 +577,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     ui.timerStatusText.style.display = 'block';
                     ui.timerStatusText.textContent = 'Süre başladı!';
                 }
-                const initialLeft = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
+                const initialLeft = Math.max(0, Math.floor((data.endTime - window.PairaTime.now()) / 1000));
                 updateTimerDisplay(initialLeft); // Immediate update
                 currentTimer = setInterval(() => {
-                    const left = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
+                    const left = Math.max(0, Math.floor((data.endTime - window.PairaTime.now()) / 1000));
                     updateTimerDisplay(left);
                     if (left <= 0) clearInterval(currentTimer);
                 }, 1000);
@@ -593,16 +593,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalPlayers = Object.keys(network.players).length;
             const finishedCount = finishedPlayers.size;
 
-            if (gameConfig.endCondition === 'all_finish') {
-                if (finishedCount >= gameConfig.endValue || finishedCount >= totalPlayers) {
+            if (finishedCount >= totalPlayers) {
+                endRound();
+            } else if (gameConfig.endCondition === 'all_finish') {
+                if (finishedCount >= gameConfig.endValue) {
                     endRound();
                 }
-            }
-            else if (gameConfig.endCondition === 'first_finish') {
+            } else if (gameConfig.endCondition === 'first_finish') {
                 if (finishedCount === 1) {
                     startHostTimer(gameConfig.endValue);
-                } else if (finishedCount >= totalPlayers) {
-                    endRound();
                 }
             }
         }

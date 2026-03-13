@@ -138,3 +138,24 @@ class PairaSharedUI {
 }
 
 window.pairaUI = new PairaSharedUI();
+
+window.PairaTime = {
+    offset: 0,
+    async sync() {
+        try {
+            const start = performance.now();
+            const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+            const data = await res.json();
+            const latency = (performance.now() - start) / 2;
+            const serverTime = new Date(data.utc_datetime).getTime() + latency;
+            this.offset = serverTime - Date.now();
+            console.log("Time synchronized. Offset:", this.offset);
+        } catch (e) {
+            console.warn("Time API sync failed", e);
+        }
+    },
+    now() {
+        return Date.now() + this.offset;
+    }
+};
+window.PairaTime.sync();

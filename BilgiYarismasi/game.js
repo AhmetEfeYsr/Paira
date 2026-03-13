@@ -190,7 +190,7 @@ document.getElementById('btn-start-game')?.addEventListener('click', () => {
          showToast(`Yeterli soru yok, oyun ${state.totalRounds} tur sürecek.`, "warning");
     }
 
-    state.gameSeed = (state.gameSeed || 1) * 0x7fff + Date.now();
+    state.gameSeed = (state.gameSeed || 1) * 0x7fff + window.PairaTime.now();
     state.activeQuestions = seededShuffle([...filtered], state.gameSeed).slice(0, state.totalRounds);
 
     // Her oyuncunun skorunu sıfırla
@@ -243,7 +243,7 @@ function startTurn() {
         correct_answer_index: correctIndex // Sadece Host'ta kalacak (network.js'te clienta giderken silinir)
     };
 
-    localTurnEndTime = Date.now() + (state.turnDuration * 1000);
+    localTurnEndTime = window.PairaTime.now() + (state.turnDuration * 1000);
     lastTickSec = -1;
 
     broadcastSync();
@@ -251,7 +251,7 @@ function startTurn() {
     startRenderTimer();
 
     turnTimeout = setInterval(() => {
-        if (Date.now() >= localTurnEndTime) {
+        if (window.PairaTime.now() >= localTurnEndTime) {
             endRoundEarly(); // Süre bitince zorla bitir
         }
     }, 1000);
@@ -261,7 +261,7 @@ function handleClientAnswer(playerId, choiceIndex) {
     if (!isHost || state.status !== 'playing') return;
     if (state.answersInRound[playerId]) return; // Zaten cevaplamış
 
-    const timeRemaining = Math.max(0, localTurnEndTime - Date.now());
+    const timeRemaining = Math.max(0, localTurnEndTime - window.PairaTime.now());
     const secondsLeft = Math.ceil(timeRemaining / 1000);
 
     const isCorrect = choiceIndex === state.currentQuestion.correct_answer_index;
@@ -363,7 +363,7 @@ function startRenderTimer() {
     const tick = () => {
         if (state.status !== 'playing') return;
 
-        const left = Math.max(0, localTurnEndTime - Date.now());
+        const left = Math.max(0, localTurnEndTime - window.PairaTime.now());
         const secs = Math.ceil(left / 1000);
         const m = Math.floor(secs / 60).toString().padStart(2, '0');
         const s = (secs % 60).toString().padStart(2, '0');
