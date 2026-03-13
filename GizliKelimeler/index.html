@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Gizli Kelimeler | Paira Games - Ücretsiz Online Kelime Oyunu</title>
+    <meta name="description" content="Arkadaşlarınızla takımlara ayrılın, ajanların ipuçlarını takip ederek kelimeleri bulun ve suikastçıya dikkat edin!">
+    <meta name="keywords" content="gizli kelimeler oyna, codenames online, ücretsiz kelime oyunu, parti oyunu, paira games">
+    <meta name="author" content="Paira Games">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Gizli Kelimeler | Paira Games">
+    <meta property="og:description" content="Arkadaşlarınızla takımlara ayrılın, ajanların ipuçlarını takip ederek kelimeleri bulun ve suikastçıya dikkat edin!">
+    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Gizli Kelimeler | Paira Games">
+    <meta property="twitter:description" content="Arkadaşlarınızla takımlara ayrılın, ajanların ipuçlarını takip ederek kelimeleri bulun ve suikastçıya dikkat edin!">
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+            <div class="hero-content">
+                <div class="game-logo-container"><img src="../logolar/gizli-kelimeler.svg" alt="Gizli Kelimeler Logo"></div>
+                <h1 class="gradient-text">Gizli Kelimeler</h1>
+                <p class="seo-description">Takımınıza katılın, ajanın tek kelimelik ipuçlarıyla doğru kelimeleri bulun, suikastçıya yakalanmayın!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Odayı Kur veya Katıl</h3>
+                        <p>Hemen bir oda oluşturup 6 haneli kodu arkadaşlarınla paylaş ya da var olan bir odaya hızlıca katıl.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Takım ve Rol Seç</h3>
+                        <p>İki takıma (A/B) ayrılın. Her takımdan biri İpucu Veren (Ajan) olur, diğerleri Tahminci (Oyuncu).</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. İpucu Ver & Tahmin Et</h3>
+                        <p>Ajan, kendi takımının kelimeleriyle bağlantılı tek kelime ve sayı söyler. Tahminciler kelimeleri seçer.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Suikastçıya Dikkat!</h3>
+                        <p>Kendi kelimelerini bul. Siyah suikastçı kelimesini seçen takım anında kaybeder!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="index.js"></script>
+    <script src="../shared/shared.js"></script>
+</body>
+</html>

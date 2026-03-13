@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Gizli Kelimeler | Oyun | Paira Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="game-layout custom-scrollbar">
+        <!-- HEADER -->
+        <header class="game-header">
+            <div class="logo-area">
+                <img src="../logolar/gizli-kelimeler.svg" alt="Logo" class="mini-logo">
+                <h2>Gizli Kelimeler</h2>
+            </div>
+            <div class="header-actions">
+                <div class="room-code-badge" id="display-room-code" title="Kopyalamak için tıkla" data-code="">••••••••</div>
+                <button id="toggle-code-visibility" class="btn btn-secondary btn-icon" title="Oda Kodunu Göster/Gizle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- LOBBY SCREEN -->
+        <section id="lobby-screen" class="view-state active">
+            <div class="lobby-card glass-panel">
+                <h3>Oda Lobisi</h3>
+                <div class="player-count-badge"><span id="player-count">1</span> Oyuncu</div>
+
+                <div class="lobby-columns">
+                    <div class="players-column custom-scrollbar">
+                        <h4>Oyuncular</h4>
+                        <ul id="players-list" class="players-list"></ul>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button id="btn-switch-team" class="btn btn-secondary" style="flex: 1;">Takım Değiş</button>
+                            <button id="btn-switch-role" class="btn btn-secondary" style="flex: 1;">Rol Değiş</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-column">
+                        <h4>Oda Ayarları</h4>
+                        <div id="host-settings" class="settings-grid hidden">
+                            <div class="setting-item">
+                                <label for="board-size">Tahta Boyutu</label>
+                                <select id="board-size" class="game-input">
+                                    <option value="16">4x4 (16 Kelime)</option>
+                                    <option value="25" selected>5x5 (25 Kelime)</option>
+                                    <option value="36">6x6 (36 Kelime)</option>
+                                </select>
+                            </div>
+                            <button id="btn-start-game" class="btn btn-primary btn-block" style="margin-top: 1rem;">Oyunu Başlat</button>
+                        </div>
+                        <div id="client-waiting" class="waiting-message">
+                            <div class="spinner"></div>
+                            <p>Kurucunun oyunu başlatması bekleniyor...</p>
+                        </div>
+                        <button id="btn-leave" class="btn btn-danger btn-block" style="margin-top: auto;">Odadan Ayrıl</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME SCREEN -->
+        <section id="game-screen" class="view-state hidden">
+            <div class="play-area" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+
+                <!-- TOP BAR -->
+                <div class="top-bar">
+                    <div class="team-score team-a">
+                        <span class="team-name">Takım A</span>
+                        <span class="score-value" id="score-a">9</span>
+                    </div>
+                    <div class="turn-info">
+                        <span class="turn-indicator" id="turn-indicator">Takım A Oynuyor</span>
+                        <div class="game-status-message status-badge" id="game-status-message">Ajan İpucu Veriyor</div>
+                    </div>
+                    <div class="team-score team-b">
+                        <span class="team-name">Takım B</span>
+                        <span class="score-value" id="score-b">8</span>
+                    </div>
+                </div>
+
+                <!-- CLUE AREA -->
+                <div class="clue-area glass-panel" id="clue-area">
+                    <div id="clue-input-section" class="hidden">
+                        <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20">
+                        <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px;">
+                        <button id="btn-submit-clue" class="btn btn-primary">Gönder</button>
+                    </div>
+                    <div id="clue-display-section" class="hidden">
+                        <h2 id="current-clue-word" class="gradient-text">İPUCU</h2>
+                        <div class="clue-badge" id="current-clue-count">Sayı: 2</div>
+                        <div class="clue-badge" id="current-clue-rem">Kalan: 3</div>
+                        <button id="btn-end-turn" class="btn btn-secondary hidden">Turu Bitir</button>
+                    </div>
+                </div>
+
+                <!-- BOARD -->
+                <div class="board-container">
+                    <div id="game-board" class="game-board grid-5x5"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- WINNER SCREEN -->
+        <section id="winner-screen" class="view-state hidden">
+            <div class="winner-card glass-panel">
+                <h2 id="winner-message" class="gradient-text">Takım A Kazandı!</h2>
+                <div class="final-scores">
+                    <div class="score-box team-a">A Takımı Kalan: <span id="final-score-a">0</span></div>
+                    <div class="score-box team-b">B Takımı Kalan: <span id="final-score-b">0</span></div>
+                </div>
+                <button id="btn-back-lobby" class="btn btn-primary btn-block hidden">Lobiye Dön</button>
+            </div>
+        </section>
+
+        <!-- CHAT AREA -->
+        <aside class="chat-area glass-panel custom-scrollbar">
+            <div class="chat-header"><h3>Oda Sohbeti</h3></div>
+            <div class="chat-messages custom-scrollbar" id="chat-messages"></div>
+            <div class="chat-input-wrapper">
+                <input type="text" id="chat-input" class="game-input" placeholder="Mesaj yaz..." maxlength="100">
+                <button id="btn-send-chat" class="btn btn-primary btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </aside>
+
+    </main>
+
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="../shared/peer_manager.js"></script>
+    <script src="network.js"></script>
+    <script src="game.js"></script>
+    <script src="../shared/shared.js"></script>
+</body>
+</html>
