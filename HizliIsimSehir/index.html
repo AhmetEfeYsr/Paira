@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Hızlı İsim Şehir | Paira Games - Ücretsiz Online Kelime Oyunu</title>
+    <meta name="description" content="Efsanevi masa oyunu Hızlı İsim Şehir'ı arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online oynayın! Kurulum yok, sadece bir oda kurun ve eğlenceye başlayın.">
+    <meta name="keywords" content="isim şehir hayvan, isim şehir, online isim şehir, p2p isim şehir, webrtc oyun, kelime oyunu, multiplayer, arkadaş oyunları, türkçe oyun, paira games">
+    <meta name="author" content="Paira Games">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Hızlı İsim Şehir | Paira Games">
+    <meta property="og:description" content="Efsanevi masa oyunu Hızlı İsim Şehir'ı arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online oynayın!">
+    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Hızlı İsim Şehir | Paira Games">
+    <meta property="twitter:description" content="Efsanevi masa oyunu Hızlı İsim Şehir'ı arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online oynayın!">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Hızlı İsim Şehir | Paira Games",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Party Game",
+      "description": "Efsanevi masa oyunu Hızlı İsim Şehir'ın online, tarayıcı tabanlı versiyonu.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+            <div class="hero-content">
+                <div class="game-logo-container"><img src="../logolar/isim-sehir.svg" alt="İsim Şehir Logo"></div>
+                <h1 class="gradient-text">Hızlı İsim Şehir</h1>
+                <p class="seo-description">Efsanevi oyunu arkadaşlarınızla herhangi bir indirme yapmadan online oynayın!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Oda Kur veya Katıl</h3>
+                        <p>Bir kullanıcı adı belirleyin. Arkadaşlarınızı davet etmek için 'Oda Kur' butonuna basın veya size verilen oda kodunu girerek mevcut bir oyuna katılın.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Kategorileri Seç</h3>
+                        <p>Oda kurucusu, oyunda yer alacak kategorileri (İsim, Şehir, Eşya vb.) belirler. İster klasik kategorileri kullanın, ister kendi özel kategorilerinizi ekleyin.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Harfe Göre Kelime Bul</h3>
+                        <p>Sistem rastgele bir harf seçer. Belirlenen harf ile başlayan kelimeleri en hızlı şekilde ilgili kategorilere yazın.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Puanları Oyla</h3>
+                        <p>Tur bittiğinde, herkesin cevapları otomatik kontrol edilir ve önerilen puanlar sunulur. Oyuncular cevaplara itiraz edip puanları oylayarak nihai sonucu belirler.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="login.js"></script>
+</body>
+</html>

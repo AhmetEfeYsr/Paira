@@ -1,0 +1,167 @@
+/* Additional styles for game.html specific to Isim Sehir */
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.game-input-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.game-input-wrapper label {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.game-input-wrapper input {
+    width: 100%;
+    padding: 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 12px;
+    font-size: 1.25rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.game-input-wrapper input:focus {
+    border-color: var(--primary-color);
+    background: var(--glass-shadow);
+    outline: none;
+}
+
+.game-input-wrapper input:disabled {
+    opacity: 0.6;
+    background: var(--card-bg);
+    cursor: not-allowed;
+}
+
+.game-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+
+/* Scoreboard */
+.scoreboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.scoreboard-table th, .scoreboard-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.scoreboard-table th {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+.scoreboard-table tr:hover {
+    background: var(--input-bg);
+}
+
+/* Voting Screen */
+.voting-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-right: 10px;
+}
+
+.vote-category-block {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.vote-category-title {
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--input-bg);
+    padding-bottom: 5px;
+}
+
+.vote-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--btn-secondary-bg);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.vote-item:last-child { border-bottom: none; }
+
+.vote-info { flex: 1; min-width: 200px; }
+.vote-player { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+.vote-word { font-size: 1.15rem; font-weight: 600; color: var(--text-color); }
+
+.vote-counts-display {
+    display: flex;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.vote-count-pill {
+    background: var(--input-bg);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.vote-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.vote-btn {
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.vote-btn:hover { background: var(--btn-secondary-bg); }
+.vote-btn.selected { box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3); }
+.vote-btn[data-val="0"].selected { background: var(--danger-color); border-color: #c0392b; color: white; }
+.vote-btn[data-val="5"].selected { background: #e67e22; border-color: #d35400; color: white;}
+.vote-btn[data-val="10"].selected { background: var(--success-color); border-color: #27ae60; color: white;}
+
+/* Status Dot in Lobby */
+.is-host::after {
+    content: '👑';
+    font-size: 0.9rem;
+    margin-left: 5px;
+}
