@@ -62,12 +62,15 @@ function resetGameState() {
 }
 
 function normalizeTurkishChars(str) {
+    // Artık veri tabanı direkt orjinal Türkçe kelimeleri barındırıyor (ağaç vb.).
+    // Sadece fallback amaçlı şapkalı harfleri veya I/i dönüşümlerini bırakıyoruz
+    // veya istenirse tamamen iade edebiliriz.
+    // Kullanıcı asi/aşı ayrımını korumak için ç,ğ,ö,ş,ü dönüştürmeyi iptal ediyoruz.
     const charMap = {
-        'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
-        'Ç': 'C', 'Ğ': 'G', 'İ': 'I', 'Ö': 'O', 'Ş': 'S', 'Ü': 'U',
+        'I': 'ı', 'İ': 'i',
         'â': 'a', 'î': 'i', 'û': 'u'
     };
-    return str.replace(/[çğıöşüÇĞİÖŞÜâîû]/g, char => charMap[char] || char).toLowerCase();
+    return str.replace(/[Iİâîû]/g, char => charMap[char] || char).toLowerCase();
 }
 
 function getTodayDateTR() {
