@@ -30,6 +30,11 @@ class FuzzyMatcher {
 
     // Ağırlıklı Damerau-Levenshtein Mesafesi
     getDistance(word1, word2) {
+        if (!word1) word1 = "";
+        if (!word2) word2 = "";
+        if (word1.length > 50) word1 = word1.substring(0, 50);
+        if (word2.length > 50) word2 = word2.substring(0, 50);
+        
         word1 = word1.toLowerCase();
         word2 = word2.toLowerCase();
 
@@ -74,7 +79,24 @@ class FuzzyMatcher {
 class GameManager {
     constructor() {
         this.matcher = new FuzzyMatcher();
-        this.wordList = ["AKINTI", "BARDAK", "CÜZDAN", "DEFTER", "ELMA", "FINDIK", "GÜNEŞ", "HAYVAN", "IRMAK", "KİTAP", "MASA", "NOKTA", "OTOBÜS", "PENCERE", "RADYO", "SAAT", "TELEFON", "UÇAK", "VAGON", "YILDIZ", "ZAMAN"];
+        this.wordList = [
+            "AKINTI", "BARDAK", "CÜZDAN", "DEFTER", "ELMA", "FINDIK", "GÜNEŞ", "HAYVAN", "IRMAK", "KİTAP", "MASA", "NOKTA", "OTOBÜS", "PENCERE", "RADYO", "SAAT", "TELEFON", "UÇAK", "VAGON", "YILDIZ", "ZAMAN",
+            "BİLGİSAYAR", "TELEVİZYON", "KAHVE", "ÇAY", "MÜZİK", "SİNEMA", "TİYATRO", "OYUN", "ARABA", "BİSİKLET", "DENİZ", "KUMSAL", "ORMAN", "DAĞ", "KAMP", "TATİL", "FOTOĞRAF", "KAMERA", "TABLET", "KLAVYE", "FARE", "KABLO", "ŞARJ",
+            "ELEKTRİK", "IŞIK", "LAMBA", "GÖZLÜK", "YÜZÜK", "KOLYE", "KÜPE", "ŞAPKA", "ATKI", "ELDİVEN", "AYAKKABI", "ÇORAP", "PANTOLON", "GÖMLEK", "KAZAK", "MONT", "CEKET", "KABAN", "YAĞMURLUK", "ŞEMSİYE", "ÇANTA", "ANAHTAR",
+            "KİLİT", "KAPI", "DUVAR", "TAVAN", "ZEMİN", "HALI", "KOLTUK", "YATAK", "YASTIK", "YORGAN", "BATTANİYE", "HAVLU", "SABUN", "ŞAMPUAN", "FIRÇA", "MACUN", "AYNA", "TARAK", "MAKAS", "BIÇAK", "ÇATAL", "KAŞIK", "TABAK",
+            "TENCERE", "TAVA", "ÇAYDANLIK", "OCAK", "FIRIN", "BUZDOLABI", "BULAŞIK", "ÇAMAŞIR", "ÜTÜ", "SÜPÜRGE", "KUTU", "ŞİŞE", "KAVANOZ", "POŞET", "SEPET", "KAFES", "AKVARYUM", "KEDİ", "KÖPEK", "KUŞ", "BALIK", "TAVŞAN",
+            "HAMSTER", "KAPLUMBAĞA", "YILAN", "KERTENKELE", "ÖRÜMCEK", "KARINCA", "SİNEK", "SİVRİSİNEK", "KELEBEK", "BÖCEK", "SOLUCAN", "SALYANGOZ", "YARASA", "SİNCAP", "TİLKİ", "KURT", "AYI", "ASLAN", "KAPLAN", "LEOPAR",
+            "ÇİTA", "FİL", "ZÜRAFA", "GERGEDAN", "SUAYGIRI", "ZEBRA", "MAYMUN", "GORİL", "ŞEMPANZE", "ORANGUTAN", "KANGURU", "KOALA", "PANDA", "KUTUPAYISI", "PENGUEN", "YUNUS", "BALİNA", "KÖPEKBALIĞI", "AHTAPOT", "YENGEÇ",
+            "ISTAKOZ", "DOMATES", "BİBER", "PATLICAN", "KABAK", "HAVUÇ", "PATATES", "SOĞAN", "SARIMSAK", "LAHANA", "MARUL", "ISPANAK", "PIRASA", "KEREVİZ", "BROKOLİ", "KARNABAHAR", "MANTAR", "ARMUT", "MUZ", "ÇİLEK", "KİRAZ",
+            "VİŞNE", "ŞEFTALİ", "KAYISI", "ERİK", "ÜZÜM", "KAVUN", "KARPUZ", "PORTAKAL", "MANDALİNA", "LİMON", "GREYFURT", "İNCİR", "CEVİZ", "FISTIK", "BADEM", "LEBLEBİ", "ÇEKİRDEK", "MISIR", "BUĞDAY", "ARPA", "YULAF", "PİRİNÇ",
+            "MERCİMEK", "NOHUT", "FASULYE", "BEZELYE", "BARBUNYA", "SÜT", "YOĞURT", "PEYNİR", "TEREYAĞI", "ZEYTİNYAĞI", "AYÇİÇEK", "ŞEKER", "TUZ", "KİMYON", "NANE", "KEKİK", "TARÇIN", "VANİLYA", "KAKAO", "ÇİKOLATA", "LOKUM",
+            "HELVA", "BAKLAVA", "KADAYIF", "KÜNEFE", "SÜTLAÇ", "MUHALLEBİ", "AŞURE", "DONDURMA", "PASTA", "KURABİYE", "BÖREK", "POĞAÇA", "SİMİT", "EKMEK", "PİDE", "LAHMACUN", "KEBAP", "DÖNER", "KÖFTE", "SUCUK", "PASTIRMA",
+            "SOSİS", "SALAM", "JAMBON", "TAVUK", "HİNDİ", "DANA", "KOYUN", "KUZU", "KEÇİ", "İNEK", "DEVE", "EŞEK", "GEYİK", "CEYLAN", "KARACA", "VAŞAK", "PANTER", "KARTAL", "ŞAHİN", "DOĞAN", "ATMACA", "BAYKUŞ", "KUZGUN", "KARGA",
+            "MARTI", "LEYLEK", "ÖRDEK", "KUĞU", "PELİKAN", "FLAMİNGO", "DEVEKUŞU", "TAVUSKUŞU", "HOROZ", "PAPAĞAN", "KANARYA", "BÜLBÜL", "GÜVERCİN", "SERÇE", "KIRLANGIÇ", "AĞAÇKAKAN", "KESTANE", "KAVAK", "SÖĞÜT", "ÇINAR",
+            "MEŞE", "AKÇAAĞAÇ", "IHLAMUR", "ÇAM", "KÖKNAR", "LADİN", "SELVİ", "ZEYTİN", "TURUNÇ", "AYVA", "KİVİ", "ANANAS", "AVOKADO", "MANGO", "BÖĞÜRTLEN", "AHUDUDU", "YABANMERSİNİ", "KUŞBURNU", "GÜL", "LALE", "SÜMBÜL",
+            "NERGİS", "KARANFİL", "MENEKŞE", "PAPATYA", "ZAMBAK", "ORKİDE", "MANOLYA", "YASEMİN", "BEGONYA", "SARDUNYA", "KAMELYA", "AÇELYA", "KAKTÜS", "FESLEĞEN", "BİBERİYE", "ADAÇAYI", "LAVANTA", "REZENE", "ANASON",
+            "ÇÖREKOTU", "SUSAM", "HAŞHAŞ", "KETEN", "PAMUK", "TÜTÜN", "ŞEKERKAMIŞI", "ŞEKERPANCARI"
+        ];
 
         this.state = {
             status: 'lobby', // lobby, playing, voting, finished
@@ -114,18 +136,23 @@ class GameManager {
             });
         }
 
+        const masumInput = document.getElementById('masum-word-input');
         const btnSubmitMasum = document.getElementById('btn-submit-masum');
-        if(btnSubmitMasum) {
-            btnSubmitMasum.addEventListener('click', () => {
-                const word = document.getElementById('masum-word-input').value.trim();
+        if(btnSubmitMasum && masumInput) {
+            const submitMasum = () => {
+                const word = masumInput.value.trim();
                 if(word.length === 0) return;
                 this.handleLocalSubmission(word);
+            };
+            btnSubmitMasum.addEventListener('click', submitMasum);
+            masumInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') submitMasum();
             });
         }
 
         const btnSubmitEbe = document.getElementById('btn-submit-ebe');
         if(btnSubmitEbe) {
-            btnSubmitEbe.addEventListener('click', () => {
+            const submitEbe = () => {
                 const guesses = [
                     document.getElementById('ebe-guess-1').value.trim(),
                     document.getElementById('ebe-guess-2').value.trim(),
@@ -135,10 +162,20 @@ class GameManager {
                 ].filter(g => g.length > 0);
 
                 if(guesses.length === 0) {
-                    showToast("En az bir tahmin yapmalısın!", "warning");
+                    window.showToast("En az bir tahmin yapmalısın!", "warning");
                     return;
                 }
                 this.handleLocalEbeSubmission(guesses);
+            };
+            btnSubmitEbe.addEventListener('click', submitEbe);
+            
+            [1,2,3,4,5].forEach(i => {
+                const input = document.getElementById(`ebe-guess-${i}`);
+                if(input) {
+                    input.addEventListener('keypress', (e) => {
+                        if(e.key === 'Enter') submitEbe();
+                    });
+                }
             });
         }
     }
@@ -146,7 +183,7 @@ class GameManager {
     startGame() {
         const playerIds = Object.keys(this.state.players);
         if(playerIds.length < 3) {
-            showToast("Oynamak için en az 3 oyuncu gerekiyor!", "error");
+            window.showToast("Oynamak için en az 3 oyuncu gerekiyor!", "error");
             return;
         }
 
@@ -171,6 +208,7 @@ class GameManager {
         this.state.submittedWords = {};
         this.state.ebeGuesses = [];
         this.state.revealedLetters = 1;
+        this.state.status = 'playing';
 
         // Rastgele Ebe Seçimi
         const playerIds = Object.keys(this.state.players);
@@ -248,7 +286,7 @@ class GameManager {
     // Masumun kendi kelimesini göndermesi
     handleLocalSubmission(word) {
         document.getElementById('btn-submit-masum').disabled = true;
-        showToast("Kelime gönderildi, diğerleri bekleniyor...", "info");
+        window.showToast("Kelime gönderildi, diğerleri bekleniyor...", "info");
 
         if(NetworkManager.isHost()) {
             this.state.submittedWords[NetworkManager.getMyId()] = word;
@@ -261,7 +299,7 @@ class GameManager {
     // Ebe'nin tahminlerini göndermesi
     handleLocalEbeSubmission(guesses) {
         document.getElementById('btn-submit-ebe').disabled = true;
-        showToast("Tahminler gönderildi!", "info");
+        window.showToast("Tahminler gönderildi!", "info");
 
         if(NetworkManager.isHost()) {
             this.state.ebeGuesses = guesses;
@@ -273,12 +311,14 @@ class GameManager {
 
     // Host: Uzaktan masum kelimesi geldi
     handleRemoteSubmission(peerId, word) {
+        if (peerId === this.state.currentEbe) return; // Ebe cannot submit masum word
         this.state.submittedWords[peerId] = word;
         this.checkAllSubmissions();
     }
 
     // Host: Uzaktan ebe tahminleri geldi
     handleRemoteGuesses(peerId, guesses) {
+        if (peerId !== this.state.currentEbe) return; // Masum cannot submit ebe guesses
         this.state.ebeGuesses = guesses;
         this.checkAllSubmissions();
     }
@@ -287,12 +327,13 @@ class GameManager {
         if(!NetworkManager.isHost()) return;
 
         const playerIds = Object.keys(this.state.players);
-        const masumCount = playerIds.length - 1; // 1 kişi ebe
+        const activeMasums = playerIds.filter(id => id !== this.state.currentEbe && !this.state.players[id].disconnected);
+        const masumCount = activeMasums.length;
 
-        const receivedMasumWords = Object.keys(this.state.submittedWords).length;
+        const receivedMasumWords = activeMasums.filter(id => this.state.submittedWords[id]).length;
         const ebeSubmitted = this.state.ebeGuesses.length > 0;
 
-        if(receivedMasumWords === masumCount && ebeSubmitted) {
+        if(receivedMasumWords >= masumCount && ebeSubmitted) {
             this.evaluateRound();
         }
     }
@@ -300,6 +341,8 @@ class GameManager {
     evaluateRound() {
         if(!NetworkManager.isHost()) return;
         if(this.state.status !== 'playing') return; // Çoklu tetiklenmeyi önle
+        
+        this.state.status = 'evaluating';
 
         const masumWords = Object.values(this.state.submittedWords);
         const ebeGuesses = this.state.ebeGuesses;
@@ -322,10 +365,10 @@ class GameManager {
         if(isJackpot) {
             resultMsg = "JACKPOT! Masumlar ana kelimeyi buldu!";
             jackpotWinners.forEach(id => {
-                this.state.players[id].score += this.state.settings.jackpotPts;
+                if(this.state.players[id]) this.state.players[id].score += this.state.settings.jackpotPts;
             });
             NetworkManager.broadcast({ type: 'PLAY_SOUND', sound: 'correct' });
-            if(typeof playSound === 'function') playSound('correct');
+            if(window.PairaAudio) window.PairaAudio.play('correct');
         } else {
             // 2. Masum eşleşmesi
             let masumMatch = false;
@@ -360,17 +403,21 @@ class GameManager {
                 if(ebeCaught) {
                     isEbeWin = true;
                     resultMsg = "EBE KAZANDI! Masumların eşleştiği kelimeyi ("+matchedWord+") bildi.";
-                    this.state.players[this.state.currentEbe].score += this.state.settings.ebeWinPts;
+                    if(this.state.players[this.state.currentEbe]) {
+                        this.state.players[this.state.currentEbe].score += this.state.settings.ebeWinPts;
+                    }
                     NetworkManager.broadcast({ type: 'PLAY_SOUND', sound: 'taboo' });
-                    if(typeof playSound === 'function') playSound('taboo');
+                    if(window.PairaAudio) window.PairaAudio.play('taboo');
                 } else {
                     isMasumWin = true;
                     resultMsg = "MASUMLAR KAZANDI! Eşleştiler ("+matchedWord+") ama Ebe bulamadı.";
                     matchedPeers.forEach(id => {
-                        this.state.players[id].score += this.state.settings.masumWinPts;
+                        if(this.state.players[id]) {
+                            this.state.players[id].score += this.state.settings.masumWinPts;
+                        }
                     });
                     NetworkManager.broadcast({ type: 'PLAY_SOUND', sound: 'correct' });
-                    if(typeof playSound === 'function') playSound('correct');
+                    if(window.PairaAudio) window.PairaAudio.play('correct');
 
                     // Ödül: Harf aç
                     this.state.revealedLetters++;
@@ -378,7 +425,7 @@ class GameManager {
             } else {
                 resultMsg = "Masumlar kendi aralarında eşleşemedi!";
                 NetworkManager.broadcast({ type: 'PLAY_SOUND', sound: 'pass' });
-                if(typeof playSound === 'function') playSound('pass');
+                if(window.PairaAudio) window.PairaAudio.play('pass');
             }
         }
 
@@ -401,6 +448,7 @@ class GameManager {
             this.state.round++;
             if(!isJackpot && !isEbeWin && isMasumWin) {
                 // Masum kazandıysa tur devam eder, süre artar
+                this.state.status = 'playing';
                 this.state.endTime = window.PairaTime.now() + (this.state.timeIncrease * 1000);
                 this.state.submittedWords = {};
                 this.state.ebeGuesses = [];
@@ -418,6 +466,7 @@ class GameManager {
         if(!NetworkManager.isHost()) return;
 
         if(this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        this.state.status = 'evaluating';
 
         NetworkManager.broadcast({ type: 'ACTION', action: 'SHOW_RESULT', msg: reasonMsg });
         this.processAction('SHOW_RESULT', null, reasonMsg);
@@ -429,7 +478,7 @@ class GameManager {
 
     processAction(action, peerId, payload = null) {
         if(action === 'SHOW_RESULT') {
-            showToast(payload, "info");
+            window.showToast(payload, "info");
             const gs = document.getElementById('game-status-message');
             if(gs) {
                 gs.innerText = payload;
@@ -450,12 +499,14 @@ function updateUI() {
         pList.innerHTML = '';
         Object.values(state.players).forEach(p => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === NetworkManager.getMyId() ? '(Sen)' : ''}</span> <strong>${p.score} Puan</strong>`;
+            const dis = p.disconnected ? ' <span style="color:var(--danger);font-size:0.8em;">(Koptu)</span>' : '';
+            li.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === NetworkManager.getMyId() ? '(Sen)' : ''}${dis}</span> <strong>${p.score} Puan</strong>`;
+            if (p.disconnected) li.style.opacity = '0.5';
             pList.appendChild(li);
         });
 
         const count = document.getElementById('player-count');
-        if(count) count.innerText = Object.keys(state.players).length;
+        if(count) count.innerText = Object.keys(state.players).filter(id => !state.players[id].disconnected).length;
     }
 
     // Oyun İçi UI
@@ -497,58 +548,13 @@ function showScreen(screenId) {
     });
 }
 
-function showToast(msg, type = "info") {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-}
-
-// Ses Fonksiyonları (Basit)
-let audioCtx = null;
-function initAudio() {
-    if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
-    }
-    if (audioCtx?.state === 'suspended') audioCtx.resume();
-}
-function playSound(type) {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    if (type === 'correct') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-    } else if (type === 'taboo') { // Hata sesi olarak kullanalım
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-    } else if (type === 'pass') { // Nötr/Geçiş sesi
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-    }
-}
-
 // Başlat
 document.addEventListener('DOMContentLoaded', () => {
     window.gameApp = new GameManager();
     window.gameApp.initEventListeners();
-    document.body.addEventListener('click', initAudio, { once: true });
+    document.body.addEventListener('click', () => {
+        if(window.PairaAudio) window.PairaAudio.init();
+    }, { once: true });
 
     // Lobiye Dön Butonu
     const btnBack = document.getElementById('btn-back-to-lobby');

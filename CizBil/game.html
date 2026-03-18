@@ -34,13 +34,13 @@
             <div class="lobby-grid">
                 <!-- Sol Panel: Oyuncular -->
                 <aside class="players-panel card">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-bg); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
                 <!-- Sağ Panel: Kurucu Ayarları -->
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyun Ayarları</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-bg); padding-bottom: 12px;">Oyun Ayarları</h3>
                     <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Hedef Puan</label><input type="number" id="target-score" value="50" min="10" max="200"></div>
@@ -76,13 +76,13 @@
 
             <div class="cizbil-layout">
                 <div class="game-area">
-                    <div class="canvas-container" style="position: relative; width: 100%; background: #fff; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; border: 4px solid var(--border-color);">
-                        <canvas id="drawing-board" width="800" height="450" style="display: block; width: 100%; height: auto; aspect-ratio: 16/9;"></canvas>
+                    <div class="canvas-container">
+                        <canvas id="drawing-board" width="800" height="450"></canvas>
                         <!-- Canvas overlay for guessers indicating they can't draw -->
                         <div id="canvas-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; pointer-events:all; cursor:not-allowed;"></div>
                         <!-- Word choice overlay for drawer -->
-                        <div id="word-choice-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-                            <div style="color: #fff; font-size: 1.5rem; margin-bottom: 2rem; font-weight: bold; text-align: center;">Çizeceğin Kelimeyi Seç</div>
+                        <div id="word-choice-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background: var(--overlay-bg); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+                            <div style="color: var(--text-main); font-size: 1.5rem; margin-bottom: 2rem; font-weight: bold; text-align: center;">Çizeceğin Kelimeyi Seç</div>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
                                 <button class="btn btn-primary" id="btn-choice-1">Kelime 1</button>
                                 <button class="btn btn-primary" id="btn-choice-2">Kelime 2</button>
@@ -91,25 +91,25 @@
                     </div>
 
                     <!-- Only visible to drawer -->
-                    <div class="toolbar card" id="toolbar" style="display: none; width: 100%; margin-top: 1rem; padding: 1rem; flex-direction: row; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                        <div class="color-picker" id="color-picker" style="display: flex; gap: 8px;">
-                            <div class="color-swatch active" style="background: #000000; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #fff;" data-color="#000000"></div>
-                            <div class="color-swatch" style="background: #e74c3c; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#e74c3c"></div>
-                            <div class="color-swatch" style="background: #3498db; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#3498db"></div>
-                            <div class="color-swatch" style="background: #2ecc71; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#2ecc71"></div>
-                            <div class="color-swatch" style="background: #f1c40f; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#f1c40f"></div>
-                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#ffffff"></div> <!-- Eraser -->
-                            <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); display: flex; align-items: center; justify-content: center; position: relative; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#ff0000" title="Özel Renk">
+                    <div class="toolbar" id="toolbar" style="display: none;">
+                        <div class="color-picker" id="color-picker">
+                            <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                            <div class="color-swatch" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                            <div class="color-swatch" style="background: #3498db;" data-color="#3498db"></div>
+                            <div class="color-swatch" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                            <div class="color-swatch" style="background: #f1c40f;" data-color="#f1c40f"></div>
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;" data-color="#ffffff"></div> <!-- Eraser -->
+                            <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); display: flex; align-items: center; justify-content: center; position: relative;" data-color="#ff0000" title="Özel Renk">
                                 <span style="color: white; font-weight: bold; pointer-events: none; text-shadow: 0 0 2px black;">+</span>
                                 <input type="color" class="custom-color-input" value="#ff0000" style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
                             </div>
                         </div>
 
-                        <div class="size-picker" id="size-picker" style="display: flex; gap: 8px; align-items: center;">
-                            <div class="size-btn" data-size="3" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 4px; height: 4px; background: white; border-radius: 50%;"></div></div>
-                            <div class="size-btn active" data-size="8" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid white; display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>
-                            <div class="size-btn" data-size="15" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 14px; height: 14px; background: white; border-radius: 50%;"></div></div>
-                            <div class="size-btn" data-size="25" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 20px; height: 20px; background: white; border-radius: 50%;"></div></div>
+                        <div class="size-picker" id="size-picker">
+                            <div class="size-btn" data-size="3"><div class="size-dot" style="width: 4px; height: 4px;"></div></div>
+                            <div class="size-btn active" data-size="8"><div class="size-dot" style="width: 8px; height: 8px;"></div></div>
+                            <div class="size-btn" data-size="15"><div class="size-dot" style="width: 14px; height: 14px;"></div></div>
+                            <div class="size-btn" data-size="25"><div class="size-dot" style="width: 20px; height: 20px;"></div></div>
                         </div>
 
                         <div class="tool-picker" id="tool-picker" style="display: flex; gap: 8px;">
@@ -143,7 +143,7 @@
 
                 <div class="sidebar">
                     <div class="chat-panel card" style="display: flex; flex-direction: column; height: 300px; padding: 1rem;">
-                        <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Tahminler</div>
+                        <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid var(--btn-secondary-bg); padding-bottom: 0.5rem;">Tahminler</div>
                         <div class="messages-container custom-scrollbar" id="messages-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;"></div>
                         <div class="chat-input-wrapper" style="display: flex; gap: 8px;">
                             <input type="text" id="chat-input" class="game-input" placeholder="Tahmin yaz..." autocomplete="off" style="flex: 1; padding: 12px; border-radius: 8px;">
@@ -154,7 +154,7 @@
                     </div>
 
                     <div class="leaderboard card" style="margin-top: 1rem; padding: 1rem;">
-                        <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Skorlar</div>
+                        <div style="font-weight: bold; margin-bottom: 0.5rem; border-bottom: 1px solid var(--btn-secondary-bg); padding-bottom: 0.5rem;">Skorlar</div>
                         <ul class="leaderboard-list custom-scrollbar" id="game-scores-list" style="list-style: none; padding: 0; max-height: 200px; overflow-y: auto;"></ul>
                     </div>
                 </div>

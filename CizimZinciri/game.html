@@ -32,12 +32,12 @@
 
             <div class="lobby-grid">
                 <aside class="players-panel card">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyun Ayarları</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyun Ayarları</h3>
                     <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Tur Sayısı</label><input type="number" id="round-count" value="3" min="1" max="10"></div>
@@ -69,7 +69,7 @@
                     <h3 id="prompt-instruction" style="text-align: center; color: var(--text-main);">Komik bir cümle yaz!</h3>
 
                     <!-- Sadece tahmin ekranında gösterilecek önceki çizim -->
-                    <div id="previous-drawing-container" style="display: none; width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.1);">
+                    <div id="previous-drawing-container" style="display: none; width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--btn-secondary-border);">
                         <img id="previous-drawing" src="" alt="Önceki Çizim" style="width: 100%; height: auto; display: block; background: white;">
                     </div>
 
@@ -81,28 +81,29 @@
                 <div id="draw-container" class="card" style="width: 100%; max-width: 800px; display: none; flex-direction: column; gap: 15px; padding: 10px;">
                     <div style="text-align: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; color: var(--warning);" id="word-to-draw">ÇİZİLECEK KELİME</div>
 
-                    <div class="canvas-container" style="width: 100%; background: #fff; border-radius: 8px; overflow: hidden; cursor: crosshair; touch-action: none; border: 2px solid var(--border-color);">
-                        <canvas id="drawing-board" width="800" height="450" style="display: block; width: 100%; height: auto; aspect-ratio: 16/9;"></canvas>
+                    <div class="canvas-container">
+                        <canvas id="drawing-board" width="800" height="450"></canvas>
                     </div>
 
-                    <div class="toolbar" id="toolbar" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                        <div class="color-picker" id="color-picker" style="display: flex; gap: 8px;">
-                            <div class="color-swatch active" style="background: #000000; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #fff;" data-color="#000000"></div>
-                            <div class="color-swatch" style="background: #e74c3c; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#e74c3c"></div>
-                            <div class="color-swatch" style="background: #3498db; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#3498db"></div>
-                            <div class="color-swatch" style="background: #2ecc71; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#2ecc71"></div>
-                            <div class="color-swatch" style="background: #f1c40f; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#f1c40f"></div>
-                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#ffffff"></div>
-                            <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); display: flex; align-items: center; justify-content: center; position: relative; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" data-color="#ff0000" title="Özel Renk">
+                    <div class="toolbar" id="toolbar">
+                        <div class="color-picker" id="color-picker">
+                            <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                            <div class="color-swatch" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                            <div class="color-swatch" style="background: #3498db;" data-color="#3498db"></div>
+                            <div class="color-swatch" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                            <div class="color-swatch" style="background: #f1c40f;" data-color="#f1c40f"></div>
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;" data-color="#ffffff"></div>
+                            <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); display: flex; align-items: center; justify-content: center; position: relative;" data-color="#ff0000" title="Özel Renk">
                                 <span style="color: white; font-weight: bold; pointer-events: none; text-shadow: 0 0 2px black;">+</span>
                                 <input type="color" class="custom-color-input" value="#ff0000" style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
                             </div>
                         </div>
 
-                        <div class="size-picker" id="size-picker" style="display: flex; gap: 8px; align-items: center;">
-                            <div class="size-btn" data-size="3" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 4px; height: 4px; background: white; border-radius: 50%;"></div></div>
-                            <div class="size-btn active" data-size="8" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid white; display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>
-                            <div class="size-btn" data-size="15" style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer;"><div style="width: 14px; height: 14px; background: white; border-radius: 50%;"></div></div>
+                        <div class="size-picker" id="size-picker">
+                            <div class="size-btn" data-size="3" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 4px; height: 4px;"></div></div>
+                            <div class="size-btn active" data-size="8" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 8px; height: 8px;"></div></div>
+                            <div class="size-btn" data-size="15" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 14px; height: 14px;"></div></div>
+                            <div class="size-btn" data-size="25" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 20px; height: 20px;"></div></div>
                         </div>
 
                         <div class="tool-picker" id="tool-picker" style="display: flex; gap: 8px;">
@@ -161,7 +162,9 @@
     </main>
 
     <script src="../shared/shared.js"></script>
+    <script src="../shared/peer_manager.js"></script>
     <script src="../shared/drawing.js"></script>
+    <script src="../shared/cizbil_words.js"></script>
     <script src="network.js" type="module"></script>
     <script src="game.js" type="module"></script>
 

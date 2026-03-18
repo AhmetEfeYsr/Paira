@@ -36,13 +36,13 @@
 
             <div class="lobby-grid">
                 <aside class="players-panel card" style="display: flex; flex-direction: column;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 0;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 0;">Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar" style="flex-grow: 1; margin: 12px 0;"></ul>
                 </aside>
 
                 <!-- HOST SETTINGS -->
                 <section class="settings-panel card custom-scrollbar host-only hidden" id="host-settings" style="overflow-y: auto; display: flex; flex-direction: column;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 15px;">Ayarlar</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 15px;">Ayarlar</h3>
 
                     <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -106,8 +106,8 @@
                     <div class="center-category-row">
                         <span class="center-label">Kategori:</span>
                         <div id="current-category-name" class="center-category-text">Yükleniyor...</div>
-                        <div id="turn-indicator" style="font-size: 0.9rem; font-weight: 500; margin-top: 5px; background: rgba(0,0,0,0.5); padding: 2px 10px; border-radius: 10px;">
-                            <span id="turn-indicator-text" style="color: var(--text-color);">Bekleniyor...</span>
+                        <div id="turn-indicator" style="font-size: 0.9rem; font-weight: 500; margin-top: 5px; background: var(--input-bg); padding: 2px 10px; border-radius: 10px;">
+                            <span id="turn-indicator-text" style="color: var(--text-main);">Bekleniyor...</span>
                         </div>
                     </div>
 
@@ -130,25 +130,6 @@
             </div>
         </section>
 
-        <!-- OYLAMA EKRANI -->
-        <section id="voting-screen" class="view-state hidden">
-            <header class="game-topbar card" style="justify-content: center; flex-direction: column; text-align: center;">
-                <h2 style="margin: 0;">Tur Sonu Oylaması</h2>
-                <p class="text-muted" style="margin-top: 5px;">Cevaplar otomatik kontrol edildi. Puanları oylayarak nihai kararı verin.</p>
-            </header>
-
-            <div class="card voting-container custom-scrollbar" id="voting-container" style="flex: 1; overflow-y: auto; margin-top: 15px; background: transparent; border: none; box-shadow: none; padding: 0;">
-                <!-- Voting blocks injected here -->
-            </div>
-
-            <div class="voting-actions card" style="margin-top: 15px; padding: 15px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                <div style="display: flex; gap: 15px; width: 100%; max-width: 500px;">
-                    <button id="btn-submit-votes" class="btn btn-primary" style="flex: 1; padding: 14px; font-size: 1.1rem;">Oyları Gönder</button>
-                    <button id="btn-bypass-votes" class="btn btn-secondary" style="flex: 1; padding: 14px; font-size: 1.1rem;">(Geç) Önerilenlerle</button>
-                </div>
-                <p id="voting-status-text" class="text-muted" style="margin: 0; font-weight: 500;"></p>
-            </div>
-        </section>
 
         <!-- PUAN DURUMU EKRANI -->
         <section id="score-screen" class="view-state hidden">

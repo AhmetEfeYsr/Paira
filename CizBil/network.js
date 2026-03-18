@@ -20,6 +20,11 @@ export let networkState = {
 
 document.addEventListener('DOMContentLoaded', () => {
     initLobby();
+    
+    // Initialize audio context on first user interaction
+    document.addEventListener('click', () => {
+        if (window.PairaAudio) window.PairaAudio.init();
+    }, { once: true });
 });
 
 function initLobby() {
@@ -228,8 +233,31 @@ function setupClient(playerName, roomCode, storedMyId) {
 
 export function broadcastState(lastAction = null) {
     if (!isHost) return;
-    const payload = { type: 'SYNC_STATE', state: networkState, lastAction };
-    Object.values(connections).forEach(c => c.send(payload));
+    
+    Object.values(connections).forEach(c => {
+        const isCurrentDrawer = (c.peer === networkState.currentDrawer);
+        
+        // Create a safe copy of the state
+        const safeState = JSON.parse(JSON.stringify(networkState));
+        safeState.wordsLeft = []; // Save bandwidth and prevent peeking
+        
+        if (!isCurrentDrawer && safeState.state === 'PLAYING') {
+            if (lastAction?.action === 'ROUND_END' || lastAction?.action === 'END_GAME') {
+                safeState.currentWord = lastAction.revealWord || networkState.currentWord;
+            } else if (safeState.currentWord) {
+                // Sadece kelimenin harf sayısını gönder (Gizli tut)
+                safeState.currentWord = safeState.currentWord.replace(/[^\s]/g, '_ ');
+            }
+        }
+        
+        let safeLastAction = lastAction;
+        if (lastAction?.action === 'WORD_CHOICE' && !isCurrentDrawer) {
+            safeLastAction = { ...lastAction, choices: null }; // Seçenekleri gizle
+        }
+
+        const payload = { type: 'SYNC_STATE', state: safeState, lastAction: safeLastAction };
+        c.send(payload);
+    });
 
     // Local host UI update
     if (networkState.state === 'LOBBY') updateLobbyUI();
@@ -267,20 +295,40 @@ function handleAction(data, senderId) {
             // Prevent guessing while word is being chosen
             if (!networkState.currentWord) return;
 
-            if (isMatch(text, networkState.currentWord)) {
-                // Correct guess
-                const points = 10; // Simple scoring
-                networkState.players[senderId].score += points;
+            if (networkState.guessedCorrectly && networkState.guessedCorrectly.includes(senderId)) return;
 
-                // Optional: give drawer points too
-                networkState.players[networkState.currentDrawer].score += Math.floor(points / 2);
+            if (isMatch(text, networkState.currentWord)) {
+                if (!networkState.guessedCorrectly) networkState.guessedCorrectly = [];
+                networkState.guessedCorrectly.push(senderId);
+
+                const activeGuessersCount = Object.keys(networkState.players).filter(id => (connections[id]?.open || id === myId) && id !== networkState.currentDrawer).length;
+                const guessOrder = networkState.guessedCorrectly.length; 
+                const maxPoints = 15;
+                const minPoints = 5;
+                let points = Math.max(minPoints, maxPoints - ((guessOrder - 1) * 2));
+
+                networkState.players[senderId].score += points;
+                networkState.players[networkState.currentDrawer].score += Math.floor(points / 3); 
 
                 const winMsg = { type: 'GUESS', name: senderName, text: text, isCorrect: true };
                 Object.values(connections).forEach(c => c.send(winMsg));
                 handleChatEvent(winMsg);
 
-                // Broadcast score update and maybe end round
-                checkWinOrNextRound();
+                if (networkState.guessedCorrectly.length >= activeGuessersCount) {
+                    checkWinOrNextRound();
+                } else if (networkState.guessedCorrectly.length === 1 && turnTimeout) {
+                    clearTimeout(turnTimeout);
+                    turnTimeout = setTimeout(() => {
+                        showToast("Süre bitti!", "warning");
+                        checkWinOrNextRound();
+                    }, 10000);
+                    
+                    const fastTimerMsg = { type: 'SYNC_STATE', state: networkState, lastAction: { action: 'FAST_TIMER', duration: 10 } };
+                    Object.values(connections).forEach(c => c.send(fastTimerMsg));
+                    if (isHost) handlePlayingState(fastTimerMsg.lastAction);
+                } else {
+                    broadcastState();
+                }
             } else {
                 // Normal chat message
                 const msg = { type: 'GUESS', name: senderName, text: text, isCorrect: false };
@@ -418,10 +466,10 @@ function checkWinOrNextRound() {
 
     if (winner) {
         networkState.state = 'END';
-        broadcastState({ action: 'END_GAME', winner: winner });
+        broadcastState({ action: 'END_GAME', winner: winner, revealWord: networkState.currentWord });
     } else {
         // Short delay then start next round
-        broadcastState({ action: 'ROUND_END' });
+        broadcastState({ action: 'ROUND_END', revealWord: networkState.currentWord });
         setTimeout(() => startRound(), 3000);
     }
 }
@@ -444,12 +492,37 @@ function handlePlayingState(lastAction) {
     } else if (lastAction?.action === 'SWITCH_TO_GAME') {
         clearCanvas();
         updateGameStateUI();
+    } else if (lastAction?.action === 'FAST_TIMER') {
+        startTimer(lastAction.duration);
+        document.getElementById('game-status-message').textContent = 'Süre azaldı!';
     } else if (lastAction?.action === 'ROUND_END') {
         stopTimer();
-        document.getElementById('game-status-message').textContent = 'Tur bitti! Kelime: ' + networkState.currentWord;
+        document.getElementById('game-status-message').textContent = 'Tur bitti! Kelime: ' + (lastAction.revealWord || networkState.currentWord);
     } else if (lastAction?.action === 'END_GAME') {
         stopTimer();
-        alert('Oyun bitti! Kazanan: ' + lastAction.winner.name);
-        window.location.href = 'index.html';
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('winner-screen').classList.add('active');
+        document.getElementById('winner-screen').classList.remove('hidden');
+
+        if (window.PairaAudio) window.PairaAudio.play('end');
+        
+        const finalScores = document.getElementById('final-scores');
+        finalScores.innerHTML = '';
+        const sorted = Object.values(networkState.players).sort((a,b) => b.score - a.score);
+        sorted.forEach((p, index) => {
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.padding = '10px';
+            div.style.background = 'var(--item-bg)';
+            div.style.borderRadius = '8px';
+            div.innerHTML = `<span>${index + 1}. ${p.name}</span> <strong style="color:var(--neon-purple);">${p.score} Puan</strong>`;
+            finalScores.appendChild(div);
+        });
+
+        document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
     }
 }

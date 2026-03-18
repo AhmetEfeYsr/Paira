@@ -22,8 +22,8 @@
     width: 100%;
     padding: 16px;
     background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
+    border: 1px solid var(--lilac-muted);
+    color: var(--text-main);
     border-radius: 12px;
     font-size: 1.25rem;
     box-sizing: border-box;
@@ -31,7 +31,7 @@
 }
 
 .game-input-wrapper input:focus {
-    border-color: var(--primary-color);
+    border-color: var(--neon-purple);
     background: var(--glass-shadow);
     outline: none;
 }
@@ -69,95 +69,17 @@
 .scoreboard-table th, .scoreboard-table td {
     padding: 15px;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--lilac-muted);
 }
 
 .scoreboard-table th {
-    color: var(--secondary-color);
+    color: var(--lilac);
     font-weight: 600;
 }
 
 .scoreboard-table tr:hover {
     background: var(--input-bg);
 }
-
-/* Voting Screen */
-.voting-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding-right: 10px;
-}
-
-.vote-category-block {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 15px;
-    border: 1px solid var(--border-color);
-}
-
-.vote-category-title {
-    font-weight: 600;
-    color: var(--secondary-color);
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--input-bg);
-    padding-bottom: 5px;
-}
-
-.vote-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px dashed var(--btn-secondary-bg);
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.vote-item:last-child { border-bottom: none; }
-
-.vote-info { flex: 1; min-width: 200px; }
-.vote-player { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
-.vote-word { font-size: 1.15rem; font-weight: 600; color: var(--text-color); }
-
-.vote-counts-display {
-    display: flex;
-    gap: 10px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-top: 6px;
-}
-
-.vote-count-pill {
-    background: var(--input-bg);
-    padding: 2px 8px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-}
-
-.vote-controls {
-    display: flex;
-    gap: 8px;
-}
-
-.vote-btn {
-    background: var(--code-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    padding: 6px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font-main);
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.vote-btn:hover { background: var(--btn-secondary-bg); }
-.vote-btn.selected { box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3); }
-.vote-btn[data-val="0"].selected { background: var(--danger-color); border-color: #c0392b; color: white; }
-.vote-btn[data-val="5"].selected { background: #e67e22; border-color: #d35400; color: white;}
-.vote-btn[data-val="10"].selected { background: var(--success-color); border-color: #27ae60; color: white;}
 
 /* Status Dot in Lobby */
 .is-host::after {
@@ -175,7 +97,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 600px;
+    min-height: clamp(400px, 60vh, 600px);
     overflow: hidden;
 }
 
@@ -192,14 +114,14 @@
     gap: 8px;
     z-index: 10;
     text-align: center;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-bg);
     padding: 20px;
     border-radius: 50%;
     width: 320px;
     height: 320px;
-    box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.2);
+    box-shadow: 0 0 30px var(--neon-glow-rgba);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(var(--primary-rgb), 0.3);
+    border: 1px solid var(--neon-glow-rgba);
 }
 
 .center-letter-row {
@@ -233,15 +155,15 @@
 
 .center-letter {
     font-size: 3rem;
-    color: var(--secondary-color);
+    color: var(--neon-purple);
     line-height: 1;
-    text-shadow: 0 0 15px rgba(var(--secondary-rgb), 0.5);
+    text-shadow: 0 0 15px var(--neon-glow-rgba);
 }
 
 .center-category-text {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--text-main);
     text-align: center;
 }
 
@@ -274,9 +196,9 @@
     align-items: center;
     justify-content: center;
     background: var(--card-bg);
-    border: 2px solid var(--border-color);
+    border: 2px solid var(--lilac-muted);
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.15);
     transition: all 0.3s ease;
     opacity: 0.6;
     pointer-events: auto;
@@ -284,8 +206,8 @@
 
 .player-node.active-turn {
     opacity: 1;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.6);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 20px var(--neon-glow-rgba);
     transform: translate(-50%, -50%) scale(1.15);
     z-index: 20;
     animation: activePulse 2s infinite;
@@ -305,7 +227,7 @@
 .node-name {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--text-main);
     max-width: 80px;
     white-space: nowrap;
     overflow: hidden;
@@ -317,7 +239,7 @@
     font-size: 0.8rem;
     color: var(--lilac);
     font-weight: 800;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--input-bg);
     padding: 2px 8px;
     border-radius: 10px;
     margin-top: 4px;
@@ -338,11 +260,12 @@
 }
 
 #finish-status-text {
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--input-bg);
     padding: 4px 12px;
     border-radius: 8px;
     margin-bottom: 8px;
     backdrop-filter: blur(4px);
+    color: var(--text-muted);
 }
 
 .compact-input-group {
@@ -352,8 +275,8 @@
     background: var(--card-bg);
     padding: 10px;
     border-radius: 20px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border: 1px solid var(--lilac-muted);
+    box-shadow: 0 10px 25px var(--overlay-bg);
     backdrop-filter: blur(10px);
 }
 
@@ -363,14 +286,14 @@
     border: none;
     padding: 12px 20px;
     font-size: 1.2rem;
-    color: var(--text-color);
+    color: var(--text-main);
     border-radius: 12px;
     outline: none;
     text-align: center;
 }
 
 .compact-input:focus {
-    background: rgba(255,255,255,0.05);
+    background: var(--btn-secondary-bg);
 }
 
 .compact-input:disabled {

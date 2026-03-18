@@ -23,7 +23,7 @@ class PairaSharedUI {
     }
 
     updateLogos(themeName) {
-        const logos = document.querySelectorAll('.game-icon img');
+        const logos = document.querySelectorAll('.game-icon img, .game-logo-container img');
         logos.forEach(img => {
             const src = img.getAttribute('src');
             if (src && src.includes('logolar/')) {
@@ -48,6 +48,30 @@ class PairaSharedUI {
                 break;
             }
         }
+
+        // Top Navigation (Back Home + Theme Switcher)
+        const savedTheme = localStorage.getItem('paira_theme') || 'paira';
+        let topNavHTML = `<div class="floating-top-nav">`;
+        
+        // Sadece alt sayfalardaysa (Oyunlardaysa) ana sayfa butonunu goster
+        if (basePath === '../') {
+            topNavHTML += `
+                <a href="${basePath}index.html" class="btn btn-secondary nav-btn" title="Ana Sayfaya Dön">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span class="nav-text">Ana Sayfa</span>
+                </a>
+            `;
+        }
+
+        topNavHTML += `
+            <select class="theme-select-btn" onchange="window.pairaUI.switchTheme(this.value)">
+                <option value="paira" ${savedTheme === 'paira' ? 'selected' : ''}>Paira</option>
+                <option value="space" ${savedTheme === 'space' ? 'selected' : ''}>Space</option>
+                <option value="light" ${savedTheme === 'light' ? 'selected' : ''}>Light</option>
+            </select>
+        </div>`;
+
+        document.body.insertAdjacentHTML('afterbegin', topNavHTML);
 
         const footerHTML = `
         <footer class="app-footer">
@@ -139,6 +163,34 @@ class PairaSharedUI {
 
 window.pairaUI = new PairaSharedUI();
 
+window.showToast = function(msg, type = "info") {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
+    toast.style.borderLeftColor = colors[type] || colors.info;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    
+    // Play sound based on toast type if audio is initialized
+    if (window.PairaAudio && window.PairaAudio.ctx) {
+        if (type === 'error') window.PairaAudio.play('wrong');
+        else if (type === 'success') window.PairaAudio.play('correct');
+        else window.PairaAudio.play('tick');
+    }
+
+    setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) reverse forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+};
+
 window.PairaTime = {
     offset: 0,
     async sync() {
@@ -159,3 +211,68 @@ window.PairaTime = {
     }
 };
 window.PairaTime.sync();
+
+window.PairaAudio = {
+    ctx: null,
+    init() {
+        if (!this.ctx) {
+            try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
+        }
+        if (this.ctx?.state === 'suspended') this.ctx.resume();
+    },
+    play(type) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gainNode = this.ctx.createGain();
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1200; 
+
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        const now = this.ctx.currentTime;
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'taboo' || type === 'wrong') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(150, now + 0.3);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'tick') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.05, now + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'end') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(220, now + 0.5);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+            osc.start(now); osc.stop(now + 1.0);
+        } else if (type === 'pass') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        }
+    }
+};

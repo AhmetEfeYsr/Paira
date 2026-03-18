@@ -2,7 +2,7 @@
 
 .game-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 20px;
 }
 
@@ -73,12 +73,12 @@
 }
 
 .scoreboard-table th {
-    color: var(--secondary-color);
+    color: var(--lilac);
     font-weight: 600;
 }
 
 .scoreboard-table tr:hover {
-    background: var(--input-bg);
+    background: var(--item-hover-bg);
 }
 
 /* Voting Screen */
@@ -98,7 +98,7 @@
 
 .vote-category-title {
     font-weight: 600;
-    color: var(--secondary-color);
+    color: var(--lilac);
     margin-top: 0;
     margin-bottom: 10px;
     border-bottom: 1px solid var(--input-bg);
@@ -155,9 +155,9 @@
 
 .vote-btn:hover { background: var(--btn-secondary-bg); }
 .vote-btn.selected { box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3); }
-.vote-btn[data-val="0"].selected { background: var(--danger-color); border-color: #c0392b; color: white; }
-.vote-btn[data-val="5"].selected { background: #e67e22; border-color: #d35400; color: white;}
-.vote-btn[data-val="10"].selected { background: var(--success-color); border-color: #27ae60; color: white;}
+.vote-btn[data-val="0"].selected { background: var(--danger); border-color: var(--danger-hover); color: var(--bg-deep); }
+.vote-btn[data-val="5"].selected { background: var(--warning); border-color: var(--warning-hover); color: var(--bg-deep); }
+.vote-btn[data-val="10"].selected { background: var(--success); border-color: var(--success-hover); color: var(--bg-deep); }
 
 /* Status Dot in Lobby */
 .is-host::after {

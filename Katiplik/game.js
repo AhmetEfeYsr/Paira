@@ -1,0 +1,467 @@
+class KatiplikGame {
+    constructor() {
+        this.playerName = sessionStorage.getItem('playerName') || 'Misafir';
+        this.isHost = sessionStorage.getItem('isHost') === 'true';
+        this.isSolo = sessionStorage.getItem('isSolo') === 'true';
+        this.roomCode = sessionStorage.getItem('roomCode');
+        
+        // Oyun Değişkbirienleri
+        this.targetText = "";
+        this.words = [];
+        this.currentWordIndex = 0;
+        this.startTime = null;
+        this.timerInterval = null;
+        this.totalKeystrokes = 0;
+        this.correctKeystrokes = 0;
+        this.isFinished = false;
+        
+        // Rakip Durumu
+        this.opponentName = "Rakip";
+        this.opponentFinishedTime = null;
+        this.opponentWpm = 0;
+        this.opponentAccuracy = 0;
+
+        // Ağ Yöneticisi ve Sohbet
+        if (!this.isSolo) {
+            this.network = new KatiplikNetwork(this);
+            this.chat = new ChatManager(this.network, this.playerName);
+            this.network.initialize(this.isHost, this.roomCode);
+        } else {
+            this.setupSoloGame();
+        }
+
+        this.bindEvents();
+        this.updateUIPlayerNames();
+    }
+
+    bindEvents() {
+        const textInput = document.getElementById('text-input');
+        
+        textInput.addEventListener('input', (e) => this.handleTyping(e));
+        textInput.addEventListener('keydown', (e) => {
+            // Boşluk tuşu basıldığında
+            if (e.code === 'Space') {
+                e.preventDefault();
+                this.handleWordCompletion(textInput.value.trim());
+            }
+        });
+        
+        document.getElementById('btn-start-game')?.addEventListener('click', () => {
+            this.initGameWithSelectedCategory();
+        });
+
+        document.getElementById('btn-play-again')?.addEventListener('click', () => {
+            if (this.isSolo) {
+                this.resetGame();
+                this.loadCategories();
+            } else if (this.isHost) {
+                this.network.sendMessage({ type: 'play_again' });
+                this.resetGame();
+                this.loadCategories();
+            }
+        });
+
+        document.getElementById('btn-cancel-wait')?.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        const roomCodeDisplay = document.getElementById('display-room-code');
+        if (roomCodeDisplay) {
+            roomCodeDisplay.addEventListener('click', () => {
+                navigator.clipboard.writeText(roomCodeDisplay.textContent).then(() => {
+                    this.showToast('Oda kodu kopyalandı!', 'success');
+                });
+            });
+        }
+    }
+
+    updateUIPlayerNames() {
+        document.getElementById('p1-name').textContent = this.playerName;
+        if (this.isSolo) {
+            document.getElementById('player2-info').style.display = 'none';
+        } else {
+            document.getElementById('p2-name').textContent = this.isHost ? 'Bekleniyor...' : this.opponentName;
+        }
+    }
+
+    setupSoloGame() {
+        document.getElementById('waiting-overlay').style.display = 'none';
+        document.getElementById('app-container').style.display = 'flex';
+        this.loadCategories();
+    }
+
+    async loadCategories() {
+        document.getElementById('waiting-overlay').style.display = 'none';
+        document.getElementById('app-container').style.display = 'flex';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('typing-area').style.display = 'none';
+
+        if (this.isHost || this.isSolo) {
+            document.getElementById('category-selection').style.display = 'block';
+            
+            try {
+                const response = await fetch('tr.json');
+                const data = await response.json();
+                this.categories = data.categories;
+                this.renderCategories();
+            } catch (err) {
+                console.error("Kategoriler yüklenemedi", err);
+                this.showToast("Metinler yüklenemedi", "error");
+            }
+        } else {
+            document.getElementById('category-selection').style.display = 'none';
+        }
+    }
+
+    renderCategories() {
+        const grid = document.getElementById('category-grid');
+        const startBtn = document.getElementById('btn-start-game');
+        grid.innerHTML = '';
+        
+        this.selectedCategory = null;
+
+        this.categories.forEach(cat => {
+            const card = document.createElement('div');
+            card.className = 'category-card';
+            card.innerHTML = `
+                <h4>${cat.name}</h4>
+                <p style="font-size:0.9rem; color:var(--text-muted);">${cat.description}</p>
+            `;
+            
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                this.selectedCategory = cat;
+                startBtn.disabled = false;
+            });
+            
+            grid.appendChild(card);
+        });
+    }
+
+    initGameWithSelectedCategory() {
+        if (!this.selectedCategory) return;
+        
+        let text = this.selectedCategory.text;
+        const type = this.selectedCategory.type; // 'random' or 'sorted'
+        
+        const usePunctuation = document.getElementById('setting-punctuation')?.checked ?? true;
+        const normalizeTR = document.getElementById('setting-tr-chars')?.checked ?? false;
+        
+        // İşlemleri gerçekleştir
+        let words = text.split(/\s+/).filter(w => w.trim() !== "");
+        
+        if (!usePunctuation) {
+            words = words.map(w => w.replace(/[.,;!?'"()\[\]{}:]/g, ''));
+            // Noktalama kalkınca boş kalan kelimeler olabilir, onları temizle
+            words = words.filter(w => w.length > 0);
+        }
+        
+        if (normalizeTR) {
+            const trMap = {
+                'ı': 'i', 'İ': 'I',
+                'ş': 's', 'Ş': 'S',
+                'ğ': 'g', 'Ğ': 'G',
+                'ü': 'u', 'Ü': 'U',
+                'ö': 'o', 'Ö': 'O',
+                'ç': 'c', 'Ç': 'C',
+                'â': 'a', 'î': 'i', 'û': 'u'
+            };
+            words = words.map(w => w.replace(/[ıİşŞğĞüÜöÖçÇâîû]/g, match => trMap[match] || match));
+        }
+        
+        if (type === 'random') {
+            for (let i = words.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [words[i], words[j]] = [words[j], words[i]];
+            }
+        }
+        
+        const processedText = words.join(' ');
+        
+        if (!this.isSolo) {
+            this.network.sendMessage({
+                type: 'game_start',
+                text: processedText
+            });
+        }
+        
+        this.startGame(processedText);
+    }
+
+    startGame(text) {
+        document.getElementById('category-selection').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('waiting-rematch-text').style.display = 'none';
+        document.getElementById('typing-area').style.display = 'flex';
+        
+        this.targetText = text;
+        this.words = text.split(/\s+/).filter(w => w.trim() !== "");
+        this.currentWordIndex = 0;
+        this.totalKeystrokes = 0;
+        this.correctKeystrokes = 0;
+        this.isFinished = false;
+        
+        // Rakip sıfırlama
+        this.opponentFinishedTime = null;
+        this.opponentWpm = 0;
+        this.opponentAccuracy = 0;
+        document.getElementById('p2-progress').style.width = '0%';
+        document.getElementById('p2-wpm').textContent = '0 WPM';
+        
+        this.renderText();
+        
+        const textInput = document.getElementById('text-input');
+        textInput.disabled = false;
+        textInput.value = '';
+        textInput.focus();
+        
+        this.startTime = Date.now();
+        this.startTimer();
+    }
+
+    renderText() {
+        const display = document.getElementById('text-display');
+        display.innerHTML = '';
+        
+        this.words.forEach((word, index) => {
+            const span = document.createElement('span');
+            span.textContent = word + ' ';
+            span.className = 'word';
+            if (index === this.currentWordIndex) {
+                span.classList.add('current');
+            }
+            display.appendChild(span);
+        });
+    }
+
+    handleTyping(e) {
+        if (this.isFinished) return;
+        
+        const inputVal = e.target.value.trim();
+        const currentWord = this.words[this.currentWordIndex];
+        const displayWords = document.getElementById('text-display').children;
+        const wordSpan = displayWords[this.currentWordIndex];
+        
+        // Hata kontrolü
+        if (inputVal && !currentWord.startsWith(inputVal)) {
+            wordSpan.classList.add('error');
+        } else {
+            wordSpan.classList.remove('error');
+        }
+        
+        this.calculateWPM();
+        this.updateProgress();
+    }
+
+    handleWordCompletion(typedWord) {
+        if (!typedWord || this.isFinished) return;
+        
+        const expectedWord = this.words[this.currentWordIndex];
+        const displayWords = document.getElementById('text-display').children;
+        const wordSpan = displayWords[this.currentWordIndex];
+        
+        this.totalKeystrokes += typedWord.length + 1; // +1 for space
+        
+        wordSpan.classList.remove('current', 'error');
+        
+        if (typedWord === expectedWord) {
+            wordSpan.classList.add('correct');
+            this.correctKeystrokes += typedWord.length + 1;
+        } else {
+            wordSpan.classList.add('incorrect');
+        }
+        
+        this.currentWordIndex++;
+        
+        const textInput = document.getElementById('text-input');
+        textInput.value = '';
+        
+        if (this.currentWordIndex >= this.words.length) {
+            this.finishGame();
+        } else {
+            displayWords[this.currentWordIndex].classList.add('current');
+            // Kelime geçişinde WPM hesapla
+            this.calculateWPM();
+            this.updateProgress();
+        }
+    }
+
+    calculateWPM() {
+        if (!this.startTime || this.isFinished) {
+            const currentWpmText = document.getElementById('p1-wpm').textContent;
+            return parseInt(currentWpmText) || 0;
+        }
+        
+        const timeElapsed = (Date.now() - this.startTime) / 60000; // minutes
+        
+        if (timeElapsed < 0.05) return 0;
+        
+        const wpm = Math.round((this.correctKeystrokes / 5) / timeElapsed);
+        const finalWpm = isNaN(wpm) || wpm < 0 || !isFinite(wpm) ? 0 : wpm;
+        
+        document.getElementById('p1-wpm').textContent = `${finalWpm} WPM`;
+        return finalWpm;
+    }
+
+    updateProgress() {
+        const progress = (this.currentWordIndex / this.words.length) * 100;
+        document.getElementById('p1-progress').style.width = `${progress}%`;
+        
+        if (!this.isSolo) {
+            this.network.sendMessage({
+                type: 'progress_update',
+                progress: progress,
+                wpm: this.calculateWPM()
+            });
+        }
+    }
+
+    updateOpponentProgress(progress, wpm) {
+        document.getElementById('p2-progress').style.width = `${progress}%`;
+        document.getElementById('p2-wpm').textContent = `${wpm} WPM`;
+    }
+
+    startTimer() {
+        clearInterval(this.timerInterval);
+        const timerElement = document.getElementById('game-timer');
+        
+        this.timerInterval = setInterval(() => {
+            const timeElapsed = Math.floor((Date.now() - this.startTime) / 1000);
+            const minutes = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
+            const seconds = (timeElapsed % 60).toString().padStart(2, '0');
+            timerElement.textContent = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    finishGame() {
+        if (this.isFinished) return;
+        this.isFinished = true;
+        clearInterval(this.timerInterval);
+        
+        const textInput = document.getElementById('text-input');
+        textInput.disabled = true;
+        
+        const finalTime = Math.max(1, Math.floor((Date.now() - this.startTime) / 1000));
+        
+        this.isFinished = false; 
+        const finalWpm = this.calculateWPM();
+        this.isFinished = true;
+        
+        const accuracy = this.totalKeystrokes > 0 ? Math.round((this.correctKeystrokes / this.totalKeystrokes) * 100) : 0;
+        
+        if (!this.isSolo) {
+            this.network.sendMessage({
+                type: 'game_finished',
+                time: finalTime,
+                wpm: finalWpm,
+                accuracy: accuracy
+            });
+        }
+        
+        if (window.PairaAudio && window.PairaAudio.play) {
+            window.PairaAudio.play('end');
+        }
+        
+        this.showResult(finalTime, finalWpm, accuracy);
+    }
+
+    opponentFinished(time, wpm, accuracy) {
+        this.opponentFinishedTime = time;
+        this.opponentWpm = wpm;
+        this.opponentAccuracy = accuracy;
+        
+        document.getElementById('p2-progress').style.width = '100%';
+        document.getElementById('p2-wpm').textContent = `${wpm} WPM`;
+        
+        if (this.isFinished) {
+            this.determineWinner();
+        }
+    }
+
+    showResult(time, wpm, accuracy) {
+        document.getElementById('typing-area').style.display = 'none';
+        const resultScreen = document.getElementById('result-screen');
+        resultScreen.style.display = 'block';
+        
+        document.getElementById('final-wpm').textContent = wpm;
+        document.getElementById('final-accuracy').textContent = `%${accuracy}`;
+        document.getElementById('final-time').textContent = `${time}s`;
+        
+        if (this.isSolo) {
+            document.getElementById('result-title').textContent = "Pratik Tamamlandı!";
+            document.getElementById('result-title').style.color = "var(--success)";
+            document.getElementById('btn-play-again').style.display = 'inline-block';
+        } else {
+            if (this.opponentFinishedTime) {
+                this.determineWinner();
+            } else {
+                document.getElementById('result-title').textContent = "Rakibin bitirmesi bekleniyor...";
+                document.getElementById('result-title').style.color = "var(--text-main)";
+                document.getElementById('btn-play-again').style.display = 'none';
+                document.getElementById('waiting-rematch-text').style.display = 'none';
+            }
+        }
+    }
+
+    determineWinner() {
+        const title = document.getElementById('result-title');
+        const playAgainBtn = document.getElementById('btn-play-again');
+        const waitingText = document.getElementById('waiting-rematch-text');
+        
+        const wpmText = document.getElementById('final-wpm').textContent;
+        const myWpm = parseInt(wpmText) || 0;
+        const opWpm = this.opponentWpm || 0;
+        
+        if (myWpm > opWpm) {
+            title.textContent = "🏆 Kazandın! 🏆";
+            title.style.color = "var(--success)";
+            if (window.PairaAudio && window.PairaAudio.play) window.PairaAudio.play('correct');
+        } else if (opWpm > myWpm) {
+            title.textContent = "❌ Kaybettin! ❌";
+            title.style.color = "var(--danger)";
+            if (window.PairaAudio && window.PairaAudio.play) window.PairaAudio.play('wrong');
+        } else {
+            title.textContent = "🤝 Berabere! 🤝";
+            title.style.color = "var(--warning)";
+            if (window.PairaAudio && window.PairaAudio.play) window.PairaAudio.play('pass');
+        }
+        
+        if (this.isHost) {
+            playAgainBtn.style.display = 'inline-block';
+            waitingText.style.display = 'none';
+        } else {
+            playAgainBtn.style.display = 'none';
+            waitingText.style.display = 'block';
+        }
+    }
+
+    resetGame() {
+        clearInterval(this.timerInterval);
+        this.isFinished = false;
+        
+        document.getElementById('game-timer').textContent = "00:00";
+        document.getElementById('p1-progress').style.width = "0%";
+        document.getElementById('p2-progress').style.width = "0%";
+        document.getElementById('p1-wpm').textContent = "0 WPM";
+        document.getElementById('p2-wpm').textContent = "0 WPM";
+        
+        const textInput = document.getElementById('text-input');
+        if (textInput) {
+            textInput.value = '';
+            textInput.disabled = true;
+        }
+        
+        if (!this.isHost && !this.isSolo) {
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('typing-area').style.display = 'flex';
+            document.getElementById('text-display').innerHTML = '<h3 style="text-align:center; margin-top:2rem; width:100%; color:var(--text-muted);">Kurucunun yeni metin seçmesi bekleniyor...</h3>';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('app-container')) {
+        new KatiplikGame();
+    }
+});

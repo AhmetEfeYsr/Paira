@@ -199,7 +199,7 @@ export function updateGameStateUI(choices = null) {
         li.style.display = 'flex';
         li.style.justifyContent = 'space-between';
         li.style.padding = '5px 0';
-        li.innerHTML = `<span>${p.name}</span> <strong style="color:var(--primary);">${p.score}</strong>`;
+        li.innerHTML = `<span>${p.name}</span> <strong style="color:var(--neon-purple);">${p.score}</strong>`;
         list.appendChild(li);
     });
 
@@ -224,7 +224,10 @@ export function updateGameStateUI(choices = null) {
         if (choices) {
             document.getElementById('main-word').textContent = "KELİME SEÇİLİYOR...";
         } else {
-                        document.getElementById('main-word').textContent = networkState.currentWord ? networkState.currentWord.replace(/[^\s]/g, '_ ') : '...';
+            document.getElementById('main-word').textContent = networkState.currentWord ? networkState.currentWord.replace(/[^\s]/g, '_ ') : '...';
+        }
+    }
+}
 
 export function startTimer(duration) {
     clearInterval(timerInterval);
@@ -237,6 +240,9 @@ export function startTimer(duration) {
         timeLeft--;
         if(timeLeft >= 0) {
             display.textContent = timeLeft;
+            if (timeLeft <= 5 && timeLeft > 0) {
+                if (window.PairaAudio) window.PairaAudio.play('tick');
+            }
         } else {
             clearInterval(timerInterval);
             if(isHost) {
@@ -267,6 +273,7 @@ export function addChatMessage(name, text, isCorrect) {
 
     if (isCorrect) {
         msg.innerHTML = `<strong style="color:var(--success)">${name}</strong> doğru bildi! 🎉`;
+        if (window.PairaAudio) window.PairaAudio.play('correct');
     } else {
         msg.innerHTML = `<strong>${name}:</strong> <span>${text}</span>`;
     }

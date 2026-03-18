@@ -1,32 +1,24 @@
 // ÇizimZinciri/network.js
-import { initGameUI, showToast, updateGameStateUI, startTimer, stopTimer, showAlbumStep } from './game.js';
-
-let peer = null;
-let connections = {}; // For Host
-let hostConnection = null; // For Client
+import { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState } from './game.js';
 
 export let isHost = false;
 export let myId = null;
+export let networkManager = null;
 export let networkState = {
     state: 'LOBBY', // LOBBY, WRITE, DRAW, ALBUM, WAIT
     players: {}, // { id: { name, score, id } }
     hostId: null,
     turnDuration: 60,
-    roundCount: 3, // Current round
+    roundCount: 1, // Current round
     maxRounds: 3, // Total rounds
 
-    // Core Game Data Structure
-    // Each player has a "storybook" that gets passed around.
-    // stories: { [originalOwnerId]: [ { type: 'text', authorId, content }, { type: 'draw', authorId, content }, ... ] }
     stories: {},
-
-    // Who holds whose book right now?
-    // assignments: { [playerId]: ownerIdOfBookBeingHeld }
     assignments: {},
-
-    // Have players finished their current task?
-    // completedTasks: { [playerId]: boolean }
-    completedTasks: {}
+    completedTasks: {},
+    
+    // Album sequence array to ensure strictly synced linear presentation
+    albumSequence: [],
+    albumIndex: -1
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,14 +35,62 @@ function initLobby() {
         return;
     }
 
+    networkManager = new window.PeerNetworkManager({
+        isHost: isHost,
+        onPeerReady: (id) => {
+            myId = id;
+            if (isHost) {
+                document.getElementById('display-room-code').dataset.code = id;
+                document.getElementById('host-settings').style.display = 'flex';
+                networkState.hostId = id;
+                networkState.players[id] = { id: id, name: playerName };
+                updateLobbyUI();
+            } else {
+                document.getElementById('display-room-code').dataset.code = targetRoomCode;
+                document.getElementById('display-room-code').textContent = targetRoomCode;
+                document.getElementById('btn-toggle-code').style.display = 'none';
+                
+                networkManager.connectToHost(targetRoomCode).then(() => {
+                    document.getElementById('client-waiting').style.display = 'flex';
+                    document.getElementById('client-waiting').classList.remove('hidden');
+                    networkManager.sendToPeer(targetRoomCode, 'JOIN', { name: playerName });
+                }).catch(() => {
+                    if (window.showToast) window.showToast("Kurucuya bağlanılamadı.", "error");
+                    else alert("Kurucuya bağlanılamadı.");
+                });
+            }
+        },
+        onDataReceived: (action, payload, senderId) => {
+            handleNetworkData(action, payload, senderId);
+        },
+        onConnection: (peerId) => {
+            // Handled via JOIN action
+        },
+        onDisconnection: (peerId) => {
+            if (isHost) {
+                if (networkState.players[peerId]) {
+                    delete networkState.players[peerId];
+                    broadcastState();
+                }
+            } else {
+                if (peerId === targetRoomCode) {
+                    if (window.showToast) window.showToast("Kurucu ile bağlantı koptu.", "error");
+                    else alert("Kurucu ile bağlantı koptu.");
+                    setTimeout(() => window.location.href = 'index.html', 3000);
+                }
+            }
+        }
+    });
+
     if (isHost) {
-        setupHost(playerName);
+        const code = generateRoomCode();
+        networkManager.init(code);
     } else {
-        setupClient(playerName, targetRoomCode);
+        networkManager.init();
     }
 
     document.getElementById('btn-leave').addEventListener('click', () => {
-        if(peer) peer.destroy();
+        networkManager.destroy();
         window.location.href = 'index.html';
     });
 
@@ -69,7 +109,9 @@ function initLobby() {
 
     document.getElementById('btn-copy-room').addEventListener('click', () => {
         const code = document.getElementById('display-room-code').dataset.code;
-        navigator.clipboard.writeText(code).then(() => showToast("Kopyalandı!", "success"));
+        navigator.clipboard.writeText(code).then(() => {
+            if(window.showToast) window.showToast("Kopyalandı!", "success");
+        });
     });
 }
 
@@ -84,120 +126,22 @@ function generateRoomCode() {
     return code;
 }
 
-function setupHost(playerName) {
-    const roomCode = generateRoomCode();
-    myId = roomCode;
-
-    peer = new Peer(roomCode, {
-        debug: 2,
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    });
-
-    peer.on('open', (id) => {
-        document.getElementById('display-room-code').dataset.code = id;
-        document.getElementById('host-settings').style.display = 'flex';
-
-        networkState.hostId = id;
-        networkState.players[id] = { id: id, name: playerName };
-        updateLobbyUI();
-    });
-
-    peer.on('connection', (conn) => {
-        connections[conn.peer] = conn;
-
-        conn.on('data', (data) => {
-            if (data.type === 'JOIN') {
-                networkState.players[conn.peer] = { id: conn.peer, name: data.name };
-                broadcastState();
-                updateLobbyUI();
-            } else {
-                handleAction(data, conn.peer);
-            }
-        });
-
-        conn.on('close', () => {
-            delete connections[conn.peer];
-            if(networkState.players[conn.peer]) {
-                delete networkState.players[conn.peer];
-                broadcastState();
-                updateLobbyUI();
-            }
-        });
-    });
-}
-
-function setupClient(playerName, roomCode) {
-    peer = new Peer({
-        debug: 2,
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    });
-
-    peer.on('open', (id) => {
-        myId = id;
-        document.getElementById('display-room-code').dataset.code = roomCode;
-        document.getElementById('display-room-code').textContent = roomCode;
-        document.getElementById('btn-toggle-code').style.display = 'none';
-
-        hostConnection = peer.connect(roomCode, { reliable: true });
-
-        hostConnection.on('open', () => {
-            document.getElementById('client-waiting').style.display = 'flex';
-            document.getElementById('client-waiting').classList.remove('hidden');
-            hostConnection.send({ type: 'JOIN', name: playerName });
-        });
-
-        hostConnection.on('data', (data) => {
-            if (data.type === 'SYNC_STATE') {
-                networkState = data.state;
-                if (networkState.state === 'LOBBY') updateLobbyUI();
-                else handlePlayingState(data.lastAction);
-            } else if (data.type === 'SUBMIT_TASK') {
-                 handleAction(data, null);
-            }
-        });
-
-        hostConnection.on('close', () => {
-            showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
-            setTimeout(() => {
-                sessionStorage.removeItem('myId');
-                sessionStorage.removeItem('roomCode');
-                window.location.href = 'index.html';
-            }, 3000);
-        });
-    });
-}
-
-export function broadcastState(lastAction = null) {
-    if (!isHost) return;
-    const payload = { type: 'SYNC_STATE', state: networkState, lastAction };
-    Object.values(connections).forEach(c => c.send(payload));
-
-    if (networkState.state === 'LOBBY') updateLobbyUI();
-    else handlePlayingState(lastAction);
-}
-
-export function broadcastAction(action) {
+function handleNetworkData(action, payload, senderId) {
     if (isHost) {
-        handleAction(action, myId);
-    } else {
-        hostConnection.send(action);
-    }
-}
-
-function handleAction(data, senderId) {
-    if (isHost) {
-        if (data.type === 'SUBMIT_TASK') {
+        if (action === 'JOIN') {
+            networkState.players[senderId] = { id: senderId, name: payload.name };
+            broadcastState();
+        } else if (action === 'SUBMIT_TASK') {
             // Prevent race condition: Ignore late submissions if already processed
             if (networkState.completedTasks[senderId]) return;
 
             const ownerId = networkState.assignments[senderId];
-            const storyType = data.taskType; // 'text' or 'draw'
-
+            
             // Push entry to the specific storybook
             networkState.stories[ownerId].push({
-                type: storyType,
+                type: payload.taskType,
                 authorId: senderId,
-                content: data.content
+                content: payload.content
             });
 
             networkState.completedTasks[senderId] = true;
@@ -205,18 +149,43 @@ function handleAction(data, senderId) {
             // Check if all active players completed
             const allCompleted = Object.keys(networkState.players).every(pid => {
                 if (pid === networkState.hostId) return networkState.completedTasks[pid];
-                return networkState.completedTasks[pid] || (!connections[pid]?.open);
+                return networkState.completedTasks[pid] || !networkManager.connections[pid];
             });
+            
             if (allCompleted) {
                 clearTimeout(turnTimeout);
                 passBooksAndNextRound();
             } else {
                 broadcastState({ action: 'PLAYER_WAITING', playerId: senderId });
             }
-        } else if (data.type === 'ALBUM_NEXT') {
+        } else if (action === 'ALBUM_NEXT') {
             // Sadece host albümü ilerletir
-            broadcastState({ action: 'ALBUM_SHOW_NEXT' });
+            networkState.albumIndex++;
+            broadcastState({ action: 'ALBUM_UPDATE' });
         }
+    } else {
+        if (action === 'SYNC_STATE') {
+            networkState = payload.state;
+            if (networkState.state === 'LOBBY') updateLobbyUI();
+            else handlePlayingState(payload.lastAction);
+        }
+    }
+}
+
+export function broadcastState(lastAction = null) {
+    if (!isHost) return;
+    networkManager.broadcast('SYNC_STATE', { state: networkState, lastAction });
+
+    if (networkState.state === 'LOBBY') updateLobbyUI();
+    else handlePlayingState(lastAction);
+}
+
+export function broadcastAction(actionData) {
+    if (isHost) {
+        handleNetworkData(actionData.type, actionData, myId);
+    } else {
+        const targetRoomCode = sessionStorage.getItem('roomCode');
+        networkManager.sendToPeer(targetRoomCode, actionData.type, actionData);
     }
 }
 
@@ -255,7 +224,10 @@ async function startGame() {
     if (!isHost) return;
 
     const pCount = Object.keys(networkState.players).length;
-    if (pCount < 3) return showToast("En az 3 kişi olmalı!", "warning");
+    if (pCount < 3) {
+        if(window.showToast) window.showToast("En az 3 kişi olmalı!", "warning");
+        return;
+    }
 
     if (window.loadGarticWords) {
         await window.loadGarticWords();
@@ -298,10 +270,8 @@ function startPhase(phase) {
 
 function forceSubmitTasks() {
     // If time is up, submit whatever they have or a placeholder
-    // Client should auto-submit if possible, but host forces state progress
     Object.keys(networkState.players).forEach(pid => {
         if (!networkState.completedTasks[pid]) {
-            // Fake submit a blank/default to keep the chain moving
             const ownerId = networkState.assignments[pid];
             const isDrawingTurn = networkState.state === 'DRAW';
             networkState.stories[ownerId].push({
@@ -319,11 +289,11 @@ function forceSubmitTasks() {
 function passBooksAndNextRound() {
     if (!isHost) return;
 
-    // Pass books mathematically to the left/right
+    // Pass books mathematically
     const pKeys = Object.keys(networkState.players);
     const oldAssignments = { ...networkState.assignments };
 
-    // Shift assignments (e.g. index i gets book of i+1)
+    // Shift assignments
     for (let i = 0; i < pKeys.length; i++) {
         const nextIdx = (i + 1) % pKeys.length;
         networkState.assignments[pKeys[i]] = oldAssignments[pKeys[nextIdx]];
@@ -332,7 +302,7 @@ function passBooksAndNextRound() {
     networkState.roundCount++;
 
     if (networkState.roundCount > networkState.maxRounds) {
-        // Game Over -> Show Album
+        prepareAlbum();
         networkState.state = 'ALBUM';
         broadcastState({ action: 'SHOW_ALBUM' });
     } else {
@@ -343,6 +313,20 @@ function passBooksAndNextRound() {
             startPhase('WRITE');
         }
     }
+}
+
+function prepareAlbum() {
+    networkState.albumSequence = [];
+    const owners = Object.keys(networkState.stories);
+    owners.forEach(ownerId => {
+        networkState.albumSequence.push({ type: 'TITLE', ownerId });
+        const story = networkState.stories[ownerId];
+        story.forEach((step, idx) => {
+            networkState.albumSequence.push({ type: 'ENTRY', ownerId, stepIdx: idx, stepData: step });
+        });
+    });
+    networkState.albumSequence.push({ type: 'END' });
+    networkState.albumIndex = 0;
 }
 
 function handlePlayingState(lastAction) {
@@ -356,14 +340,11 @@ function handlePlayingState(lastAction) {
         return; // UI stays same for others
     }
 
-    if (networkState.state === 'ALBUM' && lastAction?.action === 'SHOW_ALBUM') {
-        showAlbumScreen();
-        return;
-    }
-
-    if (networkState.state === 'ALBUM' && lastAction?.action === 'ALBUM_SHOW_NEXT') {
-        // Host advances the slides
-        if(typeof showAlbumStep === 'function') showAlbumStep();
+    if (networkState.state === 'ALBUM') {
+        if (lastAction?.action === 'SHOW_ALBUM' || lastAction?.action === 'ALBUM_UPDATE') {
+            showAlbumScreen();
+            renderAlbumState();
+        }
         return;
     }
 
@@ -389,6 +370,13 @@ function showAlbumScreen() {
 
     stopTimer();
 
-    // Trigger the UI to start rendering albums
-    if(typeof window.initAlbumUI === 'function') window.initAlbumUI();
+    if (isHost) {
+        document.getElementById('btn-next-story').style.display = 'inline-block';
+        document.getElementById('btn-next-story').onclick = () => {
+            broadcastAction({ type: 'ALBUM_NEXT' });
+        };
+        document.getElementById('btn-back-to-lobby').onclick = () => {
+            window.location.href = 'index.html'; 
+        };
+    }
 }

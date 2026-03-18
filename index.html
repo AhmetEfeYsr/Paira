@@ -14,7 +14,6 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="Paira Games | Çok Oyunculu Parti ve Günlük Bulmaca Oyunları">
     <meta property="og:description" content="Arkadaşlarınızla dilediğiniz yerde, herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online parti oyunları oynayın!">
-    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -27,7 +26,7 @@
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Paira Games",
-      "url": "https://pairagames.com/",
+      "url": "https://pairaaa.com/",
       "description": "Paira Games, arkadaşlarınızla oynanacak parti oyunları, ücretsiz tarayıcı oyunları, Kick.com yayıncı oyunları ve indirmesiz oyunlar sunan lider bir online çok oyunculu platformdur.",
       "author": {
         "@type": "Person",
@@ -44,32 +43,22 @@
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
-        <!-- Theme Switcher -->
-        <div class="theme-switcher" style="position: absolute; top: clamp(1rem, 2.5vw, 2rem); right: clamp(1rem, 2.5vw, 2rem); z-index: 10;">
-            <select id="theme-select" class="game-input" style="padding: 8px 12px; font-size: 0.9rem; min-width: 120px; cursor: pointer;" onchange="window.pairaUI.switchTheme(this.value)">
-                <option value="paira">Paira</option>
-                <option value="space">Space</option>
-                <option value="light">Light</option>
-            </select>
-        </div>
-
         <section id="portal-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh;">
             <div class="hero-content">
                 <h1 class="gradient-text">Paira Games</h1>
-                <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online parti oyunları ve günlük zeka oyunları oynayın! Eğlenceye hemen katılın.</p>
+                <p class="seo-description">Arkadaşlarınızla dilediğiniz yerde, hiçbir şey indirmeden tarayıcınız üzerinden ücretsiz online parti ve günlük zeka oyunları oynayın! Eğlenceye hemen katılın.</p>
             </div>
-
 
             <div class="category-section">
                 <h2 class="category-title">Solo Oyunlar</h2>
                 <div class="games-grid single-column">
-                    <a href="Bagnam/index.html" class="game-card horizontal-card">
+                    <a href="Bagnam/index.html" class="game-card horizontal-card" aria-label="Bağnam oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/bagnam.svg" alt="Bağnam Logo">
                         </div>
                         <div class="game-info">
                             <h3>Bağnam</h3>
-                            <p>O günkü gizli kelimeyi bul! Özel vektörleme algoritmalarıyla anlamsal benzerlikleri matematiksel olarak hesaplanmış on binlerce kelime arasından ne kadar yakın olduğunu renklerle gör.</p>
+                            <p>Günün gizli kelimesini tahmin et! Kelimelerin birbirine anlamsal olarak ne kadar yakın olduğunu renk ipuçlarıyla görerek doğru kelimeye ulaşmaya çalış.</p>
                         </div>
                     </a>
                 </div>
@@ -78,95 +67,115 @@
             <div class="category-section">
                 <h2 class="category-title">Ekip Oyunları</h2>
                 <div class="games-grid single-column">
-                    <a href="Tabu/index.html" class="game-card horizontal-card">
+                    <a href="Krono/index.html" class="game-card horizontal-card" aria-label="Krono oyunu sayfasına git">
+                        <div class="game-icon">
+                            <img src="logolar/bilgi-yarismasi.svg" alt="Krono Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Krono</h3>
+                            <p>Tarihi olayları kronolojik sıraya dizin! Tek başınıza rekor kırmaya çalışın veya bir arkadaşınızla zamana karşı yarışın.</p>
+                        </div>
+                    </a>
+
+                    <a href="Tabu/index.html" class="game-card horizontal-card" aria-label="Tabu oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/tabu.svg" alt="Tabu Logo">
                         </div>
                         <div class="game-info">
                             <h3>Tabu</h3>
-                            <p>Arkadaşlarınızla takımlara ayrılın ve yasaklı kelimelere yakalanmadan en çok puanı toplayın. Eğlencenin dibine vurun!</p>
+                            <p>Arkadaşlarınızla takımlara ayrılın, yasaklı kelimeleri kullanmadan hedeflenen kelimeyi anlatarak en yüksek puanı toplayın. Klasik eğlenceyi online yaşayın!</p>
                         </div>
                     </a>
 
-                    <a href="GizliKelimeler/index.html" class="game-card horizontal-card">
+                    <a href="GizliKelimeler/index.html" class="game-card horizontal-card" aria-label="Gizli Kelimeler oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/gizli-kelimeler.svg" alt="Gizli Kelimeler Logo">
                         </div>
                         <div class="game-info">
                             <h3>Gizli Kelimeler</h3>
-                            <p>Takımınıza katılın, ajanın tek kelimelik ipuçlarıyla doğru kelimeleri bulun, suikastçıya yakalanmayın!</p>
+                            <p>Takımınıza liderlik eden ajanın tek kelimelik ipuçlarını takip ederek kendi kelimelerinizi bulun. Dikkat edin, suikastçıya yakalanmayın!</p>
                         </div>
                     </a>
 
-                    <a href="KelimeAvi/index.html" class="game-card horizontal-card">
+                    <a href="KelimeAvi/index.html" class="game-card horizontal-card" aria-label="Kelime Avı oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/kelime-avi.svg" alt="Kelime Avı Logo">
                         </div>
                         <div class="game-info">
                             <h3>Kelime Avı</h3>
-                            <p>Gizli Ebeyi uyandırma! Sadece baş harfi verilen kelimede diğer oyuncularla üstü kapalı anlaşarak eşleşmeye çalış. Çok açık konuşursan Ebe sizi dinler ve avlar!</p>
+                            <p>Aralarınızdaki gizli ebeyi uyandırmadan sadece baş harfi verilen kelimede diğer oyuncularla eşleşmeye çalışın. Çok açık verirseniz ebe sizi yakalar!</p>
                         </div>
                     </a>
 
-                    <a href="IsimSehir/index.html" class="game-card horizontal-card">
+                    <a href="IsimSehir/index.html" class="game-card horizontal-card" aria-label="İsim Şehir oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/isim-sehir.svg" alt="İsim Şehir Logo">
                         </div>
                         <div class="game-info">
                             <h3>İsim Şehir</h3>
-                            <p>Klasik defter kalem oyunu artık dijitalde! Belirlenen harf ile en hızlı şekilde kategorileri doldurup herkesi şaşırtacak cevaplar ver.</p>
+                            <p>Defter kalemi bırakın, efsane oyun dijitalde! Belirlenen harfle en hızlı şekilde kategorileri doldurup rakiplerinizi geride bırakın.</p>
                         </div>
                     </a>
 
-                    <a href="HizliIsimSehir/index.html" class="game-card horizontal-card">
+                    <a href="HizliIsimSehir/index.html" class="game-card horizontal-card" aria-label="Hızlı İsim Şehir oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/isim-sehir.svg" alt="Hızlı İsim Şehir Logo">
                         </div>
                         <div class="game-info">
                             <h3>Hızlı İsim Şehir</h3>
-                            <p>Klasik oyunun hızlı, sıra tabanlı versiyonu! Tek bir harf ve kategori için yarışın, süreniz dolmadan en uzun kelimeyi bulun!</p>
+                            <p>Klasik oyunun daha da hızlandırılmış, heyecan dolu versiyonu! Tek bir harf ve kategori için yarışın, süreniz bitmeden en uzun kelimeyi bulun.</p>
                         </div>
                     </a>
 
-                    <a href="javascript:void(0)" class="game-card horizontal-card disabled-card" title="Yakında sizlerle!">
-                        <div class="game-icon">
-                            <img src="logolar/elementler.svg" alt="Elementler Logo">
-                        </div>
-                        <div class="game-info">
-                            <h3>Elementler <span class="coming-soon-badge">Yakında</span></h3>
-                            <p>Suyu dondur, ateşi harlayarak rüzgarı yönet! 1-4 kişilik bu aksiyon dolu platformda sadece zeka ve takım oyunu bölümü geçmeni sağlar.</p>
-                        </div>
-                        <div class="coming-soon-overlay">Yakında sizlerle</div>
-                    </a>
-
-                    <a href="BilgiYarismasi/index.html" class="game-card horizontal-card">
+                    <a href="BilgiYarismasi/index.html" class="game-card horizontal-card" aria-label="Bilgi Yarışması oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/bilgi-yarismasi.svg" alt="Bilgi Yarışması Logo">
                         </div>
                         <div class="game-info">
                             <h3>Bilgi Yarışması</h3>
-                            <p>Genel kültürden eğlenceye uzanan onlarca farklı konuda kapışın! Doğru cevabı saniyeler içinde ilk bulan en yüksek puanı kapar.</p>
+                            <p>Genel kültürden eğlenceli konulara kadar birçok alanda bilginizi konuşturun. Soruları en hızlı cevaplayan siz olun, puanları toplayın!</p>
                         </div>
                     </a>
 
-                    <a href="CizBil/index.html" class="game-card horizontal-card">
+                    <a href="Katiplik/index.html" class="game-card horizontal-card" aria-label="Katiplik Düellosu oyunu sayfasına git">
+                        <div class="game-icon" style="font-size: 3rem;">
+                            ⌨️
+                        </div>
+                        <div class="game-info">
+                            <h3>Katiplik Düellosu</h3>
+                            <p>Klavye hızınızı test edin! Arkadaşlarınıza meydan okuyun, metinleri hatasız ve en hızlı şekilde yazarak düelloyu kazanın.</p>
+                        </div>
+                    </a>
+
+                    <a href="CizBil/index.html" class="game-card horizontal-card" aria-label="ÇizBil oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/cizbil.svg" alt="ÇizBil Logo">
                         </div>
                         <div class="game-info">
                             <h3>ÇizBil</h3>
-                            <p>Biri çizer, diğerleri tahmin eder! Arkadaşlarınızla aynı odaya girin ve en iyi çizen/bilen olmak için yarışın.</p>
+                            <p>Biri çizsin, diğerleri tahmin etsin! Arkadaşlarınızla aynı odada buluşup çizim ve tahmin yeteneklerinizi yarıştırın.</p>
                         </div>
                     </a>
 
-                    <a href="CizimZinciri/index.html" class="game-card horizontal-card">
+                    <a href="CizimZinciri/index.html" class="game-card horizontal-card" aria-label="Çizim Zinciri oyunu sayfasına git">
                         <div class="game-icon">
-                            <img src="logolar/cizim-zinciri.svg" alt="ÇizimZinciri Logo">
+                            <img src="logolar/cizim-zinciri.svg" alt="Çizim Zinciri Logo">
                         </div>
                         <div class="game-info">
-                            <h3>ÇizimZinciri</h3>
-                            <p>Klasik kulaktan kulağa oyununun çizim versiyonu! Herkesin hem yazdığı, hem çizdiği, hem de güldüğü interaktif parti deneyimi.</p>
+                            <h3>Çizim Zinciri</h3>
+                            <p>Kulaktan kulağa oyununun çizimli hali! Cümleler çizime, çizimler cümlelere dönüşürken ortaya çıkan komik sonuçlara inanamayacaksınız.</p>
                         </div>
+                    </a>
+
+                    <a href="javascript:void(0)" class="game-card horizontal-card disabled-card" title="Çok yakında sizlerle!" aria-label="Elementler oyunu yakında">
+                        <div class="game-icon">
+                            <img src="logolar/elementler.svg" alt="Elementler Logo">
+                        </div>
+                        <div class="game-info">
+                            <h3>Elementler <span class="coming-soon-badge">Yakında</span></h3>
+                            <p>Suyu dondur, ateşi harlayarak rüzgarı yönet! 1-4 kişilik bu aksiyon dolu platform oyununda zekanızı ve takım ruhunuzu kullanarak bölümleri geçin.</p>
+                        </div>
+                        <div class="coming-soon-overlay">Çok Yakında</div>
                     </a>
                 </div>
             </div>
@@ -174,56 +183,49 @@
             <div class="category-section">
                 <h2 class="category-title">Yayıncı - Chat Oyunları</h2>
                 <div class="games-grid single-column">
-                    <a href="ChatTabu/index.html" class="game-card horizontal-card">
+                    <a href="ChatTabu/index.html" class="game-card horizontal-card" aria-label="Chat Tabu oyunu sayfasına git">
                         <div class="game-icon">
                             <img src="logolar/chat-tabu.svg" alt="Chat Tabu Logo">
                         </div>
                         <div class="game-info">
                             <h3>Chat Tabu</h3>
-                            <p>Yayıncı anlatır, sohbet bilir! Canlı yayında izleyicilerinizle interaktif tabu deneyimi yaşayarak etkileşimi zirveye taşıyın.</p>
+                            <p>Siz anlatın, sohbetinizdeki izleyiciler tahmin etsin! Canlı yayında izleyicilerinizle etkileşiminizi artıracak eğlenceli bir tabu deneyimi.</p>
                         </div>
                     </a>
 
-                    <a href="Gartic/index.html" class="game-card horizontal-card">
+                    <a href="Gartic/index.html" class="game-card horizontal-card" aria-label="Chat ÇizBil oyunu sayfasına git">
                         <div class="game-icon">
-                            <img src="logolar/cizbil.svg" alt="ÇizBil Logo">
+                            <img src="logolar/cizbil.svg" alt="Chat ÇizBil Logo">
                         </div>
                         <div class="game-info">
-                            <h3>ÇizBil</h3>
-                            <p>Sanatını konuştur ya da çöp adamla idare et, gerisini chat halletsin! Çizim yeteneğinin komik tahminlerle buluştuğu interaktif bir şölen.</p>
+                            <h3>Chat ÇizBil</h3>
+                            <p>Çizim yeteneğinizi konuşturun, izleyicileriniz chatten tahmin etsin! İnteraktif bir canlı yayın şöleni sizi bekliyor.</p>
                         </div>
                     </a>
                 </div>
             </div>
         </section>
 
-        <section id="portal-seo-content">
+        <section id="portal-seo-content" class="game-seo-info">
             <div class="seo-inner">
-                <h2>Paira Games: Sınırsız Eğlencenin Yeni Adresi ve Zirvesi</h2>
-                <p>Eğlence dolu anlarınızı bir üst seviyeye taşımak için en doğru yerdesiniz! Paira Games, arkadaşlarınızla dilediğiniz zaman, dilediğiniz yerden hiçbir engele takılmadan erişebileceğiniz yepyeni nesil <strong>ücretsiz tarayıcı oyunları</strong> sunar. Herhangi bir program yüklemenize, uzun süren güncellemeleri beklemenize ya da yerel cihazınıza yüksek boyutlu dosyalar kurmanıza gerek kalmadan, tamamen web tarayıcınız üzerinden anında oynayabileceğiniz <strong>indirmesiz oyunlar</strong> ile eğlence dolu maceralara sadece bir tık ile katılabilirsiniz. Platformumuz, kullanıcı dostu arayüzü ve modern altyapısı sayesinde size pürüzsüz bir oyun deneyimi vaat ediyor.</p>
+                <h2>Paira Games: Çevrimiçi Eğlencenin Yeni Adresi</h2>
+                <p>Eğlence dolu anlarınızı bir üst seviyeye taşımak için en doğru yerdesiniz! Paira Games, arkadaşlarınızla dilediğiniz zaman, hiçbir engele takılmadan oynayabileceğiniz yepyeni nesil <strong>ücretsiz tarayıcı oyunları</strong> sunar. Herhangi bir program yüklemenize ya da uzun güncellemeler beklemenize gerek kalmadan, tamamen tarayıcınız üzerinden oynayabileceğiniz <strong>indirmesiz oyunlar</strong> ile eğlenceye tek tıkla katılabilirsiniz.</p>
 
-                <h3>Sıradışı ve Arkadaşlarla Oynanacak Parti Oyunları</h3>
-                <p>Geleneksel ve klasik oyun akşamlarınızı yepyeni bir formatta dijital dünyaya taşıyoruz! Özellikle <strong>arkadaşlarla oynanacak parti oyunları</strong> kategorimizde, kahkahaların havada uçuşacağı, dostlukların eğlenceli tatlı rekabetlerle sınanacağı birbirinden renkli yapımlar sizi bekliyor. İster klasik kelime anlatma oyunu Tabu'nun heyecanını doyasıya yaşayın, ister ÇizBil ile sanatsal yeteneklerinizi (veya komik çizemeyişlerinizi) konuşturup herkesi güldürün, isterseniz de İsim Şehir gibi zamansız nostaljik oyunların kıyasıya rekabetine ortak olun. Üstelik sosyal çıkarım oyunu Kelime Avı ve çok yakında platformumuza eklenecek olan aksiyon-bulmaca dinamikli Elementler gibi yenilikçi türlerdeki farklı yapımlar sayesinde oyun geceleriniz, toplantılarınız ve çevrimiçi buluşmalarınız asla sıkıcı veya monoton geçmeyecek. Her oturum size yepyeni ve unutulmaz anılar katacak.</p>
+                <h3>Arkadaşlarınızla Oynayabileceğiniz Harika Parti Oyunları</h3>
+                <p>Geleneksel oyun akşamlarınızı dijital dünyaya taşıyoruz! <strong>Arkadaşlarla oynanacak parti oyunları</strong> kategorimizde rekabet ve eğlence bir arada. İster klasik kelime oyunu Tabu'nun heyecanını yaşayın, ister ÇizBil ile sanatsal yeteneklerinizi sergileyin, isterseniz de İsim Şehir gibi zamansız oyunlarda kıyasıya rekabet edin. Ayrıca Kelime Avı ve çok yakında eklenecek olan Elementler gibi yenilikçi oyunlarla çevrimiçi buluşmalarınız artık çok daha keyifli geçecek.</p>
 
-                <h3>Yayıncılar İçin Üstün Etkileşim: Kick.com Yayıncı Oyunları</h3>
-                <p>Bir canlı yayın başlattığınızda izleyicilerinizle aranızdaki interaktif bağı güçlendirmek ve sohbeti canlı tutmak için en etkili yöntem onları oyunun içine çeken içeriklerdir. Paira Games olarak bizler, dijital içerik üreticilerini ve canlı yayıncıları da unutmuyoruz! <strong>Kick.com yayıncı oyunları</strong> ve platform bağımsız interaktif modlarımız sayesinde (örneğin sevilen Chat Tabu konsepti), oyunun gidişatını, tahminleri ve seçimleri doğrudan izleyicilerinizin belirlemesine olanak tanıyarak yepyeni bir yayıncılık formatı oluşturabilirsiniz. Siz sadece oyunu yönetmeye odaklanın ve sohbet ekranından akan yaratıcı cevaplarla başa çıkmaya çalışın; aradaki bariyerlerin kalktığı bu sistemde eğlence, yüksek enerji ve izleyici etkileşimi kesinlikle garanti altındadır.</p>
+                <h3>Canlı Yayıncılar İçin İnteraktif Chat Oyunları</h3>
+                <p>Canlı yayınlarınızda izleyicilerinizle etkileşimi artırmanın en iyi yolu onları da oyunun içine çekmektir! <strong>Kick.com ve Twitch yayıncı oyunları</strong> sayesinde izleyicilerinizle birlikte eş zamanlı oyunlar oynayabilirsiniz. Örneğin Chat Tabu ve Chat ÇizBil gibi oyunlarla, oyunun gidişatını doğrudan izleyicilerinizin belirlemesine olanak tanıyın. Siz oyunu yönetirken sohbet ekranından akan cevaplarla yayınlarınızın enerjisini zirveye taşıyın.</p>
 
-                <h3>Hızlı, Güvenli, Stabil ve Kesintisiz Bir Oyun Deneyimi</h3>
-                <p>Modern WebRTC (Web Real-Time Communication) altyapımız ve yenilikçi sunucusuz (Peer-to-Peer) teknolojimiz sayesinde oyun içi verileriniz sadece oyuncular arasında doğrudan ve güvenle aktarılır, devasa sunucularımızda gereksiz yere veya kalıcı olarak saklanmaz. Hem kişisel gizlilik ve güvenlik hem de düşük gecikmeli (low-latency) hız odaklı bu mimari sayesinde her oyuncu kesintisiz, akıcı ve adil bir rekabet ortamı bulur. İster tek başınıza katılıp günlük semantik kelime bilginizi test edeceğiniz Bağnam'ı oynayarak zihninizi çalıştırın, isterseniz de tüm arkadaş grubunuzu toplayıp saniyeler içinde özel bir lobi kurun; Paira Games'te oyunlar her zaman yüksek performanslı, her zaman hızlı ve daima güvenilirdir.</p>
+                <h3>Hızlı, Güvenli ve Kesintisiz Deneyim</h3>
+                <p>Modern WebRTC altyapımız ve P2P (Peer-to-Peer) teknolojimiz sayesinde oyun verileriniz yalnızca oyuncular arasında doğrudan ve güvenle aktarılır. Bu sayede düşük gecikmeli, akıcı ve adil bir oyun ortamı sağlanır. Paira Games'te oyunlar her zaman hızlı, yüksek performanslı ve güvenilirdir.</p>
 
-                <h3>Hemen Nasıl Başlanır? Üye Olmak Gerekiyor mu?</h3>
-                <p>Sisteme giriş yapmak ve oyun oynamaya başlamak inanılmaz derecede basit ve zahmetsizdir! Sadece oynamak istediğiniz oyunu ana sayfadan seçin, tek bir butona tıklayarak saniyeler içinde yeni ve özel bir oda kurun veya arkadaşınızın size gönderdiği mevcut bir oda kodunu girerek bekleme lobisine anında katılın. Uzun uzadıya bir hesap açmanıza, karmaşık kayıt formları doldurmanıza, e-posta onayları beklemenize veya herhangi bir kredi kartı bilgisi girmenize kesinlikle gerek yok. Eğlenceyi ertelemek veya gereksiz prosedürlerle bekletmek bizim sözlüğümüzde yer almıyor; hemen tıklayın, odanızı oluşturup linki paylaşın ve anında oynamaya başlayın. Paira Games ile sınırsız eğlencenin kapıları sizin için ardına kadar açık!</p>
+                <h3>Hemen Oynamaya Başlayın!</h3>
+                <p>Oyun oynamaya başlamak çok kolay! Ana sayfadan istediğiniz oyunu seçin, tek tıkla kendi özel odanızı kurun veya arkadaşınızın gönderdiği bağlantıya tıklayarak hemen katılın. Uzun kayıt formlarıyla uğraşmanıza gerek yok. Eğlenceye hemen başlamak için Paira Games her an yanınızda!</p>
             </div>
         </section>
         </main>
 
-    <!-- Footer will be injected by shared.js -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('paira_theme') || 'paira';
-            const select = document.getElementById('theme-select');
-            if (select) select.value = savedTheme;
-        });
-    </script>
+    <!-- Footer and UI will be injected by shared.js -->
 </body>
 </html>

@@ -36,15 +36,15 @@
 
             <div class="lobby-grid">
                 <aside class="players-panel card" style="display: flex; flex-direction: column;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 0;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 0;">Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar" style="flex-grow: 1; margin: 12px 0;"></ul>
                 </aside>
 
                 <!-- HOST SETTINGS -->
                 <section class="settings-panel card custom-scrollbar host-only hidden" id="host-settings" style="overflow-y: auto; display: flex; flex-direction: column;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 15px;">Ayarlar</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 15px;">Ayarlar</h3>
 
-                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label>Tur Sayısı</label>
                             <input type="number" id="setting-rounds" value="3" min="1" max="10">
@@ -97,13 +97,13 @@
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card">
-                <div class="round-indicator" id="round-indicator" style="font-size: 1.15rem; background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 12px; font-weight: bold;">
+                <div class="round-indicator" id="round-indicator" style="font-size: 1.15rem; background: var(--input-bg); padding: 8px 20px; border-radius: 12px; font-weight: bold;">
                     Tur <span id="current-round">1</span> / <span id="total-rounds">3</span>
                 </div>
 
                 <div class="letter-display" style="display: flex; align-items: center; gap: 15px;">
                     <span style="font-size: 1.2rem; color: var(--text-muted);">Harf:</span>
-                    <strong id="current-letter" style="font-size: 3rem; color: var(--secondary-color); line-height: 1;">A</strong>
+                    <strong id="current-letter" style="font-size: 3rem; color: var(--neon-purple); line-height: 1;">A</strong>
                     <button id="btn-change-letter" class="btn btn-secondary btn-icon host-only hidden" title="Harfi Değiştir" style="border-radius: 50%; width: 36px; height: 36px; padding: 0 !important; background: var(--input-bg);">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                     </button>
@@ -155,7 +155,7 @@
                 <h2 style="margin: 0;">Puan Durumu</h2>
             </header>
 
-            <div class="card custom-scrollbar" style="flex: 1; overflow-y: auto; margin-top: 15px;">
+            <div class="card custom-scrollbar" style="flex: 1; overflow-y: auto; overflow-x: auto; margin-top: 15px;">
                 <table class="scoreboard-table">
                     <thead>
                         <tr>

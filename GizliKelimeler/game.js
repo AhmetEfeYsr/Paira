@@ -77,12 +77,12 @@ class GizliKelimelerEngine {
         this.state.boardSize = size;
         this.state.turnDuration = duration;
         this.state.status = 'playing';
-        this.state.turnTeam = 'A';
+        this.state.turnTeam = Math.random() < 0.5 ? 'A' : 'B';
         this.state.phase = 'CLUE';
         this.state.currentClue = null;
         this.state.winnerTeam = null;
 
-        this.generateBoard(size);
+        this.generateBoard(size, this.state.turnTeam);
         this.setState(this.state);
         if (this.onSound) this.onSound('start');
 
@@ -127,20 +127,30 @@ class GizliKelimelerEngine {
         this.renderFrame = requestAnimationFrame(tick);
     }
 
-    generateBoard(size) {
+    generateBoard(size, startingTeam) {
         let pool = [...this.allWords];
         this.seededShuffle(pool);
         const selectedWords = pool.slice(0, size);
 
         let teamA_count, teamB_count, neutral_count, assassin_count;
 
+        let primaryCount, secondaryCount;
+
         if (size === 16) {
-            teamA_count = 6; teamB_count = 5; neutral_count = 4; assassin_count = 1;
+            primaryCount = 6; secondaryCount = 5; neutral_count = 4; assassin_count = 1;
         } else if (size === 36) {
-            teamA_count = 12; teamB_count = 11; neutral_count = 12; assassin_count = 1;
+            primaryCount = 12; secondaryCount = 11; neutral_count = 12; assassin_count = 1;
         } else {
             // default 25
-            teamA_count = 9; teamB_count = 8; neutral_count = 7; assassin_count = 1;
+            primaryCount = 9; secondaryCount = 8; neutral_count = 7; assassin_count = 1;
+        }
+
+        if (startingTeam === 'A') {
+            teamA_count = primaryCount;
+            teamB_count = secondaryCount;
+        } else {
+            teamA_count = secondaryCount;
+            teamB_count = primaryCount;
         }
 
         this.state.scoreA = teamA_count;
@@ -254,14 +264,26 @@ class GizliKelimelerView {
         document.getElementById('btn-switch-role')?.addEventListener('click', () => this.callbacks.onSwitchRole());
         document.getElementById('btn-start-game')?.addEventListener('click', () => this.callbacks.onStartGame());
 
-        document.getElementById('btn-submit-clue')?.addEventListener('click', () => {
+        const submitClue = () => {
             const word = document.getElementById('clue-word').value.trim();
             const count = document.getElementById('clue-count').value;
-            if(word && count) {
-                this.callbacks.onSubmitClue(word, count);
-                document.getElementById('clue-word').value = '';
-                document.getElementById('clue-count').value = '';
+            if(!word || !count) {
+                this.showToast("Lütfen ipucu ve sayı giriniz!", "warning");
+                return;
             }
+            this.callbacks.onSubmitClue(word, count);
+            document.getElementById('clue-word').value = '';
+            document.getElementById('clue-count').value = '';
+        };
+
+        document.getElementById('btn-submit-clue')?.addEventListener('click', submitClue);
+        
+        document.getElementById('clue-word')?.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') submitClue();
+        });
+        
+        document.getElementById('clue-count')?.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') submitClue();
         });
 
         document.getElementById('btn-end-turn')?.addEventListener('click', () => this.callbacks.onEndTurn());
@@ -331,9 +353,28 @@ class GizliKelimelerView {
                 li.style.alignItems = 'center';
 
                 const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const infoSpan = document.createElement('span');
+                const infoSpan = document.createElement('div');
+                infoSpan.style.display = 'flex';
+                infoSpan.style.flexDirection = 'column';
+                infoSpan.style.gap = '4px';
+                
                 const roleStr = p.role === 'SPYMASTER' ? 'Ajan' : 'Tahminci';
-                infoSpan.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${safeName} ${p.id === this.myId ? '(Sen)' : ''}</span> <strong>T-${p.team} [${roleStr}]</strong>`;
+                const teamColorVar = p.team === 'A' ? 'var(--team-a-color)' : 'var(--team-b-color)';
+                const teamBgVar = p.team === 'A' ? 'var(--team-a-bg)' : 'var(--team-b-bg)';
+                const roleColor = p.role === 'SPYMASTER' ? 'var(--warning)' : 'var(--success)';
+                const roleBg = p.role === 'SPYMASTER' ? 'var(--warning-bg)' : 'var(--success-bg)';
+                
+                infoSpan.innerHTML = `
+                    <span style="font-weight:500; font-size:1rem; display:flex; align-items:center; gap:4px;">
+                        ${p.isHost ? '<span title="Kurucu">👑</span>' : ''}
+                        ${safeName} 
+                        ${p.id === this.myId ? '<span style="opacity:0.6; font-size:0.8em;">(Sen)</span>' : ''}
+                    </span>
+                    <div style="display:flex; gap:6px;">
+                        <span style="background:${teamBgVar}; color:${teamColorVar}; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; border: 1px solid ${teamColorVar};">Takım ${p.team}</span>
+                        <span style="background:${roleBg}; color:${roleColor}; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; border: 1px solid ${roleColor};">${roleStr}</span>
+                    </div>
+                `;
                 li.appendChild(infoSpan);
 
                 if (isHost && p.id !== this.myId && state.status !== 'playing') {
@@ -367,7 +408,7 @@ class GizliKelimelerView {
 
         const turnInd = document.getElementById('turn-indicator');
         turnInd.innerText = `Takım ${state.turnTeam} Oynuyor`;
-        turnInd.style.color = state.turnTeam === 'A' ? 'var(--primary-purple)' : 'var(--danger)';
+        turnInd.style.color = state.turnTeam === 'A' ? 'var(--team-a-color)' : 'var(--team-b-color)';
 
         const me = state.players[this.myId];
         const amITurnTeam = me && me.team === state.turnTeam;
@@ -442,7 +483,10 @@ class GizliKelimelerView {
 
     updateWinnerUI(state) {
         let msg = `Takım ${state.winnerTeam} Kazandı!`;
-        document.getElementById('winner-message').innerText = msg;
+        const winnerMsgEl = document.getElementById('winner-message');
+        winnerMsgEl.innerText = msg;
+        winnerMsgEl.style.color = state.winnerTeam === 'A' ? 'var(--team-a-color)' : 'var(--team-b-color)';
+        
         document.getElementById('final-score-a').innerText = state.scoreA;
         document.getElementById('final-score-b').innerText = state.scoreB;
 

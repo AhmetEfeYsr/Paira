@@ -94,12 +94,12 @@ class GizliKelimelerNetworkManager {
         this.initAudio();
 
         try {
-            // Load word list using same structure as Tabu
-            const resp = await fetch('../Tabu/tr.json');
+            // Load word list using same structure as Tabu or from root tr.json
+            const resp = await fetch('../tr.json');
             const data = await resp.json();
             this.engine.setWords(data);
         } catch (err) {
-            console.warn("Could not load words, using fallbacks");
+            console.warn("Could not load words, using fallbacks", err);
             this.engine.setWords(null);
         }
 

@@ -4,8 +4,6 @@ import { networkState, broadcastAction, isHost, myId } from './network.js';
 
 let drawingBoard;
 let timerInterval;
-let currentStoryIdx = 0; // Host uses this to iterate albums
-let currentStepIdx = 0;
 
 export function initGameUI() {
     // Only init board once
@@ -146,7 +144,10 @@ export function updateGameStateUI() {
 function submitPrompt() {
     const input = document.getElementById('prompt-input');
     const text = input.value.trim();
-    if(!text) return showToast("Bir şeyler yazmalısın!", "warning");
+    if(!text) {
+        if(window.showToast) window.showToast("Bir şeyler yazmalısın!", "warning");
+        return;
+    }
 
     // Disable inputs and show wait
     document.getElementById('prompt-container').style.display = 'none';
@@ -210,121 +211,82 @@ export function stopTimer() {
     clearInterval(timerInterval);
 }
 
-export function showToast(msg, type = "info") {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-}
-
 // ALBUM LOGIC (End of Game)
-
-window.initAlbumUI = function() {
-    document.getElementById('album-screen').classList.remove('hidden');
-    document.getElementById('album-screen').classList.add('active');
-
-    if (isHost) {
-        document.getElementById('btn-next-story').style.display = 'inline-block';
-        document.getElementById('btn-next-story').addEventListener('click', () => {
-            broadcastAction({ type: 'ALBUM_NEXT' });
-        });
-
-        document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
-            window.location.href = 'index.html'; // Or reset state
-        });
-    }
-
-    // Initial render setup
-    currentStoryIdx = 0;
-    currentStepIdx = 0;
-    renderAlbumStep(true);
-};
-
-export function showAlbumStep() {
-    const owners = Object.keys(networkState.stories);
-    if (currentStoryIdx >= owners.length) return;
-
-    const ownerId = owners[currentStoryIdx];
-    const story = networkState.stories[ownerId];
-
-    currentStepIdx++;
-
-    if (currentStepIdx >= story.length) {
-        currentStoryIdx++;
-        currentStepIdx = 0;
-
-        if (currentStoryIdx >= owners.length) {
-            document.getElementById('btn-next-story').style.display = 'none';
-            document.getElementById('btn-back-to-lobby').style.display = 'inline-block';
-            showToast("Bütün hikayeler bitti!", "success");
-            return;
-        }
-        renderAlbumStep(true); // new book, clear container
-        return;
-    }
-
-    renderAlbumStep(false); // just append the next step
-}
-
-function renderAlbumStep(isNewBook) {
+export function renderAlbumState() {
     const container = document.getElementById('album-container');
-    const owners = Object.keys(networkState.stories);
+    const seq = networkState.albumSequence;
+    const idx = networkState.albumIndex;
+    
+    if (!seq || idx < 0 || idx >= seq.length) return;
 
-    if (currentStoryIdx >= owners.length) return;
+    container.innerHTML = '';
+    
+    for (let i = 0; i <= idx; i++) {
+        const item = seq[i];
+        
+        if (item.type === 'TITLE') {
+            const title = document.createElement('h2');
+            title.style.color = 'var(--neon-purple)';
+            title.style.borderBottom = '1px solid var(--btn-secondary-border)';
+            title.style.paddingBottom = '10px';
+            title.style.width = '100%';
+            title.style.textAlign = 'center';
+            title.style.fontSize = '2rem';
+            title.style.marginTop = '20px';
+            title.textContent = `${networkState.players[item.ownerId].name}'in Başlattığı Hikaye`;
+            container.appendChild(title);
+        } else if (item.type === 'ENTRY') {
+            const step = item.stepData;
+            const authorName = networkState.players[step.authorId]?.name || "Bilinmeyen";
+            
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'card pop-animation';
+            entryDiv.style.width = '100%';
+            entryDiv.style.maxWidth = '600px';
+            entryDiv.style.padding = '15px';
+            entryDiv.style.background = 'var(--item-bg)';
+            entryDiv.style.margin = '0 auto';
+            entryDiv.style.marginBottom = '15px';
+            
+            const authorTag = document.createElement('div');
+            authorTag.style.fontWeight = 'bold';
+            authorTag.style.color = 'var(--text-muted)';
+            authorTag.style.marginBottom = '10px';
+            authorTag.textContent = `${authorName} ${step.type === 'text' ? 'yazdı:' : 'çizdi:'}`;
+            entryDiv.appendChild(authorTag);
 
-    const ownerId = owners[currentStoryIdx];
-    const story = networkState.stories[ownerId];
-    const step = story[currentStepIdx];
-
-    if (isNewBook) {
-        container.innerHTML = `<h2 style="color:var(--neon-purple); border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; width:100%; text-align:center; font-size:2rem; margin-top:20px;">${networkState.players[ownerId].name}'in Başlattığı Hikaye</h2>`;
+            if (step.type === 'text') {
+                const textContent = document.createElement('div');
+                textContent.style.fontSize = '1.5rem';
+                textContent.style.color = 'var(--text-main)';
+                textContent.style.textAlign = 'center';
+                textContent.textContent = step.content;
+                entryDiv.appendChild(textContent);
+            } else if (step.type === 'draw') {
+                const img = document.createElement('img');
+                img.src = step.content;
+                img.style.width = '100%';
+                img.style.borderRadius = '8px';
+                img.style.background = 'white'; // White is necessary for transparent drawn lines
+                entryDiv.appendChild(img);
+            }
+            container.appendChild(entryDiv);
+        } else if (item.type === 'END') {
+            const endMsg = document.createElement('h2');
+            endMsg.style.color = 'var(--success)';
+            endMsg.style.textAlign = 'center';
+            endMsg.style.marginTop = '30px';
+            endMsg.textContent = 'Bütün hikayeler bitti!';
+            container.appendChild(endMsg);
+            
+            if (isHost) {
+                document.getElementById('btn-next-story').style.display = 'none';
+                document.getElementById('btn-back-to-lobby').style.display = 'inline-block';
+            }
+        }
     }
-
-    if (!step) return;
-
-    const authorName = networkState.players[step.authorId]?.name || "Bilinmeyen";
-    const entryDiv = document.createElement('div');
-    entryDiv.className = 'card';
-    entryDiv.style.width = '100%';
-    entryDiv.style.maxWidth = '600px';
-    entryDiv.style.padding = '15px';
-    entryDiv.style.background = 'rgba(0,0,0,0.5)';
-    entryDiv.style.animation = 'fadeInUp 0.5s ease-out';
-
-    const authorTag = document.createElement('div');
-    authorTag.style.fontWeight = 'bold';
-    authorTag.style.color = 'var(--text-muted)';
-    authorTag.style.marginBottom = '10px';
-    authorTag.textContent = `${authorName} ${step.type === 'text' ? 'yazdı:' : 'çizdi:'}`;
-    entryDiv.appendChild(authorTag);
-
-    if (step.type === 'text') {
-        const textContent = document.createElement('div');
-        textContent.style.fontSize = '1.5rem';
-        textContent.style.color = 'var(--text-main)';
-        textContent.style.textAlign = 'center';
-        textContent.textContent = step.content;
-        entryDiv.appendChild(textContent);
-    } else if (step.type === 'draw') {
-        const img = document.createElement('img');
-        img.src = step.content;
-        img.style.width = '100%';
-        img.style.borderRadius = '8px';
-        img.style.background = 'white';
-        entryDiv.appendChild(img);
-    }
-
-    container.appendChild(entryDiv);
+    
+    // Scroll to bottom
     container.scrollTop = container.scrollHeight;
 }
 

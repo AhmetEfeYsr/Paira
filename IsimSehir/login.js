@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnJoin = document.getElementById('btn-join');
 
     const handleLogin = (isHosting) => {
+        if (window.PairaAudio) window.PairaAudio.init();
         const nameInput = document.getElementById('username-input').value.trim();
         if (!nameInput) {
             showToast("Lütfen bir ad girin", "error");
@@ -41,6 +42,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnHost) btnHost.addEventListener('click', () => handleLogin(true));
     if (btnJoin) btnJoin.addEventListener('click', () => handleLogin(false));
+
+    const roomCodeInput = document.getElementById('room-code-input');
+    if (roomCodeInput) {
+        roomCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleLogin(false);
+            }
+        });
+    }
+
+    const usernameInput = document.getElementById('username-input');
+    if (usernameInput) {
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (roomCodeInput && roomCodeInput.value.trim() !== '') {
+                    handleLogin(false);
+                }
+            }
+        });
+    }
 });
 
 function generateRoomCode() {
@@ -52,21 +75,4 @@ function generateRoomCode() {
         code += chars[array[i] % chars.length];
     }
     return code;
-}
-
-function showToast(msg, type = "info") {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
 }

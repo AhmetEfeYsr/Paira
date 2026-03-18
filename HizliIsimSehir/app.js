@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Screens
         lobbyScreen: document.getElementById('lobby-screen'),
         gameScreen: document.getElementById('game-screen'),
-        votingScreen: document.getElementById('voting-screen'),
         scoreScreen: document.getElementById('score-screen'),
 
         // Host Controls
@@ -37,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnStartGame: document.getElementById('btn-start-game'),
 
         settingRounds: document.getElementById('setting-rounds'),
-        settingEndCondition: document.getElementById('setting-end-condition'),
         settingEndValueGroup: document.getElementById('setting-end-value-group'),
         settingEndValue: document.getElementById('setting-end-value'),
         categorySelection: document.getElementById('category-selection'),
@@ -55,11 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnFinishTurn: document.getElementById('btn-finish-turn'),
         finishStatusText: document.getElementById('finish-status-text'),
 
-        // Voting & Scoreboard
-        votingContainer: document.getElementById('voting-container'),
-        btnSubmitVotes: document.getElementById('btn-submit-votes'),
-        btnBypassVotes: document.getElementById('btn-bypass-votes'),
-        votingStatusText: document.getElementById('voting-status-text'),
+        // Scoreboard
         scoreboardBody: document.getElementById('scoreboard-body'),
         btnNextRound: document.getElementById('btn-next-round'),
         extendGameGroup: document.getElementById('extend-game-group'),
@@ -111,15 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (codeToCopy) {
                 navigator.clipboard.writeText(codeToCopy)
                     .then(() => {
-                        const container = document.getElementById('toast-container');
-                        if (container) {
-                            const toast = document.createElement('div');
-                            toast.className = 'toast success';
-                            toast.style.borderLeftColor = 'var(--success-color)';
-                            toast.textContent = 'Oda kodu kopyalandı!';
-                            container.appendChild(toast);
-                            setTimeout(() => toast.remove(), 4000);
-                        }
+                        showToast('Oda kodu kopyalandı!', 'success');
                     })
                     .catch(() => console.error('Kopyalanamadı'));
             }
@@ -200,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 strong.textContent = displayName;
                 li.appendChild(strong);
             } else {
-                li.textContent = displayName;
+                li.appendChild(document.createTextNode(displayName));
             }
 
             if(ui.playersList) ui.playersList.appendChild(li);
@@ -211,8 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleNetworkError(err) {
-        alert("Bağlantı koptu veya hata oluştu. Lütfen tekrar girin.");
-        window.location.href = 'index.html';
+        showToast("Bağlantı koptu veya hata oluştu. Lütfen tekrar girin.", "error");
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
     }
 
     function handleNetworkData(senderId, data) {
@@ -343,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function switchScreen(screenId) {
-        ['lobby-screen', 'game-screen', 'voting-screen', 'score-screen'].forEach(id => {
+        ['lobby-screen', 'game-screen', 'score-screen'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
                 el.classList.remove('active');
@@ -422,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 turnIndicator.style.fontWeight = "bold";
             } else {
                 turnIndicator.textContent = `Sıra: ${currentPlayer ? currentPlayer.name : 'Bekleniyor'}`;
-                turnIndicator.style.color = "var(--text-color)";
+                turnIndicator.style.color = "var(--text-main)";
                 turnIndicator.style.fontWeight = "normal";
             }
         }
@@ -459,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.btnFinishTurn.disabled = !isMyTurn;
             if (isMyTurn) {
                 ui.btnFinishTurn.classList.add('pulse');
+                if(window.PairaAudio) window.PairaAudio.play('tick');
             } else {
                 ui.btnFinishTurn.classList.remove('pulse');
             }
@@ -498,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const s = (secondsLeft % 60).toString().padStart(2, '0');
         ui.timerDisplay.textContent = `${m}:${s}`;
 
-        if (ui.timerStatusText && gameConfig.endCondition === 'first_finish') {
+        if (ui.timerStatusText) {
             ui.timerStatusText.textContent = 'Süre başladı!';
         }
     }
@@ -519,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.btnStartGame.addEventListener('click', () => {
                 updateLocalConfig();
                 if (gameConfig.categories.length === 0) {
-                    alert("Lütfen en az bir kategori seçin.");
+                    showToast("Lütfen en az bir kategori seçin.", "warning");
                     return;
                 }
 
@@ -625,6 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const activePlayerObj = Object.values(network.players)[gameState.currentPlayerIndex];
             if (activePlayerObj && activePlayerObj.id === data.id) {
                 gameState.playerAnswers[data.id] = data.answers;
+                if(window.PairaAudio) window.PairaAudio.play('pass');
                 endRound(); // Which really ends the turn
             }
         }
@@ -681,142 +671,113 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Validation Logic ---
     let validationCache = {};
+    let apiCache = {};
+
+    async function checkWikipedia(word, keywords) {
+        const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+        try {
+            const wikiRes = await fetch(wikiUrl);
+            const wikiData = await wikiRes.json();
+            if (wikiData.query && wikiData.query.search) {
+                const lowerWord = word.toLocaleLowerCase('tr-TR');
+                for (let item of wikiData.query.search) {
+                    const snippet = item.snippet.toLocaleLowerCase('tr-TR');
+                    const title = item.title.toLocaleLowerCase('tr-TR');
+                    if (title.includes(lowerWord) || snippet.includes(lowerWord)) {
+                        if (keywords.length === 0 || keywords.some(kw => snippet.includes(kw) || title.includes(kw))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (e) {}
+        return false;
+    }
 
     async function validateViaApi(catId, word) {
         if (!word) return false;
+        const cacheKey = `${catId}_${word}`;
+        if (apiCache[cacheKey] !== undefined) return apiCache[cacheKey];
 
+        let result = false;
         try {
             if (catId === 'sehir') {
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1`;
                 const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0' } });
                 const data = await response.json();
-                return data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+                result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+                if (!result) result = await checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent']);
             }
-            if (catId === 'ulke') {
+            else if (catId === 'ulke') {
                 const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
                 const response = await fetch(url);
-                const data = await response.json();
-                return Array.isArray(data) && data.length > 0;
+                if (response.ok) {
+                    const data = await response.json();
+                    result = Array.isArray(data) && data.length > 0;
+                }
+                if (!result) result = await checkWikipedia(word, ['ülke', 'cumhuriyet', 'devlet']);
             }
-            if (catId === 'film_dizi') {
+            else if (catId === 'film_dizi') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
                 const response = await fetch(url);
-                const data = await response.json();
-                if (data.results) {
-                    for (let item of data.results) {
-                        if (item.wrapperType === 'track' && (item.kind === 'feature-movie' || item.kind === 'tv-episode')) return true;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        result = data.results.some(item => item.wrapperType === 'track' && (item.kind === 'feature-movie' || item.kind === 'tv-episode'));
                     }
                 }
-
-                // Fallback to Wikipedia TR
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('dizi') || snippet.includes('film') || snippet.includes('sinema') || snippet.includes('televizyon') || title.includes('dizi') || title.includes('film'))) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
+                if (!result) result = await checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel']);
             }
-            if (catId === 'muzik') {
+            else if (catId === 'muzik') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
                 const response = await fetch(url);
-                const data = await response.json();
-                if (data.results) {
-                    for (let item of data.results) {
-                        if ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') return true;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        result = data.results.some(item => (item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist');
                     }
                 }
-
-                // Fallback to Wikipedia TR
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('şarkı') || snippet.includes('albüm') || snippet.includes('müzik') || snippet.includes('tekli') || title.includes('şarkı') || title.includes('albüm'))) {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
+                if (!result) result = await checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single']);
             }
-            if (catId === 'sarkici') {
+            else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
-                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                const data = await response.json();
-                if (data.artists && data.artists.length > 0) {
-                    for (let artist of data.artists) {
-                        if (artist.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR')) ||
-                            (artist.aliases && artist.aliases.some(a => a.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR'))))) {
-                            return true;
-                        }
+                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.artists && data.artists.length > 0) {
+                        result = data.artists.some(artist => 
+                            artist.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR')) ||
+                            (artist.aliases && artist.aliases.some(a => a.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR'))))
+                        );
                     }
                 }
-                return false;
+                if (!result) result = await checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist']);
             }
-            if (catId === 'yazar') {
+            else if (catId === 'yazar') {
                 const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
                 const response = await fetch(url);
-                const data = await response.json();
-                return data.numFound > 0;
-            }
-            if (catId === 'hastalik') {
-                // WHO ICD requires OAuth. Use broad Wikipedia fallback for medical terms.
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('hastalık') || snippet.includes('sendrom') || snippet.includes('virüs') || snippet.includes('enfeksiyon') || snippet.includes('tıp') || snippet.includes('belirti') || title.includes('hastalığı'))) {
-                            return true;
-                        }
-                    }
+                if (response.ok) {
+                    const data = await response.json();
+                    result = data.numFound > 0;
                 }
-                return false;
+                if (!result) result = await checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat']);
             }
-            if (catId === 'spor') {
-                // TheSportsDB has poor Turkish translation coverage. Use Wikipedia fallback.
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('spor') || snippet.includes('oyun') || snippet.includes('takım') || title.includes('spor'))) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
+            else if (catId === 'hastalik') {
+                result = await checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı']);
+            }
+            else if (catId === 'spor') {
+                result = await checkWikipedia(word, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat']);
             }
         } catch (e) {
             console.error(`API validation error for ${catId} - ${word}:`, e);
-            return false;
+            result = false;
         }
-        return false;
+
+        apiCache[cacheKey] = result;
+        return result;
     }
 
     async function loadDictionary(catId) {
-        if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(catId)) {
-            return null; // Will use API
-        }
-
         if (validationCache[catId]) return validationCache[catId];
 
         try {
@@ -856,11 +817,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isCustomCat) {
                 isValidInDict = true;
-            } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(gameState.currentCategory.id)) {
-                isValidInDict = await validateViaApi(gameState.currentCategory.id, word);
             } else {
                 const dict = await loadDictionary(gameState.currentCategory.id);
-                isValidInDict = dict && dict.has(word);
+                if (dict && dict.has(word)) {
+                    isValidInDict = true;
+                } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(gameState.currentCategory.id)) {
+                    isValidInDict = await validateViaApi(gameState.currentCategory.id, word);
+                } else {
+                    isValidInDict = false;
+                }
             }
 
             if (isValidInDict) {
@@ -888,22 +853,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.currentPlayerIndex++;
         const totalPlayers = Object.keys(network.players).length;
 
-        if (gameState.currentPlayerIndex >= totalPlayers) {
-            // End of round
-            gameState.currentPlayerIndex = 0;
-            gameState.round++;
-
-            if (gameState.round > gameConfig.rounds) {
-                // Game Over
-                network.broadcast({
-                    type: 'SHOW_SCORES',
-                    scores: finalScores
-                });
-                renderScoreboard(finalScores);
-                return;
-            }
-        }
-
         // Show a brief splash of the score then go to next turn
         network.broadcast({
             type: 'TURN_RESULT',
@@ -914,23 +863,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Host locally shows result
         showTurnResult(word, score);
+        if(window.PairaAudio) {
+            if(score > 0) window.PairaAudio.play('correct');
+            else window.PairaAudio.play('wrong');
+        }
 
         // Wait a few seconds then start next turn
         setTimeout(() => {
-            const letter = getRandomLetter();
-            const randomCategory = gameConfig.categories[Math.floor(Math.random() * gameConfig.categories.length)];
+            if (gameState.currentPlayerIndex >= totalPlayers) {
+                gameState.currentPlayerIndex = 0;
+                gameState.round++;
+                
+                // Show scoreboard at the end of EACH round
+                network.broadcast({
+                    type: 'SHOW_SCORES',
+                    scores: finalScores
+                });
+                renderScoreboard(finalScores);
+            } else {
+                const letter = getRandomLetter();
+                const randomCategory = gameConfig.categories[Math.floor(Math.random() * gameConfig.categories.length)];
 
-            gameState.playerAnswers = {};
+                gameState.playerAnswers = {};
 
-            network.broadcast({
-                type: 'START_TURN',
-                config: gameConfig,
-                round: gameState.round,
-                letter: letter,
-                category: randomCategory,
-                playerIndex: gameState.currentPlayerIndex
-            });
-            startTurn(gameConfig, gameState.round, letter, randomCategory, gameState.currentPlayerIndex);
+                network.broadcast({
+                    type: 'START_TURN',
+                    config: gameConfig,
+                    round: gameState.round,
+                    letter: letter,
+                    category: randomCategory,
+                    playerIndex: gameState.currentPlayerIndex
+                });
+                startTurn(gameConfig, gameState.round, letter, randomCategory, gameState.currentPlayerIndex);
+            }
         }, 3000);
     }
 
@@ -938,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(ui.finishStatusText) {
             if (score > 0) {
                 ui.finishStatusText.textContent = `Doğru! "${word}" = +${score} puan`;
-                ui.finishStatusText.style.color = 'var(--success-color)';
+                ui.finishStatusText.style.color = 'var(--success)';
             } else {
                 ui.finishStatusText.textContent = `Yanlış veya Boş! +0 puan`;
                 ui.finishStatusText.style.color = 'var(--danger)';
@@ -946,26 +911,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Capture NETWORK_START_VOTING in handleData
-    const _handleDataVoting = network.handleData;
+    // Handle specific flow overrides
+    const _handleDataFlow = network.handleData;
     network.handleData = function(senderId, data) {
-        _handleDataVoting.call(network, senderId, data);
+        _handleDataFlow.call(network, senderId, data);
 
-        if (data.type === 'START_VOTING') {
-            if (!isHost) {
-                initVotingSession(data.results);
-            }
-        } else if (data.type === 'SINGLE_VOTE') {
-            if (isHost) {
-                handleLiveVote(senderId, data.catId, data.targetPlayerId, data.val);
-            }
-        } else if (data.type === 'SYNC_LIVE_VOTES') {
-            updateLiveVoteUI(data.aggregatedVotes);
-        } else if (data.type === 'FINISH_VOTING') {
-            if (isHost) {
-                handlePlayerFinishedVoting(senderId);
-            }
-        } else if (data.type === 'SHOW_SCORES') {
+        if (data.type === 'SHOW_SCORES') {
             if (!isHost) {
                 renderScoreboard(data.scores);
             }
@@ -973,294 +924,16 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (data.type === 'TURN_RESULT') {
             if (!isHost) {
                 showTurnResult(data.word, data.score);
-                // The client will automatically receive START_TURN shortly from host
+                if(window.PairaAudio) {
+                    if(data.score > 0) window.PairaAudio.play('correct');
+                    else window.PairaAudio.play('wrong');
+                }
             }
+        }
+        else if (data.type === 'BACK_TO_LOBBY' && !isHost) {
+            backToLobby();
         }
     };
-
-    function initVotingSession(results) {
-        currentResultsData = results;
-        clientVotes = {};
-        hasVoted = false;
-
-        if (isHost) {
-            liveVotes = {};
-            receivedVotes = 0;
-        }
-
-        // Initialize default votes as suggested scores
-        gameConfig.categories.forEach(cat => {
-            if (!results[cat.id]) return;
-            clientVotes[cat.id] = {};
-
-            if (isHost) liveVotes[cat.id] = {};
-
-            results[cat.id].forEach(res => {
-                if (!res.word) return;
-                clientVotes[cat.id][res.playerId] = res.suggestedScore;
-
-                if (isHost) {
-                    liveVotes[cat.id][res.playerId] = {};
-                }
-            });
-        });
-
-        // Let the host auto-populate initial recommended scores for everyone
-        if (isHost) {
-            for (const catId in liveVotes) {
-                for (const targetId in liveVotes[catId]) {
-                    const suggested = results[catId].find(r => r.playerId === targetId).suggestedScore;
-                    for (const pId in network.players) {
-                        liveVotes[catId][targetId][pId] = suggested;
-                    }
-                }
-            }
-            broadcastLiveVotes();
-        }
-
-        renderVotingScreen(results);
-    }
-
-    function renderVotingScreen(results) {
-        switchScreen('voting-screen');
-        if(ui.votingContainer) ui.votingContainer.innerHTML = '';
-        if(ui.btnSubmitVotes) ui.btnSubmitVotes.disabled = false;
-        if(ui.btnBypassVotes) ui.btnBypassVotes.disabled = false;
-        if(ui.votingStatusText) ui.votingStatusText.textContent = '';
-
-        gameConfig.categories.forEach(cat => {
-            if (!results[cat.id]) return;
-
-            const catBlock = document.createElement('div');
-            catBlock.className = 'vote-category-block';
-
-            const title = document.createElement('h3');
-            title.className = 'vote-category-title';
-            title.textContent = cat.name;
-            catBlock.appendChild(title);
-
-            results[cat.id].forEach(res => {
-                if (!res.word) return;
-
-                const item = document.createElement('div');
-                item.className = 'vote-item';
-
-                const info = document.createElement('div');
-                info.className = 'vote-info';
-
-                const playerName = network.players[res.playerId] ? network.players[res.playerId].name : 'Bilinmiyor';
-                const formattedWord = res.word.charAt(0).toLocaleUpperCase('tr-TR') + res.word.slice(1);
-
-                const playerDiv = document.createElement('div');
-                playerDiv.className = 'vote-player';
-                playerDiv.textContent = playerName;
-
-                const wordDiv = document.createElement('div');
-                wordDiv.className = 'vote-word';
-                wordDiv.textContent = formattedWord;
-
-                const suggestedDiv = document.createElement('div');
-                suggestedDiv.className = 'vote-suggested';
-                suggestedDiv.style.color = 'var(--warning)';
-                suggestedDiv.style.fontSize = '0.9rem';
-                suggestedDiv.textContent = `Önerilen: ${res.suggestedScore} Puan`;
-
-                // Live vote display area
-                const liveCountDiv = document.createElement('div');
-                liveCountDiv.className = 'vote-counts-display';
-                liveCountDiv.id = `live-counts-${cat.id}-${res.playerId}`;
-                liveCountDiv.innerHTML = `
-                    <span class="vote-count-pill" style="border-color: var(--success); color: var(--success);">10: <span>0</span></span>
-                    <span class="vote-count-pill" style="border-color: var(--warning); color: var(--warning);">5: <span>0</span></span>
-                    <span class="vote-count-pill" style="border-color: var(--danger); color: var(--danger);">0: <span>0</span></span>
-                `;
-
-                info.appendChild(playerDiv);
-                info.appendChild(wordDiv);
-                info.appendChild(suggestedDiv);
-                info.appendChild(liveCountDiv);
-
-                const controls = document.createElement('div');
-                controls.className = 'vote-controls';
-
-                [10, 5, 0].forEach(val => {
-                    const btn = document.createElement('button');
-                    btn.className = `vote-btn ${res.suggestedScore === val ? 'selected' : ''}`;
-                    btn.dataset.val = val;
-                    btn.textContent = val;
-
-                    btn.addEventListener('click', () => {
-                        controls.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        clientVotes[cat.id][res.playerId] = val;
-
-                        // Send single vote live
-                        network.sendToHost({
-                            type: 'SINGLE_VOTE',
-                            catId: cat.id,
-                            targetPlayerId: res.playerId,
-                            val: val
-                        });
-                    });
-
-                    controls.appendChild(btn);
-                });
-
-                item.appendChild(info);
-                item.appendChild(controls);
-                catBlock.appendChild(item);
-            });
-
-            if (results[cat.id].filter(r => r.word).length > 0) {
-                if(ui.votingContainer) ui.votingContainer.appendChild(catBlock);
-            } else {
-                const emptyMsg = document.createElement('p');
-                emptyMsg.className = 'text-muted';
-                emptyMsg.textContent = 'Bu kategoriye kimse cevap veremedi.';
-                catBlock.appendChild(emptyMsg);
-                if(ui.votingContainer) ui.votingContainer.appendChild(catBlock);
-            }
-        });
-    }
-
-    function handleLiveVote(voterId, catId, targetPlayerId, val) {
-        if (!isHost) return;
-        if (!liveVotes[catId]) liveVotes[catId] = {};
-        if (!liveVotes[catId][targetPlayerId]) liveVotes[catId][targetPlayerId] = {};
-
-        liveVotes[catId][targetPlayerId][voterId] = val;
-        broadcastLiveVotes();
-    }
-
-    function broadcastLiveVotes() {
-        if (!isHost) return;
-
-        const aggregated = {}; // catId -> targetPlayerId -> { 10: x, 5: y, 0: z }
-
-        for (const catId in liveVotes) {
-            aggregated[catId] = {};
-            for (const targetId in liveVotes[catId]) {
-                aggregated[catId][targetId] = { 10: 0, 5: 0, 0: 0 };
-                for (const voterId in liveVotes[catId][targetId]) {
-                    const v = liveVotes[catId][targetId][voterId];
-                    if (aggregated[catId][targetId][v] !== undefined) {
-                        aggregated[catId][targetId][v]++;
-                    }
-                }
-            }
-        }
-
-        network.broadcast({ type: 'SYNC_LIVE_VOTES', aggregatedVotes: aggregated });
-        updateLiveVoteUI(aggregated);
-    }
-
-    function updateLiveVoteUI(aggregated) {
-        for (const catId in aggregated) {
-            for (const targetId in aggregated[catId]) {
-                const el = document.getElementById(`live-counts-${catId}-${targetId}`);
-                if (el) {
-                    const counts = aggregated[catId][targetId];
-                    const pills = el.querySelectorAll('.vote-count-pill span');
-                    if (pills.length === 3) {
-                        pills[0].textContent = counts[10]; // 10 votes
-                        pills[1].textContent = counts[5];  // 5 votes
-                        pills[2].textContent = counts[0];  // 0 votes
-                    }
-                }
-            }
-        }
-    }
-
-    if(ui.btnSubmitVotes) ui.btnSubmitVotes.addEventListener('click', submitFinalVotes);
-    if(ui.btnBypassVotes) ui.btnBypassVotes.addEventListener('click', submitFinalVotes);
-
-    function submitFinalVotes() {
-        if (hasVoted) return;
-        hasVoted = true;
-
-        if(ui.btnSubmitVotes) ui.btnSubmitVotes.disabled = true;
-        if(ui.btnBypassVotes) ui.btnBypassVotes.disabled = true;
-        if(ui.votingStatusText) ui.votingStatusText.textContent = 'Karar gönderildi, diğer oyuncular bekleniyor...';
-
-        network.sendToHost({
-            type: 'FINISH_VOTING',
-            id: network.myId
-        });
-    }
-
-    function handlePlayerFinishedVoting(senderId) {
-        if (!isHost) return;
-
-        receivedVotes++;
-        const totalPlayers = Object.keys(network.players).length;
-        if (receivedVotes >= totalPlayers) {
-            resolveVotesAndScore();
-        }
-    }
-
-    function resolveVotesAndScore() {
-        if (!isHost) return;
-
-        const voteAggregator = {};
-        for (const catId in liveVotes) {
-            voteAggregator[catId] = {};
-            for (const targetId in liveVotes[catId]) {
-                voteAggregator[catId][targetId] = { 10: 0, 5: 0, 0: 0 };
-                for (const voterId in liveVotes[catId][targetId]) {
-                    const v = liveVotes[catId][targetId][voterId];
-                    voteAggregator[catId][targetId][v]++;
-                }
-            }
-        }
-
-        const finalScores = {};
-
-        for (const pId in network.players) {
-            finalScores[pId] = {
-                id: pId,
-                name: network.players[pId].name,
-                roundScore: 0,
-                totalScore: network.players[pId].score || 0
-            };
-        }
-
-        for (const catId in voteAggregator) {
-            for (const targetPlayerId in voteAggregator[catId]) {
-                const counts = voteAggregator[catId][targetPlayerId];
-
-                let maxCount = -1;
-                let finalVote = 0;
-
-                for (const val of [10, 5, 0]) {
-                    if (counts[val] > maxCount) {
-                        maxCount = counts[val];
-                        finalVote = val;
-                    }
-                }
-
-                if (finalScores[targetPlayerId]) {
-                    finalScores[targetPlayerId].roundScore += finalVote;
-                }
-            }
-        }
-
-        for (const pId in finalScores) {
-            finalScores[pId].totalScore += finalScores[pId].roundScore;
-            network.players[pId].score = finalScores[pId].totalScore;
-        }
-
-        network.broadcast({
-            type: 'SHOW_SCORES',
-            scores: finalScores
-        });
-
-        renderScoreboard(finalScores);
-
-        // Reset state
-        receivedVotes = 0;
-        liveVotes = {};
-        gameState.playerAnswers = {};
-    }
 
     // --- Scoreboard and Match Flow ---
     function renderScoreboard(scores) {
@@ -1297,7 +970,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHost) {
             if(ui.btnNextRound) {
                 ui.btnNextRound.classList.remove('hidden');
-                if (gameState.round >= gameConfig.rounds) {
+                if (gameState.round > gameConfig.rounds) {
                     ui.btnNextRound.textContent = 'Oyunu Bitir';
                     if(ui.extendGameGroup) ui.extendGameGroup.classList.remove('hidden');
                 } else {
@@ -1311,19 +984,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isHost) {
         if(ui.btnNextRound) {
             ui.btnNextRound.addEventListener('click', () => {
-                if (gameState.round >= gameConfig.rounds) {
+                if (gameState.round > gameConfig.rounds) {
                     network.broadcast({ type: 'BACK_TO_LOBBY' });
                     backToLobby();
                 } else {
                     const letter = getRandomLetter();
-                    gameState.round++;
+                    const randomCategory = gameConfig.categories[Math.floor(Math.random() * gameConfig.categories.length)];
+                    
                     network.broadcast({
-                        type: 'START_ROUND',
+                        type: 'START_TURN',
                         config: gameConfig,
                         round: gameState.round,
-                        letter: letter
+                        letter: letter,
+                        category: randomCategory,
+                        playerIndex: 0
                     });
-                    startRound(gameConfig, gameState.round, letter);
+                    startTurn(gameConfig, gameState.round, letter, randomCategory, 0);
                 }
             });
         }
@@ -1335,33 +1011,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameConfig.rounds += extra;
 
                 if(ui.extendGameGroup) ui.extendGameGroup.classList.add('hidden');
-                if(ui.btnNextRound) ui.btnNextRound.textContent = 'Sonraki Tura Geç';
+                if(ui.btnNextRound) {
+                    ui.btnNextRound.textContent = 'Sonraki Tura Geç';
+                }
 
                 network.broadcast({
                     type: 'CONFIG_UPDATE',
                     config: gameConfig
                 });
-
-                const letter = getRandomLetter();
-                gameState.round++;
-                network.broadcast({
-                    type: 'START_ROUND',
-                    config: gameConfig,
-                    round: gameState.round,
-                    letter: letter
-                });
-                startRound(gameConfig, gameState.round, letter);
             });
         }
     }
-
-    const _handleDataFlow = network.handleData;
-    network.handleData = function(senderId, data) {
-        _handleDataFlow.call(network, senderId, data);
-        if (data.type === 'BACK_TO_LOBBY' && !isHost) {
-            backToLobby();
-        }
-    };
 
     function backToLobby() {
         gameState.status = 'LOBBY';

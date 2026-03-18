@@ -21,7 +21,7 @@ function generateRoomCode() {
 // --- KULLANICI ROLÜ VE BAĞLANTIYI BAŞLATMA ---
 function setupUserRole() {
     // Ses başlangıcı (varsa)
-    if (typeof initAudio === 'function') initAudio();
+    if (window.PairaAudio) window.PairaAudio.init();
 
     const storedName = sessionStorage.getItem('playerName');
     const storedIsHost = sessionStorage.getItem('isHost') === 'true';
@@ -36,7 +36,7 @@ function setupUserRole() {
     // Easter Egg Kontrolü
     const lowerName = storedName.toLowerCase();
     if (lowerName === 'paira' || lowerName === 'pai' || lowerName === 'paiko') {
-        if (typeof showToast === 'function') showToast("canım ablam 💜", "info");
+        if (window.showToast) window.showToast("canım ablam 💜", "info");
     }
 
     myName = storedName.substring(0, 25);
@@ -82,8 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const codeToCopy = document.getElementById('display-room-code')?.dataset?.code;
             if (codeToCopy) {
                 navigator.clipboard.writeText(codeToCopy)
-                    .then(() => { if(typeof showToast === 'function') showToast("Oda kodu kopyalandı!", "success"); })
-                    .catch(() => { if(typeof showToast === 'function') showToast("Kopyalanamadı", "error"); });
+                    .then(() => { if(window.showToast) window.showToast("Oda kodu kopyalandı!", "success"); })
+                    .catch(() => { if(window.showToast) window.showToast("Kopyalanamadı", "error"); });
             }
         });
     }
@@ -106,8 +106,9 @@ function initPeer(customId = null) {
             if(window.gameApp && window.gameApp.state) {
                 if (window.gameApp.state.players[myId]) {
                     window.gameApp.state.players[myId].name = myName;
+                    window.gameApp.state.players[myId].disconnected = false;
                 } else {
-                    window.gameApp.state.players[myId] = { id: myId, name: myName, role: 'masum', isHost: true, score: 0 };
+                    window.gameApp.state.players[myId] = { id: myId, name: myName, role: 'masum', isHost: true, disconnected: false, score: 0 };
                 }
             }
             const codeDisplay = document.getElementById('display-room-code');
@@ -136,13 +137,13 @@ function initPeer(customId = null) {
     peer.on('error', (err) => {
         console.error("PeerJS Error:", err);
         if (err.type === 'peer-unavailable') {
-            if(typeof showToast === 'function') showToast("Oda bulunamadı veya kapandı. Lütfen ana sayfaya dönün.", "error");
+            if(window.showToast) window.showToast("Oda bulunamadı veya kapandı. Lütfen ana sayfaya dönün.", "error");
             setTimeout(() => { window.location.href = 'index.html'; }, 2000);
         } else if (err.type === 'unavailable-id' && isHost) {
             // Eğer kısa kod çakışırsa yeniden dene
             initPeer(generateRoomCode());
         } else if (err.type === 'network' || err.type === 'server-error') {
-            if(typeof showToast === 'function') showToast("Bağlantı hatası. Lütfen sayfayı yenileyin.", "error");
+            if(window.showToast) window.showToast("Bağlantı hatası. Lütfen sayfayı yenileyin.", "error");
         }
     });
 }
@@ -201,12 +202,14 @@ function handleData(data, peerId) {
     if (data.type === 'JOIN' && isHost) {
         if (appState.players[data.id]) {
             appState.players[data.id].name = data.name; // Reconnect
+            appState.players[data.id].disconnected = false;
         } else {
             appState.players[data.id] = {
                 id: data.id,
                 name: data.name,
                 role: 'masum', // Başlangıçta herkes masum, oyun başlayınca ebe seçilir
                 isHost: false,
+                disconnected: false,
                 score: 0
             };
         }
@@ -215,11 +218,13 @@ function handleData(data, peerId) {
     }
     else if (data.type === 'LEAVE' && isHost) {
         if (appState.players[data.id]) {
-            if(typeof showToast === 'function') showToast(`${appState.players[data.id].name} odadan ayrıldı.`, "info");
+            if(window.showToast) window.showToast(`${appState.players[data.id].name} odadan ayrıldı.`, "info");
             delete appState.players[data.id];
 
             if (appState.currentEbe === data.id && appState.status === 'playing') {
                 window.gameApp.endRoundPrematurely("Ebe oyundan ayrıldığı için tur iptal edildi.");
+            } else if (appState.status === 'playing') {
+                window.gameApp.checkAllSubmissions();
             }
 
             broadcastSync();
@@ -227,7 +232,7 @@ function handleData(data, peerId) {
         }
     }
     else if (data.type === 'HOST_LEAVE' && !isHost) {
-        if(typeof showToast === 'function') showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
+        if(window.showToast) window.showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
         setTimeout(() => {
             sessionStorage.removeItem('myId');
             sessionStorage.removeItem('roomCode');
@@ -262,7 +267,7 @@ function handleData(data, peerId) {
         if(window.gameApp.processAction) window.gameApp.processAction(data.action, peerId);
     }
     else if (data.type === 'PLAY_SOUND') {
-        if(typeof playSound === 'function') playSound(data.sound);
+        if(window.PairaAudio) window.PairaAudio.play(data.sound);
     }
 }
 
@@ -271,23 +276,28 @@ function handleDisconnect(peerId) {
     if (!window.gameApp || !window.gameApp.state.players[peerId]) return;
 
     const lostPlayer = window.gameApp.state.players[peerId];
-    if(typeof showToast === 'function') showToast(`${lostPlayer.name} bağlantısı koptu.`, "warning");
+    if(window.showToast) window.showToast(`${lostPlayer.name} bağlantısı koptu.`, "warning");
 
     // We don't immediately delete the player to allow for reconnect.
 
     if (!isHost && lostPlayer.isHost) {
-        if(typeof showToast === 'function') showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
+        if(window.showToast) window.showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
         setTimeout(() => {
             sessionStorage.removeItem('myId');
             sessionStorage.removeItem('roomCode');
             window.location.href = 'index.html';
         }, 3000);
     } else if (isHost) {
-        // As a host, if someone disconnected, we can just warn for now.
-        // If they don't return before turn ends, they are ghosted.
-        if (window.gameApp.state.status === 'playing' && window.gameApp.state.currentEbe !== peerId) {
-             window.gameApp.checkAllSubmissions(); // Re-check without them
+        lostPlayer.disconnected = true;
+        
+        if (window.gameApp.state.status === 'playing') {
+            if (window.gameApp.state.currentEbe === peerId) {
+                window.gameApp.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.");
+            } else {
+                window.gameApp.checkAllSubmissions();
+            }
         }
+        broadcastSync();
     }
     if(typeof updateUI === 'function') updateUI();
 }

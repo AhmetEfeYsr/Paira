@@ -3,17 +3,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const btnHost = document.getElementById('btn-host');
     const btnJoin = document.getElementById('btn-join');
+    const nameInputEl = document.getElementById('username-input');
+    const roomCodeInputEl = document.getElementById('room-code-input');
 
     const handleLogin = (isHosting) => {
-        const nameInput = document.getElementById('username-input').value.trim();
+        const nameInput = nameInputEl.value.trim();
         if (!nameInput) {
-            showToast("Lütfen bir ad girin", "error");
+            window.showToast("Lütfen bir ad girin", "error");
             return;
         }
 
-        const roomCodeInput = document.getElementById('room-code-input').value.trim().toUpperCase();
+        const roomCodeInput = roomCodeInputEl.value.trim().toUpperCase();
         if (!isHosting && !roomCodeInput) {
-            showToast("Oda kodu gerekli", "error");
+            window.showToast("Oda kodu gerekli", "error");
             return;
         }
 
@@ -30,21 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnHost) btnHost.addEventListener('click', () => handleLogin(true));
     if (btnJoin) btnJoin.addEventListener('click', () => handleLogin(false));
-});
-
-function showToast(msg, type = "info") {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
+    
+    if (nameInputEl) {
+        nameInputEl.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') handleLogin(true);
+        });
     }
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-}
+    
+    if (roomCodeInputEl) {
+        roomCodeInputEl.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') handleLogin(false);
+        });
+    }
+});

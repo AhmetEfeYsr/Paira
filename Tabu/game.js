@@ -464,14 +464,20 @@ class TabuView {
             let wordObj = state.currentWord || (state.activeWords?.[state.wordIndex]);
 
             if (wordObj && (amINarrator || isOpponent)) {
-                document.getElementById('main-word').innerText = wordObj.ana_kelime.toLocaleUpperCase('tr-TR');
-                const fw = document.getElementById('forbidden-words');
-                fw.innerHTML = '';
-                wordObj.yasakli_kelimeler.forEach(w => {
-                    const li = document.createElement('li');
-                    li.innerText = w.toLocaleUpperCase('tr-TR');
-                    fw.appendChild(li);
-                });
+                const prevWord = document.getElementById('main-word').innerText;
+                const newWord = wordObj.ana_kelime.toLocaleUpperCase('tr-TR');
+                
+                if (prevWord !== newWord) {
+                    this.triggerWordPop();
+                    document.getElementById('main-word').innerText = newWord;
+                    const fw = document.getElementById('forbidden-words');
+                    fw.innerHTML = '';
+                    wordObj.yasakli_kelimeler.forEach(w => {
+                        const li = document.createElement('li');
+                        li.innerText = w.toLocaleUpperCase('tr-TR');
+                        fw.appendChild(li);
+                    });
+                }
             }
 
             if (amINarrator) {

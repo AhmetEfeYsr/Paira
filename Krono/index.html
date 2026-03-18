@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Krono | Paira Games - Tarih Sıralama Oyunu</title>
+    <meta name="description" content="Tarihi olayları kronolojik sıraya diz, ister tek başına ister arkadaşına karşı yarış!">
+    <meta name="keywords" content="krono, tarih oyunu, kronolojik sıralama, online oyun, webrtc, paira games, trivia, çok oyunculu">
+    <meta name="author" content="Paira Games">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Krono | Paira Games - Tarih Sıralama Oyunu">
+    <meta property="og:description" content="Tarihi olayları kronolojik sıraya diz, ister tek başına ister arkadaşına karşı yarış!">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Krono | Paira Games - Tarih Sıralama Oyunu">
+    <meta property="twitter:description" content="Tarihi olayları kronolojik sıraya diz, ister tek başına ister arkadaşına karşı yarış!">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Krono",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Trivia Game",
+      "description": "Tarihi olayları kronolojik sıraya diz, ister tek başına ister arkadaşına karşı yarış!",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira Games"
+      }
+    }
+    </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+            <div class="hero-content">
+                <div class="game-logo-container">
+                    <img src="../logolar/bilgi-yarismasi.svg" alt="Krono Logo">
+                </div>
+                <h1 class="gradient-text">Krono</h1>
+                <p class="seo-description">Tarihi olayları doğru sıraya diz. Zamanla yarış, istersen tek başına oyna, istersen bir arkadaşına meydan oku!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; background: var(--success); color: white;">Solo Oyna</button>
+                    
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Arkadaşına Meydan Oku (Oda Kur)</button>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
+                    </div>
+                    
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Modunu Seç</h3>
+                        <p>Kendi rekorunu kırmak için Solo oyna veya bir arkadaşınla yarışmak için bir oda kur.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Olayları Sırala</h3>
+                        <p>Ekranda beliren 5 tarihi olayı sürükleyerek kronolojik sıraya diz.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. İpucu Kullan</h3>
+                        <p>Zorlandığında "İpucu" butonunu kullan! İlk ipucu bir olayın tarihini gösterir, ikinci ipucu rastgele bir olayı doğru yerine yerleştirir.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Kazan!</h3>
+                        <p>Zaman dolmadan tüm olayları doğru sırala ve rakibini yen!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="index.js"></script>
+</body>
+</html>

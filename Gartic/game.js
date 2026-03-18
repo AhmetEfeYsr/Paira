@@ -27,21 +27,37 @@ const normalizeTurkish = (str) => {
               .toUpperCase().trim();
 };
 
+const levenshtein = (a, b) => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+    for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) == a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // deletion
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+};
+
 const isMatch = (guess, target) => {
     const nGuess = normalizeTurkish(guess);
     const nTarget = normalizeTurkish(target);
 
-    // Direct match
     if (nGuess === nTarget) return true;
 
-    // We allow small typos for words >= 5 letters (no levenshtein needed for very strict gartic rules, but lets keep it simple)
-    if (nTarget.length > 4 && Math.abs(nGuess.length - nTarget.length) <= 1) {
-       // Simple check if they are almost same
-       let diff = 0;
-       for (let i = 0; i < Math.max(nGuess.length, nTarget.length); i++) {
-           if (nGuess[i] !== nTarget[i]) diff++;
-       }
-       if (diff <= 1) return true;
+    if (nTarget.length > 4) {
+        const distance = levenshtein(nGuess, nTarget);
+        if (distance <= 1) return true;
     }
     return false;
 };
@@ -67,7 +83,7 @@ function initCanvas() {
         el.style.touchAction = 'none';
     };
 
-    document.querySelectorAll('.color-swatch').forEach(swatch => {
+    document.querySelectorAll('.color-swatch:not(.custom-color-btn)').forEach(swatch => {
         bindInteraction(swatch, (e) => {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
             const target = e.target.closest('.color-swatch');
@@ -75,6 +91,12 @@ function initCanvas() {
             drawingBoard.setColor(target.dataset.color);
             if (target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
             else drawingBoard.setTool('brush');
+            
+            // Re-select brush button visually if eraser is not selected
+            if (target.dataset.color !== '#ffffff') {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.tool-btn[data-tool="brush"]').classList.add('active');
+            }
         });
     });
 
@@ -93,11 +115,21 @@ function initCanvas() {
             const target = e.target.closest('.tool-btn');
             target.classList.add('active');
             drawingBoard.setTool(target.dataset.tool);
+            
+            // If selecting a tool, ensure a non-white color is active if eraser was active
+            if (target.dataset.tool !== 'eraser') {
+                const activeSwatch = document.querySelector('.color-swatch.active');
+                if (activeSwatch && activeSwatch.dataset.color === '#ffffff') {
+                    // Revert to black or last used color
+                    document.querySelector('.color-swatch[data-color="#000000"]').click();
+                }
+            }
         });
     });
 
     bindInteraction(document.getElementById('btn-clear'), () => {
         drawingBoard.clear(false);
+        if (window.showToast) window.showToast("Tuval temizlendi", "info");
     });
 
     const btnUndo = document.getElementById('btn-undo');
@@ -119,6 +151,9 @@ function initCanvas() {
             customColorBtn.classList.add('active');
             drawingBoard.setColor(newColor);
             drawingBoard.setTool('brush');
+        });
+        customColorInput.addEventListener('change', (e) => {
+            if (window.showToast) window.showToast("Özel renk seçildi", "info");
         });
         customColorInput.addEventListener('pointerdown', e => {
             e.stopPropagation();
@@ -144,18 +179,21 @@ async function initGame() {
 
     document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
 
-    if (window.loadGarticWords) {
-        await window.loadGarticWords();
+    if (window.loadCizbilWords) {
+        await window.loadCizbilWords();
     }
 
     // Update word database after loading
     wordDatabase = [...window.cizbilWords];
 
-    // Shuffle words
-    wordDatabase.sort(() => (window.crypto.getRandomValues(new Uint32Array(1))[0] % 100) - 50);
+    // Shuffle words using Fisher-Yates
+    for (let i = wordDatabase.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [wordDatabase[i], wordDatabase[j]] = [wordDatabase[j], wordDatabase[i]];
+    }
 
     if (typeof ChatListener === 'undefined') {
-        alert('ChatListener yüklenemedi!');
+        if (window.showToast) window.showToast('ChatListener yüklenemedi!', 'error');
         return;
     }
 
@@ -169,10 +207,15 @@ async function initGame() {
     setTimeout(() => {
         statusBadge.textContent = 'Bağlandı';
         statusBadge.style.color = 'var(--success)';
+        statusBadge.style.borderColor = 'var(--success)';
+        if (window.showToast) window.showToast('Chat bağlantısı başarılı.', 'success');
     }, 2000);
 
     // Controls
-    document.getElementById('btn-skip').addEventListener('click', presentWordChoices);
+    document.getElementById('btn-skip').addEventListener('click', () => {
+        if (window.PairaAudio) window.PairaAudio.play('pass');
+        presentWordChoices();
+    });
     document.getElementById('btn-next').addEventListener('click', presentWordChoices);
     document.getElementById('btn-leave').addEventListener('click', () => {
         chatListener.stop();
@@ -197,6 +240,7 @@ function presentWordChoices() {
 
     document.getElementById('btn-choice-1').textContent = word1;
     document.getElementById('btn-choice-2').textContent = word2;
+    document.getElementById('word-choice-overlay-bg').style.display = 'block';
     document.getElementById('word-choice-overlay').style.display = 'flex';
     document.getElementById('main-word').textContent = "SEÇİM YAPILIYOR...";
     document.getElementById('btn-next').style.display = 'none';
@@ -208,13 +252,15 @@ function presentWordChoices() {
 }
 
 function startWord(selectedWord) {
+    document.getElementById('word-choice-overlay-bg').style.display = 'none';
     document.getElementById('word-choice-overlay').style.display = 'none';
     currentWord = selectedWord;
     document.getElementById('main-word').textContent = currentWord;
 
     state.isPaused = false;
     document.getElementById('btn-next').style.display = 'none';
-    document.getElementById('btn-skip').style.display = 'inline-block';
+    document.getElementById('btn-skip').style.display = 'inline-flex';
+    if (window.showToast) window.showToast("Yeni kelime seçildi, çizime başlayabilirsiniz!", "info");
 }
 
 function handleChatMessage(username, message) {
@@ -234,12 +280,17 @@ function handleChatMessage(username, message) {
 
     if (isMatch(message, currentWord)) {
         msgDiv.classList.add('correct');
-        textSpan.textContent += ' (🎉 DOĞRU BİLDİ!)';
+        textSpan.innerHTML = `<strong>🎉 ${message}</strong> (Doğru bildi!)`;
         handleCorrectGuess(username);
     }
 
     chatFeed.appendChild(msgDiv);
     chatFeed.scrollTop = chatFeed.scrollHeight;
+    
+    // Auto-remove old messages to prevent lag
+    if (chatFeed.children.length > 50) {
+        chatFeed.removeChild(chatFeed.firstChild);
+    }
 }
 
 function handleCorrectGuess(username) {
@@ -250,15 +301,17 @@ function handleCorrectGuess(username) {
 
     updateLeaderboard();
 
-    document.getElementById('btn-next').style.display = 'inline-block';
+    document.getElementById('btn-next').style.display = 'inline-flex';
     document.getElementById('btn-skip').style.display = 'none';
 
-    document.querySelector('.canvas-container').style.borderColor = 'var(--success)';
-    document.querySelector('.canvas-container').style.boxShadow = '0 0 30px rgba(46, 204, 113, 0.6)';
+    const canvasContainer = document.getElementById('canvas-container');
+    canvasContainer.classList.add('canvas-correct');
+    
+    if (window.PairaAudio) window.PairaAudio.play('correct');
+    if (window.showToast) window.showToast(`${username} doğru bildi!`, 'success');
 
     setTimeout(() => {
-        document.querySelector('.canvas-container').style.borderColor = 'var(--border-color)';
-        document.querySelector('.canvas-container').style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+        canvasContainer.classList.remove('canvas-correct');
     }, 2000);
 }
 
@@ -268,17 +321,22 @@ function updateLeaderboard() {
 
     const sortedScores = Object.entries(state.scores).sort((a, b) => b[1] - a[1]);
 
+    if (sortedScores.length === 0) {
+        list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding-top: 1rem; font-size: 0.9rem;">Henüz doğru tahmin yok.</div>';
+        return;
+    }
+
     sortedScores.forEach(([uname, score]) => {
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
 
         const nameSpan = document.createElement('span');
+        nameSpan.className = 'uname';
         nameSpan.textContent = uname;
 
         const scoreSpan = document.createElement('span');
-        scoreSpan.textContent = `${score} Puan`;
-        scoreSpan.style.color = 'var(--primary)';
-        scoreSpan.style.fontWeight = 'bold';
+        scoreSpan.className = 'score';
+        scoreSpan.textContent = `${score}`;
 
         item.appendChild(nameSpan);
         item.appendChild(scoreSpan);

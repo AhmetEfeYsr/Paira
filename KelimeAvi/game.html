@@ -29,13 +29,13 @@
             <div class="lobby-grid">
                 <!-- Sol Panel: Oyuncular -->
                 <aside class="players-panel card">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
                 <!-- Sağ Panel: Kurucu Ayarları -->
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyun Ayarları</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyun Ayarları</h3>
                     <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="45" min="20" max="180"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Toplam Tur</label><input type="number" id="round-count" value="5" min="1" max="20"></div>
@@ -45,7 +45,7 @@
                     <!-- Gelişmiş Ayarlar (Toggle) -->
                     <button id="btn-toggle-advanced" class="btn btn-secondary btn-block" style="margin-bottom: 1rem; padding: 10px;">⚙️ Gelişmiş Puanlama Ayarları</button>
 
-                    <div id="advanced-settings" class="settings-grid hidden" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                    <div id="advanced-settings" class="settings-grid hidden" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--code-bg); padding: 15px; border-radius: 10px;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Ebe Avlarsa Puanı</label><input type="number" id="pts-ebe-win" value="2" min="1" max="10"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Masum Eşleşme Puanı</label><input type="number" id="pts-masum-win" value="1" min="1" max="10"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Jackpot Puanı</label><input type="number" id="pts-jackpot" value="5" min="1" max="20"></div>
@@ -80,30 +80,30 @@
 
                 <!-- Harf Ekranı -->
                 <div class="letter-display-container">
-                    <h2 id="current-letters" style="font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 5px; color: #fff; background: rgba(0,0,0,0.4); padding: 15px 40px; border-radius: 15px; border: 2px solid var(--neon-purple);">...</h2>
+                    <h2 id="current-letters" style="font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 5px; color: var(--text-main); background: var(--code-bg); padding: 15px 40px; border-radius: 15px; border: 2px solid var(--neon-purple);">...</h2>
                 </div>
 
                 <!-- MASUM ALANI -->
-                <div id="masum-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--success); box-shadow: 0 5px 20px rgba(46, 204, 113, 0.1);">
+                <div id="masum-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--success); box-shadow: 0 5px 20px var(--success-bg);">
                     <h3 style="color: var(--success); margin-bottom: 0.5rem; font-size: 1.4rem;">Bir Kelimede Anlaşın!</h3>
                     <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Ekranda yazan harf ile başlayan bir kelimede <strong>çaktırmadan</strong> eşleşin. Ebe aranızda ve sizi dinliyor!</p>
                     <div class="form-group">
-                        <input type="text" id="masum-word-input" placeholder="Kelimenizi buraya yazın..." autocomplete="off" style="text-align: center; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">
+                        <input type="text" id="masum-word-input" placeholder="Kelimenizi buraya yazın..." autocomplete="off" maxlength="30" style="text-align: center; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">
                     </div>
                     <button id="btn-submit-masum" class="btn btn-success btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Gönder & Eşleşmeyi Bekle</button>
                 </div>
 
                 <!-- EBE ALANI -->
-                <div id="ebe-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--danger); box-shadow: 0 5px 20px rgba(231, 76, 60, 0.1);">
+                <div id="ebe-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--danger); box-shadow: 0 5px 20px var(--danger-bg);">
                     <h3 style="color: var(--danger); margin-bottom: 0.5rem; font-size: 1.4rem;">Sohbeti Dinle ve Avla!</h3>
                     <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Masumlar aralarında anlaşıyor. Sohbetten yola çıkıp hangi kelimede eşleşeceklerini tahmin et!</p>
 
                     <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem;">
-                        <input type="text" id="ebe-guess-1" placeholder="1. Tahmin" autocomplete="off" style="text-align: center; font-weight: 500;">
-                        <input type="text" id="ebe-guess-2" placeholder="2. Tahmin" autocomplete="off" style="text-align: center; font-weight: 500;">
-                        <input type="text" id="ebe-guess-3" placeholder="3. Tahmin" autocomplete="off" style="text-align: center; font-weight: 500;">
-                        <input type="text" id="ebe-guess-4" placeholder="4. Tahmin" autocomplete="off" style="text-align: center; font-weight: 500;">
-                        <input type="text" id="ebe-guess-5" placeholder="5. Tahmin (Zorunlu değil)" autocomplete="off" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-1" placeholder="1. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-2" placeholder="2. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-3" placeholder="3. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-4" placeholder="4. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-5" placeholder="5. Tahmin (Zorunlu değil)" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
                     </div>
 
                     <button id="btn-submit-ebe" class="btn btn-danger btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Tahminleri Kilitle</button>

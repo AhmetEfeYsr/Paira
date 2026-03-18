@@ -47,13 +47,19 @@ class TabuNetworkManager {
             },
             onStartGame: () => {
                 if (this.isHost) {
-                    const duration = document.getElementById('round-time')?.value || 60;
+                    const duration = document.getElementById('turn-duration')?.value || 60;
                     const passLimit = document.getElementById('pass-limit')?.value || 3;
-                    const category = document.getElementById('category-select')?.value || 'Hepsi';
                     const penalty = document.getElementById('taboo-penalty')?.value || 1;
-                    const rounds = document.getElementById('total-rounds')?.value || 3;
+                    const rounds = document.getElementById('round-count')?.value || 3;
+                    
+                    const categoryCheckboxes = document.querySelectorAll('#category-selection input[type="checkbox"]:checked');
+                    let category = Array.from(categoryCheckboxes).map(cb => cb.value);
+                    if(category.length === 0) category = ['Hepsi'];
 
-                    this.engine.startGame({ duration, passLimit, category, penalty, rounds });
+                    const minDifficulty = parseInt(document.getElementById('min-difficulty')?.value) || 1;
+                    const maxDifficulty = parseInt(document.getElementById('max-difficulty')?.value) || 100;
+
+                    this.engine.startGame({ duration, passLimit, category, penalty, rounds, minDifficulty, maxDifficulty });
                 }
             },
             onNarratorReady: () => {
@@ -292,14 +298,34 @@ class TabuNetworkManager {
     }
 
     populateCategories(words) {
-        const select = document.getElementById('category-select');
-        if (!select || !words) return;
-        const cats = new Set(words.map(w => w.kategori));
-        select.innerHTML = '<option value="Hepsi">Hepsi</option>';
+        const container = document.getElementById('category-selection');
+        if (!container || !words) return;
+        const cats = new Set(words.map(w => w.kategori).filter(Boolean));
+        container.innerHTML = '';
+        
+        const createPill = (val, checked) => {
+            const label = document.createElement('label');
+            label.className = 'category-pill';
+            label.innerHTML = `<input type="checkbox" value="${val}" ${checked ? 'checked' : ''}> ${val}`;
+            return label;
+        };
+        
+        container.appendChild(createPill('Hepsi', true));
+        
         cats.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c; opt.innerText = c;
-            select.appendChild(opt);
+            container.appendChild(createPill(c, false));
+        });
+
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                if (e.target.value === 'Hepsi' && e.target.checked) {
+                    checkboxes.forEach(other => { if (other !== e.target) other.checked = false; });
+                } else if (e.target.checked) {
+                    const hepsi = container.querySelector('input[value="Hepsi"]');
+                    if(hepsi) hepsi.checked = false;
+                }
+            });
         });
     }
 
@@ -348,13 +374,16 @@ class TabuNetworkManager {
 // Bootstrap game on load
 document.addEventListener('DOMContentLoaded', () => {
     window.isCodeVisible = false;
-    document.getElementById('toggle-code-visibility')?.addEventListener('click', () => {
+    document.getElementById('btn-toggle-code')?.addEventListener('click', () => {
         window.isCodeVisible = !window.isCodeVisible;
         const disp = document.getElementById('display-room-code');
         if (disp) disp.innerText = window.isCodeVisible ? (disp.dataset.code || '••••••••') : '••••••••';
+        
+        document.getElementById('icon-eye-open')?.classList.toggle('hidden', !window.isCodeVisible);
+        document.getElementById('icon-eye-closed')?.classList.toggle('hidden', window.isCodeVisible);
     });
 
-    document.getElementById('display-room-code')?.addEventListener('click', () => {
+    document.getElementById('btn-copy-room')?.addEventListener('click', () => {
         const disp = document.getElementById('display-room-code');
         const code = disp?.dataset?.code;
         if (code) {

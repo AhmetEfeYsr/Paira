@@ -143,14 +143,16 @@ function broadcastSync() {
     // Güvenlik: Aktif soru havuzunu komple gönderme
     delete stateCopy.activeQuestions;
 
-    // O anki soruyu yolla (Host tarafında şifrelenip sadece cevaplar yollanabilir ama şimdilik clienta doğru cevap bilgisi gitmesin)
     if (state.status === 'playing' && state.currentQuestion) {
         stateCopy.currentQuestion = {
             category: state.currentQuestion.category,
             question_text: state.currentQuestion.question_text,
-            shuffled_choices: state.currentQuestion.shuffled_choices
-            // correct_answer_index'i client'a göndermiyoruz, host kontrol ediyor
+            shuffled_choices: state.currentQuestion.shuffled_choices,
+            reveal_answer: state.currentQuestion.reveal_answer
         };
+        if (state.currentQuestion.reveal_answer) {
+             stateCopy.currentQuestion.correct_answer_index = state.currentQuestion.correct_answer_index;
+        }
     } else {
         stateCopy.currentQuestion = null;
     }

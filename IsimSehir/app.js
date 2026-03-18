@@ -112,15 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (codeToCopy) {
                 navigator.clipboard.writeText(codeToCopy)
                     .then(() => {
-                        const container = document.getElementById('toast-container');
-                        if (container) {
-                            const toast = document.createElement('div');
-                            toast.className = 'toast success';
-                            toast.style.borderLeftColor = 'var(--success-color)';
-                            toast.textContent = 'Oda kodu kopyalandı!';
-                            container.appendChild(toast);
-                            setTimeout(() => toast.remove(), 4000);
-                        }
+                        showToast('Oda kodu kopyalandı!', 'success');
                     })
                     .catch(() => console.error('Kopyalanamadı'));
             }
@@ -211,8 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleNetworkError(err) {
-        alert("Bağlantı koptu veya hata oluştu. Lütfen tekrar girin.");
-        window.location.href = 'index.html';
+        showToast("Bağlantı koptu veya hata oluştu. Lütfen tekrar girin.", "error");
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
     }
 
     function handleNetworkData(senderId, data) {
@@ -297,6 +291,15 @@ document.addEventListener('DOMContentLoaded', () => {
             broadcastConfig();
         });
         if(ui.settingEndValue) ui.settingEndValue.addEventListener('change', broadcastConfig);
+
+        if(ui.customCatInput) {
+            ui.customCatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if(ui.btnAddCustomCat) ui.btnAddCustomCat.click();
+                }
+            });
+        }
 
         if(ui.btnAddCustomCat) ui.btnAddCustomCat.addEventListener('click', () => {
             const val = ui.customCatInput.value.trim();
@@ -386,11 +389,34 @@ document.addEventListener('DOMContentLoaded', () => {
             input.autocomplete = 'off';
             input.spellcheck = false;
 
-            // Auto-capitalize first letter locally
+            // Auto-capitalize first letter locally without moving cursor to end
             input.addEventListener('input', (e) => {
                 let val = e.target.value;
                 if (val.length > 0) {
-                    e.target.value = val.charAt(0).toLocaleUpperCase('tr-TR') + val.slice(1);
+                    const firstChar = val.charAt(0);
+                    const upperFirst = firstChar.toLocaleUpperCase('tr-TR');
+                    if (firstChar !== upperFirst) {
+                        const start = e.target.selectionStart;
+                        const end = e.target.selectionEnd;
+                        e.target.value = upperFirst + val.slice(1);
+                        e.target.setSelectionRange(start, end);
+                    }
+                }
+            });
+
+            // Navigate inputs with Enter key
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const inputs = Array.from(document.querySelectorAll('.game-input-wrapper input'));
+                    const index = inputs.indexOf(input);
+                    if (index > -1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else if (index === inputs.length - 1) {
+                        if (ui.btnFinishTurn && !ui.btnFinishTurn.disabled) {
+                            ui.btnFinishTurn.click();
+                        }
+                    }
                 }
             });
 
@@ -499,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.btnStartGame.addEventListener('click', () => {
                 updateLocalConfig();
                 if (gameConfig.categories.length === 0) {
-                    alert("Lütfen en az bir kategori seçin.");
+                    showToast("Lütfen en az bir kategori seçin.", "warning");
                     return;
                 }
 
@@ -648,147 +674,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Validation and Voting Logic ---
     let validationCache = {};
+    let apiCache = {};
     let clientVotes = {};
     let liveVotes = {}; // Host stores: { catId: { targetPlayerId: { voterId: voteValue } } }
     let hasVoted = false;
     let receivedVotes = 0;
     let currentResultsData = null;
 
+    async function checkWikipedia(word, keywords) {
+        const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+        try {
+            const wikiRes = await fetch(wikiUrl);
+            const wikiData = await wikiRes.json();
+            if (wikiData.query && wikiData.query.search) {
+                const lowerWord = word.toLocaleLowerCase('tr-TR');
+                for (let item of wikiData.query.search) {
+                    const snippet = item.snippet.toLocaleLowerCase('tr-TR');
+                    const title = item.title.toLocaleLowerCase('tr-TR');
+                    if (title.includes(lowerWord) || snippet.includes(lowerWord)) {
+                        if (keywords.length === 0 || keywords.some(kw => snippet.includes(kw) || title.includes(kw))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (e) {}
+        return false;
+    }
+
     async function validateViaApi(catId, word) {
         if (!word) return false;
+        const cacheKey = `${catId}_${word}`;
+        if (apiCache[cacheKey] !== undefined) return apiCache[cacheKey];
 
+        let result = false;
         try {
             if (catId === 'sehir') {
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1`;
                 const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0' } });
                 const data = await response.json();
-                return data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+                result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+                if (!result) result = await checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent']);
             }
-            if (catId === 'ulke') {
+            else if (catId === 'ulke') {
                 const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
                 const response = await fetch(url);
-                const data = await response.json();
-                return Array.isArray(data) && data.length > 0;
+                if (response.ok) {
+                    const data = await response.json();
+                    result = Array.isArray(data) && data.length > 0;
+                }
+                if (!result) result = await checkWikipedia(word, ['ülke', 'cumhuriyet', 'devlet']);
             }
-            if (catId === 'film_dizi') {
+            else if (catId === 'film_dizi') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
                 const response = await fetch(url);
-                const data = await response.json();
-                if (data.results) {
-                    for (let item of data.results) {
-                        if (item.wrapperType === 'track' && (item.kind === 'feature-movie' || item.kind === 'tv-episode')) return true;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        result = data.results.some(item => item.wrapperType === 'track' && (item.kind === 'feature-movie' || item.kind === 'tv-episode'));
                     }
                 }
-
-                // Fallback to Wikipedia TR
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('dizi') || snippet.includes('film') || snippet.includes('sinema') || snippet.includes('televizyon') || title.includes('dizi') || title.includes('film'))) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
+                if (!result) result = await checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel']);
             }
-            if (catId === 'muzik') {
+            else if (catId === 'muzik') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
                 const response = await fetch(url);
-                const data = await response.json();
-                if (data.results) {
-                    for (let item of data.results) {
-                        if ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') return true;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        result = data.results.some(item => (item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist');
                     }
                 }
-
-                // Fallback to Wikipedia TR
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('şarkı') || snippet.includes('albüm') || snippet.includes('müzik') || snippet.includes('tekli') || title.includes('şarkı') || title.includes('albüm'))) {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
+                if (!result) result = await checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single']);
             }
-            if (catId === 'sarkici') {
+            else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
-                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                const data = await response.json();
-                if (data.artists && data.artists.length > 0) {
-                    for (let artist of data.artists) {
-                        if (artist.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR')) ||
-                            (artist.aliases && artist.aliases.some(a => a.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR'))))) {
-                            return true;
-                        }
+                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.artists && data.artists.length > 0) {
+                        result = data.artists.some(artist => 
+                            artist.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR')) ||
+                            (artist.aliases && artist.aliases.some(a => a.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR'))))
+                        );
                     }
                 }
-                return false;
+                if (!result) result = await checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist']);
             }
-            if (catId === 'yazar') {
+            else if (catId === 'yazar') {
                 const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
                 const response = await fetch(url);
-                const data = await response.json();
-                return data.numFound > 0;
-            }
-            if (catId === 'hastalik') {
-                // WHO ICD requires OAuth. Use broad Wikipedia fallback for medical terms.
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('hastalık') || snippet.includes('sendrom') || snippet.includes('virüs') || snippet.includes('enfeksiyon') || snippet.includes('tıp') || snippet.includes('belirti') || title.includes('hastalığı'))) {
-                            return true;
-                        }
-                    }
+                if (response.ok) {
+                    const data = await response.json();
+                    result = data.numFound > 0;
                 }
-                return false;
+                if (!result) result = await checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat']);
             }
-            if (catId === 'spor') {
-                // TheSportsDB has poor Turkish translation coverage. Use Wikipedia fallback.
-                const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
-                const wikiRes = await fetch(wikiUrl);
-                const wikiData = await wikiRes.json();
-                if (wikiData.query && wikiData.query.search) {
-                    for (let item of wikiData.query.search) {
-                        const snippet = item.snippet.toLowerCase();
-                        const title = item.title.toLowerCase();
-                        if ((title.includes(word.toLowerCase()) || snippet.includes(word.toLowerCase())) &&
-                            (snippet.includes('spor') || snippet.includes('oyun') || snippet.includes('takım') || title.includes('spor'))) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
+            else if (catId === 'hastalik') {
+                result = await checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı']);
+            }
+            else if (catId === 'spor') {
+                result = await checkWikipedia(word, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat']);
             }
         } catch (e) {
             console.error(`API validation error for ${catId} - ${word}:`, e);
-            return false;
+            result = false;
         }
-        return false;
+
+        apiCache[cacheKey] = result;
+        return result;
     }
 
     async function loadDictionary(catId) {
-        if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(catId)) {
-            return null; // Will use API
-        }
-
         if (validationCache[catId]) return validationCache[catId];
 
         try {
@@ -842,10 +839,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isCustomCat) {
                         isValidInDict = true; // Cannot validate custom categories, default to valid
-                    } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
-                        isValidInDict = await validateViaApi(cat.id, word);
                     } else {
-                        isValidInDict = dict && dict.has(word);
+                        if (dict && dict.has(word)) {
+                            isValidInDict = true;
+                        } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
+                            isValidInDict = await validateViaApi(cat.id, word);
+                        } else {
+                            isValidInDict = false;
+                        }
                     }
 
                     if (isValidInDict) {

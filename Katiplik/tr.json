@@ -1,0 +1,39 @@
+{
+    "categories": [
+        {
+            "id": "100kelime_random",
+            "name": "En Çok Kullanılan 100 Kelime",
+            "description": "Günlük hayatta en sık kullanılan kelimelerin rastgele (random) sıralanmış hali.",
+            "type": "random",
+            "text": "bir ve bu da ile için o çok en de daha ben var mi ama gibi böyle olarak veya kadar ne sen onun kendi bana diye ki her yok zaman ancak bazı başka ondan sonra bütün aynı bile iki biz işte doğru onlara şey sadece burada onların hiç bunu eğer olan tüm şimdi iyi oldu"
+        },
+        {
+            "id": "katip_2016_1",
+            "name": "2016 Katiplik Metni - 1",
+            "description": "Zabıt katipliği 2016 sınavı metni (Düz, Sıralı metin).",
+            "type": "sorted",
+            "text": "Eğer her birey okuma yazmayı bilir ve düzenli olarak okuma alışkanlığı kazanırsa toplumların gelişim seviyesi de hızla artacaktır. Adalet mülkün temelidir. Hukuk kurallarının doğru ve tarafsız bir şekilde uygulanması, toplumdaki güven duygusunu ve huzuru tesis eden en önemli unsurdur."
+        },
+        {
+            "id": "katip_2016_2",
+            "name": "2016 Katiplik Metni - 2",
+            "description": "Zabıt katipliği 2016 sınavı farklı bir metin (Düz, Sıralı metin).",
+            "type": "sorted",
+            "text": "İnsan hakları, doğuştan sahip olduğumuz ve hiç kimse tarafından elimizden alınamayacak olan temel hak ve özgürlüklerin bütünüdür. Herkes dil, din, ırk ayrımı gözetmeksizin bu haklara sahiptir ve toplumun her kesiminde bu hakların korunması devlete düşen en büyük görevlerden biridir."
+        },
+        {
+            "id": "klasik_roman_1",
+            "name": "Klasik Romanlar - Anna Karenina",
+            "description": "Anna Karenina'nın ünlü başlangıç satırları (Düz, Sıralı metin).",
+            "type": "sorted",
+            "text": "Mutlu aileler birbirine benzerler, her mutsuz ailenin ise kendine özgü bir mutsuzluğu vardır. Bütün iyi kitapların sonunda bütün iyi insanlar mutlu olur, bütün kötüler cezasını bulur."
+        },
+        {
+            "id": "yazilim_terimleri_random",
+            "name": "Yazılım Terimleri",
+            "description": "Programlama ve bilgisayar terimlerinden oluşan rastgele kelimeler.",
+            "type": "random",
+            "text": "veritabanı yönetimi sunucu taraflı kodlama istemci asenkron istekler modern uygulama temel nesne yönelimli kalıtım kapsülleme çokbiçimlilik yazılım açık kaynak proje dünya binlerce geliştirici güvenli döngü değişken fonksiyon kütüphane"
+        }
+    ]
+}

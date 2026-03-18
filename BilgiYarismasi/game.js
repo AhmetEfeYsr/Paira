@@ -7,6 +7,7 @@ let renderFrame = null;
 let localTurnEndTime = 0;
 let lastTickSec = -1;
 let isCodeVisible = false;
+let isRoundEnding = false;
 
 // Oyunun ana durumu
 let state = {
@@ -28,69 +29,12 @@ const fallbackQuestions = [
 ];
 
 // --- SES YÖNETİMİ ---
-let audioCtx = null;
 function initAudio() {
-    if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
-    }
-    if (audioCtx?.state === 'suspended') audioCtx.resume();
+    if (window.PairaAudio) window.PairaAudio.init();
 }
 
 function playSound(type) {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    // Add a lowpass filter to make all sounds softer/less piercing
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1200; // soft treble
-
-    osc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    const now = audioCtx.currentTime;
-
-    if (type === 'correct') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now); // A4
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // up to A5
-        gainNode.gain.setValueAtTime(0.0, now);
-        gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        osc.start(now); osc.stop(now + 0.4);
-    } else if (type === 'taboo' || type === 'wrong') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(150, now + 0.3);
-        gainNode.gain.setValueAtTime(0.0, now);
-        gainNode.gain.linearRampToValueAtTime(0.1, now + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        osc.start(now); osc.stop(now + 0.4);
-    } else if (type === 'tick') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, now);
-        gainNode.gain.setValueAtTime(0.0, now);
-        gainNode.gain.linearRampToValueAtTime(0.05, now + 0.02);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        osc.start(now); osc.stop(now + 0.1);
-    } else if (type === 'end') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(220, now + 0.5);
-        gainNode.gain.setValueAtTime(0.0, now);
-        gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-        osc.start(now); osc.stop(now + 1.0);
-    } else if (type === 'pass') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, now);
-        gainNode.gain.setValueAtTime(0.0, now);
-        gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        osc.start(now); osc.stop(now + 0.1);
-    }
+    if (window.PairaAudio) window.PairaAudio.play(type);
 }
 
 // --- UI YARDIMCI FONKSİYONLAR ---
@@ -240,11 +184,13 @@ function startTurn() {
         category: currentQData.kategori ? currentQData.kategori.join(', ') : "",
         question_text: currentQData.soru_metni,
         shuffled_choices: shuffledTexts,
-        correct_answer_index: correctIndex // Sadece Host'ta kalacak (network.js'te clienta giderken silinir)
+        correct_answer_index: correctIndex, // Sadece Host'ta kalacak (network.js'te clienta giderken silinir)
+        reveal_answer: false // Süre dolduğunda veya herkes cevapladığında doğru cevabı clientlara göndermek için
     };
 
     localTurnEndTime = window.PairaTime.now() + (state.turnDuration * 1000);
     lastTickSec = -1;
+    isRoundEnding = false;
 
     broadcastSync();
     updateUI();
@@ -258,7 +204,7 @@ function startTurn() {
 }
 
 function handleClientAnswer(playerId, choiceIndex) {
-    if (!isHost || state.status !== 'playing') return;
+    if (!isHost || state.status !== 'playing' || isRoundEnding) return;
     if (state.answersInRound[playerId]) return; // Zaten cevaplamış
 
     const timeRemaining = Math.max(0, localTurnEndTime - window.PairaTime.now());
@@ -300,23 +246,29 @@ function checkAllPlayersAnswered() {
 }
 
 function endRoundEarly() {
-    if (!isHost) return;
+    if (!isHost || isRoundEnding) return;
+    isRoundEnding = true;
     if (turnTimeout) { clearInterval(turnTimeout); turnTimeout = null; }
 
-    // Tüm cevapları açıkla / Ses çal (Clientlara kısa süreliğine doğru cevabı gösterebiliriz)
-    // Şimdilik doğrudan diğer tura geçiyoruz veya bitiriyoruz. İsterseniz 2 saniye bekletip geçebilirsiniz.
     playSound('end');
     broadcast({ type: 'PLAY_SOUND', sound: 'end' });
 
+    if (state.currentQuestion) {
+        state.currentQuestion.reveal_answer = true;
+    }
+    broadcastSync();
+    updateUI(); // Doğru cevapların herkes için hemen gösterilmesi için
+
     // Küçük bir bekleme (doğruyu göstermek için UI'ı kısa bir kitleme)
     setTimeout(() => {
+        isRoundEnding = false;
         state.round++;
         if (state.round > state.totalRounds) {
             showWinnerScreen();
         } else {
             startTurn();
         }
-    }, 1500); // 1.5 saniye sonuçları görmeleri için beklet
+    }, 3000); // 3 saniye sonuçları görmeleri için beklet
 }
 
 
@@ -331,7 +283,7 @@ function showWinnerScreen() {
     sortedPlayers.forEach((p, idx) => {
         const li = document.createElement('li');
         li.style.padding = '12px 20px';
-        li.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+        li.style.borderBottom = '1px solid var(--btn-secondary-border)';
         li.style.display = 'flex';
         li.style.justifyContent = 'space-between';
         li.style.fontSize = idx === 0 ? '1.4rem' : '1.1rem';
@@ -413,7 +365,7 @@ function updateUI() {
             const sortedPlayers = Object.values(state.players).sort((a, b) => b.score - a.score);
             sortedPlayers.forEach(p => {
                 const badge = document.createElement('div');
-                badge.style.background = 'rgba(0,0,0,0.3)';
+                badge.style.background = 'var(--input-bg)';
                 badge.style.padding = '6px 12px';
                 badge.style.borderRadius = '8px';
                 badge.style.fontSize = '0.9rem';
@@ -435,7 +387,10 @@ function updateUI() {
 
             const myAnswer = state.answersInRound[myId];
 
-            if (myAnswer) {
+            if (state.currentQuestion.reveal_answer) {
+                 qMsg.innerText = "Doğru cevaplar gösteriliyor...";
+                 qMsg.className = "status-badge";
+            } else if (myAnswer) {
                 qMsg.innerText = "Cevabın Kaydedildi! Diğer oyuncular bekleniyor...";
                 qMsg.className = "status-badge";
             } else {
@@ -457,35 +412,45 @@ function updateUI() {
                 btn.style.whiteSpace = 'normal';
                 btn.innerHTML = `<strong>${letters[idx]})</strong> ${escapeHtml(choiceText)}`;
 
-                // Eğer oyuncu zaten cevap verdiyse butonları kilitle
-                if (myAnswer) {
+                // Eğer cevaplar açıklandıysa
+                if (state.currentQuestion.reveal_answer && state.currentQuestion.correct_answer_index !== undefined) {
+                    btn.classList.add('disabled');
+                    if (idx === state.currentQuestion.correct_answer_index) {
+                        btn.classList.add('btn-correct');
+                    } else if (myAnswer && myAnswer.choiceIndex === idx) {
+                        btn.classList.add('btn-wrong');
+                    }
+                } else if (myAnswer) {
+                    // Eğer oyuncu zaten cevap verdiyse butonları kilitle
                     btn.classList.add('disabled');
                     // Kullanıcının seçtiği butonu vurgula
                     if (myAnswer.choiceIndex === idx) {
                         btn.classList.add('btn-selected');
                     }
                 } else {
-
                     // Hızlı tepki için pointerdown ve click olaylarını dinle.
-                    // touch cihazlarda pointerdown çok daha hızlı çalışır.
                     const handleChoice = (e) => {
-                        e.preventDefault(); // Olası scroll/double-tap sorunlarını önler
+                        e.preventDefault(); 
                         if (btn.classList.contains('disabled')) return;
 
-                        // Tıklandığı an UI geri bildirimi ver (Hızlı tepki)
+                        playSound('pass'); 
+                        
+                        // Tüm butonları anında yerel olarak kilitle ki birden fazla kere basamasın
+                        document.querySelectorAll('.choice-btn').forEach(b => {
+                            b.classList.add('disabled');
+                            b.style.pointerEvents = 'none';
+                        });
+                        
                         btn.classList.add('btn-selected');
-                        playSound('pass'); // Basit bir tık sesi
 
                         sendAnswer(idx);
 
-                        // Sadece bir kere çalışsın diye kendisini kaldırıyoruz
                         btn.removeEventListener('pointerdown', handleChoice);
                         btn.removeEventListener('click', handleChoice);
                     };
 
                     btn.addEventListener('pointerdown', handleChoice);
                     btn.addEventListener('click', handleChoice);
-
                 }
 
                 choicesContainer.appendChild(btn);

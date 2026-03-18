@@ -28,12 +28,12 @@
             </header>
             <div class="lobby-grid">
                 <aside class="players-panel card">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
                     <ul id="players-list" class="custom-scrollbar"></ul>
                 </aside>
 
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
-                    <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">Ayarlar</h3>
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Ayarlar</h3>
                     <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1.5rem;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="20" min="5" max="180"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Soru Sayısı</label><input type="number" id="round-count" value="10" min="1" max="50"></div>
@@ -106,7 +106,7 @@
             <div class="card" style="max-width: 600px; width: 100%; text-align: center; margin: 0 auto;">
                 <h2 style="font-size: 2.2rem; margin-bottom: 20px;">Sıralama</h2>
 
-                <ul id="final-scoreboard-list" style="list-style: none; padding: 0; margin-bottom: 30px; text-align: left; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                <ul id="final-scoreboard-list" style="list-style: none; padding: 0; margin-bottom: 30px; text-align: left; background: var(--input-bg); border-radius: 10px;">
                     <!-- Final sıralama dinamik eklenecek -->
                 </ul>
 

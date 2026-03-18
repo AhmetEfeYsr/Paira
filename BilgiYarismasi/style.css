@@ -112,8 +112,8 @@ input[type="checkbox"] { accent-color: var(--neon-purple); cursor: pointer; }
 /* Seçili şık için stiller */
 .btn-selected { background: rgba(var(--primary-rgb), 0.4); border-color: var(--neon-purple); color: var(--text-main); transform: scale(0.98); }
 /* Doğru / Yanlış animasyon ve renkleri */
-.btn-correct { background: rgba(46, 204, 113, 0.4) !important; border-color: var(--success) !important; color: var(--text-main) !important; }
-.btn-wrong { background: rgba(231, 76, 60, 0.4) !important; border-color: var(--danger) !important; color: var(--text-main) !important; }
+.btn-correct { background: var(--success-bg) !important; border-color: var(--success) !important; color: var(--text-main) !important; }
+.btn-wrong { background: var(--danger-bg) !important; border-color: var(--danger) !important; color: var(--text-main) !important; }
 
 .btn-block { width: 100%; }
 
@@ -133,7 +133,7 @@ input[type="checkbox"] { accent-color: var(--neon-purple); cursor: pointer; }
     flex-grow: 1; min-height: 0; overflow-y: auto;
 }
 
-.kick-link { color: #53fc18; }
+.kick-link { color: var(--success); }
 .kick-icon { transition: transform 0.3s ease; }
 .kick-link svg { width: clamp(20px, 4vw, 24px) !important; height: clamp(20px, 4vw, 24px) !important; }
 .kick-link:hover .kick-icon { transform: scale(1.15); }

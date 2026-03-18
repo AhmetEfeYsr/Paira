@@ -9,6 +9,19 @@
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
 <body>
+    <!-- Tema secimi ve ana sayfaya donus navigasyonu -->
+    <nav class="floating-top-nav">
+        <a href="../index.html" class="nav-btn" title="Ana Sayfaya Dön">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="nav-text">Ana Sayfa</span>
+        </a>
+        <select id="theme-selector" class="theme-select-btn" title="Tema Seç">
+            <option value="paira">Karanlık Tema</option>
+            <option value="light">Aydınlık Tema</option>
+            <option value="space">Uzay Teması</option>
+        </select>
+    </nav>
+
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar">
@@ -112,7 +125,7 @@
                             <button id="btn-submit-clue" class="btn btn-primary" style="margin: 0; white-space: nowrap;">Gönder</button>
                         </div>
                         <div id="clue-display-section" class="hidden" style="width: 100%; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
-                            <h2 id="current-clue-word" class="gradient-text" style="margin: 0;">İPUCU</h2>
+                        <h2 id="current-clue-word" class="gradient-text" style="margin: 0; word-break: break-all; max-width: 100%;">İPUCU</h2>
                             <div class="clue-badge" id="current-clue-count">Sayı: 2</div>
                             <div class="clue-badge" id="current-clue-rem">Kalan: 3</div>
                             <button id="btn-end-turn" class="btn btn-secondary hidden" style="margin: 0;">Turu Bitir</button>
@@ -149,12 +162,12 @@
                 <div style="display: flex; justify-content: space-around; margin: 30px 0; font-size: 1.2rem;">
                     <div class="team-a" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                         <span style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Takım A Kalan</span>
-                        <strong id="final-score-a" style="font-size: 3.5rem; color: #e74c3c; line-height: 1;">0</strong>
+                        <strong id="final-score-a" style="font-size: 3.5rem; color: var(--team-a-color); line-height: 1;">0</strong>
                     </div>
                     <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 10px 0;"></div>
                     <div class="team-b" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                         <span style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Takım B Kalan</span>
-                        <strong id="final-score-b" style="font-size: 3.5rem; color: #3498db; line-height: 1;">0</strong>
+                        <strong id="final-score-b" style="font-size: 3.5rem; color: var(--team-b-color); line-height: 1;">0</strong>
                     </div>
                 </div>
                 <button id="btn-back-lobby" class="btn btn-primary btn-block hidden" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -164,6 +177,22 @@
             </div>
         </section>
     </main>
+
+    <footer class="app-footer">
+        <div class="footer-text">
+            &copy; <span id="current-year">2026</span> Paira Games. Tüm hakları saklıdır.
+        </div>
+        <div class="footer-links">
+            <a href="https://kick.com/turgut" target="_blank" class="social-link kick-link" title="Kick'te Canlı İzle!">
+                <svg class="kick-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#53fc18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Kick</span><span>turgut</span>
+            </a>
+            <a href="https://discord.gg/w7RWeBRe" target="_blank" class="social-link" title="Discord Sunucumuza Katıl">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12c.5-1.5 2-2 3-2s2.5.5 3 2"></path><path d="M15.4 17.4c-1.5.5-3.4.5-4.8 0"></path><path d="M21 15.5c-.8 1.4-2.8 3.5-5 3.5-1 0-2.3-.3-4-.3s-3 .3-4 .3c-2.2 0-4.2-2.1-5-3.5C2 13.5 2 9 3 7c2-2 4.5-2 6-2l.5 1c-1.5.5-2.5 1.5-3.5 2.5 1-.5 2.5-1 4.5-1 1.5 0 3 .5 4.5 1-1-1-2-2-3.5-2.5l.5-1c1.5 0 4 0 6 2 1 2 1 6.5 0 8.5z"></path></svg>
+                <span>Discord</span>
+            </a>
+        </div>
+    </footer>
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="../shared/peer_manager.js"></script>

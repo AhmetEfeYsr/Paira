@@ -25,6 +25,7 @@ let state = {
     scores: {}, // username -> score
     isPaused: false
 };
+let isWordVisible = true;
 
 // Fuzzy Matcher implementation for Turkish characters (from KelimeAvi/Bagnam concept)
 const normalizeTurkish = (str) => {
@@ -102,6 +103,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     // If we are on game.html
     else if (document.getElementById('main-word')) {
         await initGame();
+
+        const btnToggleVisibility = document.getElementById('btn-toggle-visibility');
+        if (btnToggleVisibility) {
+            btnToggleVisibility.addEventListener('click', () => {
+                isWordVisible = !isWordVisible;
+                const mainWord = document.getElementById('main-word');
+                const forbiddenList = document.getElementById('forbidden-words');
+                const iconOpen = document.getElementById('icon-eye-open');
+                const iconClosed = document.getElementById('icon-eye-closed');
+                
+                if (isWordVisible) {
+                    mainWord.classList.remove('blurred-text');
+                    forbiddenList.classList.remove('blurred-text');
+                    iconOpen.style.display = 'block';
+                    iconClosed.style.display = 'none';
+                } else {
+                    mainWord.classList.add('blurred-text');
+                    forbiddenList.classList.add('blurred-text');
+                    iconOpen.style.display = 'none';
+                    iconClosed.style.display = 'block';
+                }
+            });
+        }
     }
 });
 
@@ -243,6 +267,12 @@ async function initGame() {
         gameState.clientId = null;
         updatePlayersList();
         document.getElementById('lobby-status').textContent = 'Rakip ayrıldı. Yeni rakip bekleniyor...';
+        
+        if (gameState.isGameStarted && !gameState.isGameOver) {
+            alert("Rakip oyundan ayrıldı. Oyun sona erdi.");
+            gameState.isGameOver = true;
+            updateGameUI();
+        }
     };
 
     window.handleNetworkData = (data, sender) => {
@@ -259,6 +289,10 @@ async function initGame() {
             document.getElementById('lobby-status').textContent = 'Rakip hazır!';
         }
         else if (data.type === 'SYNC_STATE') {
+            if (data.hostNow && data.state.turnEndTime) {
+                const diff = window.PairaTime.now() - data.hostNow;
+                data.state.turnEndTime += diff;
+            }
             gameState = { ...gameState, ...data.state };
             updateGameUI();
         }
@@ -314,7 +348,7 @@ async function initGame() {
                     gameState.clientScore = Math.max(0, gameState.clientScore - 1);
                 }
                 hostNextWord();
-                window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+                window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState, hostNow: window.PairaTime.now() });
                 updateGameUI();
             }
         }
@@ -348,7 +382,7 @@ async function initGame() {
             gameState.turnEndTime = window.PairaTime.now() + 60000;
         }
 
-        window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+        window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState, hostNow: window.PairaTime.now() });
         window.Network.broadcastToClients({ type: 'START_GAME' });
 
         document.getElementById('lobby-screen').classList.remove('active');
@@ -373,7 +407,7 @@ async function initGame() {
             // Deduct client score, since it's client's turn if host is pressing it
             gameState.clientScore = Math.max(0, gameState.clientScore - 1);
             hostNextWord();
-            window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState });
+            window.Network.broadcastToClients({ type: 'SYNC_STATE', state: gameState, hostNow: window.PairaTime.now() });
             updateGameUI();
         } else {
             window.Network.sendToHost({ type: 'TABOO_PRESSED' });
@@ -556,13 +590,14 @@ function updateGameUI() {
     document.getElementById('p1-score').textContent = `${gameState.hostScore} Puan`;
     document.getElementById('p2-score').textContent = `${gameState.clientScore} Puan`;
 
-    const isMyTurn = gameState.turnId === window.Network.getMyId();
+    const isMyTurn = gameState.mode === 'solo' || gameState.turnId === window.Network.getMyId();
     const statusEl = document.getElementById('turn-status');
     const mainEl = document.getElementById('main-word');
     const fbEl = document.getElementById('forbidden-words');
     const controls = document.querySelector('.narrator-actions');
     const roundDisplay = document.getElementById('round-display');
     const turnTimer = document.getElementById('turn-timer');
+    const toggleVisibilityBtn = document.getElementById('btn-toggle-visibility');
 
     if (gameState.mode !== 'solo') {
         roundDisplay.style.display = 'block';
@@ -592,6 +627,7 @@ function updateGameUI() {
         statusEl.textContent = "Sıra Sende! Anlat Bakalım.";
         statusEl.style.borderColor = "var(--success)";
         controls.style.display = "flex";
+        if (toggleVisibilityBtn) toggleVisibilityBtn.style.display = 'flex';
 
         document.getElementById('btn-skip').style.display = 'inline-block';
         if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
@@ -600,11 +636,12 @@ function updateGameUI() {
             mainEl.textContent = gameState.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
             fbEl.innerHTML = gameState.activeWord.yasakli_kelimeler.map(w => `<li>${w.toLocaleUpperCase('tr-TR')}</li>`).join('');
         }
-    } else {
-        statusEl.textContent = "Diğer Yayıncı Anlatıyor...";
-        statusEl.style.borderColor = "var(--danger)";
+        } else {
+            statusEl.textContent = "Diğer Yayıncı Anlatıyor...";
+            statusEl.style.borderColor = "var(--danger)";
+            if (toggleVisibilityBtn) toggleVisibilityBtn.style.display = 'flex';
 
-        if (gameState.mode !== 'solo') {
+            if (gameState.mode !== 'solo') {
             controls.style.display = "flex";
             document.getElementById('btn-skip').style.display = 'none';
             if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'inline-block';
@@ -748,12 +785,12 @@ function handleCorrectGuessUI(username) {
 
     // Confetti effect / visual cue on main card
     document.querySelector('.card-tabu').style.borderColor = 'var(--success)';
-    document.querySelector('.card-tabu').style.boxShadow = '0 10px 40px rgba(46, 204, 113, 0.4)';
+    document.querySelector('.card-tabu').style.boxShadow = '0 10px 40px var(--success-bg)';
 
     // Auto advance after correct guess
     setTimeout(() => {
-        document.querySelector('.card-tabu').style.borderColor = 'var(--border-color)';
-        document.querySelector('.card-tabu').style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+        document.querySelector('.card-tabu').style.borderColor = 'var(--neon-purple)';
+        document.querySelector('.card-tabu').style.boxShadow = '0 8px 25px var(--input-bg)';
 
         if (gameState.mode === 'solo') {
             soloNextWord();
@@ -780,7 +817,7 @@ function updateLeaderboard() {
 
         const scoreSpan = document.createElement('span');
         scoreSpan.textContent = `${score} Puan`;
-        scoreSpan.style.color = 'var(--primary)';
+        scoreSpan.style.color = 'var(--primary-purple)';
         scoreSpan.style.fontWeight = 'bold';
 
         item.appendChild(nameSpan);

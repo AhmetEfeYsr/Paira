@@ -1,0 +1,261 @@
+:root {
+    --bg-dark: #0f172a;
+    --bg-darker: #020617;
+    --primary-purple: #8b5cf6;
+    --secondary-blue: #3b82f6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-radius: 12px;
+}
+
+body {
+    background-color: var(--bg-darker);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+    color: var(--text-light);
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#app-container {
+    width: 90%;
+    max-width: 900px;
+    min-height: 80vh;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Waiting Overlay */
+.waiting-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-deep); z-index: 1000;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+/* Header & Players */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.player-avatar {
+    width: 50px;
+    height: 50px;
+    background: rgba(139, 92, 246, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 2px solid var(--primary-purple);
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.player-wpm {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin: 0 1rem;
+    overflow: hidden;
+    display: flex;
+}
+
+.progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.timer-container {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'Fira Code', monospace;
+    color: var(--primary-purple);
+    padding: 0 2rem;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Kategori Seçimi */
+.category-selection {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.category-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.category-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.category-card.selected {
+    border-color: var(--primary-purple);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+/* Yazı Alanı */
+.typing-area {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    flex: 1;
+}
+
+.text-display {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.4rem;
+    line-height: 2;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    min-height: 150px;
+    user-select: none;
+}
+
+.text-display .word {
+    padding: 2px 4px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.text-display .word.current {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border-bottom: 2px solid var(--primary-purple);
+}
+
+.text-display .word.correct {
+    color: var(--success);
+}
+
+.text-display .word.incorrect {
+    color: var(--danger);
+    text-decoration: line-through;
+}
+
+.text-display .word.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ff8a8a;
+}
+
+.text-input {
+    width: 100%;
+    font-family: 'Fira Code', monospace;
+    font-size: 1.4rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    color: var(--text-light);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.text-input:focus {
+    border-color: var(--primary-purple);
+}
+
+.text-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Result Stats */
+.stat-box {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    min-width: 120px;
+    flex: 1;
+}
+
+.stat-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary-purple);
+}
+
+@media (max-width: 768px) {
+    .game-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .timer-container {
+        order: -1;
+    }
+    
+    .text-display, .text-input {
+        font-size: 1.1rem;
+        padding: 1rem;
+    }
+    
+    .player-info {
+        width: 100%;
+    }
+}

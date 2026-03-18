@@ -1,0 +1,17 @@
+[
+    {"id": 1, "olay": "Tekerleğin İcadı", "tarih": -3500, "bilinirlik": 95},
+    {"id": 2, "olay": "Yazının İcadı", "tarih": -3200, "bilinirlik": 95},
+    {"id": 3, "olay": "Mısır Piramitlerinin İnşası", "tarih": -2560, "bilinirlik": 90},
+    {"id": 4, "olay": "Roma İmparatorluğunun Kuruluşu", "tarih": -753, "bilinirlik": 85},
+    {"id": 5, "olay": "Büyük İskender'in Ölümü", "tarih": -323, "bilinirlik": 80},
+    {"id": 6, "olay": "Matbaanın İcadı", "tarih": 1440, "bilinirlik": 95},
+    {"id": 7, "olay": "Amerika'nın Keşfi", "tarih": 1492, "bilinirlik": 95},
+    {"id": 8, "olay": "Fransız İhtilali", "tarih": 1789, "bilinirlik": 90},
+    {"id": 9, "olay": "I. Dünya Savaşı'nın Başlangıcı", "tarih": 1914, "bilinirlik": 90},
+    {"id": 10, "olay": "II. Dünya Savaşı'nın Bitişi", "tarih": 1945, "bilinirlik": 90},
+    {"id": 11, "olay": "Aya İlk Ayak Basılması", "tarih": 1969, "bilinirlik": 95},
+    {"id": 12, "olay": "Berlin Duvarı'nın Yıkılması", "tarih": 1989, "bilinirlik": 85},
+    {"id": 13, "olay": "Sovyetler Birliği'nin Dağılması", "tarih": 1991, "bilinirlik": 85},
+    {"id": 14, "olay": "İlk iPhone'un Tanıtılması", "tarih": 2007, "bilinirlik": 80},
+    {"id": 15, "olay": "Covid-19 Pandemisinin Başlaması", "tarih": 2019, "bilinirlik": 100}
+]

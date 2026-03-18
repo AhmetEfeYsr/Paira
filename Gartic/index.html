@@ -13,7 +13,6 @@
     <meta property="og:title" content="ÇizBil | Streamer vs Chat">
     <meta property="og:description" content="Yayıncı çizer, Chat bilir!">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://kick.com/assets/favicon/apple-touch-icon.png">
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
 
@@ -87,7 +86,13 @@
 
             if (!channel) {
                 status.innerText = 'Lütfen bir kanal adı girin!';
-                status.className = 'status-msg error';
+                status.className = 'status-msg error error-shake';
+                if (window.showToast) window.showToast('Lütfen bir kanal adı girin!', 'error');
+                
+                // Shake the input too
+                const input = document.getElementById('channel-input');
+                input.classList.add('error-shake');
+                setTimeout(() => input.classList.remove('error-shake'), 400);
                 return;
             }
 
