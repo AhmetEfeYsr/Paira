@@ -95,7 +95,7 @@ class GizliKelimelerNetworkManager {
 
         try {
             // Load word list using same structure as Tabu or from root tr.json
-            const resp = await fetch('../tr.json');
+            const resp = await fetch('../Tabu/tr.json');
             const data = await resp.json();
             this.engine.setWords(data);
         } catch (err) {
