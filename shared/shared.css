@@ -1,4 +1,4 @@
-/* Shared styles for Paira Games (Footer, Modal, Cookies, Top Nav) */
+ /* Shared styles for Paira Games (Footer, Modal, Cookies, Top Nav) */
 
 :root, [data-theme="paira"] {
     --bg-deep: #0a0816; --bg-navy: #151236; --bg-panel: rgba(21, 18, 54, 0.85);
@@ -312,7 +312,9 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: clamp(500px, calc(100vh - 8rem), 900px);
+    flex: 1;
+    min-height: 500px;
+    max-height: 900px;
 }
 
 /* Footer */
@@ -717,13 +719,23 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 .floating-top-nav {
     position: absolute;
     top: clamp(1rem, 2.5vw, 2rem);
-    right: clamp(1rem, 2.5vw, 2rem);
+    right: clamp(2rem, 4.5vw, 4rem); /* Move theme button more left */
     display: flex;
     gap: 0.8rem;
     z-index: 100;
 }
 
-.floating-top-nav .nav-btn {
+.floating-left-nav {
+    position: absolute;
+    top: clamp(1rem, 2.5vw, 2rem);
+    left: clamp(2rem, 4.5vw, 4rem); /* Move home button more right */
+    display: flex;
+    gap: 0.8rem;
+    z-index: 100;
+}
+
+.floating-top-nav .nav-btn,
+.floating-left-nav .nav-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -742,14 +754,33 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     margin: 0;
 }
 
-.floating-top-nav .nav-btn:hover {
-    background: var(--btn-secondary-hover);
+.floating-top-nav .nav-btn:hover,
+.floating-left-nav .nav-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px var(--input-bg);
 }
 
+.floating-left-nav .home-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    color: var(--danger);
+    background: transparent;
+    border: none;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin: 0;
+}
+
+.floating-left-nav .home-icon-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    color: var(--danger);
+    filter: drop-shadow(0 4px 8px rgba(231, 76, 60, 0.4));
+}
+
 .floating-top-nav .theme-select-btn {
-    padding: 8px 12px;
+    padding: 7.5px 9.5px;
     border-radius: 12px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -757,7 +788,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     border: 1px solid var(--btn-secondary-border);
     color: var(--text-main);
     cursor: pointer;
-    min-width: 100px;
+    min-width: 81px;
     transition: all 0.3s ease;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -777,30 +808,36 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 }
 
 [data-theme="light"] .floating-top-nav .theme-select-btn,
-[data-theme="light"] .floating-top-nav .nav-btn {
+[data-theme="light"] .floating-top-nav .nav-btn,
+[data-theme="light"] .floating-left-nav .nav-btn {
     background: var(--card-bg);
     border: 1px solid var(--btn-secondary-border);
     color: var(--text-main);
     box-shadow: 0 2px 10px var(--input-bg);
 }
 
-    [data-theme="light"] .floating-top-nav .theme-select-btn:hover,
-    [data-theme="light"] .floating-top-nav .nav-btn:hover {
-        background: var(--bg-panel);
-        box-shadow: 0 4px 12px var(--input-bg);
+[data-theme="light"] .floating-top-nav .theme-select-btn:hover,
+[data-theme="light"] .floating-top-nav .nav-btn:hover,
+[data-theme="light"] .floating-left-nav .nav-btn:hover {
+    background: var(--bg-panel);
+    box-shadow: 0 4px 12px var(--input-bg);
+}
+
+@media (max-width: 600px) {
+    .floating-top-nav .nav-text,
+    .floating-left-nav .nav-text {
+        display: none; /* Mobilde sadece ikon gosterelim */
     }
-    
-    @media (max-width: 600px) {
-        .floating-top-nav .nav-text {
-            display: none; /* Mobilde sadece ikon gosterelim */
-        }
-        .floating-top-nav .nav-btn {
-            padding: 8px;
-        }
-        .floating-top-nav .theme-select-btn {
-            min-width: auto;
-        }
+    .floating-top-nav .nav-btn,
+    .floating-left-nav .nav-btn {
+        padding: 8px;
     }
+    .floating-top-nav .theme-select-btn {
+        min-width: auto;
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+}
 
     /* Team Variables */
     :root {

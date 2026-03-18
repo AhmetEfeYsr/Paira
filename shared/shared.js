@@ -49,19 +49,9 @@ class PairaSharedUI {
             }
         }
 
-        // Top Navigation (Back Home + Theme Switcher)
+        // Top Navigation (Theme Switcher only, on the right)
         const savedTheme = localStorage.getItem('paira_theme') || 'paira';
         let topNavHTML = `<div class="floating-top-nav">`;
-        
-        // Sadece alt sayfalardaysa (Oyunlardaysa) ana sayfa butonunu goster
-        if (basePath === '../') {
-            topNavHTML += `
-                <a href="${basePath}index.html" class="btn btn-secondary nav-btn" title="Ana Sayfaya Dön">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    <span class="nav-text">Ana Sayfa</span>
-                </a>
-            `;
-        }
 
         topNavHTML += `
             <select class="theme-select-btn" onchange="window.pairaUI.switchTheme(this.value)">
@@ -72,6 +62,21 @@ class PairaSharedUI {
         </div>`;
 
         document.body.insertAdjacentHTML('afterbegin', topNavHTML);
+
+        // Left Navigation (Back Home, on the left)
+        const isLegalPage = window.location.href.includes('iletisim.html') || 
+                            window.location.href.includes('gizlilik-politikasi.html') || 
+                            window.location.href.includes('kullanim-kosullari.html');
+        
+        if (basePath === '../' || isLegalPage) {
+            let leftNavHTML = `
+            <div class="floating-left-nav">
+                <a href="${basePath}index.html" class="home-icon-btn" title="Ana Sayfaya Dön">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </a>
+            </div>`;
+            document.body.insertAdjacentHTML('afterbegin', leftNavHTML);
+        }
 
         const footerHTML = `
         <footer class="app-footer">

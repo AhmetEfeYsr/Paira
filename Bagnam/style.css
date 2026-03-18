@@ -1,15 +1,5 @@
 /* Bağnam specific styles */
 
-.home-btn {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 100;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-}
-
 .guess-input-wrapper {
     display: flex;
     gap: 12px;

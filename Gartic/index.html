@@ -25,8 +25,8 @@
 <body>
     <div class="glass-bg"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar">
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
         <div class="hero-content">
             <div class="game-logo-container"><img src="../logolar/cizbil.svg" alt="ÇizBil Logo"></div>
             <h1 class="gradient-text">ÇizBil</h1>
@@ -48,7 +48,6 @@
             </div>
 
             <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
-            <button id="btn-back" class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="window.location.href='../index.html'">Ana Menüye Dön</button>
             <div id="login-status" class="status-msg"></div>
         </div>
 

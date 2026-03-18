@@ -28,8 +28,8 @@
     <div class="glass-bg"></div>
     <div class="bubble-layer" id="bubble-layer"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar">
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
         <div class="hero-content">
             <div class="game-logo-container"><img src="../logolar/chat-tabu.svg" alt="Chat Tabu Logo"></div>
             <h1 class="gradient-text">Chat Tabu</h1>
@@ -76,7 +76,6 @@
                 </div>
             </div>
 
-            <button id="btn-back" class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="window.location.href='../index.html'">Ana Menüye Dön</button>
             <div id="login-status" class="status-msg" style="margin-top: 10px; text-align: center; color: var(--danger);"></div>
         </div>
 

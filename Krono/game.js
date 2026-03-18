@@ -28,6 +28,11 @@ class KronoGame {
         await this.loadEventsData();
         this.network = new KronoNetwork(this);
         this.bindEvents();
+        
+        // Eğer solo moddaysa direkt oyunu başlat
+        if (this.network.isSolo) {
+            this.startNewRound();
+        }
     }
 
     async loadEventsData() {

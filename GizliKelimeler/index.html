@@ -23,23 +23,11 @@
     <link rel="stylesheet" href="../shared/shared.css">
 </head>
 <body>
-    <!-- Tema secimi ve ana sayfaya donus navigasyonu -->
-    <nav class="floating-top-nav">
-        <a href="../index.html" class="nav-btn" title="Ana Sayfaya Dön">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            <span class="nav-text">Ana Sayfa</span>
-        </a>
-        <select id="theme-selector" class="theme-select-btn" title="Tema Seç">
-            <option value="paira">Karanlık Tema</option>
-            <option value="light">Aydınlık Tema</option>
-            <option value="space">Uzay Teması</option>
-        </select>
-    </nav>
 
     <div id="toast-container" class="toast-container"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar">
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: center;">
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
                 <div class="game-logo-container"><img src="../logolar/gizli-kelimeler.svg" alt="Gizli Kelimeler Logo"></div>
                 <h1 class="gradient-text">Gizli Kelimeler</h1>

@@ -11,6 +11,7 @@ body {
     align-items: center;
     padding: clamp(0.5rem, 2vw, 1rem);
     padding-bottom: 0;
+    min-height: 100vh;
 }
 
 .hidden { display: none !important; }
@@ -20,7 +21,7 @@ body {
 .view-state { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.4s ease; min-height: 0; overflow: hidden; }
 .view-state:not(.active) { display: none; }
 
-#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; width: 100%; }
+#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; width: 100%; padding-top: 2rem; }
 
 .hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
 .seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: -1rem; margin-bottom: 1rem; }
@@ -193,7 +194,7 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 
 @media (max-width: 900px) {
     body { padding-bottom: env(safe-area-inset-bottom); }
-    .glass-panel { height: auto; min-height: 0; flex-grow: 1; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
+    .glass-panel { min-height: 0; flex-grow: 1; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
     .settings-grid { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
 }
 
