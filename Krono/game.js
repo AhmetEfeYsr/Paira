@@ -502,8 +502,15 @@ class KronoGame {
     }
 
     switchView(viewId) {
-        document.querySelectorAll('.view-state').forEach(el => el.classList.remove('active'));
-        document.getElementById(viewId)?.classList.add('active');
+        document.querySelectorAll('.view-state').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('hidden');
+        });
+        const target = document.getElementById(viewId);
+        if (target) {
+            target.classList.add('active');
+            target.classList.remove('hidden');
+        }
     }
 
     showToast(msg, type = "info") {

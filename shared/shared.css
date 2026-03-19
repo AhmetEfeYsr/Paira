@@ -1,4 +1,4 @@
- /* Shared styles for Paira Games (Footer, Modal, Cookies, Top Nav) */
+                    /* Shared styles for Paira Games (Footer, Modal, Cookies, Top Nav) */
 
 :root, [data-theme="paira"] {
     --bg-deep: #0a0816; --bg-navy: #151236; --bg-panel: rgba(21, 18, 54, 0.85);
@@ -315,6 +315,10 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     flex: 1;
     min-height: 500px;
     max-height: 900px;
+}
+
+#app-container {
+    padding: clamp(1rem, 2.5vw, 2rem);
 }
 
 /* Footer */
