@@ -50,8 +50,8 @@
     <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
         <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
-                <div class="game-logo-container" style="font-size: 4rem;">
-                    ⌨️
+                <div class="game-logo-container">
+                    <div style="display:inline-flex; align-items:center; justify-content:center; width: 100px; height: 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); animation: float 6s ease-in-out infinite; background: var(--card-bg); font-size: 4rem;">⌨️</div>
                 </div>
                 <h1 class="gradient-text">Katiplik Düellosu</h1>
                 <p class="seo-description">Klavye hızını test et. Zamanla yarış, istersen tek başına pratik yap, istersen bir arkadaşına meydan oku ve en hızlı yazanın kim olduğunu göster!</p>
@@ -63,7 +63,7 @@
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <button id="btn-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; background: var(--success); color: white;">Solo Pratik Yap</button>
+                    <button id="btn-solo" class="btn btn-success btn-block" style="padding: 14px; font-size: 1.1rem;">Solo Pratik Yap</button>
                     
                     <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Arkadaşına Meydan Oku (Oda Kur)</button>
                     
@@ -80,7 +80,7 @@
                 </div>
             </div>
 
-            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+            <div class="game-seo-info custom-scrollbar" style="margin-top: auto;">
                 <h2>Nasıl Oynanır?</h2>
                 <div class="rules-grid">
                     <div class="rule-card">

@@ -5,7 +5,7 @@ class KatiplikGame {
         this.isSolo = sessionStorage.getItem('isSolo') === 'true';
         this.roomCode = sessionStorage.getItem('roomCode');
         
-        // Oyun Değişkbirienleri
+        // Oyun Değişkbiri  enleri
         this.targetText = "";
         this.words = [];
         this.currentWordIndex = 0;
@@ -69,7 +69,7 @@ class KatiplikGame {
         if (roomCodeDisplay) {
             roomCodeDisplay.addEventListener('click', () => {
                 navigator.clipboard.writeText(roomCodeDisplay.textContent).then(() => {
-                    this.showToast('Oda kodu kopyalandı!', 'success');
+                    window.showToast('Oda kodu kopyalandı!', 'success');
                 });
             });
         }
@@ -85,14 +85,18 @@ class KatiplikGame {
     }
 
     setupSoloGame() {
-        document.getElementById('waiting-overlay').style.display = 'none';
-        document.getElementById('app-container').style.display = 'flex';
+        document.getElementById('waiting-screen').classList.add('hidden');
+        document.getElementById('waiting-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('game-screen').classList.add('active');
         this.loadCategories();
     }
 
     async loadCategories() {
-        document.getElementById('waiting-overlay').style.display = 'none';
-        document.getElementById('app-container').style.display = 'flex';
+        document.getElementById('waiting-screen').classList.add('hidden');
+        document.getElementById('waiting-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('game-screen').classList.add('active');
         document.getElementById('result-screen').style.display = 'none';
         document.getElementById('typing-area').style.display = 'none';
 
@@ -106,7 +110,7 @@ class KatiplikGame {
                 this.renderCategories();
             } catch (err) {
                 console.error("Kategoriler yüklenemedi", err);
-                this.showToast("Metinler yüklenemedi", "error");
+                window.showToast("Metinler yüklenemedi", "error");
             }
         } else {
             document.getElementById('category-selection').style.display = 'none';
@@ -145,30 +149,10 @@ class KatiplikGame {
         let text = this.selectedCategory.text;
         const type = this.selectedCategory.type; // 'random' or 'sorted'
         
-        const usePunctuation = document.getElementById('setting-punctuation')?.checked ?? true;
-        const normalizeTR = document.getElementById('setting-tr-chars')?.checked ?? false;
+        const imlaMode = document.querySelector('input[name="imla-mode"]:checked')?.value || 'imlali';
+        const kbMode = document.querySelector('input[name="kb-mode"]:checked')?.value || 'tr';
         
-        // İşlemleri gerçekleştir
         let words = text.split(/\s+/).filter(w => w.trim() !== "");
-        
-        if (!usePunctuation) {
-            words = words.map(w => w.replace(/[.,;!?'"()\[\]{}:]/g, ''));
-            // Noktalama kalkınca boş kalan kelimeler olabilir, onları temizle
-            words = words.filter(w => w.length > 0);
-        }
-        
-        if (normalizeTR) {
-            const trMap = {
-                'ı': 'i', 'İ': 'I',
-                'ş': 's', 'Ş': 'S',
-                'ğ': 'g', 'Ğ': 'G',
-                'ü': 'u', 'Ü': 'U',
-                'ö': 'o', 'Ö': 'O',
-                'ç': 'c', 'Ç': 'C',
-                'â': 'a', 'î': 'i', 'û': 'u'
-            };
-            words = words.map(w => w.replace(/[ıİşŞğĞüÜöÖçÇâîû]/g, match => trMap[match] || match));
-        }
         
         if (type === 'random') {
             for (let i = words.length - 1; i > 0; i--) {
@@ -182,14 +166,18 @@ class KatiplikGame {
         if (!this.isSolo) {
             this.network.sendMessage({
                 type: 'game_start',
-                text: processedText
+                text: processedText,
+                imlaMode: imlaMode,
+                kbMode: kbMode
             });
         }
         
-        this.startGame(processedText);
+        this.startGame(processedText, imlaMode, kbMode);
     }
 
-    startGame(text) {
+    startGame(text, imlaMode = 'imlali', kbMode = 'tr') {
+        this.imlaMode = imlaMode;
+        this.kbMode = kbMode;
         document.getElementById('category-selection').style.display = 'none';
         document.getElementById('result-screen').style.display = 'none';
         document.getElementById('waiting-rematch-text').style.display = 'none';
@@ -220,6 +208,33 @@ class KatiplikGame {
         this.startTimer();
     }
 
+    normalizeWord(text) {
+        if (!text) return "";
+        let result = text;
+        
+        if (this.imlaMode === 'imlasiz') {
+            result = result.replace(/[^\p{L}\p{N}]/gu, '');
+            result = result.toLocaleLowerCase('tr-TR');
+        }
+        
+        if (this.kbMode === 'en') {
+            const trMap = {
+                'ı': 'i', 'İ': 'I',
+                'ş': 's', 'Ş': 'S',
+                'ğ': 'g', 'Ğ': 'G',
+                'ü': 'u', 'Ü': 'U',
+                'ö': 'o', 'Ö': 'O',
+                'ç': 'c', 'Ç': 'C',
+                'â': 'a', 'Â': 'A',
+                'î': 'i', 'Î': 'I',
+                'û': 'u', 'Û': 'U'
+            };
+            result = result.replace(/[ıİşŞğĞüÜöÖçÇâÂîÎûÛ]/g, match => trMap[match] || match);
+        }
+        
+        return result;
+    }
+
     renderText() {
         const display = document.getElementById('text-display');
         display.innerHTML = '';
@@ -243,8 +258,11 @@ class KatiplikGame {
         const displayWords = document.getElementById('text-display').children;
         const wordSpan = displayWords[this.currentWordIndex];
         
+        const normInput = this.normalizeWord(inputVal);
+        const normExpected = this.normalizeWord(currentWord);
+
         // Hata kontrolü
-        if (inputVal && !currentWord.startsWith(inputVal)) {
+        if (normInput && !normExpected.startsWith(normInput)) {
             wordSpan.classList.add('error');
         } else {
             wordSpan.classList.remove('error');
@@ -261,11 +279,14 @@ class KatiplikGame {
         const displayWords = document.getElementById('text-display').children;
         const wordSpan = displayWords[this.currentWordIndex];
         
+        const normInput = this.normalizeWord(typedWord);
+        const normExpected = this.normalizeWord(expectedWord);
+        
         this.totalKeystrokes += typedWord.length + 1; // +1 for space
         
         wordSpan.classList.remove('current', 'error');
         
-        if (typedWord === expectedWord) {
+        if (normInput === normExpected) {
             wordSpan.classList.add('correct');
             this.correctKeystrokes += typedWord.length + 1;
         } else {

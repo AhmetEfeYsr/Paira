@@ -691,6 +691,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
+                    
+                    if (title === lowerWord) {
+                        return true;
+                    }
+                    
                     if (title.includes(lowerWord) || snippet.includes(lowerWord)) {
                         if (keywords.length === 0 || keywords.some(kw => snippet.includes(kw) || title.includes(kw))) {
                             return true;

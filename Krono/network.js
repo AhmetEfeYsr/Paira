@@ -38,18 +38,52 @@ class KronoNetwork {
     }
 
     setupMultiplayerMode() {
-        this.peerManager = new PeerManager(this.isHost, this.roomCode);
+        this.peerManager = new PeerNetworkManager({
+            isHost: this.isHost,
+            onPeerReady: (id) => {
+                this.onConnected(id);
+                if (this.isHost) {
+                    this.onRoomCode(this.roomCode);
+                }
+            },
+            onConnection: (peerId, conn) => {
+                if (this.isHost) {
+                    // Send room details to the connecting client
+                    this.peerManager.sendToPeer(peerId, 'ROOM_DETAILS', {
+                        roomCode: this.roomCode
+                    });
+                }
+            },
+            onDataReceived: (action, payload, senderId) => {
+                if (action === 'PLAYER_JOIN') {
+                    this.onPlayerJoined({ id: senderId, name: payload.name, score: payload.score || 0, isHost: payload.isHost || false });
+                    if (this.isHost) {
+                        // Tell them we also joined
+                        this.peerManager.sendToPeer(senderId, 'PLAYER_JOIN', { name: this.playerName, score: 0, isHost: true });
+                    }
+                } else if (action === 'ROOM_DETAILS') {
+                    this.onRoomCode(payload.roomCode);
+                } else {
+                    this.onData({ type: action, ...payload }, senderId);
+                }
+            },
+            onDisconnection: (peerId) => this.onPlayerLeft(peerId),
+            onError: (err) => this.onError(err)
+        });
 
-        // Bind events
-        this.peerManager.on('connected', (id) => this.onConnected(id));
-        this.peerManager.on('roomCode', (code) => this.onRoomCode(code));
-        this.peerManager.on('playerJoined', (player) => this.onPlayerJoined(player));
-        this.peerManager.on('playerLeft', (id) => this.onPlayerLeft(id));
-        this.peerManager.on('data', (data, peerId) => this.onData(data, peerId));
-        this.peerManager.on('error', (err) => this.onError(err));
-
-        // Connect
-        this.peerManager.connect(this.playerName, { score: 0, status: 'ready' });
+        // Initialize and Connect
+        const myId = this.isHost ? `krono-host-${this.roomCode}` : null;
+        this.peerManager.init(myId).then(id => {
+            if (!this.isHost) {
+                this.peerManager.connectToHost(`krono-host-${this.roomCode}`).then(() => {
+                    this.peerManager.sendToPeer(`krono-host-${this.roomCode}`, 'PLAYER_JOIN', { name: this.playerName, score: 0, isHost: false });
+                }).catch(err => {
+                    this.onError("Odaya bağlanılamadı.");
+                });
+            }
+        }).catch(err => {
+            this.onError("Bağlantı kurulamadı.");
+        });
     }
 
     onConnected(id) {
@@ -82,7 +116,7 @@ class KronoNetwork {
 
     onPlayerJoined(player) {
         // Enforce max 2 players
-        if (this.isHost && this.peerManager.getConnections().length > 1) {
+        if (this.isHost && Object.keys(this.peerManager.connections).length > 1) {
             // Can't easily reject via peerManager without custom logic, 
             // but we can just ignore or disconnect them. 
             // PeerManager handles basic connection.
@@ -159,13 +193,14 @@ class KronoNetwork {
     onError(err) {
         console.error("Network Error:", err);
         this.game.showToast("Bağlantı hatası: " + err, "error");
-        if (!this.peerManager.isConnected) {
+        if (!this.peerManager.peer || this.peerManager.peer.disconnected) {
             setTimeout(() => window.location.href = 'index.html', 3000);
         }
     }
 
     send(data) {
         if (this.isSolo) return;
-        this.peerManager.broadcast(data);
+        const { type, ...payload } = data;
+        this.peerManager.broadcast(type, payload);
     }
 }

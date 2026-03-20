@@ -570,6 +570,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const btnAppeal = document.getElementById('btn-appeal');
+    if (btnAppeal) {
+        btnAppeal.addEventListener('click', () => {
+            btnAppeal.disabled = true;
+            btnAppeal.textContent = 'İtiraz Edildi!';
+            network.sendToHost({ type: 'APPEAL_REQUEST' });
+        });
+    }
+
     // Submit via Enter key
     if (ui.compactGameInput) {
         ui.compactGameInput.addEventListener('keypress', (e) => {
@@ -646,7 +655,162 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState.playerAnswers[data.id] = data.answers;
             }
         }
+        else if (data.type === 'APPEAL_REQUEST' && isHost) {
+            if (gameState.status === 'WAITING_APPEAL' && gameState.pendingNextTurn && gameState.pendingNextTurn.playerId === senderId) {
+                clearTimeout(gameState.appealTimeout);
+                gameState.status = 'VOTING';
+                gameState.votes = { yes: 0, no: 0, votedPlayers: new Set() };
+                
+                const { word, category } = gameState.pendingNextTurn;
+                
+                network.broadcast({
+                    type: 'START_VOTE',
+                    word: word,
+                    categoryName: category.name,
+                    voterCount: Object.keys(network.players).length
+                });
+                
+                startVoteHost();
+            }
+        }
+        else if (data.type === 'VOTE' && isHost) {
+            if (gameState.status === 'VOTING' && !gameState.votes.votedPlayers.has(senderId)) {
+                gameState.votes.votedPlayers.add(senderId);
+                if (data.vote === 'yes') gameState.votes.yes++;
+                else gameState.votes.no++;
+                
+                network.broadcast({
+                    type: 'VOTE_UPDATE',
+                    yes: gameState.votes.yes,
+                    no: gameState.votes.no
+                });
+                
+                if (gameState.votes.votedPlayers.size >= Object.keys(network.players).length) {
+                    endVoteHost();
+                }
+            }
+        }
     };
+    
+    let voteTimer = null;
+    function startVoteHost() {
+        showVotingUI(gameState.pendingNextTurn.word, gameState.pendingNextTurn.category.name, true);
+        
+        let timeLeft = 10;
+        clearInterval(voteTimer);
+        voteTimer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                endVoteHost();
+            }
+        }, 1000);
+    }
+    
+    function endVoteHost() {
+        if (gameState.status !== 'VOTING') return;
+        gameState.status = 'PLAYING';
+        clearInterval(voteTimer);
+        
+        const { yes, no } = gameState.votes;
+        const totalVotes = yes + no;
+        const isAccepted = totalVotes > 0 && yes > totalVotes / 2;
+        
+        const { playerId, word } = gameState.pendingNextTurn;
+        
+        if (isAccepted) {
+            const score = word.length;
+            network.players[playerId].score += score;
+            const finalScores = getFinalScores(playerId, score);
+            
+            network.broadcast({
+                type: 'VOTE_RESULT',
+                isAccepted: true,
+                score: score,
+                scores: finalScores,
+                word: word,
+                playerId: playerId
+            });
+            showTurnResult(word, score, playerId, false);
+            if(window.PairaAudio) window.PairaAudio.play('correct');
+        } else {
+            network.broadcast({
+                type: 'VOTE_RESULT',
+                isAccepted: false,
+                word: word
+            });
+            if(window.PairaAudio) window.PairaAudio.play('wrong');
+        }
+        
+        const statusText = document.getElementById('voting-status-text');
+        if (statusText) {
+            if (isAccepted) {
+                statusText.textContent = 'Oylama Sonucu: KABUL EDİLDİ!';
+                statusText.style.color = 'var(--success)';
+            } else {
+                statusText.textContent = 'Oylama Sonucu: REDDEDİLDİ!';
+                statusText.style.color = 'var(--danger)';
+            }
+        }
+        
+        setTimeout(() => {
+            hideVotingUI();
+            goToNextTurn();
+        }, 2000);
+    }
+
+    let clientVoteTimer = null;
+    function showVotingUI(word, categoryName, isHostCall) {
+        const overlay = document.getElementById('voting-overlay');
+        const text = document.getElementById('voting-text');
+        const btnYes = document.getElementById('btn-vote-yes');
+        const btnNo = document.getElementById('btn-vote-no');
+        const spanYes = document.getElementById('vote-yes-count');
+        const spanNo = document.getElementById('vote-no-count');
+        const statusText = document.getElementById('voting-status-text');
+        
+        if (overlay) overlay.classList.remove('hidden');
+        if (text) text.innerHTML = `<strong>${categoryName}</strong> kategorisi için <strong>"${word}"</strong> kelimesi kabul edilsin mi?`;
+        if (spanYes) spanYes.textContent = '0';
+        if (spanNo) spanNo.textContent = '0';
+        if (statusText) {
+            statusText.textContent = '';
+            statusText.style.color = 'var(--text-muted)';
+        }
+        
+        if (btnYes) {
+            btnYes.disabled = false;
+            btnYes.onclick = () => {
+                btnYes.disabled = true;
+                if(btnNo) btnNo.disabled = true;
+                network.sendToHost({ type: 'VOTE', vote: 'yes' });
+            };
+        }
+        if (btnNo) {
+            btnNo.disabled = false;
+            btnNo.onclick = () => {
+                btnNo.disabled = true;
+                if(btnYes) btnYes.disabled = true;
+                network.sendToHost({ type: 'VOTE', vote: 'no' });
+            };
+        }
+        
+        let timeLeft = 10;
+        const timerEl = document.getElementById('voting-timer');
+        if (timerEl) timerEl.textContent = `Süre: ${timeLeft}`;
+        
+        clearInterval(clientVoteTimer);
+        clientVoteTimer = setInterval(() => {
+            timeLeft--;
+            if (timerEl) timerEl.textContent = `Süre: ${timeLeft}`;
+            if (timeLeft <= 0) clearInterval(clientVoteTimer);
+        }, 1000);
+    }
+    
+    function hideVotingUI() {
+        const overlay = document.getElementById('voting-overlay');
+        if (overlay) overlay.classList.add('hidden');
+        clearInterval(clientVoteTimer);
+    }
 
     function endRound() {
         if (!isHost || isRoundOver) return;
@@ -683,6 +847,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
+                    
+                    if (title === lowerWord) {
+                        return true;
+                    }
+                    
                     if (title.includes(lowerWord) || snippet.includes(lowerWord)) {
                         if (keywords.length === 0 || keywords.some(kw => snippet.includes(kw) || title.includes(kw))) {
                             return true;
@@ -839,67 +1008,90 @@ document.addEventListener('DOMContentLoaded', () => {
         network.players[playerId].score += score;
 
         // Broadcast score update for immediate feedback
-        const finalScores = {};
-        for (const pId in network.players) {
-            finalScores[pId] = {
-                id: pId,
-                name: network.players[pId].name,
-                roundScore: (pId === playerId) ? score : 0,
-                totalScore: network.players[pId].score
-            };
-        }
+        const finalScores = getFinalScores(playerId, score);
 
-        // Determine next turn
-        gameState.currentPlayerIndex++;
-        const totalPlayers = Object.keys(network.players).length;
+        const canAppeal = (score === 0 && word.length > 0);
 
-        // Show a brief splash of the score then go to next turn
         network.broadcast({
             type: 'TURN_RESULT',
             word: word,
             score: score,
-            scores: finalScores
+            scores: finalScores,
+            playerId: playerId,
+            canAppeal: canAppeal
         });
 
         // Host locally shows result
-        showTurnResult(word, score);
+        showTurnResult(word, score, playerId, canAppeal);
         if(window.PairaAudio) {
             if(score > 0) window.PairaAudio.play('correct');
             else window.PairaAudio.play('wrong');
         }
 
-        // Wait a few seconds then start next turn
-        setTimeout(() => {
-            if (gameState.currentPlayerIndex >= totalPlayers) {
-                gameState.currentPlayerIndex = 0;
-                gameState.round++;
-                
-                // Show scoreboard at the end of EACH round
-                network.broadcast({
-                    type: 'SHOW_SCORES',
-                    scores: finalScores
-                });
-                renderScoreboard(finalScores);
-            } else {
-                const letter = getRandomLetter();
-                const randomCategory = gameConfig.categories[Math.floor(Math.random() * gameConfig.categories.length)];
-
-                gameState.playerAnswers = {};
-
-                network.broadcast({
-                    type: 'START_TURN',
-                    config: gameConfig,
-                    round: gameState.round,
-                    letter: letter,
-                    category: randomCategory,
-                    playerIndex: gameState.currentPlayerIndex
-                });
-                startTurn(gameConfig, gameState.round, letter, randomCategory, gameState.currentPlayerIndex);
-            }
-        }, 3000);
+        if (canAppeal) {
+            gameState.status = 'WAITING_APPEAL';
+            gameState.pendingNextTurn = { playerId, word, score, category: gameState.currentCategory };
+            gameState.appealTimeout = setTimeout(() => {
+                if (gameState.status === 'WAITING_APPEAL') {
+                    goToNextTurn();
+                }
+            }, 3000);
+        } else {
+            setTimeout(() => {
+                goToNextTurn();
+            }, 3000);
+        }
     }
 
-    function showTurnResult(word, score) {
+    function getFinalScores(roundPlayerId, roundScore) {
+        const scores = {};
+        for (const pId in network.players) {
+            scores[pId] = {
+                id: pId,
+                name: network.players[pId].name,
+                roundScore: (pId === roundPlayerId) ? roundScore : 0,
+                totalScore: network.players[pId].score
+            };
+        }
+        return scores;
+    }
+
+    function goToNextTurn() {
+        if (!isHost) return;
+        
+        gameState.currentPlayerIndex++;
+        const totalPlayers = Object.keys(network.players).length;
+
+        if (gameState.currentPlayerIndex >= totalPlayers) {
+            gameState.currentPlayerIndex = 0;
+            gameState.round++;
+            
+            const finalScores = getFinalScores(null, 0);
+
+            network.broadcast({
+                type: 'SHOW_SCORES',
+                scores: finalScores
+            });
+            renderScoreboard(finalScores);
+        } else {
+            const letter = getRandomLetter();
+            const randomCategory = gameConfig.categories[Math.floor(Math.random() * gameConfig.categories.length)];
+
+            gameState.playerAnswers = {};
+
+            network.broadcast({
+                type: 'START_TURN',
+                config: gameConfig,
+                round: gameState.round,
+                letter: letter,
+                category: randomCategory,
+                playerIndex: gameState.currentPlayerIndex
+            });
+            startTurn(gameConfig, gameState.round, letter, randomCategory, gameState.currentPlayerIndex);
+        }
+    }
+
+    function showTurnResult(word, score, playerId, canAppeal = false) {
         if(ui.finishStatusText) {
             if (score > 0) {
                 ui.finishStatusText.textContent = `Doğru! "${word}" = +${score} puan`;
@@ -907,6 +1099,33 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 ui.finishStatusText.textContent = `Yanlış veya Boş! +0 puan`;
                 ui.finishStatusText.style.color = 'var(--danger)';
+            }
+        }
+
+        const appealArea = document.getElementById('appeal-area');
+        const btnAppeal = document.getElementById('btn-appeal');
+        if (appealArea && btnAppeal) {
+            if (canAppeal && playerId === network.myId) {
+                appealArea.classList.remove('hidden');
+                let secondsLeft = 3;
+                btnAppeal.textContent = `İtiraz Et (${secondsLeft})`;
+                btnAppeal.disabled = false;
+                
+                const appealInterval = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft <= 0) {
+                        clearInterval(appealInterval);
+                        appealArea.classList.add('hidden');
+                    } else {
+                        if (!btnAppeal.disabled) {
+                            btnAppeal.textContent = `İtiraz Et (${secondsLeft})`;
+                        }
+                    }
+                }, 1000);
+                
+                // Keep interval reference if needed, but it clears itself
+            } else {
+                appealArea.classList.add('hidden');
             }
         }
     }
@@ -923,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if (data.type === 'TURN_RESULT') {
             if (!isHost) {
-                showTurnResult(data.word, data.score);
+                showTurnResult(data.word, data.score, data.playerId, data.canAppeal);
                 if(window.PairaAudio) {
                     if(data.score > 0) window.PairaAudio.play('correct');
                     else window.PairaAudio.play('wrong');
@@ -932,6 +1151,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if (data.type === 'BACK_TO_LOBBY' && !isHost) {
             backToLobby();
+        }
+        else if (data.type === 'START_VOTE') {
+            if (!isHost) {
+                showVotingUI(data.word, data.categoryName, false);
+            }
+        }
+        else if (data.type === 'VOTE_UPDATE') {
+            const spanYes = document.getElementById('vote-yes-count');
+            const spanNo = document.getElementById('vote-no-count');
+            if (spanYes) spanYes.textContent = data.yes;
+            if (spanNo) spanNo.textContent = data.no;
+        }
+        else if (data.type === 'VOTE_RESULT') {
+            const statusText = document.getElementById('voting-status-text');
+            if (statusText) {
+                if (data.isAccepted) {
+                    statusText.textContent = 'Oylama Sonucu: KABUL EDİLDİ!';
+                    statusText.style.color = 'var(--success)';
+                } else {
+                    statusText.textContent = 'Oylama Sonucu: REDDEDİLDİ!';
+                    statusText.style.color = 'var(--danger)';
+                }
+            }
+            if (!isHost) {
+                if (data.isAccepted) {
+                    showTurnResult(data.word, data.score, data.playerId, false);
+                    if(window.PairaAudio) window.PairaAudio.play('correct');
+                } else {
+                    if(window.PairaAudio) window.PairaAudio.play('wrong');
+                }
+                setTimeout(() => {
+                    hideVotingUI();
+                }, 2000);
+            }
         }
     };
 

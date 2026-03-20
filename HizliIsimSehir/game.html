@@ -120,6 +120,9 @@
 
                 <div class="compact-input-area">
                     <p id="finish-status-text" class="text-muted" style="margin-bottom: 8px; font-weight: 500; text-align: center; min-height: 20px;"></p>
+                    <div id="appeal-area" class="hidden" style="text-align: center; margin-bottom: 8px;">
+                        <button id="btn-appeal" class="btn btn-secondary" style="background-color: var(--danger); color: white; border: none;">İtiraz Et (3)</button>
+                    </div>
                     <div class="compact-input-group">
                         <input type="text" id="compact-game-input" class="compact-input" placeholder="Cevabınızı yazın..." autocomplete="off" spellcheck="false" disabled>
                         <button id="btn-finish-turn" class="btn btn-primary compact-btn" disabled>
@@ -127,6 +130,18 @@
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- VOTING OVERLAY -->
+            <div id="voting-overlay" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; border-radius: 20px;">
+                <h2 style="color: white; margin-bottom: 10px;">İtiraz Oylaması</h2>
+                <p id="voting-text" style="color: #ddd; font-size: 1.1rem; margin-bottom: 20px; max-width: 90%; word-break: break-word;">...</p>
+                <div id="voting-buttons" style="display: flex; gap: 15px;">
+                    <button id="btn-vote-yes" class="btn btn-primary" style="background-color: var(--success); min-width: 100px; border: none;">Kabul Et (<span id="vote-yes-count">0</span>)</button>
+                    <button id="btn-vote-no" class="btn btn-primary" style="background-color: var(--danger); min-width: 100px; border: none;">Reddet (<span id="vote-no-count">0</span>)</button>
+                </div>
+                <p id="voting-timer" style="color: white; margin-top: 15px; font-size: 1.1rem;">Süre: 10</p>
+                <p id="voting-status-text" style="color: var(--text-muted); margin-top: 10px; font-size: 0.9rem;"></p>
             </div>
         </section>
 
