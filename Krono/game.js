@@ -25,11 +25,18 @@ class KronoGame {
     }
 
     async init() {
-        await this.loadEventsData();
         this.network = new KronoNetwork(this);
+
+        // Eğer solo moddaysa direkt oyun ekranına geç (veri yüklenirken bekleme)
+        if (this.network.isSolo) {
+            this.switchView('game-screen');
+            document.getElementById('game-status-message').textContent = 'Yükleniyor...';
+        }
+
+        await this.loadEventsData();
         this.bindEvents();
         
-        // Eğer solo moddaysa direkt oyunu başlat
+        // Eğer solo moddaysa oyunu başlat
         if (this.network.isSolo) {
             this.startNewRound();
         }
@@ -502,8 +509,15 @@ class KronoGame {
     }
 
     switchView(viewId) {
-        document.querySelectorAll('.view-state').forEach(el => el.classList.remove('active'));
-        document.getElementById(viewId)?.classList.add('active');
+        document.querySelectorAll('.view-state').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('hidden');
+        });
+        const target = document.getElementById(viewId);
+        if (target) {
+            target.classList.add('active');
+            target.classList.remove('hidden');
+        }
     }
 
     showToast(msg, type = "info") {
