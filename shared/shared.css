@@ -719,20 +719,21 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     }
 }
 
-/* Floating Top Navigation (Back Home + Theme) */
-.floating-top-nav {
-    position: absolute;
-    top: clamp(1rem, 2.5vw, 2rem);
-    right: clamp(2rem, 4.5vw, 4rem); /* Move theme button more left */
+/* Paira Global Navigation (Back Home + Theme) */
+.paira-global-nav {
+    width: 100%;
+    max-width: 1200px;
     display: flex;
-    gap: 0.8rem;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(0.5rem, 1.5vw, 1rem) 0;
+    margin: 0 auto;
     z-index: 100;
+    flex-shrink: 0;
 }
 
-.floating-left-nav {
-    position: absolute;
-    top: clamp(1rem, 2.5vw, 2rem);
-    left: clamp(2rem, 4.5vw, 4rem); /* Move home button more right */
+.floating-top-nav, .floating-left-nav {
+    position: static;
     display: flex;
     gap: 0.8rem;
     z-index: 100;
