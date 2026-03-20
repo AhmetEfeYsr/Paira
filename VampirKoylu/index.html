@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Vampir Köylü | Paira Games - Ücretsiz Online Parti Oyunu</title>
+    <meta name="description" content="Efsanevi parti oyunu Vampir Köylü'yü (Feign tarzı) arkadaşlarınızla herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsiz online oynayın!">
+    <meta name="keywords" content="vampir köylü, feign, online vampir köylü, p2p vampir köylü, webrtc oyun, parti oyunu, multiplayer, arkadaş oyunları, türkçe oyun, paira games">
+    <meta name="author" content="Paira Games">
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container" style="font-size: 4rem; margin-bottom: 1rem;">🧛‍♂️</div>
+                <h1 class="gradient-text">Vampir Köylü</h1>
+                <p class="seo-description">Köydeki haini bul veya köylüleri avla! Efsanevi parti oyununu online oyna.</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-seo-info custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Rolünü Gizle</h3>
+                        <p>Oyun başladığında herkese gizli bir rol verilir (Vampir, Köylü, Doktor, Büyücü vb.). Rolünü kimseye belli etme!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Gece Fazı</h3>
+                        <p>Gece olduğunda herkes gözlerini kapatır. Vampirler avlanır, özel rollü köylüler yeteneklerini kullanır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Gündüz Fazı</h3>
+                        <p>Sabah olduğunda gece olan biten açıklanır. Köylüler aralarındaki vampirleri bulmak için tartışır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Oylama</h3>
+                        <p>Tartışma sonunda bir şüpheli oylanır. En çok oyu alan kişi köyden sürülür ve rolü ortaya çıkar.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="login.js"></script>
+</body>
+</html>
