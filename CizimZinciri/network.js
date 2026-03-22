@@ -1,12 +1,12 @@
 // ÇizimZinciri/network.js
-impor { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState } from './game.js';
+import { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState } from './game.js';
 
 export let isHost = false;
 export let myId = null;
 export let networkManager = null;
 export let networkState = {
     state: 'LOBBY', // LOBBY, WRITE, DRAW, ALBUM, WAIT
-     {}, // { id: { name, score, id } }
+    players: {}, // { id: { name, score, id } }
     hostId: null,
     turnDuration: 60,
     roundCount: 1, // Current round
@@ -70,6 +70,18 @@ function initLobby() {
             if (isHost) {
                 if (networkState.players[peerId]) {
                     delete networkState.players[peerId];
+                    
+                    // Check if the remaining players have all completed their tasks
+                    if (networkState.state === 'WRITE' || networkState.state === 'DRAW') {
+                        const allCompleted = Object.keys(networkState.players).every(pid => {
+                            if (pid === networkState.hostId) return networkState.completedTasks[pid];
+                            return networkState.completedTasks[pid] || !networkManager.connections[pid];
+                        });
+                        if (allCompleted) {
+                            clearTimeout(turnTimeout);
+                            passBooksAndNextRound();
+                        }
+                    }
                     broadcastState();
                 }
             } else {
@@ -115,16 +127,7 @@ function initLobby() {
     });
 }
 
-function generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    const randomVals = new Uint8Array(6);
-    window.crypto.getRandomValues(randomVals);
-    for (let i = 0; i < 6; i++) {
-        code += chars[randomVals[i] % chars.length];
-    }
-    return code;
-}
+
 
 function handleNetworkData(action, payload, senderId) {
     if (isHost) {
@@ -373,7 +376,7 @@ function handlePlayingState(lastAction) {
     if (networkState.state === 'ALBUM') {
         if (lastAction?.action === 'SHOW_ALBUM' || lastAction?.action === 'ALBUM_UPDATE') {
             showAlbumScreen();
-            renderAlbumState();
+            renderAlbumState(networkState);
         }
         return;
     }
@@ -384,11 +387,11 @@ function handlePlayingState(lastAction) {
     document.getElementById('game-screen').classList.add('active');
     document.getElementById('game-screen').classList.remove('hidden');
 
-    initGameUI();
-    updateGameStateUI();
+    initGameUI(networkState, myId);
+    updateGameStateUI(networkState, myId);
 
     if (lastAction?.action === 'START_PHASE') {
-        startTimer(networkState.turnDuration);
+        startTimer(networkState.turnDuration, networkState, myId);
     }
 }
 

@@ -5,7 +5,7 @@ class KatiplikGame {
         this.isSolo = sessionStorage.getItem('isSolo') === 'true';
         this.roomCode = sessionStorage.getItem('roomCode');
         
-        // Oyun Değişkbiri  enleri
+        // Oyun Değişkenleri
         this.targetText = "";
         this.words = [];
         this.currentWordIndex = 0;
@@ -37,10 +37,20 @@ class KatiplikGame {
     bindEvents() {
         const textInput = document.getElementById('text-input');
         
-        textInput.addEventListener('input', (e) => this.handleTyping(e));
+        textInput.addEventListener('input', (e) => {
+            if (this.isFinished) return;
+            const val = e.target.value;
+            // Handle space or newline entered via input (especially for mobile)
+            if (val.length > 0 && (val.endsWith(' ') || val.endsWith('\n'))) {
+                this.handleWordCompletion(val.trim());
+            } else {
+                this.handleTyping(e);
+            }
+        });
+        
         textInput.addEventListener('keydown', (e) => {
-            // Boşluk tuşu basıldığında
-            if (e.code === 'Space') {
+            // Prevent default space behavior for immediate visual feedback on desktop
+            if (e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
                 this.handleWordCompletion(textInput.value.trim());
             }
@@ -64,15 +74,6 @@ class KatiplikGame {
         document.getElementById('btn-cancel-wait')?.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
-
-        const roomCodeDisplay = document.getElementById('display-room-code');
-        if (roomCodeDisplay) {
-            roomCodeDisplay.addEventListener('click', () => {
-                navigator.clipboard.writeText(roomCodeDisplay.textContent).then(() => {
-                    window.showToast('Oda kodu kopyalandı!', 'success');
-                });
-            });
-        }
     }
 
     updateUIPlayerNames() {
@@ -85,18 +86,12 @@ class KatiplikGame {
     }
 
     setupSoloGame() {
-        document.getElementById('waiting-screen').classList.add('hidden');
-        document.getElementById('waiting-screen').classList.remove('active');
-        document.getElementById('game-screen').classList.remove('hidden');
-        document.getElementById('game-screen').classList.add('active');
+        window.showScreen('game-screen');
         this.loadCategories();
     }
 
     async loadCategories() {
-        document.getElementById('waiting-screen').classList.add('hidden');
-        document.getElementById('waiting-screen').classList.remove('active');
-        document.getElementById('game-screen').classList.remove('hidden');
-        document.getElementById('game-screen').classList.add('active');
+        window.showScreen('game-screen');
         document.getElementById('result-screen').style.display = 'none';
         document.getElementById('typing-area').style.display = 'none';
 
@@ -106,7 +101,7 @@ class KatiplikGame {
             try {
                 const response = await fetch('tr.json');
                 const data = await response.json();
-                this.categories = data.categories;
+                this.categories = data; // JSON kök dizini bir array
                 this.renderCategories();
             } catch (err) {
                 console.error("Kategoriler yüklenemedi", err);
@@ -114,6 +109,8 @@ class KatiplikGame {
             }
         } else {
             document.getElementById('category-selection').style.display = 'none';
+            document.getElementById('typing-area').style.display = 'flex';
+            document.getElementById('text-display').innerHTML = '<h3 style="text-align:center; margin-top:2rem; width:100%; color:var(--text-muted);">Kurucunun metin seçmesi bekleniyor...</h3>';
         }
     }
 
@@ -124,12 +121,12 @@ class KatiplikGame {
         
         this.selectedCategory = null;
 
-        this.categories.forEach(cat => {
+        this.categories.forEach((cat, index) => {
             const card = document.createElement('div');
             card.className = 'category-card';
             card.innerHTML = `
-                <h4>${cat.name}</h4>
-                <p style="font-size:0.9rem; color:var(--text-muted);">${cat.description}</p>
+                <h4>Metin ${index + 1}</h4>
+                <p style="font-size:0.9rem; color:var(--text-muted);">${cat.title}</p>
             `;
             
             card.addEventListener('click', () => {
@@ -301,7 +298,21 @@ class KatiplikGame {
         if (this.currentWordIndex >= this.words.length) {
             this.finishGame();
         } else {
-            displayWords[this.currentWordIndex].classList.add('current');
+            const nextWordSpan = displayWords[this.currentWordIndex];
+            nextWordSpan.classList.add('current');
+            
+            // Otomatik kaydırma
+            const display = document.getElementById('text-display');
+            const displayRect = display.getBoundingClientRect();
+            const spanRect = nextWordSpan.getBoundingClientRect();
+            
+            if (spanRect.bottom > displayRect.bottom - 40) {
+                display.scrollBy({
+                    top: spanRect.bottom - displayRect.bottom + 60,
+                    behavior: 'smooth'
+                });
+            }
+            
             // Kelime geçişinde WPM hesapla
             this.calculateWPM();
             this.updateProgress();

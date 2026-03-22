@@ -40,56 +40,71 @@ class ChatManager {
     }
 }
 
-class KatiplikNetwork {
+class KatiplikNetwork extends BaseGameNetwork {
     constructor(game) {
-        this.game = game;
-        this.peerManager = new PeerNetworkManager({
-            isHost: game.isHost,
-            onPeerReady: (id) => {
-                console.log("Peer ready:", id);
-            },
-            onConnection: (peerId, conn) => {
-                this.onConnectionEstablished();
-            },
-            onDataReceived: (action, payload, senderId) => {
-                this.onMessageReceived({ type: action, ...payload });
-            },
-            onDisconnection: (peerId) => {
+        super({
+            onAction: (actionType, payload, senderId) => this.onMessageReceived({ type: actionType, ...payload }),
+            onPlayerLeave: (peerId) => {
                 window.showToast("Rakip ayrıldı", "warning");
                 setTimeout(() => window.location.href = 'index.html', 3000);
-            },
-            onError: (err) => {
-                console.error("Network error:", err);
-                window.showToast("Bağlantı hatası", "error");
             }
+        });
+        this.game = game;
+
+        // Custom lobby UI initialization
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: this.roomCode || this.myId,
+            isHost: this.isHostNode
         });
     }
 
     initialize(isHost, roomCode) {
+        // Katiplik used a specific host ID structure, so we simulate it here or just use base init
         const myId = isHost ? `katiplik-host-${roomCode}` : null;
-        this.peerManager.init(myId).then(() => {
-            if (!isHost) {
-                this.peerManager.connectToHost(`katiplik-host-${roomCode}`).then(() => {
+        
+        // We override roomCode locally for custom join logic
+        if (isHost) {
+            this.init(myId).then((id) => {
+                this.lobbyUI.setRoomCode(roomCode);
+                this.myId = id;
+            }).catch(err => {
+                window.showToast("Bağlantı kurulamadı", "error");
+            });
+        } else {
+            this.init().then(() => {
+                this.connectToHost(`katiplik-host-${roomCode}`).then(() => {
                     this.onConnectionEstablished();
                 }).catch(err => {
                     window.showToast("Odaya bağlanılamadı", "error");
                 });
-            }
-        }).catch(err => {
-            window.showToast("Bağlantı kurulamadı", "error");
-        });
+            }).catch(err => {
+                window.showToast("Bağlantı kurulamadı", "error");
+            });
+        }
+    }
+
+    // Capture standard join to establish connection
+    onPlayerJoin(peerId, payload) {
+        if (this.isHostNode && peerId !== this.myId) {
+            this.onConnectionEstablished();
+        }
+    }
+
+    _handleDataReceived(action, payload, senderId) {
+        // Fallback for custom join logic
+        if (action === 'JOIN' && this.isHostNode) {
+            this.onConnectionEstablished();
+        }
+        super._handleDataReceived(action, payload, senderId);
     }
 
     sendMessage(data) {
         const { type, ...payload } = data;
-        this.peerManager.broadcast(type, payload);
+        this.sendGameAction(type, payload);
     }
 
     onConnectionEstablished() {
-        document.getElementById('waiting-screen')?.classList.add('hidden');
-        document.getElementById('waiting-screen')?.classList.remove('active');
-        document.getElementById('game-screen')?.classList.remove('hidden');
-        document.getElementById('game-screen')?.classList.add('active');
+        window.showScreen('game-screen');
 
         if (this.game.isHost) {
             this.game.opponentName = 'Rakip';

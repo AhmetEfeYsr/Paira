@@ -1,31 +1,32 @@
 /**
- * TabuNetworkManager - Integrates PeerNetworkManager with TabuGameEngine
+ * TabuNetworkManager - Integrates BaseGameNetwork with TabuGameEngine
  */
-class TabuNetworkManager {
+class TabuNetworkManager extends BaseGameNetwork {
     constructor(engine, view) {
+        super({
+            onStateSync: (payload) => this.onStateSync(payload),
+            onPlayerJoin: (peerId, payload) => this.onPlayerJoin(peerId, payload),
+            onPlayerLeave: (peerId) => this.onPlayerLeave(peerId),
+            onAction: (actionType, payload, senderId) => this.onActionReceived(actionType, payload, senderId)
+        });
+        
         this.engine = engine;
         this.view = view;
 
-        this.myName = sessionStorage.getItem('playerName') || 'Oyuncu';
-        this.isHost = sessionStorage.getItem('isHost') === 'true';
-        this.hostId = sessionStorage.getItem('roomCode');
-        this.myId = null;
-
-        this.net = new PeerNetworkManager({
-            isHost: this.isHost,
-            onPeerReady: (id) => this.onPeerReady(id),
-            onConnection: (peerId) => this.onConnection(peerId),
-            onDataReceived: (action, payload, senderId) => this.onDataReceived(action, payload, senderId),
-            onDisconnection: (peerId) => this.onDisconnection(peerId),
-            onError: (err) => this.onError(err)
+        // Initialize Shared Lobby UI
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: this.roomCode || this.myId,
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id),
+            onRoomStart: () => this.startGame()
         });
 
         // Link Engine events to Network Broadcasts (Host only)
-        if (this.isHost) {
+        if (this.isHostNode) {
             this.engine.onStateChange = (state) => this.broadcastState();
             this.engine.onSound = (sound) => {
                 this.playSound(sound);
-                this.net.broadcast('PLAY_SOUND', { sound });
+                this.broadcast('PLAY_SOUND', { sound });
             };
         } else {
             this.engine.onSound = (sound) => this.playSound(sound);
@@ -39,28 +40,7 @@ class TabuNetworkManager {
         // Link View events to Network/Engine
         this.view.callbacks = {
             onSwitchTeam: () => {
-                if (this.isHost) {
-                    this.engine.switchTeam(this.myId);
-                } else {
-                    this.net.sendToPeer(this.hostId, 'SWITCH_TEAM');
-                }
-            },
-            onStartGame: () => {
-                if (this.isHost) {
-                    const duration = document.getElementById('turn-duration')?.value || 60;
-                    const passLimit = document.getElementById('pass-limit')?.value || 3;
-                    const penalty = document.getElementById('taboo-penalty')?.value || 1;
-                    const rounds = document.getElementById('round-count')?.value || 3;
-                    
-                    const categoryCheckboxes = document.querySelectorAll('#category-selection input[type="checkbox"]:checked');
-                    let category = Array.from(categoryCheckboxes).map(cb => cb.value);
-                    if(category.length === 0) category = ['Hepsi'];
-
-                    const minDifficulty = parseInt(document.getElementById('min-difficulty')?.value) || 1;
-                    const maxDifficulty = parseInt(document.getElementById('max-difficulty')?.value) || 100;
-
-                    this.engine.startGame({ duration, passLimit, category, penalty, rounds, minDifficulty, maxDifficulty });
-                }
+                this.sendGameAction('SWITCH_TEAM');
             },
             onNarratorReady: () => {
                 this.sendAction('NARRATOR_READY');
@@ -73,24 +53,14 @@ class TabuNetworkManager {
             },
             onSendChat: (msg) => {
                 this.view.displayChat("Sen", msg, true);
-                if (this.isHost) {
-                    this.net.broadcast('CHAT', { sender: this.myName, msg }, this.myId);
+                if (this.isHostNode) {
+                    this.broadcast('CHAT', { sender: this.myName, msg }, this.myId);
                 } else {
-                    this.net.sendToPeer(this.hostId, 'CHAT', { sender: this.myName, msg });
-                }
-            },
-            onKickPlayer: (id) => {
-                if (this.isHost && id !== this.myId) {
-                    this.net.sendToPeer(id, 'KICKED');
-                    setTimeout(() => {
-                        this.net._handleDisconnection(id); // Force drop
-                        this.engine.removePlayer(id);
-                        this.view.showToast("Oyuncu atıldı.", "info");
-                    }, 500);
+                    this.sendToPeer(this.roomCode, 'CHAT', { sender: this.myName, msg });
                 }
             },
             onBackToLobby: () => {
-                if (this.isHost) {
+                if (this.isHostNode) {
                     this.engine.setState({ status: 'lobby' });
                 }
             },
@@ -117,145 +87,95 @@ class TabuNetworkManager {
             this.populateCategories(this.engine.fallbackWords);
         }
 
-        if (!sessionStorage.getItem('playerName')) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        if (this.isHost) {
+        if (this.isHostNode) {
             document.getElementById('host-settings')?.classList.remove('hidden');
             document.getElementById('client-waiting')?.classList.add('hidden');
-            const customId = sessionStorage.getItem('myId') || this.generateRoomCode();
-            this.net.init(customId);
         } else {
             document.getElementById('host-settings')?.classList.add('hidden');
             document.getElementById('client-waiting')?.classList.remove('hidden');
-            if (!this.hostId) {
-                window.location.href = 'index.html';
-                return;
-            }
-            this.net.init();
         }
+        
+        // Use BaseGameNetwork autoInit
+        this.autoInit().catch(err => console.error("AutoInit failed", err));
     }
 
-    onPeerReady(id) {
-        this.myId = id;
+    // Overriding internal handler to capture myId when ready
+    _handlePeerReady(id) {
+        super._handlePeerReady(id);
         this.view.setMyId(id);
-
-        if (this.isHost) {
-            this.hostId = id;
-            if (!this.engine.state.players[id]) {
-                this.engine.addPlayer(id, this.myName, true, 'A');
-            } else {
-                this.engine.state.players[id].name = this.myName;
-                this.engine.setState(this.engine.state);
-                this.engine.setState({});
-            }
-
-            const codeDisplay = document.getElementById('display-room-code');
-            if (codeDisplay) {
-                codeDisplay.dataset.code = id;
-                codeDisplay.innerText = window.isCodeVisible ? id : '••••••••';
-            }
-
-            this.view.updateUI(this.engine.state, this.isHost);
-        } else {
-            this.net.connectToHost(this.hostId).then(() => {
-                this.net.sendToPeer(this.hostId, 'JOIN', { name: this.myName });
-            }).catch(err => {
-                this.view.showToast("Kurucuya bağlanılamadı.", "error");
-            });
+        if (this.isHostNode) {
+            this.lobbyUI.setRoomCode(id);
+            this.view.updateUI(this.engine.state, this.isHostNode);
         }
     }
 
-    onConnection(peerId) {
-        // Handled via JOIN action to ensure data payload
-    }
-
-    onDataReceived(action, payload, senderId) {
-        if (action === 'JOIN' && this.isHost) {
-            const state = this.engine.state;
-            if (state.players[senderId]) {
-                state.players[senderId].name = payload.name;
+    onPlayerJoin(peerId, payload) {
+        const state = this.engine.state;
+        if (state.players[peerId]) {
+            state.players[peerId].name = payload.name;
+        } else {
+            if (peerId === this.myId && this.isHostNode) {
+                this.engine.addPlayer(peerId, payload.name, true, 'A');
             } else {
                 const countA = Object.values(state.players).filter(p => p.team === 'A').length;
                 const countB = Object.values(state.players).filter(p => p.team === 'B').length;
-                this.engine.addPlayer(senderId, payload.name, false, countA <= countB ? 'A' : 'B');
+                this.engine.addPlayer(peerId, payload.name, false, countA <= countB ? 'A' : 'B');
+            }
+        }
+        this.broadcastState();
+    }
+
+    onPlayerLeave(peerId) {
+        const p = this.engine.state.players[peerId];
+        if (p) {
+            this.view.showToast(`${p.name} ayrıldı.`, "info");
+            const isCurrentTurn = (this.engine.state.turnId === peerId && this.engine.state.status === 'playing');
+            this.engine.removePlayer(peerId);
+            if (isCurrentTurn) {
+                this.engine.endTurn();
             }
             this.broadcastState();
         }
-        else if (action === 'SWITCH_TEAM' && this.isHost) {
+    }
+
+    onStateSync(payload) {
+        this.engine.setState(payload.state);
+        if (payload.hostId) this.roomCode = payload.hostId;
+
+        if (payload.durationLeft > 0) {
+            this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
+        }
+        if (this.engine.state.status === 'playing') {
+            this.engine.startRenderTimer();
+        }
+        this.view.updateUI(this.engine.state, this.isHostNode);
+    }
+
+    onActionReceived(actionType, payload, senderId) {
+        if (actionType === 'SWITCH_TEAM') {
             this.engine.switchTeam(senderId);
         }
-        else if (action === 'SYNC' && !this.isHost) {
-            this.engine.setState(payload.state);
-            this.hostId = payload.hostId;
-
-            if (payload.durationLeft > 0) {
-                this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
-            }
-            if (this.engine.state.status === 'playing') {
-                this.engine.startRenderTimer();
-            }
-            this.view.updateUI(this.engine.state, this.isHost);
-        }
-        else if (action === 'ACTION' && this.isHost) {
-            if (this.engine.state.turnId === senderId || payload.actionType === 'TOGGLE_PAUSE' || payload.actionType === 'NARRATOR_READY') {
-                if (payload.actionType === 'NARRATOR_READY') this.engine.beginTimer();
-                else if (payload.actionType === 'TOGGLE_PAUSE') this.engine.togglePause();
-                else this.engine.processAction(payload.actionType);
+        else if (actionType === 'ACTION') {
+            const aType = payload.actionType;
+            if (this.engine.state.turnId === senderId || aType === 'TOGGLE_PAUSE' || aType === 'NARRATOR_READY') {
+                if (aType === 'NARRATOR_READY') this.engine.beginTimer();
+                else if (aType === 'TOGGLE_PAUSE') this.engine.togglePause();
+                else this.engine.processAction(aType);
             }
         }
-        else if (action === 'CHAT') {
+        else if (actionType === 'CHAT') {
             this.view.displayChat(payload.sender, payload.msg);
-            if (this.isHost) {
-                this.net.broadcast('CHAT', payload, senderId);
+            if (this.isHostNode) {
+                this.broadcast('CHAT', payload, senderId);
             }
         }
-        else if (action === 'PLAY_SOUND') {
+        else if (actionType === 'PLAY_SOUND') {
             this.playSound(payload.sound);
-        }
-        else if (action === 'KICKED' && !this.isHost) {
-            this.view.showToast("Odadan atıldınız.", "error");
-            setTimeout(() => this.leaveRoom(), 2000);
-        }
-        else if (action === 'HOST_LEAVE' && !this.isHost) {
-            this.view.showToast("Kurucu odadan ayrıldı.", "warning");
-            setTimeout(() => this.leaveRoom(), 2000);
-        }
-        else if (action === 'LEAVE' && this.isHost) {
-            const p = this.engine.state.players[senderId];
-            if (p) {
-                this.view.showToast(`${p.name} ayrıldı.`, "info");
-                this.engine.removePlayer(senderId);
-                if (this.engine.state.turnId === senderId && this.engine.state.status === 'playing') {
-                    this.engine.endTurn();
-                }
-            }
-        }
-    }
-
-    onDisconnection(peerId) {
-        if (this.isHost) {
-            const p = this.engine.state.players[peerId];
-            if (p) this.view.showToast(`${p.name} bağlantısı koptu.`, "warning");
-        } else if (peerId === this.hostId) {
-            this.view.showToast("Kurucu ile bağlantı koptu, lobiye dönülüyor...", "error");
-            setTimeout(() => this.leaveRoom(), 2000);
-        }
-    }
-
-    onError(err) {
-        if (err.type === 'peer-unavailable') {
-            this.view.showToast("Oda bulunamadı veya kapandı.", "error");
-            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-        } else {
-            console.error("Network Error:", err);
         }
     }
 
     broadcastState() {
-        if (!this.isHost) return;
+        if (!this.isHostNode) return;
         const stateCopy = { ...this.engine.state };
         const currentWord = stateCopy.activeWords && stateCopy.activeWords[stateCopy.wordIndex];
         delete stateCopy.activeWords; // Optimization
@@ -263,42 +183,56 @@ class TabuNetworkManager {
 
         const durationLeft = stateCopy.isPaused ? this.engine.pauseOffset : Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
 
-        this.net.broadcast('SYNC', {
+        this.broadcast('SYNC', {
             state: stateCopy,
-            hostId: this.hostId,
+            hostId: this.roomCode,
             durationLeft: durationLeft
         });
-        this.view.updateUI(this.engine.state, this.isHost);
+        
+        // Let view and lobby manager know
+        this.view.updateUI(this.engine.state, this.isHostNode);
+        
+        const myId = this.myId;
+        this.lobbyUI.renderPlayers(this.engine.state.players, myId, (p, isMe) => {
+            const safeName = p.name.replace(/</g, "<").replace(/>/g, ">");
+            return `<span>${p.isHost ? '👑 ' : ''}${safeName} ${isMe ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
+        });
     }
 
     sendAction(actionType) {
         if (this.engine.state.turnId !== this.myId && actionType !== 'TOGGLE_PAUSE' && actionType !== 'NARRATOR_READY') return;
+        this.sendGameAction('ACTION', { actionType });
+    }
 
-        if (this.isHost) {
-            if (actionType === 'NARRATOR_READY') this.engine.beginTimer();
-            else if (actionType === 'TOGGLE_PAUSE') this.engine.togglePause();
-            else this.engine.processAction(actionType);
-        } else {
-            this.net.sendToPeer(this.hostId, 'ACTION', { actionType });
+    kickPlayer(id) {
+        if (this.isHostNode && id !== this.myId) {
+            this.sendToPeer(id, 'KICKED');
+            setTimeout(() => {
+                this._handleDisconnection(id); // Force drop
+                this.view.showToast("Oyuncu atıldı.", "info");
+            }, 500);
         }
     }
 
-    leaveRoom() {
-        if (this.isHost) this.net.broadcast('HOST_LEAVE');
-        else if (this.hostId) this.net.sendToPeer(this.hostId, 'LEAVE');
+    startGame() {
+        if (this.isHostNode) {
+            const duration = document.getElementById('turn-duration')?.value || 60;
+            const passLimit = document.getElementById('pass-limit')?.value || 3;
+            const penalty = document.getElementById('taboo-penalty')?.value || 1;
+            const rounds = document.getElementById('round-count')?.value || 3;
+            
+            const categoryCheckboxes = document.querySelectorAll('#category-selection input[type="checkbox"]:checked');
+            let category = Array.from(categoryCheckboxes).map(cb => cb.value);
+            if(category.length === 0) category = ['Hepsi'];
 
-        this.net.destroy();
-        sessionStorage.removeItem('myId');
-        sessionStorage.removeItem('roomCode');
-        window.location.href = 'index.html';
+            const minDifficulty = parseInt(document.getElementById('min-difficulty')?.value) || 1;
+            const maxDifficulty = parseInt(document.getElementById('max-difficulty')?.value) || 100;
+
+            this.engine.startGame({ duration, passLimit, category, penalty, rounds, minDifficulty, maxDifficulty });
+            this.broadcastState();
+        }
     }
 
-    generateRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let result = '';
-        for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-        return result;
-    }
 
     populateCategories(words) {
         const container = document.getElementById('category-selection');
@@ -333,72 +267,22 @@ class TabuNetworkManager {
     }
 
     initAudio() {
-        this.audioCtx = null;
-        try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { }
+        if(window.PairaAudio) window.PairaAudio.init();
     }
 
     playSound(type) {
-        if (!this.audioCtx) return;
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-
-        const now = this.audioCtx.currentTime;
-        if (type === 'correct') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now); osc.stop(now + 0.3);
-        } else if (type === 'taboo') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now); osc.stop(now + 0.3);
-        } else if (type === 'pass') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(now); osc.stop(now + 0.2);
-        } else if (type === 'tick') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now);
-            gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(now); osc.stop(now + 0.1);
-        } else if (type === 'timeup') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
-            gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-            osc.start(now); osc.stop(now + 0.8);
-        } else if (type === 'start') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            osc.start(now); osc.stop(now + 0.5);
-        }
+        if(!window.PairaAudio) return;
+        const mapped = type === 'timeup' ? 'end' : (type === 'start' ? 'correct' : type);
+        window.PairaAudio.play(mapped);
     }
 }
 
 // Bootstrap game on load
 document.addEventListener('DOMContentLoaded', () => {
-    window.isCodeVisible = false;
-    document.getElementById('btn-toggle-code')?.addEventListener('click', () => {
-        window.isCodeVisible = !window.isCodeVisible;
-        const disp = document.getElementById('display-room-code');
-        if (disp) disp.innerText = window.isCodeVisible ? (disp.dataset.code || '••••••••') : '••••••••';
-        
-        document.getElementById('icon-eye-open')?.classList.toggle('hidden', !window.isCodeVisible);
-        document.getElementById('icon-eye-closed')?.classList.toggle('hidden', window.isCodeVisible);
-    });
-
-    document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-        const disp = document.getElementById('display-room-code');
-        const code = disp?.dataset?.code;
-        if (code) {
-            navigator.clipboard.writeText(code).then(() => {
-                if(window.tabuNet) window.tabuNet.view.showToast("Oda kodu kopyalandı!", "success");
-            });
-        }
-    });
-
     // Only run game logic if we are on game.html
     if (document.getElementById('game-screen')) {
-        const engine = new TabuGameEngine();
+        const isHost = sessionStorage.getItem('isHost') === 'true';
+        const engine = new TabuGameEngine(isHost);
         const view = new TabuView({});
 
         // Timer tick binding

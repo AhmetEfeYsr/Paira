@@ -103,7 +103,7 @@ class GizliKelimelerNetworkManager {
         if (this.isHost) {
             document.getElementById('host-settings')?.classList.remove('hidden');
             document.getElementById('client-waiting')?.classList.add('hidden');
-            const customId = sessionStorage.getItem('myId') || this.generateRoomCode();
+            const customId = sessionStorage.getItem('myId') || (window.generateRoomCode ? window.generateRoomCode() : "ROOM");
             this.net.init(customId);
         } else {
             document.getElementById('host-settings')?.classList.add('hidden');
@@ -257,48 +257,15 @@ class GizliKelimelerNetworkManager {
         window.location.href = 'index.html';
     }
 
-    generateRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let result = '';
-        for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-        return result;
-    }
 
     initAudio() {
-        this.audioCtx = null;
-        try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { }
+        if(window.PairaAudio) window.PairaAudio.init();
     }
 
     playSound(type) {
-        if (!this.audioCtx) return;
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-
-        const now = this.audioCtx.currentTime;
-        if (type === 'correct') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now); osc.stop(now + 0.3);
-        } else if (type === 'taboo') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now); osc.stop(now + 0.3);
-        } else if (type === 'tick') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now);
-            gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(now); osc.stop(now + 0.1);
-        } else if (type === 'timeup') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
-            gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-            osc.start(now); osc.stop(now + 0.8);
-        } else if (type === 'start') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            osc.start(now); osc.stop(now + 0.5);
-        }
+        if(!window.PairaAudio) return;
+        const mapped = type === 'timeup' ? 'end' : (type === 'start' ? 'correct' : type);
+        window.PairaAudio.play(mapped);
     }
 }
 

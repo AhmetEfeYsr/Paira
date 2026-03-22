@@ -1,331 +1,181 @@
-// network.js - WebRTC, PeerJS Bağlantıları ve Veri İletimi
-
-let peer = null;
-let myId = null;
-let myName = null;
-let isHost = false;
-let hostId = null;
-let connections = {};
-
-// Global Değişkenler
-let isCodeVisible = false;
-
-// --- KISA ODA KODU ÜRETİCİ ---
-function generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Karışıklık olmasın diye 0,O,1,I hariç
-    let result = '';
-    for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-    return result;
-}
-
-// --- KULLANICI ROLÜ VE BAĞLANTIYI BAŞLATMA ---
-function setupUserRole() {
-    // Ses başlangıcı (varsa)
-    if (window.PairaAudio) window.PairaAudio.init();
-
-    const storedName = sessionStorage.getItem('playerName');
-    const storedIsHost = sessionStorage.getItem('isHost') === 'true';
-    const storedRoomCode = sessionStorage.getItem('roomCode');
-    const storedMyId = sessionStorage.getItem('myId');
-
-    if (!storedName) {
-        window.location.href = 'index.html'; // Fallback
-        return;
-    }
-
-    // Easter Egg Kontrolü
-    const lowerName = storedName.toLowerCase();
-    if (lowerName === 'paira' || lowerName === 'pai' || lowerName === 'paiko') {
-        if (window.showToast) window.showToast("canım ablam 💜", "info");
-    }
-
-    myName = storedName.substring(0, 25);
-    isHost = storedIsHost;
-
-    if (isHost) {
-        document.getElementById('host-settings').classList.remove('hidden');
-        document.getElementById('client-waiting').classList.add('hidden');
-        initPeer(storedMyId || generateRoomCode()); // Kurucu için kısa kod üret veya eskisini kullan
-    } else {
-        if (!storedRoomCode) {
-            window.location.href = 'index.html';
-            return;
-        }
-        hostId = storedRoomCode;
-        document.getElementById('host-settings').classList.add('hidden');
-        document.getElementById('client-waiting').classList.remove('hidden');
-        initPeer(storedMyId || null); // Katılımcı için rastgele PeerID veya eskisini kullan
-    }
-}
-
-// Buton Dinleyicileri (DOM yüklendikten sonra eklenecek, veya elementler varsa)
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize user role from sessionStorage
-    setupUserRole();
-
-    // Lobi Kodu Göster/Gizle ve Kopyala
-    const btnToggleCode = document.getElementById('btn-toggle-code');
-    if (btnToggleCode) {
-        btnToggleCode.addEventListener('click', () => {
-            isCodeVisible = !isCodeVisible; // global variable in game.js usually
-            const codeDisplay = document.getElementById('display-room-code');
-            btnToggleCode.innerText = isCodeVisible ? '🙈' : '👁️';
-            if (codeDisplay) {
-                codeDisplay.innerText = isCodeVisible ? (codeDisplay.dataset.code || '') : '••••••••';
-            }
+/**
+ * KelimeAviNetwork - Network layer
+ */
+class KelimeAviNetwork extends BaseGameNetwork {
+    constructor(engine, view) {
+        super({
+            onStateSync: (state) => this.handleStateSync(state),
+            onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
+            onPlayerLeave: (id) => this.handlePlayerLeave(id),
+            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId)
         });
-    }
+        
+        this.engine = engine;
+        this.view = view;
+        
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            this.view.setMyId(id);
+            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
+        };
 
-    const btnCopyRoom = document.getElementById('btn-copy-room');
-    if(btnCopyRoom) {
-        btnCopyRoom.addEventListener('click', () => {
-            const codeToCopy = document.getElementById('display-room-code')?.dataset?.code;
-            if (codeToCopy) {
-                navigator.clipboard.writeText(codeToCopy)
-                    .then(() => { if(window.showToast) window.showToast("Oda kodu kopyalandı!", "success"); })
-                    .catch(() => { if(window.showToast) window.showToast("Kopyalanamadı", "error"); });
-            }
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: '',
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id)
         });
-    }
-});
 
+        if (this.isHostNode) {
+            this.engine.onStateChange = (state) => {
+                const isHostEbe = (this.myId === state.currentEbe);
+                const hostState = JSON.parse(JSON.stringify(state));
 
-// --- PEERJS AĞ ALTYAPISI ---
-function initPeer(customId = null) {
-    peer = new Peer(customId, {
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] },
-        debug: 1
-    });
-
-    peer.on('open', (id) => {
-        myId = id;
-        sessionStorage.setItem('myId', myId);
-        if (isHost) {
-            hostId = myId;
-            // Host olarak kendimizi oyunculara ekle veya güncelle
-            if(window.gameApp && window.gameApp.state) {
-                if (window.gameApp.state.players[myId]) {
-                    window.gameApp.state.players[myId].name = myName;
-                    window.gameApp.state.players[myId].disconnected = false;
-                } else {
-                    window.gameApp.state.players[myId] = { id: myId, name: myName, role: 'masum', isHost: true, disconnected: false, score: 0 };
+                if (!isHostEbe && hostState.status === 'playing' && hostState.targetWord) {
+                    hostState.targetWord = hostState.targetWord.substring(0, hostState.revealedLetters);
                 }
-            }
-            const codeDisplay = document.getElementById('display-room-code');
-            if(codeDisplay) {
-                codeDisplay.dataset.code = myId;
-                codeDisplay.innerText = typeof isCodeVisible !== 'undefined' && isCodeVisible ? myId : '••••••••';
-            }
 
-            if(window.gameApp && window.gameApp.state.status === 'playing') {
-                if(typeof showScreen === 'function') showScreen('game-screen');
-                if(window.gameApp.syncRoundData) window.gameApp.syncRoundData();
-            } else if (window.gameApp && window.gameApp.state.status === 'finished') {
-                if(typeof showScreen === 'function') showScreen('winner-screen');
-            } else {
-                if(typeof showScreen === 'function') showScreen('lobby-screen');
-            }
+                this.view.updateUI(hostState, this.isHostNode);
+                this.lobbyUI.renderPlayers(hostState.players, this.myId);
+                
+                this.broadcastCensoredState();
+            };
 
-            if(typeof updateUI === 'function') updateUI();
-        } else {
-            connectToPeer(hostId);
-        }
-    });
+            this.engine.onTimerTick = (secs) => {
+                this.view.updateTimer(secs);
+                if (secs % 5 === 0 || secs <= 5) {
+                    const durationLeft = Math.max(0, this.engine.localEndTime - window.PairaTime.now());
+                    this.broadcast('SYNC_TIME', { durationLeft });
+                }
+            };
+            
+            this.engine.onSound = (sound) => {
+                window.PairaAudio && window.PairaAudio.play(sound);
+                this.broadcast('PLAY_SOUND', { sound });
+            };
 
-    peer.on('connection', setupConnection);
-
-    peer.on('error', (err) => {
-        console.error("PeerJS Error:", err);
-        if (err.type === 'peer-unavailable') {
-            if(window.showToast) window.showToast("Oda bulunamadı veya kapandı. Lütfen ana sayfaya dönün.", "error");
-            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-        } else if (err.type === 'unavailable-id' && isHost) {
-            // Eğer kısa kod çakışırsa yeniden dene
-            initPeer(generateRoomCode());
-        } else if (err.type === 'network' || err.type === 'server-error') {
-            if(window.showToast) window.showToast("Bağlantı hatası. Lütfen sayfayı yenileyin.", "error");
-        }
-    });
-}
-
-function connectToPeer(targetId) {
-    if (!targetId || targetId === myId) return;
-    const conn = peer.connect(targetId, { reliable: true });
-    setupConnection(conn);
-}
-
-function setupConnection(conn) {
-    const handleOpen = () => {
-        connections[conn.peer] = conn;
-        if (isHost) {
-            broadcastSync();
-        } else {
-            conn.send({ type: 'JOIN', id: myId, name: myName });
-        }
-    };
-
-    if (conn.open) {
-        handleOpen();
-    } else {
-        conn.on('open', handleOpen);
-    }
-
-    conn.on('data', (data) => handleData(data, conn.peer));
-    conn.on('close', () => handleDisconnect(conn.peer));
-}
-
-// --- VERİ İLETİM FONKSİYONLARI ---
-function broadcast(data) {
-    Object.values(connections).forEach(conn => {
-        if (conn.open) conn.send(data);
-    });
-}
-
-function broadcastSync() {
-    if (!isHost || !window.gameApp) return;
-
-    const stateCopy = { ...window.gameApp.state };
-    // Optimizasyon: Büyük verileri ayıkla gerekirse
-
-    broadcast({
-        type: 'SYNC',
-        state: stateCopy,
-        hostId,
-        serverTime: window.PairaTime.now()
-    });
-}
-
-function handleData(data, peerId) {
-    if (!data.type || !window.gameApp) return;
-    const appState = window.gameApp.state;
-
-    if (data.type === 'JOIN' && isHost) {
-        if (appState.players[data.id]) {
-            appState.players[data.id].name = data.name; // Reconnect
-            appState.players[data.id].disconnected = false;
-        } else {
-            appState.players[data.id] = {
-                id: data.id,
-                name: data.name,
-                role: 'masum', // Başlangıçta herkes masum, oyun başlayınca ebe seçilir
-                isHost: false,
-                disconnected: false,
-                score: 0
+            this.engine.onShowResult = (msg) => {
+                this.view.showResult(msg);
+                this.broadcast('SHOW_RESULT', { msg });
             };
         }
-        broadcastSync();
-        if(typeof updateUI === 'function') updateUI();
     }
-    else if (data.type === 'LEAVE' && isHost) {
-        if (appState.players[data.id]) {
-            if(window.showToast) window.showToast(`${appState.players[data.id].name} odadan ayrıldı.`, "info");
-            delete appState.players[data.id];
 
-            if (appState.currentEbe === data.id && appState.status === 'playing') {
-                window.gameApp.endRoundPrematurely("Ebe oyundan ayrıldığı için tur iptal edildi.");
-            } else if (appState.status === 'playing') {
-                window.gameApp.checkAllSubmissions();
-            }
-
-            broadcastSync();
-            if(typeof updateUI === 'function') updateUI();
-        }
-    }
-    else if (data.type === 'HOST_LEAVE' && !isHost) {
-        if(window.showToast) window.showToast("Kurucu odadan ayrıldı, lobiye dönülüyor...", "warning");
-        setTimeout(() => {
-            sessionStorage.removeItem('myId');
-            sessionStorage.removeItem('roomCode');
-            window.location.href = 'index.html';
-        }, 2000);
-    }
-    else if (data.type === 'SYNC') {
-        window.gameApp.state = data.state;
-        hostId = data.hostId;
-
-        if (window.gameApp.state.status === 'playing') {
-            if(typeof showScreen === 'function') showScreen('game-screen');
-            // Eğer yeni raunt başladıysa ve localUI güncellenmesi gerekiyorsa:
-            if(window.gameApp.syncRoundData) window.gameApp.syncRoundData();
-        }
-        else if (window.gameApp.state.status === 'finished') {
-            if(typeof showScreen === 'function') showScreen('winner-screen');
-        }
-        else {
-            if(typeof showScreen === 'function') showScreen('lobby-screen');
-        }
-
-        if(typeof updateUI === 'function') updateUI();
-    }
-    else if (data.type === 'SUBMIT_WORD' && isHost) {
-        window.gameApp.handleRemoteSubmission(peerId, data.word);
-    }
-    else if (data.type === 'SUBMIT_GUESSES' && isHost) {
-        window.gameApp.handleRemoteGuesses(peerId, data.guesses);
-    }
-    else if (data.type === 'ACTION' && isHost) {
-        if(window.gameApp.processAction) window.gameApp.processAction(data.action, peerId);
-    }
-    else if (data.type === 'PLAY_SOUND') {
-        if(window.PairaAudio) window.PairaAudio.play(data.sound);
-    }
-}
-
-function handleDisconnect(peerId) {
-    if (connections[peerId]) delete connections[peerId];
-    if (!window.gameApp || !window.gameApp.state.players[peerId]) return;
-
-    const lostPlayer = window.gameApp.state.players[peerId];
-    if(window.showToast) window.showToast(`${lostPlayer.name} bağlantısı koptu.`, "warning");
-
-    // We don't immediately delete the player to allow for reconnect.
-
-    if (!isHost && lostPlayer.isHost) {
-        if(window.showToast) window.showToast("Kurucu ile bağlantı koptu. Lütfen odayı yeniden kurun veya bağlanın.", "error");
-        setTimeout(() => {
-            sessionStorage.removeItem('myId');
-            sessionStorage.removeItem('roomCode');
-            window.location.href = 'index.html';
-        }, 3000);
-    } else if (isHost) {
-        lostPlayer.disconnected = true;
+    broadcastCensoredState() {
+        const fullState = this.engine.state;
         
-        if (window.gameApp.state.status === 'playing') {
-            if (window.gameApp.state.currentEbe === peerId) {
-                window.gameApp.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.");
-            } else {
-                window.gameApp.checkAllSubmissions();
+        Object.keys(this.connections).forEach(peerId => {
+            const isEbe = (peerId === fullState.currentEbe);
+            const safeState = JSON.parse(JSON.stringify(fullState));
+            
+            if (!isEbe && safeState.status === 'playing' && safeState.targetWord) {
+                safeState.targetWord = safeState.targetWord.substring(0, safeState.revealedLetters);
             }
-        }
-        broadcastSync();
+            
+            this.sendToPeer(peerId, 'SYNC', safeState);
+        });
     }
-    if(typeof updateUI === 'function') updateUI();
+
+    handleStateSync(data) {}
+
+    handlePlayerJoin(id, player) {
+        if (this.isHostNode) {
+            this.engine.addPlayer(id, player.name, player.isHost || false);
+        }
+    }
+
+    handlePlayerLeave(id) {
+        if (this.isHostNode) {
+            this.engine.removePlayer(id);
+        }
+    }
+
+    handleAction(action, payload, senderId) {
+        if (!this.isHostNode) return;
+
+        if (action === 'SUBMIT_MASUM') {
+            this.engine.handleMasumSubmission(senderId, payload.word);
+        }
+        else if (action === 'SUBMIT_EBE') {
+            this.engine.handleEbeGuesses(senderId, payload.guesses);
+        }
+    }
+
+    _handleDataReceived(action, payload, senderId) {
+        if (action === 'SYNC' && !this.isHostNode) {
+            this.engine.state = payload;
+            this.view.updateUI(payload, this.isHostNode);
+            this.lobbyUI.renderPlayers(payload.players, this.myId);
+            return;
+        }
+
+        super._handleDataReceived(action, payload, senderId);
+        
+        if (action === 'SYNC_TIME' && !this.isHostNode) {
+            this.engine.localEndTime = window.PairaTime.now() + payload.durationLeft;
+            this.engine.startRenderTimer();
+        }
+        else if (action === 'PLAY_SOUND' && !this.isHostNode) {
+            window.PairaAudio && window.PairaAudio.play(payload.sound);
+        }
+        else if (action === 'SHOW_RESULT' && !this.isHostNode) {
+            this.view.showResult(payload.msg);
+        }
+    }
+
+    kickPlayer(id) {
+        if (this.isHostNode) {
+            this.sendToPeer(id, 'KICKED');
+            setTimeout(() => {
+                if (this.connections[id]) {
+                    this.connections[id].close();
+                    this._handleDisconnection(id);
+                }
+            }, 500);
+        }
+    }
 }
 
-// Güvenli Çıkış Butonları için Event Listener ekleyelim
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-leave-lobby')?.addEventListener('click', leaveRoom);
-});
-
-function leaveRoom() {
-    if (peer) {
-        if (!isHost && hostId && connections[hostId]) {
-            connections[hostId].send({ type: 'LEAVE', id: myId });
-        } else if (isHost) {
-            broadcast({ type: 'HOST_LEAVE' });
+    window.PairaAudio && window.PairaAudio.init();
+    
+    const isHost = sessionStorage.getItem('isHost') === 'true';
+    const engine = new KelimeAviGameEngine(isHost);
+    
+    const view = new KelimeAviView({
+        onStartGame: (settings) => {
+            if (!engine.startGame(settings)) {
+                if (window.showToast) window.showToast("Oynamak için en az 1 oyuncu gerekiyor!", "warning");
+            }
+        },
+        onSubmitMasum: (word) => {
+            network.sendGameAction('SUBMIT_MASUM', { word });
+        },
+        onSubmitEbe: (guesses) => {
+            network.sendGameAction('SUBMIT_EBE', { guesses });
+        },
+        onBackToLobby: () => {
+            if (isHost) engine.backToLobby();
         }
-        peer.destroy();
-        peer = null;
-    }
-    sessionStorage.removeItem('myId');
-    sessionStorage.removeItem('roomCode');
-    window.location.href = 'index.html';
-}
+    });
 
-// Global network objesi, game.js içinden erişebilmek için
-window.NetworkManager = {
-    broadcast: broadcast,
-    broadcastSync: broadcastSync,
-    getMyId: () => myId,
-    isHost: () => isHost
-};
+    const network = new KelimeAviNetwork(engine, view);
+    
+    if (!isHost) {
+        engine.onTimerTick = (secs) => view.updateTimer(secs);
+    }
+
+    const hostSettings = document.getElementById('host-settings');
+    const clientWaiting = document.getElementById('client-waiting');
+    
+    if (isHost) {
+        hostSettings?.classList.remove('hidden');
+        hostSettings.style.display = 'block';
+        clientWaiting?.classList.add('hidden');
+    } else {
+        hostSettings?.classList.add('hidden');
+        hostSettings.style.display = 'none';
+        clientWaiting?.classList.remove('hidden');
+    }
+    
+    network.autoInit().catch(err => console.error("Network init failed", err));
+});

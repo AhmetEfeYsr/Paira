@@ -502,35 +502,11 @@ class KronoGame {
     }
 
     switchView(viewId) {
-        document.querySelectorAll('.view-state').forEach(el => {
-            el.classList.remove('active');
-            el.classList.add('hidden');
-        });
-        const target = document.getElementById(viewId);
-        if (target) {
-            target.classList.add('active');
-            target.classList.remove('hidden');
-        }
+        if(window.showScreen) window.showScreen(viewId);
     }
 
     showToast(msg, type = "info") {
-        let container = document.getElementById('toast-container');
-        if (!container) return;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-
-        const colors = {
-            error: 'var(--danger)',
-            success: 'var(--success)',
-            warning: 'var(--warning)',
-            info: 'var(--primary-purple)'
-        };
-        toast.style.borderLeftColor = colors[type] || colors.info;
-        toast.textContent = msg;
-
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+        if(window.showToast) window.showToast(msg, type);
     }
 }
 

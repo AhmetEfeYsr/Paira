@@ -1,243 +1,230 @@
 /**
- * PeerJS Network Manager
- * Handles P2P connections without a centralized backend.
+ * HizliIsimSehirNetwork - Network layer
  */
-class NetworkManager {
-    constructor(onStateUpdate, onPlayerJoin, onPlayerLeave, onError) {
-        this.peer = null;
-        this.connections = {}; // id -> DataConnection
-        this.isHost = false;
-        this.myId = null;
-        this.roomCode = null;
-        this.username = null;
-        this.players = {}; // id -> { id, name, isHost, ...state }
-
-        this.onStateUpdate = onStateUpdate;
-        this.onPlayerJoin = onPlayerJoin;
-        this.onPlayerLeave = onPlayerLeave;
-        this.onError = onError;
-    }
-
-    generateClientId() {
-        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-        let code = '';
-        const array = new Uint32Array(9);
-        window.crypto.getRandomValues(array);
-        for (let i = 0; i < 9; i++) {
-            code += chars[array[i] % chars.length];
-        }
-        return code;
-    }
-
-    init(isHost, roomCode, username) {
-        this.isHost = isHost === 'true' || isHost === true;
-        this.roomCode = roomCode;
-        this.username = username;
-        this.myId = this.isHost ? `hizli-isimsehir-host-${this.roomCode}` : `hizli-isimsehir-client-${this.generateClientId()}`;
-
-        this.peer = new Peer(this.myId, {
-            debug: 2
+class HizliIsimSehirNetwork extends BaseGameNetwork {
+    constructor(engine, view) {
+        super({
+            onStateSync: (state) => this.handleStateSync(state),
+            onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
+            onPlayerLeave: (id) => this.handlePlayerLeave(id),
+            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId)
         });
-
-        this.peer.on('open', (id) => {
-            console.log('Peer connected with ID:', id);
-
-            this.players[this.myId] = {
-                id: this.myId,
-                name: this.username,
-                isHost: this.isHost,
-                ready: false,
-                score: 0
-            };
-            this.onPlayerJoin(this.players[this.myId]);
-
-            if (!this.isHost) {
-                this.connectToHost();
-            }
-        });
-
-        this.peer.on('connection', (conn) => {
-            if (!this.isHost) {
-                // Clients shouldn't receive direct connections in a star topology
-                conn.close();
-                return;
-            }
-            this.setupConnection(conn);
-        });
-
-        this.peer.on('error', (err) => {
-            console.error('Peer error:', err);
-            this.onError(err.type || 'network_error');
-        });
-    }
-
-    connectToHost() {
-        const hostId = `hizli-isimsehir-host-${this.roomCode}`;
-        const conn = this.peer.connect(hostId, {
-            metadata: { username: this.username }
-        });
-        this.setupConnection(conn);
-    }
-
-    setupConnection(conn) {
-        const handleOpen = () => {
-            console.log('Connected to:', conn.peer);
-            this.connections[conn.peer] = conn;
-
-            if (this.isHost) {
-                // Add client to players list
-                this.players[conn.peer] = {
-                    id: conn.peer,
-                    name: conn.metadata.username,
-                    isHost: false,
-                    score: 0
-                };
-                this.onPlayerJoin(this.players[conn.peer]);
-
-                // Broadcast new player list to everyone
-                this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
-            } else {
-                // I am client, start time synchronization with host
-                this.syncTimeWithHost();
-            }
+        
+        this.engine = engine;
+        this.view = view;
+        
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            this.view.setMyId(id);
+            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
         };
 
-        if (conn.open) {
-            handleOpen();
-        } else {
-            conn.on('open', handleOpen);
-        }
-
-        conn.on('data', (data) => {
-            this.handleData(conn.peer, data);
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: '',
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id)
         });
 
-        conn.on('close', () => {
-            this.handleDisconnect(conn.peer);
-        });
+        if (this.isHostNode) {
+            this.engine.onStateChange = (state) => {
+                this.view.updateGameUI(state);
+                this.broadcastState({ state: state });
+            };
 
-        conn.on('error', (err) => {
-            console.error('Connection error:', err);
-            this.handleDisconnect(conn.peer);
-        });
-    }
+            this.engine.onTurnResult = (result) => {
+                this.view.showTurnResult(result.word, result.score, result.playerId, result.canAppeal);
+                if(window.PairaAudio) {
+                    if(result.score > 0) window.PairaAudio.play('correct');
+                    else window.PairaAudio.play('wrong');
+                }
+                this.broadcast('TURN_RESULT', result);
+            };
 
-    handleDisconnect(peerId) {
-        console.log('Disconnected from:', peerId);
-        if (this.connections[peerId]) {
-            delete this.connections[peerId];
-        }
+            this.engine.onScoreUpdate = (scores) => {
+                this.view.renderScoreboard(scores, this.isHostNode, this.engine.state.round, this.engine.config.rounds);
+                this.broadcast('SHOW_SCORES', { scores, round: this.engine.state.round, totalRounds: this.engine.config.rounds });
+            };
 
-        if (this.isHost) {
-            if (this.players[peerId]) {
-                const player = this.players[peerId];
-                delete this.players[peerId];
-                this.onPlayerLeave(player);
-                this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
-            }
-        } else {
-            // If client loses connection to host
-            if (peerId.includes('host')) {
-                this.onError('host_disconnected');
-            }
-        }
-    }
+            this.engine.onVoteStart = (word, categoryName) => {
+                this.view.showVotingUI(word, categoryName);
+                this.broadcast('START_VOTE', { word, categoryName });
+            };
 
-    handleData(senderId, data) {
-        // Time synchronization: Handle ping/pong messages natively in network layer
-        if (data.type === 'TIME_PING' && this.isHost) {
-            // Reply to client with host's current time
-            this.sendTo(senderId, {
-                type: 'TIME_PONG',
-                clientTime: data.clientTime,
-                hostTime: Date.now()
-            });
-            return; // Don't pass to game logic
-        }
-        else if (data.type === 'TIME_PONG' && !this.isHost) {
-            // Calculate offset based on round trip time
-            const now = Date.now();
-            const rtt = now - data.clientTime;
-            const latency = rtt / 2;
-            const hostTimeAtArrival = data.hostTime + latency;
-            
-            // Override PairaTime offset for this client to perfectly match Host
-            if (window.PairaTime) {
-                window.PairaTime.offset = hostTimeAtArrival - now;
-            }
-            return; // Don't pass to game logic
-        }
-
-        // Automatically route host broadcast to self
-        if (data.type === 'SYNC_PLAYERS') {
-            this.players = data.players;
-            // Update UI list
-            Object.values(this.players).forEach(p => this.onPlayerJoin(p)); // re-render
-        }
-
-        // Pass payload to game logic
-        this.onStateUpdate(senderId, data);
-    }
-
-    sendToHost(data) {
-        if (this.isHost) {
-            // Local loopback
-            this.handleData(this.myId, data);
-        } else {
-            const hostId = `hizli-isimsehir-host-${this.roomCode}`;
-            if (this.connections[hostId] && this.connections[hostId].open) {
-                this.connections[hostId].send(data);
-            }
+            this.engine.onVoteResult = (result) => {
+                this.view.showVoteResult(result.isAccepted);
+                if(window.PairaAudio) {
+                    if(result.isAccepted) window.PairaAudio.play('correct');
+                    else window.PairaAudio.play('wrong');
+                }
+                this.broadcast('VOTE_RESULT', result);
+            };
         }
     }
 
-    broadcast(data) {
-        if (!this.isHost) return;
-        Object.values(this.connections).forEach(conn => {
-            if (conn.open) {
-                conn.send(data);
-            }
-        });
-    }
-
-    sendTo(peerId, data) {
-        if (this.connections[peerId] && this.connections[peerId].open) {
-            this.connections[peerId].send(data);
-        }
-    }
-
-    syncTimeWithHost() {
-        if (this.isHost) return;
+    handleStateSync(data) {
+        if (!data || !data.state) return;
+        this.engine.state = data.state;
         
-        // Send a few pings to get a good average, but one is usually enough for a quick fix
-        const hostId = `hizli-isimsehir-host-${this.roomCode}`;
-        if (this.connections[hostId] && this.connections[hostId].open) {
-            this.connections[hostId].send({
-                type: 'TIME_PING',
-                clientTime: Date.now()
-            });
-            
-            // Periodically resync to handle clock drift
-            if (!this.syncInterval) {
-                this.syncInterval = setInterval(() => {
-                    if (this.connections[hostId] && this.connections[hostId].open) {
-                        this.connections[hostId].send({
-                            type: 'TIME_PING',
-                            clientTime: Date.now()
-                        });
-                    }
-                }, 10000); // Every 10 seconds
+        if (data.state.status === 'LOBBY') {
+            this.view.switchScreen('lobby-screen');
+        } else if (data.state.status === 'PLAYING' || data.state.status === 'WAITING_APPEAL') {
+            this.view.updateGameUI(data.state);
+        }
+        // SCORE screen transition is handled by explicit SHOW_SCORES action
+    }
+
+    handlePlayerJoin(id, player) {
+        if (this.isHostNode) {
+            this.engine.addPlayer(id, player.name, player.isHost || false);
+            this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.broadcast('SYNC_PLAYERS', { players: this.engine.state.players });
+        }
+    }
+
+    handlePlayerLeave(id) {
+        if (this.isHostNode) {
+            this.engine.removePlayer(id);
+            this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.broadcast('SYNC_PLAYERS', { players: this.engine.state.players });
+        }
+    }
+
+    handleAction(action, payload, senderId) {
+        if (this.isHostNode) {
+            if (action === 'CONFIG_UPDATE') {
+                // If a client tried to update, ignore. Only Host updates config locally.
+            } else if (action === 'SUBMIT_ANSWERS') {
+                this.engine.handleTurnSubmit(senderId, payload.answers);
+            } else if (action === 'APPEAL') {
+                this.engine.handleAppeal(senderId);
+            } else if (action === 'VOTE') {
+                this.engine.handleVote(senderId, payload.vote);
             }
         }
     }
 
-    disconnect() {
-        if (this.syncInterval) {
-            clearInterval(this.syncInterval);
-            this.syncInterval = null;
+    _handleDataReceived(action, payload, senderId) {
+        super._handleDataReceived(action, payload, senderId);
+        
+        if (!this.isHostNode) {
+            if (action === 'SYNC_PLAYERS') {
+                this.engine.state.players = payload.players;
+                this.lobbyUI.renderPlayers(payload.players, this.myId);
+            } else if (action === 'CONFIG_UPDATE') {
+                this.engine.config = payload.config;
+                this.view.updateClientConfig(payload.config);
+            } else if (action === 'TIMER_SYNC') {
+                this.view.startTimer(payload.endTime);
+            } else if (action === 'TURN_RESULT') {
+                this.view.showTurnResult(payload.word, payload.score, payload.playerId, payload.canAppeal);
+                if(window.PairaAudio) {
+                    if(payload.score > 0) window.PairaAudio.play('correct');
+                    else window.PairaAudio.play('wrong');
+                }
+            } else if (action === 'SHOW_SCORES') {
+                this.view.renderScoreboard(payload.scores, this.isHostNode, payload.round, payload.totalRounds);
+            } else if (action === 'START_VOTE') {
+                this.view.showVotingUI(payload.word, payload.categoryName);
+            } else if (action === 'VOTE_UPDATE') {
+                this.view.updateVoteCount(payload.yes, payload.no);
+            } else if (action === 'VOTE_RESULT') {
+                this.view.showVoteResult(payload.isAccepted);
+                if(window.PairaAudio) {
+                    if(payload.isAccepted) window.PairaAudio.play('correct');
+                    else window.PairaAudio.play('wrong');
+                }
+            }
         }
-        if (this.peer) {
-            this.peer.destroy();
+        
+        // Host also receives VOTE updates
+        if (action === 'VOTE_UPDATE') {
+            this.view.updateVoteCount(payload.yes, payload.no);
         }
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.PairaAudio && window.PairaAudio.init();
+    
+    const isHost = sessionStorage.getItem('isHost') === 'true';
+    const engine = new HizliIsimSehirGameEngine(isHost);
+    
+    const view = new HizliIsimSehirView({
+        onConfigUpdate: (config) => {
+            if (isHost) {
+                engine.config = config;
+                network.broadcast('CONFIG_UPDATE', { config });
+            }
+        },
+        onStartGame: (config) => {
+            engine.startGame(config);
+        },
+        onTimeUp: () => {
+            // Client auto-submits empty if time is up and they haven't manually submitted
+            const input = document.getElementById('compact-game-input');
+            if (input && !input.disabled) {
+                const btn = document.getElementById('btn-finish-turn');
+                if (btn) btn.click();
+            }
+        },
+        onFinishTurn: (answers) => {
+            network.sendGameAction('SUBMIT_ANSWERS', { answers });
+        },
+        onAppeal: () => {
+            network.sendGameAction('APPEAL');
+        },
+        onVote: (voteStr) => {
+            network.sendGameAction('VOTE', { vote: voteStr });
+        },
+        onNextRound: () => {
+            if (isHost) engine.nextRound();
+        },
+        onExtendGame: (extraRounds) => {
+            if (isHost) engine.extendGame(extraRounds);
+        }
+    });
+
+    const network = new HizliIsimSehirNetwork(engine, view);
+    
+    // Setup Timer Sync Hook
+    if (isHost) {
+        engine.onStateChange = (state) => {
+            view.updateGameUI(state);
+            network.broadcastState({ state: state });
+            
+            // If it's playing and we just changed state, we need to sync timer
+            if (state.status === 'PLAYING') {
+                const endTime = window.PairaTime.now() + (engine.config.endValue * 1000);
+                view.startTimer(endTime);
+                network.broadcast('TIMER_SYNC', { endTime });
+            } else {
+                view.stopTimer();
+            }
+        };
+        
+        // Broadcast vote updates
+        const _handleVote = engine.handleVote.bind(engine);
+        engine.handleVote = (playerId, voteStr) => {
+            _handleVote(playerId, voteStr);
+            view.updateVoteCount(engine.state.votes.yes, engine.state.votes.no);
+            network.broadcast('VOTE_UPDATE', { yes: engine.state.votes.yes, no: engine.state.votes.no });
+        };
+    }
+
+    const hostSettings = document.getElementById('host-settings');
+    const clientWaiting = document.getElementById('client-waiting');
+    
+    if (isHost) {
+        hostSettings?.classList.remove('hidden');
+        clientWaiting?.classList.add('hidden');
+        document.querySelectorAll('.host-only').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.client-only').forEach(el => el.classList.add('hidden'));
+    } else {
+        hostSettings?.classList.add('hidden');
+        clientWaiting?.classList.remove('hidden');
+        document.querySelectorAll('.host-only').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.client-only').forEach(el => el.classList.remove('hidden'));
+    }
+    
+    network.autoInit().catch(err => console.error("Network init failed", err));
+});

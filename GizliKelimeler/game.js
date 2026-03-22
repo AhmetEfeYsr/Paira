@@ -294,32 +294,11 @@ class GizliKelimelerView {
     }
 
     showScreen(screenId) {
-        document.querySelectorAll('.view-state').forEach(el => {
-            if (el.id === screenId) {
-                el.classList.remove('hidden');
-                el.classList.add('active');
-            } else {
-                el.classList.add('hidden');
-                el.classList.remove('active');
-            }
-        });
+        if(window.showScreen) window.showScreen(screenId);
     }
 
     showToast(msg, type = "info") {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-        toast.style.borderLeftColor = colors[type] || colors.info;
-        toast.textContent = msg;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+        if(window.showToast) window.showToast(msg, type);
     }
 
     updateUI(state, isHost) {

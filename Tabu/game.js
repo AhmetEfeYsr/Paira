@@ -3,7 +3,8 @@
  * Pure, testable class independent of DOM manipulation.
  */
 class TabuGameEngine {
-    constructor() {
+    constructor(isHost = true) {
+        this.isHost = isHost;
         this.state = {
             status: 'lobby',
             players: {},
@@ -223,13 +224,26 @@ class TabuGameEngine {
     }
 
     advanceWord() {
+        const oldWordObj = this.state.activeWords[this.state.wordIndex];
+        const oldWord = oldWordObj ? oldWordObj.ana_kelime : null;
+
         this.state.wordIndex++;
         if (this.state.wordIndex >= this.state.activeWords.length) {
             this.gameSeed = (this.gameSeed * 16807) % 2147483647;
             this.seededShuffle(this.state.activeWords, this.gameSeed);
             this.state.wordIndex = 0;
         }
-        // Force pop animation is now handled in view
+
+        const newWordObj = this.state.activeWords[this.state.wordIndex];
+        const newWord = newWordObj ? newWordObj.ana_kelime : null;
+
+        // Shuffle sonrası tamamen aynı kelime denk gelirse, veya takımın son kelimesi takılı kalırsa atla
+        if (oldWord && newWord && oldWord === newWord && this.state.activeWords.length > 1) {
+            this.state.wordIndex++;
+            if (this.state.wordIndex >= this.state.activeWords.length) {
+                this.state.wordIndex = 0;
+            }
+        }
     }
 
     startRenderTimer() {
@@ -252,7 +266,11 @@ class TabuGameEngine {
                 }
 
                 if (left <= 0) {
-                    this.endTurn();
+                    if (this.isHost) {
+                        this.endTurn();
+                    } else if (this.onTimerTick) {
+                        this.onTimerTick(0, 'waiting');
+                    }
                     return;
                 }
             } else if (this.state.isWaitingForReady) {
@@ -329,80 +347,15 @@ class TabuView {
         input.value = '';
     }
 
-    showScreen(screenId) {
-        document.querySelectorAll('.view-state').forEach(el => {
-            if (el.id === screenId) {
-                el.classList.remove('hidden');
-                el.classList.add('active');
-            } else {
-                el.classList.add('hidden');
-                el.classList.remove('active');
-            }
-        });
-    }
-
-    showToast(msg, type = "info") {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-        toast.style.borderLeftColor = colors[type] || colors.info;
-        toast.textContent = msg;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
-    }
 
     updateUI(state, isHost) {
-        const playerCount = Object.keys(state.players).length;
-        document.getElementById('player-count').innerText = playerCount;
-
-        const btnStart = document.getElementById('btn-start-game');
-        if (btnStart) {
-            if (playerCount >= 2) btnStart.classList.remove('disabled');
-            else btnStart.classList.add('disabled');
-        }
-
-        const pList = document.getElementById('players-list');
-        if (pList) {
-            pList.innerHTML = '';
-            Object.values(state.players).forEach(p => {
-                const li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.alignItems = 'center';
-
-                const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const infoSpan = document.createElement('span');
-                infoSpan.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${safeName} ${p.id === this.myId ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
-                li.appendChild(infoSpan);
-
-                if (isHost && p.id !== this.myId && state.status !== 'playing') {
-                    const kickBtn = document.createElement('button');
-                    kickBtn.className = 'btn btn-danger btn-icon';
-                    kickBtn.style.padding = '4px 8px';
-                    kickBtn.style.marginLeft = '8px';
-                    kickBtn.title = "Oyuncuyu At";
-                    kickBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-                    kickBtn.onclick = () => this.callbacks.onKickPlayer(p.id);
-                    li.appendChild(kickBtn);
-                }
-                pList.appendChild(li);
-            });
-        }
-
         if (state.status === 'lobby') {
-            this.showScreen('lobby-screen');
+            window.showScreen('lobby-screen');
         } else if (state.status === 'playing') {
-            this.showScreen('game-screen');
+            window.showScreen('game-screen');
             this.updateGameUI(state);
         } else if (state.status === 'ended') {
-            this.showScreen('winner-screen');
+            window.showScreen('winner-screen');
             this.updateWinnerUI(state);
         }
     }

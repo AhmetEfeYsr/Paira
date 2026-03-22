@@ -179,8 +179,8 @@ async function initGame() {
 
     document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
 
-    if (window.loadCizbilWords) {
-        await window.loadCizbilWords();
+    if (window.loadGarticWords) {
+        await window.loadGarticWords();
     }
 
     // Update word database after loading

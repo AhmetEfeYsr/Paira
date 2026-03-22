@@ -4,11 +4,32 @@
 class PairaSharedUI {
     constructor() {
         this.initTheme();
-        document.addEventListener('DOMContentLoaded', () => {
+        
+        const initUI = () => {
             this.injectSharedUI();
             this.injectSEOFooter();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
-        });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initUI);
+        } else {
+            initUI();
+        }
+    }
+
+    getBasePath() {
+        if (this._basePath !== undefined) return this._basePath;
+        const scripts = document.getElementsByTagName('script');
+        for (let script of scripts) {
+            if (script.src.includes('shared.js')) {
+                const srcStr = script.getAttribute('src');
+                this._basePath = (srcStr && srcStr.startsWith('../')) ? '../' : '';
+                return this._basePath;
+            }
+        }
+        this._basePath = '';
+        return '';
     }
 
     initTheme() {
@@ -37,17 +58,8 @@ class PairaSharedUI {
     }
 
     injectSharedUI() {
-        const scripts = document.getElementsByTagName('script');
-        let basePath = '';
-        for (let script of scripts) {
-            if (script.src.includes('shared.js')) {
-                const srcStr = script.getAttribute('src');
-                if (srcStr.startsWith('../')) {
-                    basePath = '../';
-                }
-                break;
-            }
-        }
+        const basePath = this.getBasePath();
+        const isGamePage = window.location.pathname.endsWith('game.html');
 
         // Top Navigation (Theme Switcher only, on the right)
         const savedTheme = localStorage.getItem('paira_theme') || 'paira';
@@ -84,27 +96,29 @@ class PairaSharedUI {
         `;
         document.body.insertAdjacentHTML('afterbegin', navWrapperHTML);
 
-        const footerHTML = `
-        <footer class="app-footer">
-            <div class="footer-text">Paira Games &copy; ${new Date().getFullYear()} • Tüm Hakları Saklıdır</div>
-            <div class="footer-links">
-                <a href="https://github.com/AhmetEfeYSR" target="_blank" rel="noopener noreferrer" class="social-link">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-                    <span>GitHub</span>
-                </a>
-                <a href="https://kick.com/Pairaaa" target="_blank" rel="noopener noreferrer" class="social-link kick-link">
-                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="Kick--Streamline-Simple-Icons" height="18" width="18"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#53fc18" stroke-width="1"></path></svg>
-                    <span>Paira</span>
-                </a>
-            </div>
-        </footer>
-        `;
+        if (!isGamePage) {
+            const footerHTML = `
+            <footer class="app-footer">
+                <div class="footer-text">Paira Games &copy; ${new Date().getFullYear()} • Tüm Hakları Saklıdır</div>
+                <div class="footer-links">
+                    <a href="https://github.com/AhmetEfeYSR" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://kick.com/Pairaaa" target="_blank" rel="noopener noreferrer" class="social-link kick-link">
+                        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="Kick--Streamline-Simple-Icons" height="18" width="18"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#53fc18" stroke-width="1"></path></svg>
+                        <span>Paira</span>
+                    </a>
+                </div>
+            </footer>
+            `;
 
-        const existingFooter = document.querySelector('.app-footer');
-        if (existingFooter) {
-            existingFooter.outerHTML = footerHTML;
-        } else {
-            document.body.insertAdjacentHTML('beforeend', footerHTML);
+            const existingFooter = document.querySelector('.app-footer');
+            if (existingFooter) {
+                existingFooter.outerHTML = footerHTML;
+            } else {
+                document.body.insertAdjacentHTML('beforeend', footerHTML);
+            }
         }
 
         const cookieHTML = `
@@ -126,20 +140,10 @@ class PairaSharedUI {
     }
 
     injectSEOFooter() {
-        // Let's determine the correct base path using the script source approach for robustness
-        const scripts = document.getElementsByTagName('script');
-        let basePath = '';
-        for (let script of scripts) {
-            if (script.src.includes('shared.js')) {
-                // If script src is like "../shared/shared.js", the root is "../"
-                // If it is "shared/shared.js", the root is ""
-                const srcStr = script.getAttribute('src');
-                if (srcStr.startsWith('../')) {
-                    basePath = '../';
-                }
-                break;
-            }
-        }
+        const isGamePage = window.location.pathname.endsWith('game.html');
+        if (isGamePage) return; // Do not inject SEO footer on game pages
+
+        const basePath = this.getBasePath();
 
         const seoFooterHTML = `
         <footer id="seo-footer" style="width: 100%; text-align: center; padding: 1rem; margin-top: 1rem; background: var(--footer-bg); font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--btn-secondary-bg);">
@@ -173,6 +177,18 @@ class PairaSharedUI {
 }
 
 window.pairaUI = new PairaSharedUI();
+
+window.checkEasterEgg = function(username) {
+    if (!username) return 0;
+    const lowerName = username.toLowerCase();
+    if (lowerName === 'paira' || lowerName === 'pai' || lowerName === 'paiko') {
+        if (typeof window.showToast === 'function') {
+            window.showToast('canım ablam 💜', 'info'); // Many use "info" or "success"
+        }
+        return 1000;
+    }
+    return 0;
+};
 
 window.showToast = function(msg, type = "info") {
     let container = document.getElementById('toast-container');
@@ -286,4 +302,29 @@ window.PairaAudio = {
             osc.start(now); osc.stop(now + 0.1);
         }
     }
+};
+
+window.generateRoomCode = function() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    const array = new Uint32Array(6);
+    if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(array);
+        for (let i = 0; i < 6; i++) code += chars[array[i] % chars.length];
+    } else {
+        for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+};
+
+window.showScreen = function(screenId) {
+    document.querySelectorAll('.view-state').forEach(el => {
+        if (el.id === screenId) {
+            el.classList.remove('hidden');
+            el.classList.add('active');
+        } else {
+            el.classList.add('hidden');
+            el.classList.remove('active');
+        }
+    });
 };

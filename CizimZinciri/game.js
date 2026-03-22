@@ -1,11 +1,11 @@
 // ÇizimZinciri/game.js
 
-import { networkState, broadcastAction, isHost, myId } from './network.js';
+import { broadcastAction, isHost } from './network.js';
 
 let drawingBoard;
 let timerInterval;
 
-export function initGameUI() {
+export function initGameUI(networkState, myId) {
     // Only init board once
     if (!drawingBoard) {
         const canvasElement = document.getElementById('drawing-board');
@@ -22,14 +22,19 @@ export function initGameUI() {
             el.style.touchAction = 'none';
         };
 
-        document.querySelectorAll('.color-swatch').forEach(swatch => {
+        document.querySelectorAll('.color-swatch:not(.custom-color-btn)').forEach(swatch => {
             bindInteraction(swatch, (e) => {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 const target = e.target.closest('.color-swatch');
                 target.classList.add('active');
                 drawingBoard.setColor(target.dataset.color);
-                if (target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
-                else drawingBoard.setTool('brush');
+                if (target.dataset.color === '#ffffff') {
+                    drawingBoard.setTool('eraser');
+                } else {
+                    drawingBoard.setTool('brush');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.tool-btn[data-tool="brush"]').classList.add('active');
+                }
             });
         });
 
@@ -48,6 +53,13 @@ export function initGameUI() {
                 const target = e.target.closest('.tool-btn');
                 target.classList.add('active');
                 drawingBoard.setTool(target.dataset.tool);
+                
+                if (target.dataset.tool !== 'eraser') {
+                    const activeSwatch = document.querySelector('.color-swatch.active');
+                    if (activeSwatch && activeSwatch.dataset.color === '#ffffff') {
+                        document.querySelector('.color-swatch[data-color="#000000"]').click();
+                    }
+                }
             });
         });
 
@@ -88,16 +100,21 @@ export function initGameUI() {
         }
 
         // Submit logic
-        document.getElementById('btn-submit-prompt').addEventListener('click', submitPrompt);
+        document.getElementById('btn-submit-prompt').addEventListener('click', () => submitPrompt(window._networkState, window._myId));
         document.getElementById('prompt-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') submitPrompt();
+            if (e.key === 'Enter') submitPrompt(window._networkState, window._myId);
         });
 
-        document.getElementById('btn-submit-drawing').addEventListener('click', submitDrawing);
+        document.getElementById('btn-submit-drawing').addEventListener('click', () => submitDrawing(window._networkState, window._myId));
     }
 }
 
-export function updateGameStateUI() {
+export function updateGameStateUI(networkState, myId) {
+    window._networkState = networkState;
+    window._myId = myId;
+    
+    if (!networkState || !networkState.state) return;
+    
     const state = networkState.state;
     const isCompleted = networkState.completedTasks[myId];
 
@@ -141,7 +158,7 @@ export function updateGameStateUI() {
     }
 }
 
-function submitPrompt() {
+function submitPrompt(networkState, myId) {
     const input = document.getElementById('prompt-input');
     const text = input.value.trim();
     if(!text) {
@@ -156,7 +173,7 @@ function submitPrompt() {
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text, round: networkState.roundCount });
 }
 
-function submitDrawing() {
+function submitDrawing(networkState, myId) {
     const dataURL = drawingBoard.getDataURL();
 
     document.getElementById('draw-container').style.display = 'none';
@@ -165,7 +182,7 @@ function submitDrawing() {
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
 
-export function startTimer(duration) {
+export function startTimer(duration, networkState, myId) {
     clearInterval(timerInterval);
     let timeLeft = duration;
 
@@ -182,14 +199,14 @@ export function startTimer(duration) {
             clearInterval(timerInterval);
             // Time is up, auto submit
             if (!networkState.completedTasks[myId]) {
-                if (networkState.state === 'WRITE') submitPromptFallback();
-                else if (networkState.state === 'DRAW') submitDrawingFallback();
+                if (networkState.state === 'WRITE') submitPromptFallback(networkState, myId);
+                else if (networkState.state === 'DRAW') submitDrawingFallback(networkState, myId);
             }
         }
     }, 1000);
 }
 
-function submitPromptFallback() {
+function submitPromptFallback(networkState, myId) {
     const input = document.getElementById('prompt-input');
     let text = input.value.trim();
     if (!text) {
@@ -202,7 +219,7 @@ function submitPromptFallback() {
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text, round: networkState.roundCount });
 }
 
-function submitDrawingFallback() {
+function submitDrawingFallback(networkState, myId) {
     const dataURL = drawingBoard.getDataURL();
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
@@ -212,7 +229,7 @@ export function stopTimer() {
 }
 
 // ALBUM LOGIC (End of Game)
-export function renderAlbumState() {
+export function renderAlbumState(networkState) {
     const container = document.getElementById('album-container');
     const seq = networkState.albumSequence;
     const idx = networkState.albumIndex;
@@ -291,4 +308,4 @@ export function renderAlbumState() {
 }
 
 // Ensure the UI shows the right state from network events globally
-window.updateGameStateUI = updateGameStateUI;
+window.updateGameStateUI = (state, id) => updateGameStateUI(state || window._networkState, id || window._myId);

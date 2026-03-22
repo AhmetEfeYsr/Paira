@@ -6,9 +6,7 @@ let isHost = false;
 let myId = null;
 let roomCode = null;
 
-const generateRoomCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-};
+;
 
 const initPeer = async (mode, room = null) => {
     isHost = mode === 'host';

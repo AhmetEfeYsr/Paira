@@ -335,30 +335,4 @@ function switchScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
 }
 
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if(!container) return;
 
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-
-    if(type === 'error') {
-        toast.style.borderLeftColor = 'var(--danger)';
-        toast.style.color = 'var(--danger)';
-    } else if (type === 'success') {
-        toast.style.borderLeftColor = 'var(--success)';
-        toast.style.color = 'var(--success)';
-    } else if (type === 'warning') {
-        toast.style.borderLeftColor = 'var(--warning)';
-        toast.style.color = 'var(--warning)';
-    }
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}

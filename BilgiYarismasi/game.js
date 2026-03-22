@@ -1,364 +1,324 @@
-// game.js - Trivia Oyun Mantığı, UI Güncellemeleri ve Durum Yönetimi
+/**
+ * BilgiYarismasiGameEngine - Core game logic
+ */
+class BilgiYarismasiGameEngine {
+    constructor(isHost = true) {
+        this.isHost = isHost;
+        this.state = {
+            status: 'lobby',
+            players: {},
+            round: 1,
+            totalRounds: 10,
+            turnDuration: 20,
+            wrongPenalty: true,
+            activeQuestions: [],
+            currentQuestion: null,
+            answersInRound: {}
+        };
+        this.allQuestions = [];
+        this.gameSeed = window.PairaTime.now();
+        
+        this.fallbackQuestions = [
+            { kategori: ["Genel Kültür"], soru_metni: "Türkiye'nin başkenti neresidir?", dogru_cevap: "Ankara", yanlis_secenekler: ["İstanbul", "İzmir", "Bursa"], zorluk: 10 },
+            { kategori: ["Bilim"], soru_metni: "Su hangi iki elementten oluşur?", dogru_cevap: "Hidrojen ve Oksijen", yanlis_secenekler: ["Azot ve Oksijen", "Helyum ve Hidrojen", "Kükürt ve Oksijen"], zorluk: 20 }
+        ];
 
-// --- GLOBAL DEĞİŞKENLER ---
-let allQuestions = [];
-let turnTimeout = null;
-let renderFrame = null;
-let localTurnEndTime = 0;
-let lastTickSec = -1;
-let isCodeVisible = false;
-let isRoundEnding = false;
+        this.onStateChange = null;
+        this.onTimerTick = null;
+        this.onSound = null;
 
-// Oyunun ana durumu
-let state = {
-    status: 'lobby',
-    players: {},
-    round: 1,
-    totalRounds: 10,
-    turnDuration: 20,
-    wrongPenalty: true, // -5 Puan Cezası
-    activeQuestions: [],
-    currentQuestion: null,
-    answersInRound: {} // Her turda kimlerin cevap verdiğini takip eder: { playerId: { choiceIndex: number, points: number, timeLeft: number } }
-};
+        this.localTurnEndTime = 0;
+        this.turnTimeout = null;
+        this.renderFrame = null;
+        this.isRoundEnding = false;
+        this.lastTickSec = -1;
+    }
 
-// Yedek Soru Havuzu (Fetch başarısız olursa diye)
-const fallbackQuestions = [
-    { kategori: ["Genel Kültür"], soru_metni: "Türkiye'nin başkenti neresidir?", dogru_cevap: "Ankara", yanlis_secenekler: ["İstanbul", "İzmir", "Bursa"], zorluk: 10 },
-    { kategori: ["Bilim"], soru_metni: "Su hangi iki elementten oluşur?", dogru_cevap: "Hidrojen ve Oksijen", yanlis_secenekler: ["Azot ve Oksijen", "Helyum ve Hidrojen", "Kükürt ve Oksijen"], zorluk: 20 }
-];
+    setState(newState) {
+        this.state = { ...this.state, ...newState };
+        if (this.onStateChange) this.onStateChange(this.state);
+    }
 
-// --- SES YÖNETİMİ ---
-function initAudio() {
-    if (window.PairaAudio) window.PairaAudio.init();
-}
+    addPlayer(id, name, isHost) {
+        this.state.players[id] = { id, name, isHost, score: 0 };
+        this.setState({ players: this.state.players });
+    }
 
-function playSound(type) {
-    if (window.PairaAudio) window.PairaAudio.play(type);
-}
+    removePlayer(id) {
+        delete this.state.players[id];
+        this.setState({ players: this.state.players });
+        
+        if (this.isHost && this.state.status === 'playing' && this.checkAllPlayersAnswered()) {
+             this.endRoundEarly();
+        }
+    }
 
-// --- UI YARDIMCI FONKSİYONLAR ---
-function escapeHtml(text) {
-    if (text == null) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    setQuestions(questions) {
+        this.allQuestions = (questions && questions.length > 0) ? questions : this.fallbackQuestions;
+    }
 
-function showScreen(screenId) {
-    document.querySelectorAll('.view-state').forEach(el => {
-        if (el.id === screenId) {
-            el.classList.remove('hidden');
-            el.classList.add('active');
+    seededShuffle(arr, seed) {
+        const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(rng() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    startGame(settings) {
+        if (!this.isHost) return;
+        if (Object.keys(this.state.players).length < 2) return false;
+
+        this.state.turnDuration = Math.max(5, parseInt(settings.turnDuration) || 20);
+        this.state.totalRounds = Math.max(1, parseInt(settings.roundCount) || 10);
+        this.state.wrongPenalty = settings.wrongPenalty;
+
+        let minD = parseInt(settings.minD, 10) || 1;
+        let maxD = parseInt(settings.maxD, 10) || 100;
+        if (minD > maxD) [minD, maxD] = [maxD, minD];
+        
+        const selCats = settings.categories || [];
+
+        let filtered = this.allQuestions.filter(q => {
+            const matchesCategory = selCats.length === 0 || (q.kategori && q.kategori.some(cat => selCats.includes(cat)));
+            const matchesDifficulty = q.zorluk >= minD && q.zorluk <= maxD;
+            return matchesCategory && matchesDifficulty;
+        });
+
+        if (filtered.length === 0) {
+            filtered = [...this.allQuestions]; // fallback
+        }
+
+        if (filtered.length < this.state.totalRounds) {
+             this.state.totalRounds = filtered.length;
+        }
+
+        this.gameSeed = (this.gameSeed || 1) * 0x7fff + window.PairaTime.now();
+        this.state.activeQuestions = this.seededShuffle([...filtered], this.gameSeed).slice(0, this.state.totalRounds);
+
+        Object.keys(this.state.players).forEach(pId => this.state.players[pId].score = 0);
+
+        this.state.round = 1;
+        this.state.status = 'playing';
+
+        this.startTurn();
+        return true;
+    }
+
+    getShuffledChoices(questionObj, seed) {
+        const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+        const choices = [
+            questionObj.dogru_cevap,
+            questionObj.yanlis_secenekler[0],
+            questionObj.yanlis_secenekler[1],
+            questionObj.yanlis_secenekler[2]
+        ];
+        let indices = [0, 1, 2, 3];
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(rng() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        let correctIndex = indices.indexOf(0); 
+        let shuffledTexts = indices.map(idx => choices[idx]);
+        return { shuffledTexts, correctIndex };
+    }
+
+    startTurn() {
+        if (!this.isHost) return;
+        if (this.turnTimeout) { clearInterval(this.turnTimeout); this.turnTimeout = null; }
+
+        this.state.answersInRound = {}; 
+
+        const currentQData = this.state.activeQuestions[this.state.round - 1];
+        if (!currentQData) { this.endGame(); return; }
+
+        const seed = this.gameSeed + this.state.round;
+        const { shuffledTexts, correctIndex } = this.getShuffledChoices(currentQData, seed);
+
+        this.state.currentQuestion = {
+            category: currentQData.kategori ? currentQData.kategori.join(', ') : "",
+            question_text: currentQData.soru_metni,
+            shuffled_choices: shuffledTexts,
+            correct_answer_index: correctIndex, 
+            reveal_answer: false 
+        };
+
+        this.localTurnEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
+        this.lastTickSec = -1;
+        this.isRoundEnding = false;
+
+        this.setState(this.state);
+        this.startRenderTimer();
+
+        this.turnTimeout = setInterval(() => {
+            if (window.PairaTime.now() >= this.localTurnEndTime) {
+                this.endRoundEarly(); 
+            }
+        }, 1000);
+    }
+
+    handleAnswer(playerId, choiceIndex) {
+        if (!this.isHost || this.state.status !== 'playing' || this.isRoundEnding) return;
+        if (this.state.answersInRound[playerId]) return; 
+
+        const timeRemaining = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
+        const secondsLeft = Math.ceil(timeRemaining / 1000);
+
+        const isCorrect = choiceIndex === this.state.currentQuestion.correct_answer_index;
+
+        let pointsEarned = 0;
+        if (isCorrect) {
+            pointsEarned = secondsLeft;
+            this.state.players[playerId].score += pointsEarned;
         } else {
-            el.classList.add('hidden');
-            el.classList.remove('active');
+            if (this.state.wrongPenalty) {
+                pointsEarned = -5;
+                this.state.players[playerId].score += pointsEarned;
+            }
         }
-    });
-}
 
-function showToast(msg, type = "info") {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const colors = { error: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--primary-purple)' };
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-}
+        this.state.answersInRound[playerId] = { choiceIndex, isCorrect, pointsEarned };
 
-// --- BAŞLANGIÇ AYARLARI ---
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const res = await fetch('tr.json');
-        const data = await res.json();
-        allQuestions = Array.isArray(data) ? data : fallbackQuestions;
-    } catch {
-        allQuestions = fallbackQuestions;
-    }
-    populateCategories();
-    document.body.addEventListener('click', initAudio, { once: true });
-});
+        this.setState(this.state);
 
-function seededShuffle(arr, seed) {
-    const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-function populateCategories() {
-    const container = document.getElementById('category-selection');
-    if (!container) return;
-    const cats = [...new Set(allQuestions.flatMap(w => w.kategori).filter(Boolean))];
-    container.innerHTML = '';
-    cats.forEach(cat => {
-        const lbl = document.createElement('label');
-        lbl.className = 'category-pill';
-        lbl.innerHTML = `<input type="checkbox" value="${escapeHtml(cat)}" checked> ${escapeHtml(cat)}`;
-        container.appendChild(lbl);
-    });
-}
-
-// --- OYUN AKIŞI (HOST) ---
-document.getElementById('btn-start-game')?.addEventListener('click', () => {
-    if (!isHost) return;
-    if (Object.keys(state.players).length < 2) { showToast("Oyuna başlamak için en az 2 kişi olmalı!", "warning"); return; }
-
-    state.turnDuration = Math.max(5, parseInt(document.getElementById('turn-duration').value) || 20);
-    state.totalRounds = Math.max(1, parseInt(document.getElementById('round-count').value) || 10);
-    state.wrongPenalty = document.getElementById('wrong-penalty').checked;
-
-    let minD = parseInt(document.getElementById('min-difficulty').value, 10) || 1;
-    let maxD = parseInt(document.getElementById('max-difficulty').value, 10) || 100;
-    if (minD > maxD) [minD, maxD] = [maxD, minD];
-    const selCats = Array.from(document.querySelectorAll('.category-pill input:checked')).map(cb => cb.value);
-
-    let filtered = allQuestions.filter(q => {
-        const matchesCategory = selCats.length === 0 || (q.kategori && q.kategori.some(cat => selCats.includes(cat)));
-        const matchesDifficulty = q.zorluk >= minD && q.zorluk <= maxD;
-        return matchesCategory && matchesDifficulty;
-    });
-
-    if (filtered.length === 0) {
-        showToast("Seçilen kategorilerde soru bulunamadı, tüm sorular yükleniyor.", "info");
-        filtered = [...allQuestions];
-    }
-
-    if (filtered.length < state.totalRounds) {
-         state.totalRounds = filtered.length;
-         showToast(`Yeterli soru yok, oyun ${state.totalRounds} tur sürecek.`, "warning");
-    }
-
-    state.gameSeed = (state.gameSeed || 1) * 0x7fff + window.PairaTime.now();
-    state.activeQuestions = seededShuffle([...filtered], state.gameSeed).slice(0, state.totalRounds);
-
-    // Her oyuncunun skorunu sıfırla
-    Object.keys(state.players).forEach(pId => state.players[pId].score = 0);
-
-    state.round = 1;
-    state.status = 'playing';
-
-    showScreen('game-screen');
-    startTurn();
-});
-
-function getShuffledChoices(questionObj, seed) {
-    const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-    const choices = [
-        questionObj.dogru_cevap,
-        questionObj.yanlis_secenekler[0],
-        questionObj.yanlis_secenekler[1],
-        questionObj.yanlis_secenekler[2]
-    ];
-    // İndisleri karıştır, böylece doğru cevabın yeni indeksini bulabiliriz
-    let indices = [0, 1, 2, 3];
-    for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-
-    let correctIndex = indices.indexOf(0); // 0. eleman orjinal doğru cevaptı
-    let shuffledTexts = indices.map(idx => choices[idx]);
-
-    return { shuffledTexts, correctIndex };
-}
-
-function startTurn() {
-    if (!isHost) return;
-    if (turnTimeout) { clearInterval(turnTimeout); turnTimeout = null; }
-
-    state.answersInRound = {}; // Yeni tur için cevapları temizle
-
-    const currentQData = state.activeQuestions[state.round - 1];
-    if (!currentQData) { showWinnerScreen(); return; }
-
-    const seed = state.gameSeed + state.round;
-    const { shuffledTexts, correctIndex } = getShuffledChoices(currentQData, seed);
-
-    state.currentQuestion = {
-        category: currentQData.kategori ? currentQData.kategori.join(', ') : "",
-        question_text: currentQData.soru_metni,
-        shuffled_choices: shuffledTexts,
-        correct_answer_index: correctIndex, // Sadece Host'ta kalacak (network.js'te clienta giderken silinir)
-        reveal_answer: false // Süre dolduğunda veya herkes cevapladığında doğru cevabı clientlara göndermek için
-    };
-
-    localTurnEndTime = window.PairaTime.now() + (state.turnDuration * 1000);
-    lastTickSec = -1;
-    isRoundEnding = false;
-
-    broadcastSync();
-    updateUI();
-    startRenderTimer();
-
-    turnTimeout = setInterval(() => {
-        if (window.PairaTime.now() >= localTurnEndTime) {
-            endRoundEarly(); // Süre bitince zorla bitir
-        }
-    }, 1000);
-}
-
-function handleClientAnswer(playerId, choiceIndex) {
-    if (!isHost || state.status !== 'playing' || isRoundEnding) return;
-    if (state.answersInRound[playerId]) return; // Zaten cevaplamış
-
-    const timeRemaining = Math.max(0, localTurnEndTime - window.PairaTime.now());
-    const secondsLeft = Math.ceil(timeRemaining / 1000);
-
-    const isCorrect = choiceIndex === state.currentQuestion.correct_answer_index;
-
-    let pointsEarned = 0;
-    if (isCorrect) {
-        pointsEarned = secondsLeft;
-        state.players[playerId].score += pointsEarned;
-    } else {
-        if (state.wrongPenalty) {
-            pointsEarned = -5;
-            state.players[playerId].score += pointsEarned;
+        if (this.checkAllPlayersAnswered()) {
+            this.endRoundEarly();
         }
     }
 
-    state.answersInRound[playerId] = {
-        choiceIndex,
-        isCorrect,
-        pointsEarned
-    };
-
-    broadcastSync();
-    updateUI();
-
-    // Herkes cevapladıysa turu beklemeden bitir
-    if (checkAllPlayersAnswered()) {
-        endRoundEarly();
+    checkAllPlayersAnswered() {
+        if (!this.isHost) return false;
+        const expectedPlayersCount = Object.keys(this.state.players).length;
+        const answeredPlayersCount = Object.keys(this.state.answersInRound).length;
+        return answeredPlayersCount >= expectedPlayersCount;
     }
-}
 
-function checkAllPlayersAnswered() {
-    if (!isHost) return false;
-    const expectedPlayersCount = Object.keys(state.players).length;
-    const answeredPlayersCount = Object.keys(state.answersInRound).length;
-    return answeredPlayersCount >= expectedPlayersCount;
-}
+    endRoundEarly() {
+        if (!this.isHost || this.isRoundEnding) return;
+        this.isRoundEnding = true;
+        if (this.turnTimeout) { clearInterval(this.turnTimeout); this.turnTimeout = null; }
 
-function endRoundEarly() {
-    if (!isHost || isRoundEnding) return;
-    isRoundEnding = true;
-    if (turnTimeout) { clearInterval(turnTimeout); turnTimeout = null; }
+        if (this.onSound) this.onSound('end');
 
-    playSound('end');
-    broadcast({ type: 'PLAY_SOUND', sound: 'end' });
-
-    if (state.currentQuestion) {
-        state.currentQuestion.reveal_answer = true;
-    }
-    broadcastSync();
-    updateUI(); // Doğru cevapların herkes için hemen gösterilmesi için
-
-    // Küçük bir bekleme (doğruyu göstermek için UI'ı kısa bir kitleme)
-    setTimeout(() => {
-        isRoundEnding = false;
-        state.round++;
-        if (state.round > state.totalRounds) {
-            showWinnerScreen();
-        } else {
-            startTurn();
+        if (this.state.currentQuestion) {
+            this.state.currentQuestion.reveal_answer = true;
         }
-    }, 3000); // 3 saniye sonuçları görmeleri için beklet
-}
+        
+        this.setState(this.state); 
 
-
-function showWinnerScreen() {
-    state.status = 'finished';
-
-    const ul = document.getElementById('final-scoreboard-list');
-    ul.innerHTML = '';
-
-    const sortedPlayers = Object.values(state.players).sort((a, b) => b.score - a.score);
-
-    sortedPlayers.forEach((p, idx) => {
-        const li = document.createElement('li');
-        li.style.padding = '12px 20px';
-        li.style.borderBottom = '1px solid var(--btn-secondary-border)';
-        li.style.display = 'flex';
-        li.style.justifyContent = 'space-between';
-        li.style.fontSize = idx === 0 ? '1.4rem' : '1.1rem';
-        li.style.color = idx === 0 ? 'var(--neon-purple)' : 'var(--text-main)';
-        li.style.fontWeight = idx === 0 ? '800' : '500';
-
-        li.innerHTML = `<span>${idx + 1}. ${escapeHtml(p.name)} ${p.id === myId ? '(Sen)' : ''}</span> <span>${p.score} Puan</span>`;
-        ul.appendChild(li);
-    });
-
-    showScreen('winner-screen');
-    broadcastSync();
-}
-
-document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => {
-    state.status = 'lobby';
-    Object.keys(state.players).forEach(pId => state.players[pId].score = 0);
-    state.round = 1;
-    showScreen('lobby-screen');
-    broadcastSync();
-});
-
-// Timer Animasyonu
-function startRenderTimer() {
-    if (renderFrame) cancelAnimationFrame(renderFrame);
-    const timerEl = document.getElementById('timer-display');
-    if (!timerEl) return;
-
-    const tick = () => {
-        if (state.status !== 'playing') return;
-
-        const left = Math.max(0, localTurnEndTime - window.PairaTime.now());
-        const secs = Math.ceil(left / 1000);
-        const m = Math.floor(secs / 60).toString().padStart(2, '0');
-        const s = (secs % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-
-        if (secs <= 5 && secs > 0) {
-            timerEl.style.color = 'var(--danger)';
-            if (lastTickSec !== secs) { playSound('tick'); lastTickSec = secs; }
-        } else {
-            timerEl.style.color = 'var(--lilac)';
-        }
-
-        renderFrame = requestAnimationFrame(tick);
-    };
-    renderFrame = requestAnimationFrame(tick);
-}
-
-// --- UI GÜNCELLEME ---
-function updateUI() {
-    const playerCount = Object.keys(state.players).length;
-    const playerCountEl = document.getElementById('player-count');
-    if (playerCountEl) playerCountEl.innerText = playerCount;
-
-    const btnStart = document.getElementById('btn-start-game');
-    if (btnStart) {
-        if (playerCount >= 2) btnStart.classList.remove('disabled');
-        else btnStart.classList.add('disabled');
+        setTimeout(() => {
+            this.isRoundEnding = false;
+            this.state.round++;
+            if (this.state.round > this.state.totalRounds) {
+                this.endGame();
+            } else {
+                this.startTurn();
+            }
+        }, 3000); 
     }
 
-    const pList = document.getElementById('players-list');
-    if (pList) {
-        pList.innerHTML = '';
-        Object.values(state.players).forEach(p => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span>${p.isHost ? '👑 ' : ''}${escapeHtml(p.name)} ${p.id === myId ? '(Sen)' : ''}</span> <strong>${p.score || 0} Puan</strong>`;
-            pList.appendChild(li);
+    endGame() {
+        this.state.status = 'finished';
+        this.setState(this.state);
+    }
+
+    backToLobby() {
+        this.state.status = 'lobby';
+        Object.keys(this.state.players).forEach(pId => this.state.players[pId].score = 0);
+        this.state.round = 1;
+        this.setState(this.state);
+    }
+
+    startRenderTimer() {
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+
+        const tick = () => {
+            if (this.state.status !== 'playing') return;
+
+            const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
+            const secs = Math.ceil(left / 1000);
+            
+            if (this.onTimerTick) this.onTimerTick(secs);
+
+            if (secs <= 5 && secs > 0 && this.lastTickSec !== secs) {
+                if (this.onSound) this.onSound('tick');
+                this.lastTickSec = secs;
+            }
+
+            this.renderFrame = requestAnimationFrame(tick);
+        };
+        this.renderFrame = requestAnimationFrame(tick);
+    }
+}
+
+/**
+ * BilgiYarismasiView - Handles DOM
+ */
+class BilgiYarismasiView {
+    constructor(callbacks) {
+        this.callbacks = callbacks;
+        this.myId = null;
+        this.bindEvents();
+    }
+
+    setMyId(id) {
+        this.myId = id;
+    }
+
+    escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    bindEvents() {
+        document.getElementById('btn-start-game')?.addEventListener('click', () => {
+            const settings = {
+                turnDuration: document.getElementById('turn-duration')?.value,
+                roundCount: document.getElementById('round-count')?.value,
+                wrongPenalty: document.getElementById('wrong-penalty')?.checked,
+                minD: document.getElementById('min-difficulty')?.value,
+                maxD: document.getElementById('max-difficulty')?.value,
+                categories: Array.from(document.querySelectorAll('.category-pill input:checked')).map(cb => cb.value)
+            };
+            this.callbacks.onStartGame(settings);
+        });
+
+        document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => {
+            this.callbacks.onBackToLobby();
         });
     }
 
-    if (state.status === 'playing') {
+    populateCategories(questions) {
+        const container = document.getElementById('category-selection');
+        if (!container) return;
+        const cats = [...new Set(questions.flatMap(w => w.kategori).filter(Boolean))];
+        container.innerHTML = '';
+        cats.forEach(cat => {
+            const lbl = document.createElement('label');
+            lbl.className = 'category-pill';
+            lbl.innerHTML = `<input type="checkbox" value="${this.escapeHtml(cat)}" checked> ${this.escapeHtml(cat)}`;
+            container.appendChild(lbl);
+        });
+    }
+
+    updateUI(state, isHost) {
+        if (state.status === 'lobby') {
+            window.showScreen('lobby-screen');
+        } else if (state.status === 'playing') {
+            window.showScreen('game-screen');
+            this.updateGameUI(state);
+        } else if (state.status === 'finished') {
+            window.showScreen('winner-screen');
+            this.updateWinnerUI(state);
+        }
+    }
+
+    updateGameUI(state) {
         document.getElementById('round-indicator').innerText = `Soru ${state.round} / ${state.totalRounds}`;
 
-        // Üst Scoreboard'u güncelle
         const scb = document.getElementById('in-game-scoreboard');
         if (scb) {
             scb.innerHTML = '';
@@ -369,8 +329,8 @@ function updateUI() {
                 badge.style.padding = '6px 12px';
                 badge.style.borderRadius = '8px';
                 badge.style.fontSize = '0.9rem';
-                badge.style.border = p.id === myId ? '1px solid var(--primary-purple)' : '1px solid transparent';
-                badge.innerHTML = `<strong>${escapeHtml(p.name)}:</strong> ${p.score}`;
+                badge.style.border = p.id === this.myId ? '1px solid var(--primary-purple)' : '1px solid transparent';
+                badge.innerHTML = `<strong>${this.escapeHtml(p.name)}:</strong> ${p.score}`;
                 scb.appendChild(badge);
             });
         }
@@ -385,7 +345,7 @@ function updateUI() {
             qCategory.innerText = state.currentQuestion.category;
             qMain.innerText = state.currentQuestion.question_text;
 
-            const myAnswer = state.answersInRound[myId];
+            const myAnswer = state.answersInRound[this.myId];
 
             if (state.currentQuestion.reveal_answer) {
                  qMsg.innerText = "Doğru cevaplar gösteriliyor...";
@@ -410,9 +370,8 @@ function updateUI() {
                 btn.style.fontSize = '1.1rem';
                 btn.style.height = 'auto';
                 btn.style.whiteSpace = 'normal';
-                btn.innerHTML = `<strong>${letters[idx]})</strong> ${escapeHtml(choiceText)}`;
+                btn.innerHTML = `<strong>${letters[idx]})</strong> ${this.escapeHtml(choiceText)}`;
 
-                // Eğer cevaplar açıklandıysa
                 if (state.currentQuestion.reveal_answer && state.currentQuestion.correct_answer_index !== undefined) {
                     btn.classList.add('disabled');
                     if (idx === state.currentQuestion.correct_answer_index) {
@@ -421,29 +380,22 @@ function updateUI() {
                         btn.classList.add('btn-wrong');
                     }
                 } else if (myAnswer) {
-                    // Eğer oyuncu zaten cevap verdiyse butonları kilitle
                     btn.classList.add('disabled');
-                    // Kullanıcının seçtiği butonu vurgula
                     if (myAnswer.choiceIndex === idx) {
                         btn.classList.add('btn-selected');
                     }
                 } else {
-                    // Hızlı tepki için pointerdown ve click olaylarını dinle.
                     const handleChoice = (e) => {
                         e.preventDefault(); 
                         if (btn.classList.contains('disabled')) return;
-
-                        playSound('pass'); 
                         
-                        // Tüm butonları anında yerel olarak kilitle ki birden fazla kere basamasın
                         document.querySelectorAll('.choice-btn').forEach(b => {
                             b.classList.add('disabled');
                             b.style.pointerEvents = 'none';
                         });
-                        
                         btn.classList.add('btn-selected');
 
-                        sendAnswer(idx);
+                        this.callbacks.onAnswer(idx);
 
                         btn.removeEventListener('pointerdown', handleChoice);
                         btn.removeEventListener('click', handleChoice);
@@ -462,4 +414,41 @@ function updateUI() {
             qMsg.className = "status-badge";
         }
     }
+
+    updateWinnerUI(state) {
+        const ul = document.getElementById('final-scoreboard-list');
+        ul.innerHTML = '';
+
+        const sortedPlayers = Object.values(state.players).sort((a, b) => b.score - a.score);
+
+        sortedPlayers.forEach((p, idx) => {
+            const li = document.createElement('li');
+            li.style.padding = '12px 20px';
+            li.style.borderBottom = '1px solid var(--btn-secondary-border)';
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.fontSize = idx === 0 ? '1.4rem' : '1.1rem';
+            li.style.color = idx === 0 ? 'var(--neon-purple)' : 'var(--text-main)';
+            li.style.fontWeight = idx === 0 ? '800' : '500';
+
+            li.innerHTML = `<span>${idx + 1}. ${this.escapeHtml(p.name)} ${p.id === this.myId ? '(Sen)' : ''}</span> <span>${p.score} Puan</span>`;
+            ul.appendChild(li);
+        });
+    }
+
+    updateTimer(secs) {
+        const timerEl = document.getElementById('timer-display');
+        if (!timerEl) return;
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+        timerEl.style.color = secs <= 5 && secs > 0 ? 'var(--danger)' : 'var(--lilac)';
+    }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { BilgiYarismasiGameEngine, BilgiYarismasiView };
+} else {
+    window.BilgiYarismasiGameEngine = BilgiYarismasiGameEngine;
+    window.BilgiYarismasiView = BilgiYarismasiView;
 }
