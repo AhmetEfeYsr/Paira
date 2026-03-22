@@ -6,6 +6,14 @@ class KronoNetwork {
         this.roomCode = sessionStorage.getItem('roomCode');
         this.playerName = sessionStorage.getItem('playerName') || 'Oyuncu';
 
+        if (this.isHost && !this.isSolo && !this.roomCode) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            this.roomCode = result;
+            sessionStorage.setItem('roomCode', this.roomCode);
+        }
+
         if (this.isSolo) {
             this.setupSoloMode();
         } else {

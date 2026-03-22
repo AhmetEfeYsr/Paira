@@ -182,8 +182,8 @@ class GameManager {
 
     startGame() {
         const playerIds = Object.keys(this.state.players);
-        if(playerIds.length < 3) {
-            window.showToast("Oynamak için en az 3 oyuncu gerekiyor!", "error");
+        if(playerIds.length < 1) {
+            window.showToast("Oynamak için en az 1 oyuncu gerekiyor!", "error");
             return;
         }
 

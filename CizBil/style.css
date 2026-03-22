@@ -47,7 +47,7 @@ body {
 
 /* SEO ve Kurallar Bölümü */
 .hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
-.seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: -1rem; margin-bottom: 1rem; }
+.seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-bottom: 1rem; }
 
 .seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--btn-secondary-bg); text-align: center; overflow-y: visible; }
 .seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: var(--text-main); }
