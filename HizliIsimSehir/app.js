@@ -837,6 +837,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let validationCache = {};
     let apiCache = {};
 
+    function normalizeForSearch(text) {
+        if (!text) return "";
+        return text.toString().toLocaleLowerCase('tr-TR')
+            .replace(/ğ/g, 'g')
+            .replace(/ü/g, 'u')
+            .replace(/ş/g, 's')
+            .replace(/ı/g, 'i')
+            .replace(/ö/g, 'o')
+            .replace(/ç/g, 'c')
+            .replace(/â/g, 'a')
+            .replace(/î/g, 'i')
+            .replace(/û/g, 'u')
+            .trim();
+    }
+
     async function checkWikipedia(word, keywords) {
         const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
@@ -844,16 +859,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search) {
                 const lowerWord = word.toLocaleLowerCase('tr-TR');
+                const normWord = normalizeForSearch(lowerWord);
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
                     
-                    if (title === lowerWord) {
+                    const normTitle = normalizeForSearch(title);
+                    const normSnippet = normalizeForSearch(snippet);
+                    
+                    if (title === lowerWord || normTitle === normWord) {
                         return true;
                     }
                     
-                    if (title.includes(lowerWord) || snippet.includes(lowerWord)) {
-                        if (keywords.length === 0 || keywords.some(kw => snippet.includes(kw) || title.includes(kw))) {
+                    if (title.includes(lowerWord) || snippet.includes(lowerWord) || normTitle.includes(normWord) || normSnippet.includes(normWord)) {
+                        if (keywords.length === 0 || keywords.some(kw => {
+                            const normKw = normalizeForSearch(kw);
+                            return snippet.includes(kw) || title.includes(kw) || normSnippet.includes(normKw) || normTitle.includes(normKw);
+                        })) {
                             return true;
                         }
                     }
@@ -914,10 +936,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
-                        result = data.artists.some(artist => 
-                            artist.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR')) ||
-                            (artist.aliases && artist.aliases.some(a => a.name.toLocaleLowerCase('tr-TR').includes(word.toLocaleLowerCase('tr-TR'))))
-                        );
+                        const normWord = normalizeForSearch(word);
+                        result = data.artists.some(artist => {
+                            const artistName = artist.name.toLocaleLowerCase('tr-TR');
+                            const normArtistName = normalizeForSearch(artistName);
+                            return artistName.includes(word.toLocaleLowerCase('tr-TR')) || normArtistName.includes(normWord) ||
+                                (artist.aliases && artist.aliases.some(a => {
+                                    const aliasName = a.name.toLocaleLowerCase('tr-TR');
+                                    return aliasName.includes(word.toLocaleLowerCase('tr-TR')) || normalizeForSearch(aliasName).includes(normWord);
+                                }));
+                        });
                     }
                 }
                 if (!result) result = await checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist']);
@@ -953,13 +981,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`../IsimSehir/data/${catId}.json`);
             if (response.ok) {
                 const arr = await response.json();
-                validationCache[catId] = new Set(arr.map(w => w.toLocaleLowerCase('tr-TR')));
+                const dict = new Set();
+                const normDict = new Set();
+                arr.forEach(w => {
+                    const lower = w.toLocaleLowerCase('tr-TR');
+                    dict.add(lower);
+                    normDict.add(normalizeForSearch(lower));
+                });
+                validationCache[catId] = { dict, normDict };
             } else {
-                validationCache[catId] = new Set();
+                validationCache[catId] = { dict: new Set(), normDict: new Set() };
             }
         } catch (e) {
             console.warn(`Dictionary not found for ${catId}, fallback to empty.`);
-            validationCache[catId] = new Set();
+            validationCache[catId] = { dict: new Set(), normDict: new Set() };
         }
         return validationCache[catId];
     }
@@ -977,18 +1012,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let word = answers[gameState.currentCategory.id] || "";
         word = word.trim().toLocaleLowerCase('tr-TR');
+        const normWord = normalizeForSearch(word);
+        const letterLower = gameState.letter.toLocaleLowerCase('tr-TR');
+        const normLetter = normalizeForSearch(gameState.letter);
 
         let score = 0;
 
-        if (word.length > 0 && word.startsWith(gameState.letter.toLocaleLowerCase('tr-TR'))) {
+        if (word.length > 0 && (word.startsWith(letterLower) || normWord.startsWith(normLetter))) {
             const isCustomCat = gameState.currentCategory.id.startsWith('custom_');
             let isValidInDict = false;
 
             if (isCustomCat) {
                 isValidInDict = true;
             } else {
-                const dict = await loadDictionary(gameState.currentCategory.id);
-                if (dict && dict.has(word)) {
+                const dictObj = await loadDictionary(gameState.currentCategory.id);
+                if (dictObj && (dictObj.dict.has(word) || dictObj.normDict.has(normWord))) {
                     isValidInDict = true;
                 } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(gameState.currentCategory.id)) {
                     isValidInDict = await validateViaApi(gameState.currentCategory.id, word);
@@ -1188,6 +1226,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    let autoNextRoundTimer = null;
+
     // --- Scoreboard and Match Flow ---
     function renderScoreboard(scores) {
         switchScreen('score-screen');
@@ -1223,12 +1263,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHost) {
             if(ui.btnNextRound) {
                 ui.btnNextRound.classList.remove('hidden');
+                clearInterval(autoNextRoundTimer);
                 if (gameState.round > gameConfig.rounds) {
                     ui.btnNextRound.textContent = 'Oyunu Bitir';
                     if(ui.extendGameGroup) ui.extendGameGroup.classList.remove('hidden');
                 } else {
-                    ui.btnNextRound.textContent = 'Sonraki Tura Geç';
+                    ui.btnNextRound.textContent = 'Sonraki Tura Geç (5)';
                     if(ui.extendGameGroup) ui.extendGameGroup.classList.add('hidden');
+                    
+                    let timeLeft = 5;
+                    autoNextRoundTimer = setInterval(() => {
+                        timeLeft--;
+                        if (timeLeft <= 0) {
+                            clearInterval(autoNextRoundTimer);
+                            ui.btnNextRound.click();
+                        } else {
+                            ui.btnNextRound.textContent = `Sonraki Tura Geç (${timeLeft})`;
+                        }
+                    }, 1000);
                 }
             }
         }
@@ -1237,6 +1289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isHost) {
         if(ui.btnNextRound) {
             ui.btnNextRound.addEventListener('click', () => {
+                clearInterval(autoNextRoundTimer);
                 if (gameState.round > gameConfig.rounds) {
                     network.broadcast({ type: 'BACK_TO_LOBBY' });
                     backToLobby();
@@ -1277,6 +1330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function backToLobby() {
+        clearInterval(autoNextRoundTimer);
         gameState.status = 'LOBBY';
         gameState.round = 1;
         gameState.playerAnswers = {};
