@@ -59,14 +59,6 @@ class GizliKelimelerNetworkManager {
                 if (this.isHost) this.engine.processAction('END_TURN', {}, this.myId);
                 else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'END_TURN', payload: {} });
             },
-            onSendChat: (msg) => {
-                this.view.displayChat("Sen", msg, true);
-                if (this.isHost) {
-                    this.net.broadcast('CHAT', { sender: this.myName, msg }, this.myId);
-                } else {
-                    this.net.sendToPeer(this.hostId, 'CHAT', { sender: this.myName, msg });
-                }
-            },
             onKickPlayer: (id) => {
                 if (this.isHost && id !== this.myId) {
                     this.net.sendToPeer(id, 'KICKED');
@@ -185,12 +177,6 @@ class GizliKelimelerNetworkManager {
         }
         else if (action === 'ACTION' && this.isHost) {
             this.engine.processAction(payload.actionType, payload.payload, senderId);
-        }
-        else if (action === 'CHAT') {
-            this.view.displayChat(payload.sender, payload.msg);
-            if (this.isHost) {
-                this.net.broadcast('CHAT', payload, senderId);
-            }
         }
         else if (action === 'PLAY_SOUND') {
             this.playSound(payload.sound);

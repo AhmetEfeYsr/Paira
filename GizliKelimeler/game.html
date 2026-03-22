@@ -101,18 +101,18 @@
                 </div>
             </header>
 
-            <div class="game-layout">
-                <main class="play-area" style="overflow: auto;">
+            <div class="game-layout" style="display: flex; flex-direction: column; width: 100%;">
+                <main class="play-area" style="overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center;">
 
                     <!-- CLUE AREA -->
-                    <div class="clue-area glass-panel" id="clue-area" style="width: 100%; box-sizing: border-box;">
+                    <div class="clue-area glass-panel" id="clue-area" style="width: 100%; max-width: 1200px; box-sizing: border-box; margin-bottom: 1rem;">
                         <div id="clue-input-section" class="hidden" style="width: 100%; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                            <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20" style="margin: 0; min-width: 200px; flex: 1;">
-                            <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px; margin: 0;">
-                            <button id="btn-submit-clue" class="btn btn-primary" style="margin: 0; white-space: nowrap;">Gönder</button>
+                            <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20" style="margin: 0; min-width: 200px; flex: 1; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
+                            <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px; margin: 0; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
+                            <button id="btn-submit-clue" class="btn btn-primary" style="margin: 0; white-space: nowrap; padding: 12px 24px; border-radius: 8px;">Gönder</button>
                         </div>
                         <div id="clue-display-section" class="hidden" style="width: 100%; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
-                        <h2 id="current-clue-word" class="gradient-text" style="margin: 0; word-break: break-all; max-width: 100%;">İPUCU</h2>
+                            <h2 id="current-clue-word" class="gradient-text" style="margin: 0; word-break: break-all; max-width: 100%;">İPUCU</h2>
                             <div class="clue-badge" id="current-clue-count">Sayı: 2</div>
                             <div class="clue-badge" id="current-clue-rem">Kalan: 3</div>
                             <button id="btn-end-turn" class="btn btn-secondary hidden" style="margin: 0;">Turu Bitir</button>
@@ -120,24 +120,10 @@
                     </div>
 
                     <!-- BOARD -->
-                    <div class="board-container" style="width: 100%; box-sizing: border-box;">
+                    <div class="board-container" style="width: 100%; max-width: 1200px; box-sizing: border-box; display: flex; justify-content: center;">
                         <div id="game-board" class="game-board grid-5x5"></div>
                     </div>
                 </main>
-
-                <aside class="chat-panel card" style="display: flex; flex-direction: column;">
-                    <div style="color: var(--lilac); font-weight: 600; font-size: 1.1rem; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                        Oda Sohbeti
-                    </div>
-                    <div id="chat-messages" class="messages-container custom-scrollbar" style="flex-grow: 1; margin-bottom: 12px;"></div>
-                    <div class="chat-input-wrapper" style="display: flex; gap: 8px;">
-                        <input type="text" id="chat-input" autocomplete="off" placeholder="Mesaj yazın..." style="flex-grow: 1; padding: 12px; border-radius: 8px; margin: 0;">
-                        <button id="btn-send-chat" class="btn btn-primary btn-icon" style="padding: 0 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0;" aria-label="Gönder">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                    </div>
-                </aside>
             </div>
         </section>
 

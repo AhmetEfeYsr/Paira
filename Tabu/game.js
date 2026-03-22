@@ -235,7 +235,7 @@ class TabuGameEngine {
     startRenderTimer() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
 
-        let lastTickSec = -1;
+        if (this.lastTickSec === undefined) this.lastTickSec = -1;
 
         const tick = () => {
             if (this.state.status !== 'playing') return;
@@ -246,9 +246,9 @@ class TabuGameEngine {
 
                 if (this.onTimerTick) this.onTimerTick(secs, 'running');
 
-                if (secs <= 10 && secs > 0 && lastTickSec !== secs) {
+                if (secs <= 10 && secs > 0 && this.lastTickSec !== secs) {
                     if (this.onSound) this.onSound('tick');
-                    lastTickSec = secs;
+                    this.lastTickSec = secs;
                 }
 
                 if (left <= 0) {
@@ -269,6 +269,8 @@ class TabuGameEngine {
     endTurn() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
         if (this.onSound) this.onSound('timeup');
+
+        this.advanceWord(); // Yeni anlatıcıya yeni kelime geçmesi için
 
         this.state.turnIndex++;
         if (this.state.turnIndex >= this.state.turnOrder.length) {

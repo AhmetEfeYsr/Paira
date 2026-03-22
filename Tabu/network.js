@@ -194,6 +194,9 @@ class TabuNetworkManager {
             if (payload.durationLeft > 0) {
                 this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
             }
+            if (this.engine.state.status === 'playing') {
+                this.engine.startRenderTimer();
+            }
             this.view.updateUI(this.engine.state, this.isHost);
         }
         else if (action === 'ACTION' && this.isHost) {

@@ -288,20 +288,9 @@ class GizliKelimelerView {
 
         document.getElementById('btn-end-turn')?.addEventListener('click', () => this.callbacks.onEndTurn());
 
-        document.getElementById('btn-send-chat')?.addEventListener('click', () => this.sendChat());
-        document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') this.sendChat(); });
-
         document.getElementById('btn-back-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
         document.getElementById('btn-leave')?.addEventListener('click', () => this.callbacks.onLeave());
         document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
-    }
-
-    sendChat() {
-        const input = document.getElementById('chat-input');
-        const msg = input.value.trim();
-        if (!msg) return;
-        this.callbacks.onSendChat(msg);
-        input.value = '';
     }
 
     showScreen(screenId) {
@@ -496,18 +485,6 @@ class GizliKelimelerView {
         } else {
             btnBack.classList.add('hidden');
         }
-    }
-
-    displayChat(sender, msg, isSelf = false) {
-        const cBox = document.getElementById('chat-messages');
-        if (!cBox) return;
-        const div = document.createElement('div');
-        div.className = `chat-msg ${isSelf ? 'self' : ''}`;
-        const safeSender = sender.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const safeMsg = msg.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        div.innerHTML = `<strong>${safeSender}:</strong> ${safeMsg}`;
-        cBox.appendChild(div);
-        cBox.scrollTop = cBox.scrollHeight;
     }
 
     updateTimer(secs, status) {
