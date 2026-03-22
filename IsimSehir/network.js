@@ -97,7 +97,8 @@ class NetworkManager {
                 // Broadcast new player list to everyone
                 this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
             } else {
-                // I am client, send a hello if needed, or just wait for SYNC_PLAYERS
+                // I am client, start time synchronization with host
+                this.syncTimeWithHost();
             }
         };
 
@@ -143,6 +144,30 @@ class NetworkManager {
     }
 
     handleData(senderId, data) {
+        // Time synchronization: Handle ping/pong messages natively in network layer
+        if (data.type === 'TIME_PING' && this.isHost) {
+            // Reply to client with host's current time
+            this.sendTo(senderId, {
+                type: 'TIME_PONG',
+                clientTime: data.clientTime,
+                hostTime: Date.now()
+            });
+            return; // Don't pass to game logic
+        }
+        else if (data.type === 'TIME_PONG' && !this.isHost) {
+            // Calculate offset based on round trip time
+            const now = Date.now();
+            const rtt = now - data.clientTime;
+            const latency = rtt / 2;
+            const hostTimeAtArrival = data.hostTime + latency;
+            
+            // Override PairaTime offset for this client to perfectly match Host
+            if (window.PairaTime) {
+                window.PairaTime.offset = hostTimeAtArrival - now;
+            }
+            return; // Don't pass to game logic
+        }
+
         // Automatically route host broadcast to self
         if (data.type === 'SYNC_PLAYERS') {
             this.players = data.players;
@@ -181,7 +206,36 @@ class NetworkManager {
         }
     }
 
+    syncTimeWithHost() {
+        if (this.isHost) return;
+        
+        // Send a few pings to get a good average, but one is usually enough for a quick fix
+        const hostId = `isimsehir-host-${this.roomCode}`;
+        if (this.connections[hostId] && this.connections[hostId].open) {
+            this.connections[hostId].send({
+                type: 'TIME_PING',
+                clientTime: Date.now()
+            });
+            
+            // Periodically resync to handle clock drift
+            if (!this.syncInterval) {
+                this.syncInterval = setInterval(() => {
+                    if (this.connections[hostId] && this.connections[hostId].open) {
+                        this.connections[hostId].send({
+                            type: 'TIME_PING',
+                            clientTime: Date.now()
+                        });
+                    }
+                }, 10000); // Every 10 seconds
+            }
+        }
+    }
+
     disconnect() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+        }
         if (this.peer) {
             this.peer.destroy();
         }

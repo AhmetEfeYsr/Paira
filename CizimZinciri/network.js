@@ -132,6 +132,8 @@ function handleNetworkData(action, payload, senderId) {
             networkState.players[senderId] = { id: senderId, name: payload.name };
             broadcastState();
         } else if (action === 'SUBMIT_TASK') {
+            // Check round payload to avoid race conditions with late submissions
+            if (payload.round !== networkState.roundCount) return;
             // Prevent race condition: Ignore late submissions if already processed
             if (networkState.completedTasks[senderId]) return;
 
@@ -293,7 +295,7 @@ function startPhase(phase) {
     clearTimeout(turnTimeout);
     turnTimeout = setTimeout(() => {
         forceSubmitTasks();
-    }, networkState.turnDuration * 1000);
+    }, (networkState.turnDuration + 2) * 1000);
 }
 
 function forceSubmitTasks() {

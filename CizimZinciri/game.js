@@ -153,7 +153,7 @@ function submitPrompt() {
     document.getElementById('prompt-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
 
-    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text });
+    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text, round: networkState.roundCount });
 }
 
 function submitDrawing() {
@@ -162,7 +162,7 @@ function submitDrawing() {
     document.getElementById('draw-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
 
-    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL });
+    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
 
 export function startTimer(duration) {
@@ -199,12 +199,12 @@ function submitPromptFallback() {
             text = "... (Zamanında yazılamadı)";
         }
     }
-    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text });
+    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text, round: networkState.roundCount });
 }
 
 function submitDrawingFallback() {
     const dataURL = drawingBoard.getDataURL();
-    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL });
+    broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
 
 export function stopTimer() {

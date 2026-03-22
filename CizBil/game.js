@@ -51,7 +51,12 @@ export const isMatch = (guess, target) => {
     return false;
 };
 
+let isUIInitialized = false;
+
 export function initGameUI() {
+    if (isUIInitialized) return;
+    isUIInitialized = true;
+
     const canvasElement = document.getElementById('drawing-board');
     drawingBoard = new AdvancedDrawingBoard(canvasElement, {
         defaultColor: '#000000',

@@ -424,6 +424,8 @@ function startRound() {
     dIndex = (dIndex + 1) % activePlayers.length;
     networkState.currentDrawer = activePlayers[dIndex];
 
+    networkState.guessedCorrectly = []; // Reset correctly guessed players for new round
+
     // Pick words
     if (networkState.wordsLeft.length < 2) {
         networkState.wordsLeft = window.cizbilWords ? [...window.cizbilWords].sort(() => Math.random() - 0.5) : ["YEDEK_KELİME", "YEDEK_2"];
