@@ -161,20 +161,48 @@ function handleNetworkData(action, payload, senderId) {
         } else if (action === 'ALBUM_NEXT') {
             // Sadece host albümü ilerletir
             networkState.albumIndex++;
-            broadcastState({ action: 'ALBUM_UPDATE' });
+            networkManager.broadcast('ALBUM_INDEX_UPDATE', { albumIndex: networkState.albumIndex });
+            handlePlayingState({ action: 'ALBUM_UPDATE' });
         }
     } else {
         if (action === 'SYNC_STATE') {
             networkState = payload.state;
             if (networkState.state === 'LOBBY') updateLobbyUI();
             else handlePlayingState(payload.lastAction);
+        } else if (action === 'ALBUM_INDEX_UPDATE') {
+            networkState.albumIndex = payload.albumIndex;
+            handlePlayingState({ action: 'ALBUM_UPDATE' });
         }
     }
 }
 
 export function broadcastState(lastAction = null) {
     if (!isHost) return;
-    networkManager.broadcast('SYNC_STATE', { state: networkState, lastAction });
+
+    if (networkState.state === 'LOBBY') {
+        networkManager.broadcast('SYNC_STATE', { state: networkState, lastAction });
+    } else if (networkState.state === 'ALBUM') {
+        const stateToSend = { ...networkState, stories: {} };
+        networkManager.broadcast('SYNC_STATE', { state: stateToSend, lastAction });
+    } else {
+        Object.keys(networkManager.connections).forEach(peerId => {
+            if (peerId !== networkState.hostId) {
+                const stateToSend = { ...networkState };
+                stateToSend.stories = {};
+                const assignedBook = networkState.assignments[peerId];
+                if (assignedBook && networkState.stories[assignedBook]) {
+                    const storyArr = networkState.stories[assignedBook];
+                    if (storyArr.length > 0) {
+                        stateToSend.stories[assignedBook] = [ storyArr[storyArr.length - 1] ];
+                    } else {
+                        stateToSend.stories[assignedBook] = [];
+                    }
+                }
+                stateToSend.albumSequence = [];
+                networkManager.sendToPeer(peerId, 'SYNC_STATE', { state: stateToSend, lastAction });
+            }
+        });
+    }
 
     if (networkState.state === 'LOBBY') updateLobbyUI();
     else handlePlayingState(lastAction);
