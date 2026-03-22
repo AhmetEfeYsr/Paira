@@ -105,6 +105,15 @@ class KronoNetwork {
                 status: 'ready'
             }];
             this.game.updateLobbyUI();
+        } else {
+            this.game.players = [{
+                id: id,
+                name: this.playerName,
+                score: 0,
+                isHost: false,
+                status: 'ready'
+            }];
+            this.game.updateLobbyUI();
         }
     }
 
@@ -113,6 +122,13 @@ class KronoNetwork {
         if (display) {
             display.textContent = code;
             display.dataset.code = code;
+            
+            const eyeOpen = document.getElementById('icon-eye-open');
+            const eyeClosed = document.getElementById('icon-eye-closed');
+            if (eyeOpen && eyeClosed) {
+                eyeOpen.classList.remove('hidden');
+                eyeClosed.classList.add('hidden');
+            }
         }
         
         // Hide settings if not host

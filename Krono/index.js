@@ -108,6 +108,12 @@ class KronoLobby {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // SessionStorage'ı temizle
+    sessionStorage.removeItem('playerName');
+    sessionStorage.removeItem('isHost');
+    sessionStorage.removeItem('roomCode');
+    sessionStorage.removeItem('isSolo');
+
     if (document.getElementById('btn-host')) {
         new KronoLobby();
     }
