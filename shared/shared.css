@@ -738,6 +738,12 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     pointer-events: auto; /* Enable clicks on text links and buttons */
 }
 
+/* Ensure game UI is pushed up when cookie banner is shown to prevent overlap */
+body:has(.cookie-banner.show) .glass-panel,
+body:has(.cookie-banner.show) #app-container {
+    margin-bottom: 70px !important;
+}
+
 .floating-top-nav, .floating-left-nav {
     position: static;
     display: flex;
