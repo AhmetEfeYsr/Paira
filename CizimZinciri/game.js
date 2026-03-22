@@ -110,8 +110,8 @@ export function updateGameStateUI() {
         return;
     }
 
-    const assignedBookOwner = networkState.assignments[myId];
-    const storyHistory = networkState.stories[assignedBookOwner];
+    const assignedBookOwner = networkState.assignments ? networkState.assignments[myId] : null;
+    const storyHistory = (assignedBookOwner && networkState.stories) ? (networkState.stories[assignedBookOwner] || []) : [];
     const lastEntry = storyHistory.length > 0 ? storyHistory[storyHistory.length - 1] : null;
 
     if (state === 'WRITE') {

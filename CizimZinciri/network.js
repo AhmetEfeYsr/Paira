@@ -1,12 +1,12 @@
 // ÇizimZinciri/network.js
-import { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState } from './game.js';
+impor { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState } from './game.js';
 
 export let isHost = false;
 export let myId = null;
 export let networkManager = null;
 export let networkState = {
     state: 'LOBBY', // LOBBY, WRITE, DRAW, ALBUM, WAIT
-    players: {}, // { id: { name, score, id } }
+     {}, // { id: { name, score, id } }
     hostId: null,
     turnDuration: 60,
     roundCount: 1, // Current round
