@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('isHost');
     sessionStorage.removeItem('roomCode');
+    sessionStorage.removeItem('myId');
 
     const btnHost = document.getElementById('btn-host');
     const btnJoin = document.getElementById('btn-join');

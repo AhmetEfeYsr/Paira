@@ -104,6 +104,7 @@ class TabuNetworkManager extends BaseGameNetwork {
         super._handlePeerReady(id);
         this.view.setMyId(id);
         if (this.isHostNode) {
+            this.roomCode = id; // Sync roomCode with actual PeerJS ID
             this.lobbyUI.setRoomCode(id);
             this.view.updateUI(this.engine.state, this.isHostNode);
         }
@@ -149,6 +150,13 @@ class TabuNetworkManager extends BaseGameNetwork {
             this.engine.startRenderTimer();
         }
         this.view.updateUI(this.engine.state, this.isHostNode);
+
+        // Render player list for clients too
+        const myId = this.myId;
+        this.lobbyUI.renderPlayers(this.engine.state.players, myId, (p, isMe) => {
+            const safeName = p.name.replace(/</g, "<").replace(/>/g, ">");
+            return `<span>${p.isHost ? '👑 ' : ''}${safeName} ${isMe ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
+        });
     }
 
     onActionReceived(actionType, payload, senderId) {
@@ -185,7 +193,7 @@ class TabuNetworkManager extends BaseGameNetwork {
 
         this.broadcast('SYNC', {
             state: stateCopy,
-            hostId: this.roomCode,
+            hostId: this.myId,
             durationLeft: durationLeft
         });
         

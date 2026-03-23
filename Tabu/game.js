@@ -331,12 +331,13 @@ class TabuView {
         document.getElementById('btn-correct')?.addEventListener('click', () => this.callbacks.onAction('CORRECT'));
         document.getElementById('btn-taboo')?.addEventListener('click', () => this.callbacks.onAction('TABOO'));
         document.getElementById('btn-pass')?.addEventListener('click', () => this.callbacks.onAction('PASS'));
-        document.getElementById('btn-back-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
+        document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
 
         document.getElementById('btn-send-chat')?.addEventListener('click', () => this.sendChat());
         document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') this.sendChat(); });
 
-        document.getElementById('btn-leave')?.addEventListener('click', () => this.callbacks.onLeave());
+        document.getElementById('btn-leave-lobby')?.addEventListener('click', () => this.callbacks.onLeave());
+        document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
     }
 
     sendChat() {
@@ -458,7 +459,7 @@ class TabuView {
         let msg = "Berabere!";
         if (state.scoreA > state.scoreB) msg = "Takım A Kazandı!";
         else if (state.scoreB > state.scoreA) msg = "Takım B Kazandı!";
-        document.getElementById('winner-message').innerText = msg;
+        document.getElementById('winner-team-name').innerText = msg;
         document.getElementById('final-score-a').innerText = state.scoreA;
         document.getElementById('final-score-b').innerText = state.scoreB;
     }
