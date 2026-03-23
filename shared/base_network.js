@@ -44,7 +44,8 @@ class BaseGameNetwork extends window.PeerNetworkManager {
         }
 
         if (this.isHostNode) {
-            const customId = sessionStorage.getItem('myId') || this.generateRoomCode();
+            // Priority: Explicit roomCode from login, then existing myId, then new generation
+            const customId = sessionStorage.getItem('roomCode') || sessionStorage.getItem('myId') || this.generateRoomCode();
             return this.init(customId);
         } else {
             if (!this.roomCode) {

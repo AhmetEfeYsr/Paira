@@ -1,10 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // SessionStorage'ı temizle
-    sessionStorage.removeItem('playerName');
-    sessionStorage.removeItem('username');
-    sessionStorage.removeItem('isHost');
-    sessionStorage.removeItem('roomCode');
-    sessionStorage.removeItem('myId');
+    // SessionStorage'ı temizle - Temizleme işlemini daha garantiye almak için her açılışta yapıyoruz.
+    const keysToRemove = ['playerName', 'username', 'isHost', 'roomCode', 'myId', 'isSolo'];
+    keysToRemove.forEach(key => sessionStorage.removeItem(key));
 
     const btnHost = document.getElementById('btn-host');
     const btnJoin = document.getElementById('btn-join');
