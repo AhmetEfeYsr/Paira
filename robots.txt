@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Disallow hidden folders
+Disallow: /.*
+
+Sitemap: https://pairaaa.com/sitemap.xml
