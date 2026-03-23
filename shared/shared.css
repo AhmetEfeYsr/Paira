@@ -499,6 +499,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
 /* Game SEO Info */
 .game-seo-info {
     width: 100%;
+    max-width: 1200px;
     margin: 2rem auto;
     padding: 2rem;
     background: var(--card-bg);
