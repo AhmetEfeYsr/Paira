@@ -698,15 +698,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:foc
     justify-content: space-between;
     width: 100%;
     padding: 1rem 1.5rem;
-    position: absolute;
-    top: 0;
-    left: 0;
     z-index: 1000;
-    pointer-events: none;
-}
-
-.paira-global-nav > * {
-    pointer-events: auto;
 }
 
 .cookie-btn {
