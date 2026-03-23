@@ -4,9 +4,9 @@
 class TabuNetworkManager extends BaseGameNetwork {
     constructor(engine, view) {
         super({
-            onStateSync: (payload) => this.onStateSync(payload),
-            onPlayerJoin: (peerId, payload) => this.onPlayerJoin(peerId, payload),
-            onPlayerLeave: (peerId) => this.onPlayerLeave(peerId),
+            onStateSync: (payload) => this.handleStateSync(payload),
+            onPlayerJoin: (peerId, payload) => this.handlePlayerJoin(peerId, payload),
+            onPlayerLeave: (peerId) => this.handlePlayerLeave(peerId),
             onAction: (actionType, payload, senderId) => this.onActionReceived(actionType, payload, senderId)
         });
         
@@ -110,7 +110,7 @@ class TabuNetworkManager extends BaseGameNetwork {
         }
     }
 
-    onPlayerJoin(peerId, payload) {
+    handlePlayerJoin(peerId, payload) {
         const state = this.engine.state;
         if (state.players[peerId]) {
             state.players[peerId].name = payload.name;
@@ -126,7 +126,7 @@ class TabuNetworkManager extends BaseGameNetwork {
         this.broadcastState();
     }
 
-    onPlayerLeave(peerId) {
+    handlePlayerLeave(peerId) {
         const p = this.engine.state.players[peerId];
         if (p) {
             this.view.showToast(`${p.name} ayrıldı.`, "info");
@@ -139,7 +139,7 @@ class TabuNetworkManager extends BaseGameNetwork {
         }
     }
 
-    onStateSync(payload) {
+    handleStateSync(payload) {
         this.engine.setState(payload.state);
         if (payload.hostId) this.roomCode = payload.hostId;
 

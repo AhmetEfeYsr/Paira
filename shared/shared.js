@@ -221,17 +221,36 @@ window.showToast = function(msg, type = "info") {
 window.PairaTime = {
     offset: 0,
     async sync() {
-        try {
-            const start = performance.now();
-            const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
-            const data = await res.json();
-            const latency = (performance.now() - start) / 2;
-            const serverTime = new Date(data.utc_datetime).getTime() + latency;
-            this.offset = serverTime - Date.now();
-            console.log("Time synchronized. Offset:", this.offset);
-        } catch (e) {
-            console.warn("Time API sync failed", e);
+        const apis = [
+            'https://worldtimeapi.org/api/timezone/Etc/UTC',
+            'https://timeapi.io/api/Time/current/zone?timeZone=UTC'
+        ];
+        
+        for (const api of apis) {
+            try {
+                const start = performance.now();
+                const res = await fetch(api);
+                if (!res.ok) continue;
+                const data = await res.json();
+                const latency = (performance.now() - start) / 2;
+                
+                let serverTime;
+                if (data.utc_datetime) { // worldtimeapi
+                    serverTime = new Date(data.utc_datetime).getTime() + latency;
+                } else if (data.dateTime) { // timeapi.io
+                    serverTime = new Date(data.dateTime + 'Z').getTime() + latency;
+                }
+                
+                if (serverTime) {
+                    this.offset = serverTime - Date.now();
+                    console.log(`Time synchronized via ${api}. Offset:`, this.offset);
+                    return;
+                }
+            } catch (e) {
+                console.warn(`Time API sync failed for ${api}`, e);
+            }
         }
+        console.warn("All Time API syncs failed, using local time.");
     },
     now() {
         return Date.now() + this.offset;
