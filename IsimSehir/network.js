@@ -45,7 +45,8 @@ class NetworkManager extends window.PeerNetworkManager {
                         this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
                     }
                 } else {
-                    if (peerId.includes('host')) {
+                    const expectedHostId = `isimsehir-host-${this.roomCode}`;
+                    if (peerId === expectedHostId) {
                         if (this.onErrorCallback) this.onErrorCallback('host_disconnected');
                     }
                 }

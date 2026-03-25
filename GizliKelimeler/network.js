@@ -33,15 +33,28 @@ class GizliKelimelerNetworkManager {
         // Link View events to Network/Engine
         this.view.callbacks = {
             onSwitchTeam: () => {
+                if (this.engine.state.status !== 'lobby') return;
                 if (this.isHost) this.engine.switchTeam(this.myId);
                 else this.net.sendToPeer(this.hostId, 'SWITCH_TEAM');
             },
             onSwitchRole: () => {
+                if (this.engine.state.status !== 'lobby') return;
                 if (this.isHost) this.engine.switchRole(this.myId);
                 else this.net.sendToPeer(this.hostId, 'SWITCH_ROLE');
             },
             onStartGame: () => {
                 if (this.isHost) {
+                    const players = Object.values(this.engine.state.players);
+                    const teamA = players.filter(p => p.team === 'A');
+                    const teamB = players.filter(p => p.team === 'B');
+                    if (teamA.length === 0 || teamB.length === 0) {
+                        this.view.showToast("Her takımda en az 1 oyuncu olmalı!", "error");
+                        return;
+                    }
+                    if (!teamA.some(p => p.role === 'SPYMASTER') || !teamB.some(p => p.role === 'SPYMASTER')) {
+                        this.view.showToast("Her takımda en az 1 Ajan olmalı!", "error");
+                        return;
+                    }
                     const boardSize = document.getElementById('board-size')?.value || 25;
                     const turnDuration = document.getElementById('turn-duration')?.value || 90;
                     this.engine.startGame({ boardSize, turnDuration });
@@ -71,7 +84,17 @@ class GizliKelimelerNetworkManager {
             },
             onBackToLobby: () => {
                 if (this.isHost) {
-                    this.engine.setState({ status: 'lobby' });
+                    if (this.engine.renderFrame) cancelAnimationFrame(this.engine.renderFrame);
+                    this.engine.setState({
+                        status: 'lobby',
+                        board: [],
+                        scoreA: 0,
+                        scoreB: 0,
+                        winnerTeam: null,
+                        currentClue: null,
+                        phase: 'CLUE',
+                        turnTeam: 'A'
+                    });
                 }
             },
             onLeave: () => {
@@ -127,7 +150,6 @@ class GizliKelimelerNetworkManager {
             } else {
                 this.engine.state.players[id].name = this.myName;
                 this.engine.setState(this.engine.state);
-                this.engine.setState({});
             }
 
             const codeDisplay = document.getElementById('display-room-code');
@@ -161,9 +183,11 @@ class GizliKelimelerNetworkManager {
             this.broadcastState();
         }
         else if (action === 'SWITCH_TEAM' && this.isHost) {
+            if (this.engine.state.status !== 'lobby') return;
             this.engine.switchTeam(senderId);
         }
         else if (action === 'SWITCH_ROLE' && this.isHost) {
+            if (this.engine.state.status !== 'lobby') return;
             this.engine.switchRole(senderId);
         }
         else if (action === 'SYNC' && !this.isHost) {
@@ -201,7 +225,10 @@ class GizliKelimelerNetworkManager {
     onDisconnection(peerId) {
         if (this.isHost) {
             const p = this.engine.state.players[peerId];
-            if (p) this.view.showToast(`${p.name} bağlantısı koptu.`, "warning");
+            if (p) {
+                this.view.showToast(`${p.name} bağlantısı koptu.`, "warning");
+                this.engine.removePlayer(peerId);
+            }
         } else if (peerId === this.hostId) {
             this.view.showToast("Kurucu ile bağlantı koptu, lobiye dönülüyor...", "error");
             setTimeout(() => this.leaveRoom(), 2000);
@@ -244,7 +271,17 @@ class GizliKelimelerNetworkManager {
             });
         });
 
-        this.view.updateUI(this.engine.state, this.isHost);
+        // Host GUESSER ise tahta bilgisini maskele
+        const hostPlayer = this.engine.state.players[this.myId];
+        if (hostPlayer && hostPlayer.role === 'GUESSER') {
+            const maskedState = JSON.parse(JSON.stringify(this.engine.state));
+            maskedState.board.forEach(cell => {
+                if (!cell.revealed) cell.team = 'HIDDEN';
+            });
+            this.view.updateUI(maskedState, this.isHost);
+        } else {
+            this.view.updateUI(this.engine.state, this.isHost);
+        }
     }
 
     leaveRoom() {

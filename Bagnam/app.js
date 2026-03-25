@@ -4,6 +4,8 @@ const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/BagnamM
 let targetDate = ""; // Hedeflenen tarih (YYYY-MM-DD)
 let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, score: number }
 let hasWon = false;
+let hintsUsed = 0; // Kaç ipucu kullanıldı
+let hintDataCache = null;
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnGuess = document.getElementById('btn-guess');
     const wordInput = document.getElementById('word-input');
     const btnGiveup = document.getElementById('btn-giveup');
+    const btnHint = document.getElementById('btn-hint');
     const btnPlayPast = document.getElementById('btn-play-past');
     const datePicker = document.getElementById('past-date-picker');
 
@@ -36,12 +39,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     if(btnGiveup) btnGiveup.addEventListener('click', handleGiveUp);
+    if(btnHint) btnHint.addEventListener('click', handleHint);
 });
 
 function resetGameState() {
     targetDate = "";
     guesses = [];
     hasWon = false;
+    hintsUsed = 0;
+    hintDataCache = null;
+
+    const btnHint = document.getElementById('btn-hint');
+    if (btnHint) {
+        btnHint.textContent = "İpucu Al (3)";
+        btnHint.disabled = false;
+        btnHint.style.opacity = "1";
+    }
 
     document.getElementById('guess-count').textContent = "0";
     document.getElementById('word-input').value = "";
@@ -62,15 +75,15 @@ function resetGameState() {
 }
 
 function normalizeTurkishChars(str) {
-    // Artık veri tabanı direkt orjinal Türkçe kelimeleri barındırıyor (ağaç vb.).
-    // Sadece fallback amaçlı şapkalı harfleri veya I/i dönüşümlerini bırakıyoruz
-    // veya istenirse tamamen iade edebiliriz.
-    // Kullanıcı asi/aşı ayrımını korumak için ç,ğ,ö,ş,ü dönüştürmeyi iptal ediyoruz.
+    // Şapkalı harfler ve Türkçe karakterlerin İngilizce karşılıkları
     const charMap = {
-        'I': 'ı', 'İ': 'i',
-        'â': 'a', 'î': 'i', 'û': 'u'
+        'I': 'i', 'İ': 'i', 'ı': 'i',
+        'â': 'a', 'î': 'i', 'û': 'u',
+        'Â': 'a', 'Î': 'i', 'Û': 'u',
+        'ç': 'c', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
+        'Ç': 'c', 'Ğ': 'g', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
     };
-    return str.replace(/[Iİâîû]/g, char => charMap[char] || char).toLowerCase();
+    return str.replace(/[IİıâîûÂÎÛçğöşüÇĞÖŞÜ]/g, char => charMap[char] || char).toLowerCase();
 }
 
 function getTodayDateTR() {
@@ -144,40 +157,49 @@ async function handleGuess() {
     btnGuess.disabled = true;
 
     try {
-        const urlOriginal = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${word}.json`;
-        const urlNormalized = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${normalizedWord}.json`;
-
-        const [responseOriginal, responseNormalized] = await Promise.all([
-            fetch(urlOriginal),
-            fetch(urlNormalized)
-        ]);
-
-        if (!responseOriginal.ok || !responseNormalized.ok) {
-            throw new Error(`HTTP error! statuses: Original ${responseOriginal.status}, Normalized ${responseNormalized.status}`);
+        // Kullanıcı "ağaç" yazmış olabilir, "agac" yazmış olabilir.
+        // Veritabanında her iki versiyon da mevcut olabilir.
+        // O yüzden hem orijinal (küçük harf) hem de normalize edilmiş haliyle arama yapacağız.
+        let basesToCheck = [word];
+        if (word !== normalizedWord) {
+            basesToCheck.push(normalizedWord);
         }
 
-        const [dataOriginal, dataNormalized] = await Promise.all([
-            responseOriginal.json(),
-            responseNormalized.json()
-        ]);
-
-        let finalData = null;
-
-        if (dataOriginal === null && dataNormalized === null) {
-            finalData = null;
-        } else if (dataOriginal !== null && dataNormalized !== null) {
-            if (dataOriginal.r !== dataNormalized.r || dataOriginal.s !== dataNormalized.s) {
-                finalData = dataOriginal;
+        let wordsToCheck = [];
+        
+        for (const base of basesToCheck) {
+            const match = base.match(/_([1-5])$/);
+            if (match) {
+                if (!wordsToCheck.includes(base)) wordsToCheck.push(base);
             } else {
-                finalData = dataOriginal;
+                for (let i = 1; i <= 5; i++) {
+                    const withSuffix = `${base}_${i}`;
+                    if (!wordsToCheck.includes(withSuffix)) wordsToCheck.push(withSuffix);
+                }
             }
-        } else if (dataOriginal !== null) {
-            finalData = dataOriginal;
-        } else if (dataNormalized !== null) {
-            finalData = dataNormalized;
         }
 
-        if (finalData === null) {
+        const fetchPromises = wordsToCheck.map(w => 
+            fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${w}.json`)
+        );
+
+        const responses = await Promise.all(fetchPromises);
+        
+        let foundData = [];
+        
+        for (let i = 0; i < responses.length; i++) {
+            if (responses[i].ok) {
+                const data = await responses[i].json();
+                if (data !== null) {
+                    foundData.push({
+                        word: wordsToCheck[i],
+                        data: data
+                    });
+                }
+            }
+        }
+
+        if (foundData.length === 0) {
             // Word not found in the dataset
             showToast(`"${rawWord}" kelimesi sözlükte bulunamadı.`, "warning");
             inputEl.value = "";
@@ -185,16 +207,39 @@ async function handleGuess() {
             // Visual shake feedback
             inputEl.classList.add('error-shake');
             setTimeout(() => inputEl.classList.remove('error-shake'), 400);
-        } else if (typeof finalData === "object" && typeof finalData.r === "number" && typeof finalData.s === "number") {
-            const rank = finalData.r;
-            const score = finalData.s;
+        } else {
+            // Add all found homonyms as guesses
+            for (const item of foundData) {
+                const finalData = item.data;
+                const finalWord = item.word;
+                
+                if (typeof finalData === "object" && typeof finalData.r === "number" && typeof finalData.s === "number") {
+                    const rank = finalData.r;
+                    const score = finalData.s;
 
-            // Add guess
-            guesses.push({
-                word: word,
-                rank: rank,
-                score: score
-            });
+                    // Eğer kelime önceden eklenmişse atla (örneğin arka arkaya devrim_1 yazarsa)
+                    if(guesses.some(g => g.word === finalWord)) {
+                        continue;
+                    }
+
+                    // Add guess
+                    guesses.push({
+                        word: finalWord,
+                        rank: rank,
+                        score: score
+                    });
+
+                    // Check win condition
+                    if(rank === 1) {
+                        hasWon = true;
+                    }
+                }
+            }
+            
+            // Eğer none valid (foundData var ama data geçersizse)
+            if (guesses.length === 0 && !hasWon) {
+                 throw new Error("Geçersiz veri formatı döndü.");
+            }
 
             // Update UI
             document.getElementById('guess-count').textContent = guesses.length;
@@ -203,15 +248,12 @@ async function handleGuess() {
             // Re-render history list
             renderHistory();
 
-            // Check win condition
-            if(rank === 1) {
-                hasWon = true;
+            // Check win condition UI update
+            if(hasWon) {
                 handleWin();
             } else {
                 inputEl.focus();
             }
-        } else {
-             throw new Error("Geçersiz veri formatı döndü.");
         }
 
     } catch (error) {
@@ -326,6 +368,81 @@ async function handleGiveUp() {
         inputEl.disabled = false;
         btnGuess.disabled = false;
         btnGiveup.disabled = false;
+    }
+}
+
+// Utils
+async function handleHint() {
+    if (hasWon) return;
+    if (hintsUsed >= 3) {
+        showToast("Tüm ipucu haklarınızı kullandınız.", "warning");
+        return;
+    }
+
+    const btnHint = document.getElementById('btn-hint');
+    btnHint.disabled = true;
+
+    let hintKey = "";
+    let hintTitle = "";
+    let isDefinition = true;
+
+    // Hint mantığı:
+    // 1. İpucu: 300. tanım
+    // 2. İpucu: 300 bilinmediyse 300 kelime, bilindiyse 200 tanım
+    // 3. İpucu: 200 bilinmediyse 200 kelime, bilindiyse 100 tanım
+
+    if (hintsUsed === 0) {
+        hintKey = "hint-300-tanim";
+        hintTitle = "300. Kelime Tanımı";
+    } else if (hintsUsed === 1) {
+        const is300Guessed = guesses.some(g => g.rank === 300);
+        if (!is300Guessed) {
+            hintKey = "hint-300-kelime";
+            hintTitle = "300. Kelime";
+            isDefinition = false;
+        } else {
+            hintKey = "hint-200-tanim";
+            hintTitle = "200. Kelime Tanımı";
+        }
+    } else if (hintsUsed === 2) {
+        const is200Guessed = guesses.some(g => g.rank === 200);
+        if (!is200Guessed) {
+            hintKey = "hint-200-kelime";
+            hintTitle = "200. Kelime";
+            isDefinition = false;
+        } else {
+            hintKey = "hint-100-tanim";
+            hintTitle = "100. Kelime Tanımı";
+        }
+    }
+
+    try {
+        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
+        const response = await fetch(url);
+        
+        if (!response.ok) throw new Error("Fetch error");
+        const data = await response.json();
+
+        if (data) {
+            let displayData = isDefinition ? data : data.toLocaleUpperCase('tr-TR');
+            let hintMessage = `İpucu ${hintsUsed + 1} (${hintTitle}):\n\n${displayData}`;
+            
+            hintsUsed++;
+            btnHint.textContent = `İpucu Al (${3 - hintsUsed})`;
+            alert(hintMessage);
+        } else {
+            showToast("İpucu verisi bulunamadı.", "error");
+        }
+    } catch (error) {
+        console.error("İpucu çekilirken hata:", error);
+        showToast("İpucu alınamadı. Lütfen tekrar deneyin.", "error");
+    } finally {
+        if (hintsUsed < 3) {
+            btnHint.disabled = false;
+        } else {
+            btnHint.disabled = true;
+            btnHint.style.opacity = "0.5";
+        }
     }
 }
 

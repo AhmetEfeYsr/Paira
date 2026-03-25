@@ -90,7 +90,7 @@ class HizliIsimSehirGameEngine {
             .trim();
     }
 
-    async checkWikipedia(word, keywords) {
+    async checkWikipedia(word, keywords, requiredLetterLower) {
         const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
             const wikiRes = await fetch(wikiUrl);
@@ -101,6 +101,10 @@ class HizliIsimSehirGameEngine {
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
+                    
+                    if (requiredLetterLower && !title.startsWith(requiredLetterLower)) {
+                        continue;
+                    }
                     
                     const normTitle = this.normalizeForSearch(title);
                     const normSnippet = this.normalizeForSearch(snippet);
@@ -119,19 +123,23 @@ class HizliIsimSehirGameEngine {
         return false;
     }
 
-    async validateViaApi(catId, word) {
+    async validateViaApi(catId, word, requiredLetterLower) {
         if (!word) return false;
-        const cacheKey = `${catId}_${word}`;
+        const cacheKey = `${catId}_${word}_${requiredLetterLower}`;
         if (this.apiCache[cacheKey] !== undefined) return this.apiCache[cacheKey];
 
         let result = false;
         try {
             if (catId === 'sehir') {
-                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1`;
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
                 const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0' } });
                 const data = await response.json();
                 result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
-                if (!result) result = await this.checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent']);
+                if (result) {
+                    const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
+                    if (!nameLower.startsWith(requiredLetterLower)) result = false;
+                }
+                if (!result) result = await this.checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredLetterLower);
             }
             else if (catId === 'ulke') {
                 const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
@@ -139,8 +147,14 @@ class HizliIsimSehirGameEngine {
                 if (response.ok) {
                     const data = await response.json();
                     result = Array.isArray(data) && data.length > 0;
+                    if (result) {
+                        const trName = data[0].translations?.tur?.common?.toLocaleLowerCase('tr-TR');
+                        if (trName && !trName.startsWith(requiredLetterLower)) {
+                            result = false;
+                        }
+                    }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['ülke', 'cumhuriyet', 'devlet']);
+                if (!result) result = await this.checkWikipedia(word, ['ülke', 'cumhuriyet', 'devlet'], requiredLetterLower);
             }
             else if (catId === 'film_dizi') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
@@ -148,10 +162,15 @@ class HizliIsimSehirGameEngine {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.results) {
-                        result = data.results.some(item => item.wrapperType === 'track' && (item.kind === 'feature-movie' || item.kind === 'tv-episode'));
+                        const match = data.results.find(item => 
+                            item.wrapperType === 'track' && 
+                            (item.kind === 'feature-movie' || item.kind === 'tv-episode') &&
+                            item.trackName.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower)
+                        );
+                        result = !!match;
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel']);
+                if (!result) result = await this.checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel'], requiredLetterLower);
             }
             else if (catId === 'muzik') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
@@ -159,10 +178,14 @@ class HizliIsimSehirGameEngine {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.results) {
-                        result = data.results.some(item => (item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist');
+                        const match = data.results.find(item => 
+                            ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') &&
+                            (item.trackName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower) || item.artistName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower))
+                        );
+                        result = !!match;
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single']);
+                if (!result) result = await this.checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], requiredLetterLower);
             }
             else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
@@ -174,30 +197,33 @@ class HizliIsimSehirGameEngine {
                         result = data.artists.some(artist => {
                             const artistName = artist.name.toLocaleLowerCase('tr-TR');
                             const normArtistName = this.normalizeForSearch(artistName);
-                            return artistName.includes(word.toLocaleLowerCase('tr-TR')) || normArtistName.includes(normWord) ||
+                            const matchesName = artistName.includes(word.toLocaleLowerCase('tr-TR')) || normArtistName.includes(normWord) ||
                                 (artist.aliases && artist.aliases.some(a => {
                                     const aliasName = a.name.toLocaleLowerCase('tr-TR');
                                     return aliasName.includes(word.toLocaleLowerCase('tr-TR')) || this.normalizeForSearch(aliasName).includes(normWord);
                                 }));
+                            return matchesName && artistName.startsWith(requiredLetterLower);
                         });
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist']);
+                if (!result) result = await this.checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist'], requiredLetterLower);
             }
             else if (catId === 'yazar') {
                 const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
                 const response = await fetch(url);
                 if (response.ok) {
                     const data = await response.json();
-                    result = data.numFound > 0;
+                    if (data.docs) {
+                        result = data.docs.some(doc => doc.name.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower));
+                    }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat']);
+                if (!result) result = await this.checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat'], requiredLetterLower);
             }
             else if (catId === 'hastalik') {
-                result = await this.checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı']);
+                result = await this.checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], requiredLetterLower);
             }
             else if (catId === 'spor') {
-                result = await this.checkWikipedia(word, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat']);
+                result = await this.checkWikipedia(word, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat'], requiredLetterLower);
             }
         } catch (e) {
             result = false;
@@ -214,18 +240,22 @@ class HizliIsimSehirGameEngine {
             if (response.ok) {
                 const arr = await response.json();
                 const dict = new Set();
-                const normDict = new Set();
+                const normDict = new Map();
                 arr.forEach(w => {
                     const lower = w.toLocaleLowerCase('tr-TR');
                     dict.add(lower);
-                    normDict.add(this.normalizeForSearch(lower));
+                    const norm = this.normalizeForSearch(lower);
+                    if (!normDict.has(norm)) {
+                        normDict.set(norm, new Set());
+                    }
+                    normDict.get(norm).add(lower);
                 });
                 this.validationCache[catId] = { dict, normDict };
             } else {
-                this.validationCache[catId] = { dict: new Set(), normDict: new Set() };
+                this.validationCache[catId] = { dict: new Set(), normDict: new Map() };
             }
         } catch (e) {
-            this.validationCache[catId] = { dict: new Set(), normDict: new Set() };
+            this.validationCache[catId] = { dict: new Set(), normDict: new Map() };
         }
         return this.validationCache[catId];
     }
@@ -251,7 +281,7 @@ class HizliIsimSehirGameEngine {
 
         let score = 0;
 
-        if (word.length > 0 && (word.startsWith(letterLower) || normWord.startsWith(normLetter))) {
+        if (word.length > 0 && normWord.startsWith(normLetter)) {
             const isCustomCat = this.state.currentCategory.id.startsWith('custom_');
             let isValidInDict = false;
 
@@ -259,10 +289,23 @@ class HizliIsimSehirGameEngine {
                 isValidInDict = true;
             } else {
                 const dictObj = await this.loadDictionary(this.state.currentCategory.id);
-                if (dictObj && (dictObj.dict.has(word) || dictObj.normDict.has(normWord))) {
-                    isValidInDict = true;
-                } else if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
-                    isValidInDict = await this.validateViaApi(this.state.currentCategory.id, word);
+                if (dictObj) {
+                    if (dictObj.dict.has(word) && word.startsWith(letterLower)) {
+                        isValidInDict = true;
+                    } else if (dictObj.normDict.has(normWord)) {
+                        const originals = dictObj.normDict.get(normWord);
+                        for (const ow of originals) {
+                            if (ow.startsWith(letterLower)) {
+                                isValidInDict = true;
+                                word = ow; // Update to original correct spelling
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
+                    isValidInDict = await this.validateViaApi(this.state.currentCategory.id, word, letterLower);
                 }
             }
 
@@ -365,7 +408,7 @@ class HizliIsimSehirGameEngine {
     
     nextRound() {
         if (!this.isHost) return;
-        if (this.state.round > this.config.rounds) {
+        if (this.state.round >= this.config.rounds) {
             this.state.status = 'LOBBY';
             this.state.round = 1;
             for (const pId in this.state.players) {
@@ -706,7 +749,7 @@ class HizliIsimSehirView {
         this.voteTimer = setInterval(() => {
             secs--;
             if (tel) tel.textContent = `Süre: ${secs}`;
-            if (secs <= 0) clearInterval(this.voteTimer);
+            if (secs <= 0) { clearInterval(this.voteTimer); if (this.callbacks.onVoteTimeout) this.callbacks.onVoteTimeout(); }
         }, 1000);
     }
     

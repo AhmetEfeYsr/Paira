@@ -29,11 +29,16 @@ class NetworkManager {
         return code;
     }
 
-    init(isHost, roomCode, username) {
+    init(isHost, roomCode, username, existingId = null) {
         this.isHost = isHost === 'true' || isHost === true;
         this.roomCode = roomCode;
         this.username = username;
-        this.myId = this.isHost ? `vk-host-${this.roomCode}` : `vk-client-${this.generateClientId()}`;
+        
+        if (existingId && !this.isHost) {
+            this.myId = existingId;
+        } else {
+            this.myId = this.isHost ? `vk-host-${this.roomCode}` : `vk-client-${this.generateClientId()}`;
+        }
 
         this.peer = new Peer(this.myId, {
             debug: 2
@@ -92,15 +97,17 @@ class NetworkManager {
             this.connections[conn.peer] = conn;
 
             if (this.isHost) {
-                // Add client to players list
-                this.players[conn.peer] = {
-                    id: conn.peer,
-                    name: conn.metadata.username,
-                    isHost: false,
-                    isAlive: true,
-                    role: null,
-                    score: 0
-                };
+                // Add client to players list if not exists
+                if (!this.players[conn.peer]) {
+                    this.players[conn.peer] = {
+                        id: conn.peer,
+                        name: conn.metadata.username,
+                        isHost: false,
+                        isAlive: true,
+                        role: null,
+                        score: 0
+                    };
+                }
                 this.onPlayerJoin(this.players[conn.peer]);
 
                 // Broadcast new player list to everyone
@@ -146,8 +153,12 @@ class NetworkManager {
     handleData(senderId, data) {
         if (data.type === 'SYNC_PLAYERS') {
             this.players = data.players;
-            // Update UI list
-            Object.values(this.players).forEach(p => this.onPlayerJoin(p)); 
+            // Tek seferde lobideki listeyi güncelle
+            if (this.onPlayerJoin && Object.keys(this.players).length > 0) {
+                // Sadece trigger amaçlı son player ile çağır
+                const lastPlayer = Object.values(this.players).pop();
+                this.onPlayerJoin(lastPlayer);
+            }
         }
 
         // Pass payload to game logic

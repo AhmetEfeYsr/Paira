@@ -62,7 +62,7 @@ class GizliKelimelerEngine {
         }
     }
 
-    seededShuffle(arr) {
+    shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -129,7 +129,7 @@ class GizliKelimelerEngine {
 
     generateBoard(size, startingTeam) {
         let pool = [...this.allWords];
-        this.seededShuffle(pool);
+        this.shuffle(pool);
         const selectedWords = pool.slice(0, size);
 
         let teamA_count, teamB_count, neutral_count, assassin_count;
@@ -162,7 +162,7 @@ class GizliKelimelerEngine {
         for (let i = 0; i < neutral_count; i++) assignments.push('NEUTRAL');
         for (let i = 0; i < assassin_count; i++) assignments.push('ASSASSIN');
 
-        this.seededShuffle(assignments);
+        this.shuffle(assignments);
 
         this.state.board = selectedWords.map((word, idx) => ({
             id: idx,
@@ -401,9 +401,9 @@ class GizliKelimelerView {
             inputSec.classList.add('hidden');
             displaySec.classList.remove('hidden');
 
-            document.getElementById('current-clue-word').innerText = state.currentClue.word;
-            document.getElementById('current-clue-count').innerText = `Sayı: ${state.currentClue.count}`;
-            document.getElementById('current-clue-rem').innerText = `Kalan: ${state.currentClue.remaining}`;
+            document.getElementById('current-clue-word').innerText = state.currentClue ? state.currentClue.word : '';
+            document.getElementById('current-clue-count').innerText = state.currentClue ? `Sayı: ${state.currentClue.count}` : '';
+            document.getElementById('current-clue-rem').innerText = state.currentClue ? `Kalan: ${state.currentClue.remaining}` : '';
 
             if (amITurnTeam && !amISpymaster) {
                 statusMsg.innerText = "Tahmin Yap!";
@@ -419,13 +419,23 @@ class GizliKelimelerView {
 
     renderBoard(state, amISpymaster, canGuess) {
         const boardEl = document.getElementById('game-board');
-        boardEl.className = `game-board grid-${Math.sqrt(state.boardSize)}x${Math.sqrt(state.boardSize)}`;
+        if (!boardEl) return;
+        
+        // Ensure grid class is correctly applied
+        const cols = Math.sqrt(state.boardSize) || 5;
+        boardEl.className = `game-board grid-${cols}x${cols}`;
         boardEl.innerHTML = '';
 
         state.board.forEach((cell, idx) => {
             const card = document.createElement('div');
             card.className = 'board-card';
-            card.innerText = cell.word;
+            
+            // Use a span to ensure text is centered and pointer-events are passed to the card
+            const textSpan = document.createElement('span');
+            textSpan.style.pointerEvents = 'none';
+            textSpan.style.wordBreak = 'break-word';
+            textSpan.innerText = cell.word || '';
+            card.appendChild(textSpan);
 
             if (cell.revealed) {
                 card.classList.add('revealed');
@@ -442,7 +452,15 @@ class GizliKelimelerView {
             }
 
             if (!cell.revealed && canGuess) {
-                card.onclick = () => this.callbacks.onGuessWord(idx);
+                card.style.cursor = 'pointer';
+                card.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.callbacks.onGuessWord(idx);
+                };
+            } else {
+                card.style.cursor = 'default';
+                card.onclick = null;
             }
 
             boardEl.appendChild(card);

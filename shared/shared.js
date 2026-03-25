@@ -124,7 +124,7 @@ class PairaSharedUI {
         const cookieHTML = `
         <div id="cookieBanner" class="cookie-banner">
             <div class="cookie-text">
-                Sitemiz deneyiminizi geliştirmek için çerezleri (cookies) ve yerel depolama teknolojilerini kullanır. Oyuna devam ederek <a href="${basePath}kullanim-kosullari.html">Kullanım Koşulları ve Gizlilik Politikamızı</a> kabul etmiş olursunuz.
+                Deneyiminizi iyileştirmek için çerezleri kullanıyoruz. Paira'da eğlenceye devam ederek <a href="${basePath}kullanim-kosullari.html">Kullanım Koşulları ve Gizlilik Politikamızı</a> kabul etmiş sayılırsınız.
             </div>
             <button class="cookie-btn" onclick="window.pairaUI.acceptCookies()">Anladım</button>
         </div>

@@ -271,8 +271,12 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
     align-items: center;
     justify-content: center;
     word-break: break-word;
+    overflow-wrap: anywhere;
     min-height: 80px;
+    min-width: 0;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 10;
 }
 
 .board-card:hover {

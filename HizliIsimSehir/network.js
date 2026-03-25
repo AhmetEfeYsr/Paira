@@ -26,10 +26,7 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
         });
 
         if (this.isHostNode) {
-            this.engine.onStateChange = (state) => {
-                this.view.updateGameUI(state);
-                this.broadcastState({ state: state });
-            };
+            // onStateChange is set in DOMContentLoaded to include timer sync
 
             this.engine.onTurnResult = (result) => {
                 this.view.showTurnResult(result.word, result.score, result.playerId, result.canAppeal);
@@ -181,6 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         onExtendGame: (extraRounds) => {
             if (isHost) engine.extendGame(extraRounds);
+        },
+        onVoteTimeout: () => {
+            if (isHost) engine.endVote();
         }
     });
 

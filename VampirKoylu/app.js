@@ -9,24 +9,52 @@ let myId = '';
 let network = null;
 
 let gameState = {
-    status: 'LOBBY', // LOBBY, NIGHT, DAY, VOTING, END
+    status: 'LOBBY', // LOBBY, NIGHT, DAY_DISCUSSION, VOTING, END, NIGHT_ANIMATION, DAY_ANIMATION
     dayCount: 0,
-    players: {},
+    players: {}, // id -> { id, name, isAlive, role, team, ... }
     settings: {
         vampireCount: 1,
-        doctor: true,
-        seer: true,
         discussionTime: 90
     },
-    nightActions: {}, // { killerId: targetId, doctorId: targetId, seerId: targetId }
-    votes: {}, // { voterId: targetId }
-    logs: [] // string array
+    nightActions: {}, 
+    dayActions: {}, 
+    votes: {},
+    logs: [],
+    winnerMsg: '',
+    campfireActive: true
 };
 
 let timerInterval = null;
 let currentTimer = 0;
+let pendingActionTarget = null;
+let roleModalShown = false;
 
-// UI Elements
+// Roles Definition
+const ROLES = {
+    KOYLU: { name: 'Köylü', team: 'KOY', hasNightAction: false, hasDayAction: false, desc: 'Sıradan bir köylüsün. Tartışarak vampirleri bulmaya çalış.' },
+    DOKTOR: { name: 'Doktor', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini iyileştirip korursun. Aynı kişiyi arka arkaya koruyamazsın. Kendini yalnızca 1 kez koruyabilirsin.' },
+    INTIKAMCI: { name: 'İntikamcı', team: 'KOY', hasNightAction: false, hasDayAction: true, desc: 'İlk gün birini intikam hedefi seçersin. Eğer asılırsan, hedefin de seninle birlikte ölür.' },
+    UYURGEZER: { name: 'Uyurgezer', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece birinin evine gidersin. Bir vampirin evine gidersen ölürsün.' },
+    GOZCU: { name: 'Gözcü', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece birinin evini izlersin. O gece eve kim geldiyse öğrenirsin.' },
+    DEDEKTIF: { name: 'Dedektif', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece 2 kişi seçersin. Bu iki kişinin aynı takımda olup olmadığını öğrenirsin.' },
+    SERIF: { name: 'Şerif', team: 'KOY', hasNightAction: false, hasDayAction: true, desc: 'Gündüz birini vurabilirsin (1 kullanım). Masum birini vurursan vicdan azabından ölürsün.' },
+    TUZAKCI: { name: 'Tuzakçı', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece birinin evine tuzak kurarsın. O eve gelen herkesin aksiyonu iptal olur.' },
+    POLIS: { name: 'Polis', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini takip eder ve bloklar. Bloklanmış kişinin gece aksiyonu iptal olur.' },
+    IZCI: { name: 'İzci', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Her gece birinin rolünü öğrenirsin.' },
+    DELI: { name: 'Deli', team: 'KOY', hasNightAction: true, hasDayAction: false, desc: 'Gözcü, İzci veya Dedektif gibi davranırsın ama aldığın bilgiler tamamen rastgeledir.' },
+    
+    VAMPIR: { name: 'Sıradan Vampir', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Her gece diğer vampirlerle birlikte bir kurban seçersin.' },
+    DRACULA: { name: 'Dracula', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin ama İzci ve Dedektif seni köylü olarak görür.' },
+    VAMPIR_IZCISI: { name: 'Vampir İzcisi', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin. Tuzaklara ve polis bloğuna bağışıksın.' },
+    PROFESYONEL: { name: 'Profesyonel', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin. Hedefin doktor korumasını bile deler (1 kullanım).' },
+    ZEHIRLI: { name: 'Zehirli', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin. Bir kişiyi zehirlersin; ertesi gece tedavi edilmezse ölür (1 kullanım).' },
+    
+    SOYTARI: { name: 'Soytarı', team: 'TARAFSIZ', hasNightAction: false, hasDayAction: false, desc: 'Tek amacın oylamada asılmak. Asılırsan kazanırsın!' },
+    HIRSIZ: { name: 'Hırsız', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'İlk gece birini seçersin. Hedefin ölürse, onun rolünü ve takımını devralırsın.' },
+    KUNDAKCI: { name: 'Kundakçı', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini benzinle ıslat. Kendini seçersen ıslatılmış herkes yanar.' },
+    SERI_KATIL: { name: 'Seri Katil', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini öldürürsün. Polis seni bloklamaya çalışırsa başarısız olur. Son hayatta kalan ol.' }
+};
+
 const els = {
     screens: {
         lobby: document.getElementById('lobby-screen'),
@@ -43,12 +71,7 @@ const els = {
         clientWaiting: document.getElementById('client-waiting'),
         hostNameDisplay: document.getElementById('host-name-display'),
         btnStart: document.getElementById('btn-start-game'),
-        startError: document.getElementById('start-error-text'),
-        
-        // Settings
         vampires: document.getElementById('setting-vampires'),
-        doctor: document.getElementById('setting-doctor'),
-        seer: document.getElementById('setting-seer'),
         discussionTime: document.getElementById('setting-discussion-time')
     },
     game: {
@@ -59,7 +82,17 @@ const els = {
         actionTitle: document.getElementById('action-title'),
         actionPlayers: document.getElementById('action-players-container'),
         btnSkip: document.getElementById('btn-skip-action'),
-        logs: document.getElementById('game-logs')
+        btnConfirm: document.getElementById('btn-confirm-action'),
+        logs: document.getElementById('game-logs'),
+        actionPanel: document.getElementById('action-panel'),
+        rolesList: document.getElementById('roles-list'),
+        privateLogs: document.getElementById('private-info-logs'),
+        animOverlay: document.getElementById('animation-overlay'),
+        animStatusText: document.getElementById('animation-status-text'),
+        roleModal: document.getElementById('role-modal'),
+        roleModalName: document.getElementById('role-modal-name'),
+        roleModalDesc: document.getElementById('role-modal-desc'),
+        btnCloseRoleModal: document.getElementById('btn-close-role-modal')
     },
     score: {
         title: document.getElementById('end-game-title'),
@@ -69,8 +102,7 @@ const els = {
     }
 };
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
     isHost = sessionStorage.getItem('isHost') === 'true';
     roomCode = sessionStorage.getItem('roomCode');
     username = sessionStorage.getItem('username');
@@ -81,10 +113,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (window.PairaAudio) window.PairaAudio.init();
+    
+    if (window.initGameScene) {
+        window.initGameScene('game-container');
+    } else {
+        setTimeout(() => {
+            if (window.initGameScene) window.initGameScene('game-container');
+        }, 500);
+    }
 
     setupUI();
     initNetwork();
-});
+
+    // 3D Raycaster Click Hook
+    window.onPlayerSelected = (targetId) => {
+        if (!els.game.actionPanel.classList.contains('hidden') && targetId) {
+            const valid = Array.from(els.game.actionPlayers.children).find(c => c.dataset.id === targetId);
+            if (valid && !valid.classList.contains('dead')) {
+                document.querySelectorAll('.player-action-card').forEach(c => c.classList.remove('selected'));
+                valid.classList.add('selected');
+                pendingActionTarget = targetId;
+                els.game.btnConfirm.classList.remove('hidden');
+            }
+        }
+    };
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
 
 function setupUI() {
     els.lobby.codeDisplay.dataset.code = roomCode;
@@ -113,58 +168,164 @@ function setupUI() {
     els.game.btnSkip.addEventListener('click', () => {
         submitAction('skip');
     });
+
+    els.game.btnConfirm.addEventListener('click', () => {
+        if (pendingActionTarget) {
+            submitAction(pendingActionTarget);
+            pendingActionTarget = null;
+        }
+    });
+
+    els.game.btnCloseRoleModal.addEventListener('click', () => {
+        els.game.roleModal.classList.add('hidden');
+    });
 }
 
 function initNetwork() {
-    network = new NetworkManager(
-        onStateUpdate,
-        onPlayerJoin,
-        onPlayerLeave,
-        onError
-    );
+    network = new NetworkManager(onStateUpdate, onPlayerJoin, onPlayerLeave, onError);
     network.init(isHost, roomCode, username);
     myId = network.myId;
+    
+    // gameScene ve myId sync için peer bağlantısının kurulmasını bekle
+    const checkReady = setInterval(() => {
+        if (network.peer && network.peer.id) {
+            myId = network.myId;
+            if (window.gameScene) window.gameScene.setLocalPlayer(myId);
+            clearInterval(checkReady);
+        }
+    }, 200);
 }
 
-// Network Callbacks
 function onPlayerJoin(player) {
-    if (isHost) {
-        // If host, store in our local auth state
+    if (isHost && gameState.status === 'LOBBY') {
         gameState.players[player.id] = player;
     }
-    updateLobbyPlayersList(network.players);
+    if (network && network.players) {
+        updateLobbyPlayersList(network.players);
+        update3DScene(network.players);
+    }
 }
 
 function onPlayerLeave(player) {
-    if (isHost) {
-        if (gameState.players[player.id]) {
-            gameState.players[player.id].isAlive = false;
+    if (isHost && gameState.players[player.id]) {
+        gameState.players[player.id].isAlive = false;
+        
+        // Ayrılan oyuncunun bekleyen aksiyonlarını temizle
+        if (gameState.nightActions) delete gameState.nightActions[player.id];
+        if (gameState.votes) delete gameState.votes[player.id];
+        if (gameState.dayActions) delete gameState.dayActions[player.id];
+        
+        if (gameState.status !== 'LOBBY' && gameState.status !== 'END') {
+            // Aksiyonları yeniden kontrol et
+            if (gameState.status === 'NIGHT') checkNightEnd();
+            else if (gameState.status === 'VOTING') checkVotingEnd();
+            checkWin();
         }
     }
-    updateLobbyPlayersList(network.players);
+    if (network && network.players) {
+        updateLobbyPlayersList(network.players);
+    }
     if(gameState.status !== 'LOBBY' && gameState.status !== 'END') {
         addLog(`${player.name} oyundan ayrıldı.`);
-        // In a full game, check if this triggers end game
     }
 }
 
 function onError(err) {
-    showToast("Bağlantı hatası: " + err, "error");
     if (err === 'host_disconnected') {
+        attemptHostMigration();
+    } else {
+        showToast("Bağlantı hatası: " + err, "error");
         setTimeout(() => window.location.href = 'index.html', 2000);
     }
+}
+
+function attemptHostMigration() {
+    if (gameState.status === 'LOBBY' || gameState.status === 'END') {
+        showToast("Kurucu koptu, lobiye dönülüyor...", "error");
+        setTimeout(() => window.location.href = 'index.html', 2000);
+        return;
+    }
+    
+    addLog("Kurucu bağlantısı koptu! Yeni kurucu seçiliyor...");
+    showToast("Kurucu düştü, host migration başlatılıyor...", "warning");
+    
+    let pIds = Object.keys(gameState.players).sort();
+    let oldHostId = pIds.find(id => gameState.players[id].isHost);
+    
+    if (oldHostId) {
+        gameState.players[oldHostId].isAlive = false;
+        pIds = pIds.filter(id => id !== oldHostId);
+    }
+    
+    if (pIds.length === 0) {
+        setTimeout(() => window.location.href = 'index.html', 2000);
+        return;
+    }
+    
+    let newHostId = pIds[0];
+    let oldMyId = myId;
+    
+    network.disconnect();
+    
+    setTimeout(() => {
+        network = new NetworkManager(onStateUpdate, onPlayerJoin, onPlayerLeave, onError);
+        if (oldMyId === newHostId) {
+            addLog("Yeni kurucu sensin! Oyun devam ediyor.");
+            showToast("Yeni kurucu siz oldunuz!", "success");
+            
+            sessionStorage.setItem('isHost', 'true');
+            isHost = true;
+            gameState.players[oldMyId].isHost = true;
+            
+            network.init(true, roomCode, username);
+            network.players = gameState.players;
+            myId = network.myId; 
+            
+            // Re-map myId in gameState if it changed (vk-host-ROOM vs vk-client-xyz)
+            if (myId !== oldMyId) {
+                gameState.players[myId] = gameState.players[oldMyId];
+                gameState.players[myId].id = myId;
+                delete gameState.players[oldMyId];
+            }
+            
+            setTimeout(() => { broadcastState(); }, 3000);
+            
+        } else {
+            addLog(`Yeni kurucu ${gameState.players[newHostId].name} oldu. Yeniden bağlanılıyor...`);
+            network.init(false, roomCode, username, oldMyId);
+            myId = network.myId;
+        }
+    }, 1500);
 }
 
 function onStateUpdate(senderId, data) {
     if (data.type === 'GAME_STATE') {
         gameState = data.state;
+        if (gameState.timerEndTime) startClientTimer(gameState.timerEndTime);
         updateUIForState();
+        update3DSceneFromState();
+    } else if (data.type === 'PRIVATE_LOG_CLEAR') {
+        els.game.privateLogs.innerHTML = '<div style="color: #666; font-style: italic;">Henüz özel bir bilgi almadınız...</div>';
     } else if (data.type === 'ACTION' && isHost) {
         handlePlayerAction(senderId, data.action, data.target);
+    } else if (data.type === 'PRIVATE_LOG' && data.target === myId) {
+        addPrivateLog(data.msg);
+    } else if (data.type === 'PLAY_ANIMATIONS' && data.target === myId) {
+        if (window.gameScene) {
+            data.anims.forEach(anim => {
+                window.gameScene.animatePlayerAction(anim.actorId, anim.targetId, anim.type);
+            });
+            if(data.watchHouseId) {
+                window.gameScene.watchHouse(data.watchHouseId);
+            }
+        }
+    } else if (data.type === 'HANG_ANIMATION') {
+        if (window.gameScene) {
+            window.gameScene.animateHang(data.targetId);
+        }
     }
 }
 
-// UI Updaters
 function updateLobbyPlayersList(playersObj) {
     els.lobby.playersList.innerHTML = '';
     const players = Object.values(playersObj);
@@ -172,63 +333,71 @@ function updateLobbyPlayersList(playersObj) {
 
     players.forEach(p => {
         const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${p.name}</span>
-            ${p.isHost ? '<span style="font-size: 0.8rem; background: var(--lilac); color: var(--bg-deep); padding: 2px 8px; border-radius: 10px; font-weight: bold;">Kurucu</span>' : ''}
-        `;
+        li.innerHTML = `<span>${p.name}</span>${p.isHost ? '<span style="font-size: 0.8rem; background: var(--lilac); color: var(--bg-deep); padding: 2px 8px; border-radius: 10px; font-weight: bold;">Kurucu</span>' : ''}`;
         els.lobby.playersList.appendChild(li);
-        
         if (p.isHost) els.lobby.hostNameDisplay.textContent = p.name;
     });
 }
 
+function update3DScene(playersObj) {
+    if(window.gameScene) {
+        const arr = Object.values(playersObj).map(p => ({
+            id: p.id,
+            name: p.name,
+            isAlive: p.isAlive !== false
+        }));
+        window.gameScene.updatePlayers(arr);
+    }
+}
+
+function update3DSceneFromState() {
+    if(window.gameScene) {
+        const arr = Object.values(gameState.players).map(p => ({
+            id: p.id,
+            name: p.name,
+            isAlive: p.isAlive
+        }));
+        window.gameScene.updatePlayers(arr);
+        window.gameScene.setNight(gameState.status === 'NIGHT' || gameState.status === 'NIGHT_ANIMATION');
+        window.gameScene.setCampfireActive(gameState.campfireActive);
+    }
+}
+
 function switchScreen(screenId) {
-    Object.values(els.screens).forEach(s => s.classList.remove('active'));
-    Object.values(els.screens).forEach(s => s.classList.add('hidden'));
-    
+    Object.values(els.screens).forEach(s => { s.classList.remove('active'); s.classList.add('hidden'); });
     const target = document.getElementById(screenId);
-    if (target) {
-        target.classList.remove('hidden');
-        target.classList.add('active');
+    if (target) { target.classList.remove('hidden'); target.classList.add('active'); }
+    // 3D sahne tıklama: sadece oyun ekranında aktif
+    if (screenId === 'game-screen') {
+        document.body.classList.add('game-active');
+    } else {
+        document.body.classList.remove('game-active');
     }
 }
 
 function updateUIForState() {
-    if (gameState.status === 'LOBBY') {
-        switchScreen('lobby-screen');
-    } else if (gameState.status === 'END') {
-        switchScreen('score-screen');
-        renderEndGame();
-    } else {
-        switchScreen('game-screen');
-        renderGameScreen();
-    }
+    if (gameState.status === 'LOBBY') switchScreen('lobby-screen');
+    else if (gameState.status === 'END') { switchScreen('score-screen'); renderEndGame(); }
+    else { switchScreen('game-screen'); renderGameScreen(); }
 }
 
-// Game Logic
 function handleStartGame() {
     if (!isHost) return;
-    
     const pCount = Object.keys(gameState.players).length;
     const vCount = parseInt(els.lobby.vampires.value);
+    const hasDoctor = document.getElementById('setting-doctor')?.value === '1';
+    const hasSeer = document.getElementById('setting-seer')?.value === '1';
     
-    if (pCount < 3) {
-        showToast("En az 3 oyuncu gerekli!", "error");
-        return;
-    }
-    
-    if (vCount >= pCount) {
-        showToast("Vampir sayısı oyuncu sayısından az olmalı!", "error");
-        return;
-    }
+    if (pCount < 3) { showToast("En az 3 oyuncu gerekli!", "error"); return; }
+    if (vCount >= pCount) { showToast("Vampir sayısı oyuncu sayısından az olmalı!", "error"); return; }
 
-    gameState.settings = {
-        vampireCount: vCount,
-        doctor: els.lobby.doctor.value === "1",
-        seer: els.lobby.seer.value === "1",
-        discussionTime: parseInt(els.lobby.discussionTime.value)
+    gameState.settings = { 
+        vampireCount: vCount, 
+        discussionTime: parseInt(els.lobby.discussionTime.value) || 90,
+        hasDoctor: hasDoctor,
+        hasSeer: hasSeer
     };
-
+    
     assignRoles();
     
     gameState.status = 'NIGHT';
@@ -236,90 +405,246 @@ function handleStartGame() {
     gameState.logs = ['Oyun başladı! Roller dağıtıldı.'];
     gameState.nightActions = {};
     gameState.votes = {};
+    gameState.campfireActive = true;
+    
+    // Clear private logs
+    network.broadcast({ type: 'PRIVATE_LOG_CLEAR' });
 
     broadcastState();
+
+    // G9: Notify Oduncu
+    setTimeout(() => {
+        Object.values(gameState.players).forEach(p => {
+            if (p.isOduncu) {
+                sendPrivateLog(p.id, 'Sen köyün Oduncususun! Eğer ölürsen kamp ateşi sönecek.');
+            }
+        });
+    }, 1000);
 }
 
 function assignRoles() {
     const pIds = Object.keys(gameState.players);
-    // Shuffle
     for (let i = pIds.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pIds[i], pIds[j]] = [pIds[j], pIds[i]];
     }
     
     let index = 0;
-    
-    // Assign Vampires
+    // Vampires — now includes Dracula, Zehirli, Vampir İzcisi (G1)
+    const vampRolePool = ['VAMPIR'];
+    if (pIds.length >= 6)  vampRolePool.push('PROFESYONEL');
+    if (pIds.length >= 8)  vampRolePool.push('DRACULA');
+    if (pIds.length >= 10) vampRolePool.push('ZEHIRLI');
+    if (pIds.length >= 12) vampRolePool.push('VAMPIR_IZCISI');
     for (let i = 0; i < gameState.settings.vampireCount; i++) {
-        gameState.players[pIds[index++]].role = 'Vampir';
+        let vRole = i < vampRolePool.length ? vampRolePool[i] : 'VAMPIR';
+        gameState.players[pIds[index++]].role = vRole;
     }
     
-    // Assign Doctor
-    if (gameState.settings.doctor && index < pIds.length) {
-        gameState.players[pIds[index++]].role = 'Doktor';
-    }
+    // Other Roles Based on Count — expanded pool
+    const rolesToAdd = [];
+    if(pIds.length >= 3 && gameState.settings.hasDoctor) rolesToAdd.push('DOKTOR');
+    if(pIds.length >= 4 && gameState.settings.hasSeer) rolesToAdd.push('GOZCU');
+    if(pIds.length >= 5) rolesToAdd.push('SERI_KATIL');
+    if(pIds.length >= 6) rolesToAdd.push('POLIS');
+    if(pIds.length >= 7) rolesToAdd.push('SERIF');
+    if(pIds.length >= 8) rolesToAdd.push('TUZAKCI');
+    if(pIds.length >= 9) rolesToAdd.push('IZCI');
+    if(pIds.length >= 10) rolesToAdd.push('DEDEKTIF');
+    if(pIds.length >= 11) rolesToAdd.push('KUNDAKCI');
+    if(pIds.length >= 12) rolesToAdd.push('INTIKAMCI');
     
-    // Assign Seer
-    if (gameState.settings.seer && index < pIds.length) {
-        gameState.players[pIds[index++]].role = 'Büyücü';
-    }
+    rolesToAdd.forEach(r => {
+        if(index < pIds.length) gameState.players[pIds[index++]].role = r;
+    });
     
-    // Assign Villagers
     while (index < pIds.length) {
-        gameState.players[pIds[index++]].role = 'Köylü';
+        gameState.players[pIds[index++]].role = 'KOYLU';
     }
+    
+    // Assign Oduncu randomly to one Koylu
+    let koyluler = Object.values(gameState.players).filter(p => p.role === 'KOYLU');
+    if(koyluler.length > 0) {
+        koyluler[Math.floor(Math.random()*koyluler.length)].isOduncu = true;
+    }
+
+    Object.values(gameState.players).forEach(p => {
+        p.team = ROLES[p.role]?.team || 'KOY';
+        p.selfHealCount = 0;
+        p.lastHealed = null;
+        p.usedAbility = false;
+        p.isPoisoned = false;
+        p.isDoused = false;
+        p.fakeRole = null;
+        p.hirsizTarget = null;
+        p.intikamciTarget = null;
+    });
 }
 
 function broadcastState() {
     if (isHost) {
-        network.broadcast({ type: 'GAME_STATE', state: gameState });
-        updateUIForState(); // Update local UI
+        // G5: Compute role counts and send sanitized state per-client
+        const roleCounts = {};
+        Object.values(gameState.players).forEach(p => {
+            if (p.role) {
+                let rName = ROLES[p.role]?.name || 'Bilinmiyor';
+                roleCounts[rName] = (roleCounts[rName] || 0) + 1;
+            }
+        });
+        gameState.roleCounts = roleCounts;
+        const isEnd = gameState.status === 'END';
+
+        Object.keys(network.connections).forEach(clientId => {
+            const conn = network.connections[clientId];
+            if (conn && conn.open) {
+                const clientState = JSON.parse(JSON.stringify(gameState));
+                if (!isEnd) {
+                    Object.values(clientState.players).forEach(p => {
+                        if (p.id !== clientId) {
+                            delete p.role;
+                            delete p.team;
+                        }
+                    });
+                    // Vampirler kamp ateşini göremez
+                    const clientPlayer = gameState.players[clientId];
+                    if (clientPlayer && clientPlayer.team === 'VAMPIR') {
+                        clientState.campfireActive = true; // hep yanıyor görünsün
+                    }
+                }
+                delete clientState.nightActions;
+                delete clientState.dayActions;
+                conn.send({ type: 'GAME_STATE', state: clientState });
+            }
+        });
+
+        updateUIForState();
+        update3DSceneFromState();
     }
+}
+
+function sendPrivateLog(targetId, msg) {
+    if(isHost) {
+        network.sendTo(targetId, { type: 'PRIVATE_LOG', target: targetId, msg: msg });
+        if(targetId === myId) addPrivateLog(msg);
+    }
+}
+
+function addPrivateLog(msg) {
+    if(els.game.privateLogs.innerHTML.includes('Henüz özel bir bilgi almadınız')) {
+        els.game.privateLogs.innerHTML = '';
+    }
+    const d = document.createElement('div');
+    d.textContent = '• ' + msg;
+    els.game.privateLogs.appendChild(d);
+    els.game.privateLogs.scrollTop = els.game.privateLogs.scrollHeight;
+}
+
+function renderRolesHUD() {
+    els.game.rolesList.innerHTML = '';
+    // Use pre-computed roleCounts from host if available, else compute locally
+    let roleCounts = gameState.roleCounts;
+    if (!roleCounts) {
+        roleCounts = {};
+        Object.values(gameState.players).forEach(p => {
+            let rName = ROLES[p.role]?.name || 'Bilinmiyor';
+            roleCounts[rName] = (roleCounts[rName] || 0) + 1;
+        });
+    }
+    
+    Object.entries(roleCounts).forEach(([rName, count]) => {
+        const li = document.createElement('li');
+        li.textContent = `${rName}: ${count}`;
+        els.game.rolesList.appendChild(li);
+    });
+}
+
+function showRoleModal(roleName, roleDesc) {
+    els.game.roleModalName.textContent = roleName;
+    els.game.roleModalDesc.textContent = roleDesc;
+    els.game.roleModal.classList.remove('hidden');
 }
 
 function renderGameScreen() {
-    els.game.phase.textContent = gameState.status === 'NIGHT' ? 'Gece' : (gameState.status === 'DAY' ? 'Gündüz' : 'Oylama');
+    renderRolesHUD();
+
+    els.game.phase.textContent = gameState.status === 'NIGHT' ? 'Gece' : (gameState.status.includes('DAY') ? 'Gündüz' : (gameState.status === 'VOTING' ? 'Oylama' : 'Animasyon'));
     els.game.day.textContent = gameState.dayCount;
     
     const myPlayer = gameState.players[myId];
-    els.game.myRole.textContent = myPlayer ? myPlayer.role : 'Seyirci';
+    els.game.myRole.textContent = myPlayer ? (ROLES[myPlayer.role]?.name || myPlayer.role) : 'Seyirci';
+    
+    // U1: Show role description modal on first render
+    if (myPlayer && myPlayer.role && !roleModalShown && gameState.dayCount === 1 && gameState.status === 'NIGHT') {
+        const rDef = ROLES[myPlayer.role];
+        if (rDef) {
+            roleModalShown = true;
+            showRoleModal(rDef.name, rDef.desc || '');
+        }
+    }
     
     renderLogs();
     
-    if (!myPlayer || !myPlayer.isAlive) {
-        els.game.actionTitle.textContent = 'Ölüsün (İzleyici)';
-        els.game.actionPlayers.innerHTML = '';
-        els.game.btnSkip.classList.add('hidden');
+    // U3: Animation feedback overlay
+    if (gameState.status.includes('ANIMATION')) {
+        els.game.animOverlay.classList.remove('hidden');
+        els.game.animStatusText.textContent = gameState.status === 'NIGHT_ANIMATION'
+            ? 'Gece sonuçları hesaplanıyor...'
+            : 'Oylama sonucu uygulanıyor...';
+    } else {
+        els.game.animOverlay.classList.add('hidden');
+    }
+    
+    if (!myPlayer || !myPlayer.isAlive || gameState.status.includes('ANIMATION')) {
+        els.game.actionPanel.classList.add('hidden');
         return;
     }
     
+    els.game.actionPanel.classList.remove('hidden');
     els.game.btnSkip.classList.add('hidden');
+    els.game.btnConfirm.classList.add('hidden');
+    pendingActionTarget = null;
     els.game.actionPlayers.innerHTML = '';
 
+    const rDef = ROLES[myPlayer.role];
+
     if (gameState.status === 'NIGHT') {
-        if (myPlayer.role === 'Vampir') {
-            els.game.actionTitle.textContent = 'Kimi avlayacaksın?';
-            renderActionList(true); // Exclude other vampires? Simple version: just exclude self
-        } else if (myPlayer.role === 'Doktor') {
-            els.game.actionTitle.textContent = 'Kimi koruyacaksın?';
-            renderActionList(false); // Can protect self
-        } else if (myPlayer.role === 'Büyücü') {
-            els.game.actionTitle.textContent = 'Kimin rolünü göreceksin?';
-            renderActionList(true); // Exclude self
+        if (rDef && rDef.hasNightAction) {
+            if (myPlayer.role === 'HIRSIZ' && gameState.dayCount > 1) {
+                els.game.actionPanel.classList.add('hidden');
+                return;
+            }
+            let isDedektif = myPlayer.role === 'DEDEKTIF';
+            // Deli gerçek Dedektif değil, tek hedef seçecek
+            if (myPlayer.role === 'DELI') isDedektif = false;
+            els.game.actionTitle.textContent = isDedektif ? 'Gece Aksiyonu: 2 Hedef Seç' : 'Gece Aksiyonu: Hedef Seç';
+            // Tüm vampir rolleri için kendini hariç tut
+            let excludeSelfForVamp = ROLES[myPlayer.role]?.team === 'VAMPIR';
+            renderActionList(excludeSelfForVamp, isDedektif ? 2 : 1); 
+            els.game.btnSkip.classList.remove('hidden'); 
         } else {
-            els.game.actionTitle.textContent = 'Uyumaya devam et...';
+            els.game.actionPanel.classList.add('hidden');
         }
-    } else if (gameState.status === 'DAY') {
-        els.game.actionTitle.textContent = 'Tartışma zamanı!';
+    } else if (gameState.status === 'DAY_DISCUSSION') {
+        if (rDef && rDef.hasDayAction) {
+            if (myPlayer.role === 'INTIKAMCI' && (gameState.dayCount > 1 || myPlayer.intikamciTarget)) {
+                els.game.actionPanel.classList.add('hidden');
+            } else {
+                els.game.actionTitle.textContent = 'Gündüz Aksiyonu: Hedef Seç (Opsiyonel)';
+                renderActionList(true);
+                els.game.btnSkip.classList.remove('hidden');
+            }
+        } else {
+            els.game.actionPanel.classList.add('hidden');
+        }
     } else if (gameState.status === 'VOTING') {
         els.game.actionTitle.textContent = 'Kimi oylayacaksın?';
         els.game.btnSkip.classList.remove('hidden');
-        renderActionList(false, true); // Allow skipping, show skip button handled above
+        renderActionList(true); 
     }
 }
 
-function renderActionList(excludeSelf, isVoting = false) {
+function renderActionList(excludeSelf, maxSelect = 1) {
+    let selectedIds = [];
     const pIds = Object.keys(gameState.players);
     pIds.forEach(id => {
         const p = gameState.players[id];
@@ -327,16 +652,32 @@ function renderActionList(excludeSelf, isVoting = false) {
         
         const card = document.createElement('div');
         card.className = `player-action-card ${!p.isAlive ? 'dead' : ''}`;
+        card.dataset.id = id;
         card.innerHTML = `<strong>${p.name}</strong>`;
         
         if (p.isAlive) {
             card.addEventListener('click', () => {
-                document.querySelectorAll('.player-action-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                submitAction(id);
+                if (maxSelect === 1) {
+                    document.querySelectorAll('.player-action-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    pendingActionTarget = id;
+                    els.game.btnConfirm.classList.remove('hidden');
+                } else {
+                    if (card.classList.contains('selected')) {
+                        card.classList.remove('selected');
+                        selectedIds = selectedIds.filter(i => i !== id);
+                    } else {
+                        if (selectedIds.length < maxSelect) {
+                            card.classList.add('selected');
+                            selectedIds.push(id);
+                        }
+                    }
+                    if (selectedIds.length === maxSelect) {
+                        submitAction(selectedIds);
+                    }
+                }
             });
         }
-        
         els.game.actionPlayers.appendChild(card);
     });
 }
@@ -345,30 +686,34 @@ function renderLogs() {
     els.game.logs.innerHTML = '';
     gameState.logs.forEach(l => {
         const d = document.createElement('div');
-        d.textContent = '> ' + l;
+        if(l.startsWith('!')) {
+            d.style.color = 'var(--neon-purple)';
+            d.style.fontWeight = 'bold';
+            d.textContent = '> ' + l.substring(1);
+        } else {
+            d.textContent = '> ' + l;
+        }
         els.game.logs.appendChild(d);
     });
     els.game.logs.scrollTop = els.game.logs.scrollHeight;
 }
 
 function submitAction(targetId) {
-    network.sendToHost({
-        type: 'ACTION',
-        action: gameState.status,
-        target: targetId
-    });
-    els.game.actionTitle.textContent = 'Seçim yapıldı, bekleniyor...';
+    network.sendToHost({ type: 'ACTION', action: gameState.status, target: targetId });
+    els.game.actionPanel.classList.add('hidden');
 }
 
 function addLog(msg) {
     gameState.logs.push(msg);
+    if(!isHost) renderLogs();
 }
 
-// Host handles incoming actions
 function handlePlayerAction(senderId, actionType, targetId) {
     if (actionType === 'NIGHT') {
         gameState.nightActions[senderId] = targetId;
         checkNightEnd();
+    } else if (actionType === 'DAY_DISCUSSION') {
+        gameState.dayActions[senderId] = targetId;
     } else if (actionType === 'VOTING') {
         gameState.votes[senderId] = targetId;
         checkVotingEnd();
@@ -376,12 +721,9 @@ function handlePlayerAction(senderId, actionType, targetId) {
 }
 
 function checkNightEnd() {
-    // Count alive actors
     let requiredActions = 0;
     Object.values(gameState.players).forEach(p => {
-        if (p.isAlive && (p.role === 'Vampir' || p.role === 'Doktor' || p.role === 'Büyücü')) {
-            requiredActions++;
-        }
+        if (p.isAlive && ROLES[p.role]?.hasNightAction) requiredActions++;
     });
     
     if (Object.keys(gameState.nightActions).length >= requiredActions) {
@@ -390,38 +732,341 @@ function checkNightEnd() {
 }
 
 function resolveNight() {
-    let killedId = null;
-    let protectedId = null;
+    let actions = gameState.nightActions;
+    let blockedPlayers = new Set();
+    let traps = new Set();
+    let visits = {};
+    let protectedPlayers = new Set();
+    let poisonedPlayers = new Set();
+    let deaths = [];
+    let clientAnimations = {};
+    Object.keys(gameState.players).forEach(id => clientAnimations[id] = []);
     
-    // Simple logic: first vamp target is killed. First doc target is protected.
-    Object.entries(gameState.nightActions).forEach(([actorId, targetId]) => {
-        const actor = gameState.players[actorId];
-        if (!actor || !actor.isAlive) return;
-        
-        if (actor.role === 'Vampir') killedId = targetId;
-        if (actor.role === 'Doktor') protectedId = targetId;
-        // Seer gets PM in a real game, skipped for simplicity here, just log
+    const visit = (actorId, targetId, isImmune = false) => {
+        if (!isImmune && blockedPlayers.has(actorId)) {
+            clientAnimations[actorId].push({ actorId: actorId, targetId: targetId, type: 'POLICE_BLOCK' });
+            return false;
+        }
+        if (!isImmune && traps.has(targetId)) {
+            clientAnimations[actorId].push({ actorId: actorId, targetId: targetId, type: 'TRAPPED' });
+            return false;
+        }
+        if (!visits[targetId]) visits[targetId] = [];
+        visits[targetId].push(actorId);
+        return true;
+    };
+
+    // 1. Polis
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (p.role === 'POLIS' && p.isAlive && gameState.players[tid]?.role !== 'SERI_KATIL' && tid !== 'skip') {
+            blockedPlayers.add(tid);
+            clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+        }
     });
-    
-    addLog(`--- GÜN ${gameState.dayCount} ---`);
-    if (killedId && killedId !== protectedId) {
-        gameState.players[killedId].isAlive = false;
-        addLog(`${gameState.players[killedId].name} gece öldürüldü!`);
-    } else {
-        addLog('Gece kimse ölmedi.');
+
+    // 2. Tuzakçı
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (p.role === 'TUZAKCI' && p.isAlive && !blockedPlayers.has(aid) && tid !== 'skip') {
+            traps.add(tid);
+            clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+        }
+    });
+
+    // 4. Doktor
+    Object.values(gameState.players).forEach(p => { if(p.role === 'DOKTOR') p.triedHeal = false; });
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (p.role === 'DOKTOR' && p.isAlive && tid !== 'skip') {
+            if (tid === aid && p.selfHealCount >= 1) return; // Cannot self heal more than once
+            if (p.lastHealed === tid) return; // Cannot heal same person twice in a row
+            
+            p.triedHeal = true;
+            if (visit(aid, tid)) {
+                protectedPlayers.add(tid);
+                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+                if (tid === aid) p.selfHealCount = (p.selfHealCount || 0) + 1;
+                p.lastHealed = tid;
+            }
+        }
+    });
+    Object.values(gameState.players).forEach(p => { if(p.role === 'DOKTOR' && !p.triedHeal) p.lastHealed = null; });
+
+    // 3. Seri Katil
+    let skTarget = null;
+    let skId = null;
+    Object.entries(actions).forEach(([aid, tid]) => {
+        if (gameState.players[aid].role === 'SERI_KATIL' && gameState.players[aid].isAlive && tid !== 'skip') {
+            skTarget = tid;
+            skId = aid;
+            if (visit(aid, tid, true)) {
+                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'KILL' });
+            }
+        }
+    });
+
+    // 5. Vampirler
+    let vampVotes = {};
+    let profTarget = null, zehirTarget = null;
+    let mainVamp = null;
+    let vampTarget = null;
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (p.team === 'VAMPIR' && p.isAlive && tid !== 'skip') {
+            vampVotes[tid] = (vampVotes[tid] || 0) + 1;
+            mainVamp = aid;
+            if (p.role === 'PROFESYONEL' && !p.usedAbility) {
+                profTarget = tid;
+                p.usedAbility = true;
+            } else if (p.role === 'ZEHIRLI' && !p.usedAbility) {
+                zehirTarget = tid;
+                p.usedAbility = true;
+            }
+        }
+    });
+    let maxV = 0;
+    Object.entries(vampVotes).forEach(([tid, c]) => {
+        if (c > maxV) { maxV = c; vampTarget = tid; }
+    });
+
+    // G3: Use actual vampire player IDs so they can be blocked/trapped
+    let profActorId = Object.keys(actions).find(aid => gameState.players[aid].role === 'PROFESYONEL');
+    let zehirActorId = Object.keys(actions).find(aid => gameState.players[aid].role === 'ZEHIRLI');
+
+    if (profTarget && profActorId && visit(profActorId, profTarget)) {
+        deaths.push({ id: profTarget, killer: 'VAMPIR_PROF' }); // bypasses doctor protection AND SK immunity
+        clientAnimations[profActorId].push({ actorId: profActorId, targetId: profTarget, type: 'KILL' });
+    } else if (vampTarget && mainVamp && visit(mainVamp, vampTarget)) {
+        if (!protectedPlayers.has(vampTarget) && gameState.players[vampTarget].role !== 'SERI_KATIL') {
+            deaths.push({ id: vampTarget, killer: 'VAMPIR' });
+        }
+        clientAnimations[mainVamp].push({ actorId: mainVamp, targetId: vampTarget, type: 'KILL' });
     }
     
-    if (checkWin()) return;
+    // Vampir İzcisi: ek olarak vampir saldırısına katılır, tuzak/police bağışık
+    let vampIzcisiId = Object.keys(actions).find(aid => gameState.players[aid]?.role === 'VAMPIR_IZCISI' && gameState.players[aid]?.isAlive);
+    if (vampIzcisiId && actions[vampIzcisiId] !== 'skip' && vampIzcisiId !== mainVamp) {
+        // Vampir İzcisi tuzak ve police'e bağışık olarak ziyaret eder
+        visit(vampIzcisiId, actions[vampIzcisiId], true);
+        clientAnimations[vampIzcisiId].push({ actorId: vampIzcisiId, targetId: actions[vampIzcisiId], type: 'WALK' });
+    }
     
-    gameState.status = 'DAY';
+    // 6. Zehirli (Applies poison)
+    if (zehirTarget && zehirActorId && visit(zehirActorId, zehirTarget)) {
+        poisonedPlayers.add(zehirTarget);
+        clientAnimations[zehirActorId].push({ actorId: zehirActorId, targetId: zehirTarget, type: 'WALK' });
+    }
+    
+    // Process previous poisons
+    Object.values(gameState.players).forEach(p => {
+        if (p.isAlive && p.isPoisoned) {
+            if (protectedPlayers.has(p.id)) p.isPoisoned = false; // Cured
+            else deaths.push({ id: p.id, killer: 'ZEHIR' });
+        }
+    });
+    poisonedPlayers.forEach(id => { if(gameState.players[id]) gameState.players[id].isPoisoned = true; });
+
+    // 7. Uyurgezer
+    let ugTarget = null, ugId = null;
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (p.role === 'UYURGEZER' && p.isAlive && tid !== 'skip') {
+            ugId = aid;
+            if (visit(aid, tid)) {
+                ugTarget = tid;
+                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+            }
+        }
+    });
+
+    // Evaluate SK & UG & Vamp collateral
+    if (skTarget && skId) {
+        if (skTarget === ugId) {
+            if (!protectedPlayers.has(ugId)) deaths.push({ id: ugId, killer: 'SERI_KATIL' });
+        } else {
+            if (!protectedPlayers.has(skTarget)) deaths.push({ id: skTarget, killer: 'SERI_KATIL' });
+        }
+    }
+    
+    if (ugId && ugTarget) {
+        let targetTeam = gameState.players[ugTarget]?.team;
+        if (targetTeam === 'VAMPIR') {
+            deaths.push({ id: ugId, killer: 'VAMPIR' }); 
+        } else if (vampTarget === ugTarget && !protectedPlayers.has(ugTarget)) {
+            deaths.push({ id: ugId, killer: 'VAMPIR_COLLATERAL' }); 
+        } else if (skTarget === ugTarget) {
+            // "SK eve saldırdıysa, Uyurgezer sonra vardığında ölmemeli" -> ölmez
+        } else if (ugTarget === skId) {
+            // "Uyurgezer SK'nin evine giderse -> ölmez (ev boş)"
+            if (actions[skId] === 'skip' && !protectedPlayers.has(ugId)) {
+                deaths.push({ id: ugId, killer: 'SERI_KATIL' }); // SK is home!
+            }
+        }
+    }
+    
+    // 9. Kundakçı
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (p.role === 'KUNDAKCI' && p.isAlive && tid !== 'skip') {
+            if (tid === aid) {
+                // Ignite!
+                Object.values(gameState.players).forEach(target => {
+                    if (target.isAlive && target.isDoused) {
+                        deaths.push({ id: target.id, killer: 'KUNDAKCI' });
+                        clientAnimations[aid].push({ actorId: aid, targetId: target.id, type: 'KILL' });
+                    }
+                });
+            } else {
+                if (visit(aid, tid)) {
+                    clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+                    if(gameState.players[tid]) gameState.players[tid].isDoused = true;
+                }
+            }
+        }
+    });
+
+    // 8. Info Roles & Hırsız
+    Object.entries(actions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if (!p.isAlive || tid === 'skip') return;
+        
+        let isDeli = p.role === 'DELI';
+        let fakeRole = p.fakeRole || (p.fakeRole = ['GOZCU', 'IZCI', 'DEDEKTIF'][Math.floor(Math.random()*3)]);
+
+        if (p.role === 'HIRSIZ' && gameState.dayCount === 1) {
+            p.hirsizTarget = tid;
+        }
+
+        if (p.role === 'GOZCU' || (isDeli && fakeRole === 'GOZCU')) {
+            if (visit(aid, tid)) {
+                let seen = (visits[tid] || []).filter(id => id !== aid && gameState.players[id]);
+                if (isDeli) seen = [Object.keys(gameState.players)[Math.floor(Math.random()*Object.keys(gameState.players).length)]];
+                sendPrivateLog(aid, `${gameState.players[tid].name} evine girenler: ${seen.map(id => gameState.players[id]?.name || 'Biri').join(', ') || 'Kimse'}`);
+                
+                network.sendTo(aid, { type: 'PLAY_ANIMATIONS', target: aid, anims: [], watchHouseId: tid });
+                
+                seen.forEach(visitorId => {
+                    let aType = 'WALK';
+                    if (blockedPlayers.has(visitorId)) aType = 'POLICE_BLOCK';
+                    else if (traps.has(tid)) aType = 'TRAPPED';
+                    else if (gameState.players[visitorId].role === 'SERI_KATIL') aType = 'KILL';
+                    clientAnimations[aid].push({ actorId: visitorId, targetId: tid, type: aType });
+                });
+            }
+        } else if (p.role === 'IZCI' || (isDeli && fakeRole === 'IZCI')) {
+            if (visit(aid, tid)) {
+                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+                let tr = gameState.players[tid].role;
+                if(tr === 'DRACULA') tr = 'KOYLU';
+                if(isDeli) tr = Object.keys(ROLES)[Math.floor(Math.random()*Object.keys(ROLES).length)];
+                sendPrivateLog(aid, `${gameState.players[tid].name} rolü: ${ROLES[tr]?.name || tr}`);
+            }
+        } else if (p.role === 'DEDEKTIF') {
+            if (Array.isArray(tid) && tid.length === 2) {
+                if (visit(aid, tid[0]) && visit(aid, tid[1])) {
+                    clientAnimations[aid].push({ actorId: aid, targetId: tid[0], type: 'WALK' });
+                    clientAnimations[aid].push({ actorId: aid, targetId: tid[1], type: 'WALK' });
+                    let team1 = gameState.players[tid[0]].team;
+                    let team2 = gameState.players[tid[1]].team;
+                    if (gameState.players[tid[0]].role === 'DRACULA') team1 = 'KOY'; 
+                    if (gameState.players[tid[1]].role === 'DRACULA') team2 = 'KOY'; 
+                    let sameTeam = team1 === team2;
+                    sendPrivateLog(aid, `${gameState.players[tid[0]].name} ve ${gameState.players[tid[1]].name} ${sameTeam ? 'Aynı Takımda' : 'Farklı Takımda'}`);
+                }
+            }
+        } else if (isDeli && fakeRole === 'DEDEKTIF') {
+            if (visit(aid, tid)) {
+                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+                let sameTeam = Math.random() > 0.5;
+                let other = Object.keys(gameState.players).find(id => id !== tid && gameState.players[id].isAlive);
+                let otherName = other ? gameState.players[other].name : 'Biri';
+                sendPrivateLog(aid, `${gameState.players[tid].name} ve ${otherName} ${sameTeam ? 'Aynı Takımda' : 'Farklı Takımda'}`);
+            }
+        }
+    });
+
+    // Broadcast personal animations
+    Object.keys(clientAnimations).forEach(clientId => {
+        if (clientAnimations[clientId].length > 0) {
+            network.sendTo(clientId, { type: 'PLAY_ANIMATIONS', target: clientId, anims: clientAnimations[clientId] });
+        }
+    });
+
+    gameState.status = 'NIGHT_ANIMATION';
+    els.game.actionPanel.classList.add('hidden');
     broadcastState();
-    
-    // Start discussion timer
-    startTimer(gameState.settings.discussionTime, () => {
-        gameState.status = 'VOTING';
-        gameState.votes = {};
-        addLog('Tartışma bitti. Oylama başladı.');
+
+    // Wait for animations to play
+    setTimeout(() => {
+        addLog(`--- GÜN ${gameState.dayCount} ---`);
+        if (deaths.length > 0) {
+            deaths.forEach(d => {
+                if(gameState.players[d.id] && gameState.players[d.id].isAlive) {
+                    // Profesyonel SK bağışıklığını geçer
+                    if (d.killer === 'VAMPIR' && gameState.players[d.id].role === 'SERI_KATIL') return;
+                    gameState.players[d.id].isAlive = false;
+                    addLog(`${gameState.players[d.id].name} gece öldürüldü!`);
+                    
+                    // Hırsız logic
+                    Object.values(gameState.players).forEach(p => {
+                        if(p.role === 'HIRSIZ' && p.isAlive && p.hirsizTarget === d.id && !p.usedAbility) {
+                            p.role = gameState.players[d.id].role;
+                            p.team = gameState.players[d.id].team;
+                            p.usedAbility = true;
+                            sendPrivateLog(p.id, `Hedefin öldü! Yeni rolün: ${ROLES[p.role].name}`);
+                        }
+                    });
+
+                    if(gameState.players[d.id].isOduncu) {
+                        gameState.campfireActive = false;
+                        addLog('Kamp ateşi söndü...');
+                    }
+                }
+            });
+        } else {
+            addLog('Gece kimse ölmedi.');
+        }
+        
+        if (checkWin()) return;
+        
+        gameState.status = 'DAY_DISCUSSION';
+        gameState.dayActions = {};
         broadcastState();
+        
+        startTimer(gameState.settings.discussionTime, () => {
+            resolveDayActions();
+            if(checkWin()) return;
+            
+            gameState.status = 'VOTING';
+            gameState.votes = {};
+            addLog('Tartışma bitti. Oylama başladı.');
+            broadcastState();
+        });
+    }, 5000); 
+}
+function resolveDayActions() {
+    Object.entries(gameState.dayActions).forEach(([aid, tid]) => {
+        let p = gameState.players[aid];
+        if(p.isAlive && p.role === 'SERIF' && tid !== 'skip') {
+            if (!p.usedAbility) {
+                p.usedAbility = true;
+                let target = gameState.players[tid];
+                if(target && target.isAlive) {
+                    target.isAlive = false;
+                    addLog(`Şerif ${p.name}, ${target.name} kişisini vurdu!`);
+                    if(target.team === 'KOY') {
+                        p.isAlive = false;
+                        addLog(`Şerif ${p.name} masum birini vurduğu için vicdan azabından intihar etti.`);
+                    }
+                }
+            }
+        } else if (p.isAlive && p.role === 'INTIKAMCI' && tid !== 'skip') {
+            if (!p.intikamciTarget) {
+                p.intikamciTarget = tid;
+                sendPrivateLog(aid, `İntikam hedefin: ${gameState.players[tid].name}`);
+            }
+        }
     });
 }
 
@@ -443,54 +1088,88 @@ function resolveVoting() {
     let tie = false;
     
     Object.entries(tallies).forEach(([id, count]) => {
-        if (count > max) {
-            max = count;
-            eliminatedId = id;
-            tie = false;
-        } else if (count === max) {
-            tie = true;
-        }
+        if (count > max) { max = count; eliminatedId = id; tie = false; }
+        else if (count === max && max > 0) tie = true;
     });
     
-    if (eliminatedId && !tie) {
-        gameState.players[eliminatedId].isAlive = false;
-        addLog(`${gameState.players[eliminatedId].name} köyden sürüldü. Rolü: ${gameState.players[eliminatedId].role}`);
-    } else {
-        addLog('Oylama berabere bitti veya pas geçildi. Kimse asılmadı.');
+    // Gerçek tie kontrolü: aynı max'a sahip birden fazla kişi var mı?
+    if (max > 0) {
+        const topVoted = Object.entries(tallies).filter(([id, count]) => count === max);
+        tie = topVoted.length > 1;
+        if (!tie) eliminatedId = topVoted[0][0];
     }
     
-    if (checkWin()) return;
-    
-    gameState.status = 'NIGHT';
-    gameState.dayCount++;
-    gameState.nightActions = {};
-    addLog('Gece çöküyor...');
-    broadcastState();
+    if (eliminatedId && !tie) {
+        gameState.status = 'DAY_ANIMATION';
+        els.game.actionPanel.classList.add('hidden');
+        broadcastState();
+        
+        network.broadcast({ type: 'HANG_ANIMATION', targetId: eliminatedId });
+        
+        setTimeout(() => {
+            gameState.players[eliminatedId].isAlive = false;
+            let roleName = ROLES[gameState.players[eliminatedId].role]?.name || 'Bilinmiyor';
+            addLog(`${gameState.players[eliminatedId].name} asıldı. Rolü: ${roleName}`);
+            
+            if(gameState.players[eliminatedId].role === 'SOYTARI') {
+                addLog(`Soytarı asıldı! Soytarı kazandı.`);
+                endGame('Soytarı Kazandı!');
+                return;
+            } else if (gameState.players[eliminatedId].role === 'INTIKAMCI') {
+                let iTarget = gameState.players[eliminatedId].intikamciTarget;
+                if (iTarget && gameState.players[iTarget] && gameState.players[iTarget].isAlive) {
+                    gameState.players[iTarget].isAlive = false;
+                    addLog(`İntikamcı asılırken yanında ${gameState.players[iTarget].name}'i de götürdü!`);
+                }
+            }
+            
+            if (checkWin()) return;
+            
+            gameState.status = 'NIGHT';
+            gameState.dayCount++;
+            gameState.nightActions = {};
+            addLog('Gece çöküyor...');
+            broadcastState();
+        }, 5500);
+
+    } else {
+        addLog('Oylama berabere bitti veya pas geçildi. Kimse asılmadı.');
+        if (checkWin()) return;
+        
+        gameState.status = 'NIGHT';
+        gameState.dayCount++;
+        gameState.nightActions = {};
+        addLog('Gece çöküyor...');
+        broadcastState();
+    }
 }
 
 function checkWin() {
-    let vamps = 0, others = 0;
+    if(gameState.status === 'END') return true;
+    
+    let vamps = 0, koyluler = 0, sk = 0;
     Object.values(gameState.players).forEach(p => {
         if (p.isAlive) {
-            if (p.role === 'Vampir') vamps++;
-            else others++;
+            if (p.team === 'VAMPIR') vamps++;
+            else if (p.role === 'SERI_KATIL') sk++;
+            else koyluler++;
         }
     });
     
-    if (vamps === 0) {
-        endGame('Köylüler Kazandı!');
-        return true;
-    } else if (vamps >= others) {
-        endGame('Vampirler Kazandı!');
-        return true;
-    }
+    let totalAlive = vamps + koyluler + sk;
+    
+    if (totalAlive === 0) { endGame('Berabere! Herkes öldü.'); return true; }
+    if (sk === 1 && totalAlive === 1) { endGame('Seri Katil Kazandı!'); return true; }
+    if (sk === 1 && totalAlive === 2 && vamps === 0) { endGame('Seri Katil Kazandı!'); return true; }
+    if (vamps === 0 && sk === 0) { endGame('Köylüler Kazandı!'); return true; }
+    if (vamps >= koyluler + sk) { endGame('Vampirler Kazandı!'); return true; }
+    
     return false;
 }
 
 function endGame(winnerMsg) {
     gameState.status = 'END';
     gameState.logs.push(winnerMsg);
-    // Add winner prop to state
     gameState.winnerMsg = winnerMsg;
     broadcastState();
 }
@@ -504,7 +1183,7 @@ function renderEndGame() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${p.name}</td>
-            <td style="color: var(--neon-purple); font-weight: bold;">${p.role || '?'}</td>
+            <td style="color: var(--neon-purple); font-weight: bold;">${ROLES[p.role]?.name || '?'}</td>
             <td>${p.isAlive ? 'Yaşıyor' : 'Öldü'}</td>
         `;
         els.score.body.appendChild(tr);
@@ -515,27 +1194,43 @@ function handlePlayAgain() {
     gameState.status = 'LOBBY';
     gameState.dayCount = 0;
     gameState.logs = [];
+    gameState.campfireActive = true;
     Object.values(gameState.players).forEach(p => {
         p.isAlive = true;
         p.role = null;
+        p.team = null;
+        p.isPoisoned = false;
+        p.isOduncu = false;
+        p.isDoused = false;
+        p.fakeRole = null;
+        p.usedAbility = false;
+        p.hirsizTarget = null;
+        p.intikamciTarget = null;
+        p.lastHealed = null;
+        p.selfHealCount = 0;
     });
+    roleModalShown = false;
     broadcastState();
 }
 
 function startTimer(seconds, callback) {
     if (timerInterval) clearInterval(timerInterval);
-    currentTimer = seconds;
+    const now = window.PairaTime ? window.PairaTime.now() : Date.now();
+    gameState.timerEndTime = now + seconds * 1000;
+    broadcastState();
     
+    if (isHost && callback) {
+        setTimeout(() => { callback(); }, seconds * 1000);
+    }
+}
+
+function startClientTimer(endTime) {
+    if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
-        currentTimer--;
-        
-        if (isHost) {
-            // Can broadcast timer if needed, but local tick is fine if we sync time
-        }
-        
-        if (currentTimer <= 0) {
-            clearInterval(timerInterval);
-            if (isHost && callback) callback();
-        }
+        const now = window.PairaTime ? window.PairaTime.now() : Date.now();
+        let left = Math.floor((endTime - now)/1000);
+        if (left < 0) left = 0;
+        if(els.game.timer) els.game.timer.textContent = `${Math.floor(left/60).toString().padStart(2,'0')}:${(left%60).toString().padStart(2,'0')}`;
+        if (left <= 0) clearInterval(timerInterval);
     }, 1000);
 }
