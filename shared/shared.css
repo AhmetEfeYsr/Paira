@@ -167,7 +167,7 @@
 }
 
 /* Global Inputs & Buttons Enhanced */
-input[type="text"], input[type="password"], input[type="number"], select {
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea, select {
     background: var(--input-bg);
     border: 1px solid var(--lilac-muted);
     color: var(--text-main);
@@ -180,20 +180,20 @@ input[type="text"], input[type="password"], input[type="number"], select {
     width: 100%;
 }
 
-input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus {
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--neon-purple);
     background: rgba(var(--primary-rgb), 0.1);
     box-shadow: 0 0 15px var(--neon-glow-rgba);
 }
 
-[data-theme="light"] input[type="text"], [data-theme="light"] input[type="password"], [data-theme="light"] input[type="number"], [data-theme="light"] select {
+[data-theme="light"] input[type="text"], [data-theme="light"] input[type="email"], [data-theme="light"] input[type="password"], [data-theme="light"] input[type="number"], [data-theme="light"] textarea, [data-theme="light"] select {
     background: rgba(0, 0, 0, 0.03);
     border: 1px solid var(--btn-secondary-bg);
     color: var(--text-main);
 }
 
-[data-theme="light"] input[type="text"]:focus, [data-theme="light"] input[type="password"]:focus, [data-theme="light"] input[type="number"]:focus, [data-theme="light"] select:focus {
+[data-theme="light"] input[type="text"]:focus, [data-theme="light"] input[type="email"]:focus, [data-theme="light"] input[type="password"]:focus, [data-theme="light"] input[type="number"]:focus, [data-theme="light"] textarea:focus, [data-theme="light"] select:focus {
     background: var(--text-main);
     border-color: var(--neon-purple);
     box-shadow: 0 0 15px var(--neon-glow-rgba);

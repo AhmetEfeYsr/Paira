@@ -187,16 +187,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const network = new HizliIsimSehirNetwork(engine, view);
     
     // Setup Timer Sync Hook
+    let forceTurnTimeout = null;
     if (isHost) {
         engine.onStateChange = (state) => {
             view.updateGameUI(state);
             network.broadcastState({ state: state });
             
+            if (forceTurnTimeout) {
+                clearTimeout(forceTurnTimeout);
+                forceTurnTimeout = null;
+            }
+
             // If it's playing and we just changed state, we need to sync timer
             if (state.status === 'PLAYING') {
-                const endTime = window.PairaTime.now() + (engine.config.endValue * 1000);
+                const duration = engine.config.endValue * 1000;
+                const endTime = window.PairaTime.now() + duration;
                 view.startTimer(endTime);
                 network.broadcast('TIMER_SYNC', { endTime });
+
+                // Host-side safety timeout: advancement if player doesn't submit
+                forceTurnTimeout = setTimeout(() => {
+                    const playersArr = Object.values(engine.state.players);
+                    const currentPlayer = playersArr[engine.state.currentPlayerIndex];
+                    if (currentPlayer && engine.state.status === 'PLAYING') {
+                        console.log("Force advancing turn for player:", currentPlayer.name);
+                        engine.handleTurnSubmit(currentPlayer.id, {});
+                    }
+                }, duration + 3000); // 3 seconds grace period
             } else {
                 view.stopTimer();
             }

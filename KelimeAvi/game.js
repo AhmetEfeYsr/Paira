@@ -26,8 +26,8 @@ class FuzzyMatcher {
         if (word1.length > 50) word1 = word1.substring(0, 50);
         if (word2.length > 50) word2 = word2.substring(0, 50);
         
-        word1 = word1.toLowerCase();
-        word2 = word2.toLowerCase();
+        word1 = word1.toLocaleLowerCase('tr-TR');
+        word2 = word2.toLocaleLowerCase('tr-TR');
 
         const len1 = word1.length;
         const len2 = word2.length;
@@ -397,6 +397,7 @@ class KelimeAviView {
         const btnSubmitMasum = document.getElementById('btn-submit-masum');
         if(btnSubmitMasum && masumInput) {
             const submitMasum = () => {
+                if(btnSubmitMasum.disabled) return;
                 const word = masumInput.value.trim();
                 if(word.length === 0) return;
                 btnSubmitMasum.disabled = true;
@@ -412,6 +413,7 @@ class KelimeAviView {
         const btnSubmitEbe = document.getElementById('btn-submit-ebe');
         if(btnSubmitEbe) {
             const submitEbe = () => {
+                if(btnSubmitEbe.disabled) return;
                 const guesses = [
                     document.getElementById('ebe-guess-1')?.value.trim(),
                     document.getElementById('ebe-guess-2')?.value.trim(),
@@ -463,16 +465,30 @@ class KelimeAviView {
         const ebeArea = document.getElementById('ebe-area');
         const letterDisplay = document.getElementById('current-letters');
 
-        // Only clear inputs if we haven't submitted yet in this round
-        if (!state.submittedWords[myId] && !state.ebeGuesses.length) {
-             document.getElementById('masum-word-input').value = '';
-             document.getElementById('btn-submit-masum').disabled = false;
+        // Disable buttons if already submitted
+        const hasSubmittedMasum = !!state.submittedWords[myId];
+        const hasSubmittedEbe = state.ebeGuesses && state.ebeGuesses.length > 0;
+        
+        const btnSubmitMasum = document.getElementById('btn-submit-masum');
+        if (btnSubmitMasum) btnSubmitMasum.disabled = hasSubmittedMasum;
+        
+        const btnSubmitEbe = document.getElementById('btn-submit-ebe');
+        if (btnSubmitEbe) btnSubmitEbe.disabled = hasSubmittedEbe;
 
-             [1,2,3,4,5].forEach(i => {
-                 const input = document.getElementById(`ebe-guess-${i}`);
-                 if (input) input.value = '';
-             });
-             document.getElementById('btn-submit-ebe').disabled = false;
+        // Clear inputs ONLY when a new round starts
+        if (this._lastClearedRound !== state.round || this._lastClearedStatus !== state.status) {
+            if (state.status === 'playing' && Object.keys(state.submittedWords).length === 0 && state.ebeGuesses.length === 0) {
+                const masumInput = document.getElementById('masum-word-input');
+                if (masumInput) masumInput.value = '';
+
+                [1,2,3,4,5].forEach(i => {
+                    const input = document.getElementById(`ebe-guess-${i}`);
+                    if (input) input.value = '';
+                });
+                
+                this._lastClearedRound = state.round;
+                this._lastClearedStatus = state.status;
+            }
         }
 
         const statusMsg = document.getElementById('game-status-message');

@@ -44,7 +44,25 @@ class HizliIsimSehirGameEngine {
     }
 
     removePlayer(id) {
+        const playersArr = Object.values(this.state.players);
+        const index = playersArr.findIndex(p => p.id === id);
+        
         delete this.state.players[id];
+        
+        if (index !== -1 && index < this.state.currentPlayerIndex) {
+            this.state.currentPlayerIndex--;
+        } else if (index !== -1 && index === this.state.currentPlayerIndex) {
+            if (this.state.status === 'PLAYING' || this.state.status === 'WAITING_APPEAL' || this.state.status === 'VOTING') {
+                this.state.status = 'PLAYING';
+                const totalPlayers = Object.keys(this.state.players).length;
+                if (this.state.currentPlayerIndex >= totalPlayers) {
+                    if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores(null, 0));
+                } else {
+                    this.startNextTurn(this.state.round, this.state.currentPlayerIndex);
+                }
+            }
+        }
+        
         this.setState({ players: this.state.players });
     }
 
@@ -123,6 +141,34 @@ class HizliIsimSehirGameEngine {
         return false;
     }
 
+    async validateViaLlm(catName, word, requiredLetter) {
+        try {
+            const prompt = `Sen bir İsim Şehir oyunu hakemisin.
+Kategori: "${catName}"
+Harf: "${requiredLetter}"
+Kelime: "${word}"
+
+Bu kelime bu kategoriye uygun mu ve belirtilen harfle mi başlıyor? 
+Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açıklama"}`;
+
+            const response = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'gemini-1.5-flash',
+                    prompt: prompt,
+                    temperature: 0.5
+                })
+            });
+            const data = await response.json();
+            const result = JSON.parse(data.text);
+            return { valid: !!result.valid, reason: result.reason || "" };
+        } catch (e) {
+            console.error("LLM Validation Error:", e);
+            return { valid: false, reason: "Yapay zeka doğrulaması başarısız oldu." };
+        }
+    }
+
     async validateViaApi(catId, word, requiredLetterLower) {
         if (!word) return false;
         const cacheKey = `${catId}_${word}_${requiredLetterLower}`;
@@ -132,7 +178,7 @@ class HizliIsimSehirGameEngine {
         try {
             if (catId === 'sehir') {
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
-                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0' } });
+                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
                 const data = await response.json();
                 result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
                 if (result) {
@@ -189,7 +235,7 @@ class HizliIsimSehirGameEngine {
             }
             else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
-                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0' } });
+                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
@@ -265,6 +311,7 @@ class HizliIsimSehirGameEngine {
         
         const activePlayerObj = Object.values(this.state.players)[this.state.currentPlayerIndex];
         if (activePlayerObj && activePlayerObj.id === playerId) {
+            if (this.state.playerAnswers[playerId] !== undefined) return;
             this.state.playerAnswers[playerId] = answers;
             await this.processAnswers(playerId);
         }
@@ -280,13 +327,14 @@ class HizliIsimSehirGameEngine {
         const normLetter = this.normalizeForSearch(this.state.letter);
 
         let score = 0;
+        let llmReason = "";
 
         if (word.length > 0 && normWord.startsWith(normLetter)) {
             const isCustomCat = this.state.currentCategory.id.startsWith('custom_');
             let isValidInDict = false;
 
             if (isCustomCat) {
-                isValidInDict = true;
+                isValidInDict = word.startsWith(letterLower);
             } else {
                 const dictObj = await this.loadDictionary(this.state.currentCategory.id);
                 if (dictObj) {
@@ -307,6 +355,15 @@ class HizliIsimSehirGameEngine {
                 if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
                     isValidInDict = await this.validateViaApi(this.state.currentCategory.id, word, letterLower);
                 }
+                
+                // Gemini Fallback if still invalid
+                if (!isValidInDict) {
+                    const llmRes = await this.validateViaLlm(this.state.currentCategory.name, word, this.state.letter);
+                    if (llmRes.valid) {
+                        isValidInDict = true;
+                        llmReason = llmRes.reason;
+                    }
+                }
             }
 
             if (isValidInDict) {
@@ -314,10 +371,11 @@ class HizliIsimSehirGameEngine {
             }
         }
 
+        if (!this.state.players[playerId]) return;
         this.state.players[playerId].score += score;
         const canAppeal = (score === 0 && word.length > 0);
 
-        if (this.onTurnResult) this.onTurnResult({ word, score, playerId, canAppeal });
+        if (this.onTurnResult) this.onTurnResult({ word, score, playerId, canAppeal, llmReason });
 
         if (canAppeal) {
             this.state.status = 'WAITING_APPEAL';

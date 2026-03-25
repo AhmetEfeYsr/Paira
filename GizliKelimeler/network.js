@@ -55,6 +55,10 @@ class GizliKelimelerNetworkManager {
                         this.view.showToast("Her takımda en az 1 Ajan olmalı!", "error");
                         return;
                     }
+                    if (!teamA.some(p => p.role === 'GUESSER') || !teamB.some(p => p.role === 'GUESSER')) {
+                        this.view.showToast("Her takımda en az 1 Tahminci olmalı!", "error");
+                        return;
+                    }
                     const boardSize = document.getElementById('board-size')?.value || 25;
                     const turnDuration = document.getElementById('turn-duration')?.value || 90;
                     this.engine.startGame({ boardSize, turnDuration });
@@ -193,7 +197,10 @@ class GizliKelimelerNetworkManager {
         else if (action === 'SYNC' && !this.isHost) {
             this.engine.setState(payload.state);
             this.hostId = payload.hostId;
-            if (payload.durationLeft > 0) {
+            if (payload.localTurnEndTime !== undefined) {
+                this.engine.localTurnEndTime = payload.localTurnEndTime;
+                this.engine.startRenderTimer();
+            } else if (payload.durationLeft !== undefined) {
                 this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
                 this.engine.startRenderTimer();
             }
@@ -267,7 +274,8 @@ class GizliKelimelerNetworkManager {
             this.net.sendToPeer(peerId, 'SYNC', {
                 state: stateCopy,
                 hostId: this.hostId,
-                durationLeft: durationLeft
+                durationLeft: durationLeft,
+                localTurnEndTime: this.engine.localTurnEndTime
             });
         });
 

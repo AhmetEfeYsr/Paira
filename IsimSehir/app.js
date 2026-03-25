@@ -162,9 +162,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const network = new NetworkManager(
         (senderId, data) => handleNetworkData(senderId, data),
         (player) => updatePlayerList(),
-        (player) => updatePlayerList(),
+        (player) => {
+            updatePlayerList();
+            handlePlayerDisconnect(player.id);
+        },
         (err) => handleNetworkError(err)
     );
+
+    function handlePlayerDisconnect(playerId) {
+        if (!isHost) return;
+
+        if (gameState.status === 'PLAYING' && !isRoundOver) {
+            finishedPlayers.delete(playerId);
+            delete gameState.playerAnswers[playerId];
+            
+            const totalPlayers = Object.keys(network.players).length;
+            const finishedCount = finishedPlayers.size;
+
+            if (totalPlayers > 0 && finishedCount >= totalPlayers) {
+                endRound();
+            } else if (gameConfig.endCondition === 'all_finish') {
+                if (finishedCount >= gameConfig.endValue) {
+                    endRound();
+                }
+            }
+        } else if (gameState.status === 'VOTING') {
+            finishedVoters.delete(playerId);
+            const totalPlayers = Object.keys(network.players).length;
+            if (totalPlayers > 0 && finishedVoters.size >= totalPlayers) {
+                resolveVotesAndScore();
+            }
+        }
+    }
 
     network.init(isHost, roomCode, username);
 
@@ -701,6 +730,34 @@ document.addEventListener('DOMContentLoaded', () => {
     let finishedVoters = new Set();
     let currentResultsData = null;
 
+    async function validateViaLlm(catName, word, requiredLetter) {
+        try {
+            const prompt = `Sen bir İsim Şehir oyunu hakemisin.
+Kategori: "${catName}"
+Harf: "${requiredLetter}"
+Kelime: "${word}"
+
+Bu kelime bu kategoriye uygun mu ve belirtilen harfle mi başlıyor? 
+Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açıklama"}`;
+
+            const response = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'gemini-1.5-flash',
+                    prompt: prompt,
+                    temperature: 0.5
+                })
+            });
+            const data = await response.json();
+            const result = JSON.parse(data.text);
+            return { valid: !!result.valid, reason: result.reason || "" };
+        } catch (e) {
+            console.error("LLM Validation Error:", e);
+            return { valid: false, reason: "Yapay zeka doğrulaması başarısız oldu." };
+        }
+    }
+
     async function checkWikipedia(word, keywords, requiredLetterLower) {
         const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
@@ -747,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (catId === 'sehir') {
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
-                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0' } });
+                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
                 const data = await response.json();
                 result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
                 if (result) {
@@ -912,50 +969,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 const normLetter = normalizeForSearch(gameState.letter);
                 
                 let score = 0;
+                let llmReason = "";
 
                 if (word.length > 0 && normWord.startsWith(normLetter)) {
                     const isCustomCat = cat.id.startsWith('custom_');
-
-                    let isValidInDict = false;
+                    let isValid = false;
 
                     if (isCustomCat) {
-                        isValidInDict = true; // Cannot validate custom categories, default to valid
+                        isValid = word.startsWith(letterLower);
                     } else {
                         if (dictObj) {
                             if (dictObj.dict.has(word) && word.startsWith(letterLower)) {
-                                isValidInDict = true;
+                                isValid = true;
                             } else if (dictObj.normDict.has(normWord)) {
                                 const originals = dictObj.normDict.get(normWord);
                                 for (const ow of originals) {
                                     if (ow.startsWith(letterLower)) {
-                                        isValidInDict = true;
-                                        word = ow; // Update to original correct spelling
+                                        isValid = true;
+                                        word = ow;
                                         break;
                                     }
                                 }
                             }
                         }
                         
-                        if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
-                            isValidInDict = await validateViaApi(cat.id, word, letterLower);
+                        if (!isValid && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
+                            isValid = await validateViaApi(cat.id, word, letterLower);
+                        }
+
+                        if (!isValid) {
+                            const llmRes = await validateViaLlm(cat.name, word, gameState.letter);
+                            if (llmRes.valid) {
+                                isValid = true;
+                                llmReason = llmRes.reason;
+                            }
                         }
                     }
 
-                    if (isValidInDict) {
-                        if (wordFrequency[normWord] > 1) {
-                            score = 5; // Duplicate
-                        } else {
-                            score = 10; // Unique
-                        }
-                    } else {
-                        score = 0; // Not in dictionary or API
+                    if (isValid) {
+                        score = (wordFrequency[normWord] > 1) ? 5 : 10;
                     }
                 }
 
                 results[cat.id].push({
                     playerId: playerId,
                     word: word,
-                    suggestedScore: score
+                    suggestedScore: score,
+                    llmReason: llmReason
                 });
             }
         }
@@ -966,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
             config: gameConfig
         });
 
+        gameState.status = 'VOTING';
         initVotingSession(results);
     }
 
@@ -976,6 +1037,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.type === 'START_VOTING') {
             if (!isHost) {
+                gameState.status = 'VOTING';
                 initVotingSession(data.results);
             }
         } else if (data.type === 'SINGLE_VOTE') {
@@ -1081,6 +1143,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 suggestedDiv.style.color = 'var(--warning)';
                 suggestedDiv.style.fontSize = '0.9rem';
                 suggestedDiv.textContent = `Önerilen: ${res.suggestedScore} Puan`;
+                if (res.llmReason) {
+                    suggestedDiv.title = res.llmReason;
+                    suggestedDiv.textContent += " (AI Destekli)";
+                }
 
                 // Live vote display area
                 const liveCountDiv = document.createElement('div');
@@ -1291,6 +1357,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Scoreboard and Match Flow ---
     function renderScoreboard(scores) {
+        gameState.status = 'SCORE';
         switchScreen('score-screen');
         if(ui.scoreboardBody) ui.scoreboardBody.innerHTML = '';
 

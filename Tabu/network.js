@@ -143,8 +143,9 @@ class TabuNetworkManager extends BaseGameNetwork {
         this.engine.setState(payload.state);
         if (payload.hostId) this.roomCode = payload.hostId;
 
-        if (payload.durationLeft > 0) {
-            this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
+        if (payload.localTurnEndTime !== undefined) {
+            this.engine.localTurnEndTime = payload.localTurnEndTime;
+            this.engine.pauseOffset = payload.pauseOffset;
         }
         if (this.engine.state.status === 'playing') {
             this.engine.startRenderTimer();
@@ -189,12 +190,11 @@ class TabuNetworkManager extends BaseGameNetwork {
         delete stateCopy.activeWords; // Optimization
         stateCopy.currentWord = currentWord || null;
 
-        const durationLeft = stateCopy.isPaused ? this.engine.pauseOffset : Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
-
         this.broadcast('SYNC', {
             state: stateCopy,
             hostId: this.myId,
-            durationLeft: durationLeft
+            localTurnEndTime: this.engine.localTurnEndTime,
+            pauseOffset: this.engine.pauseOffset
         });
         
         // Let view and lobby manager know

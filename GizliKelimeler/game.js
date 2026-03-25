@@ -180,7 +180,7 @@ class GizliKelimelerEngine {
 
         if (actionType === 'SUBMIT_CLUE' && this.state.phase === 'CLUE' && p.team === this.state.turnTeam && p.role === 'SPYMASTER') {
             const count = parseInt(payload.count);
-            if (!payload.word || isNaN(count)) return;
+            if (!payload.word || isNaN(count) || count < 1) return;
 
             this.state.currentClue = {
                 word: payload.word.toUpperCase(),
