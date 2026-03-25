@@ -1,0 +1,54 @@
+📖 Temel Oyun İşleyişi (Fazlar)
+Oyun günleri 2 ana bölümden oluşur: Gündüz ve Gece.
+1. Gündüz Fazı
+Gündüz fazında tüm hayatta kalan karakterler "evlerinin önüne çıkar" (ortak sohbet/tartışma alanı). Gündüz fazı 3 alt aşamadan oluşur:
+• a. Gündüz Rolü Kullanımı: Şerif, İntikamcı gibi gündüz aksiyonu alabilen roller yeteneklerini bu aşamada (veya oylama öncesi) kullanır.
+• b. Oylama: Tüm oyuncular tartıştıktan sonra şüphelendikleri bir kişiyi asmak için oy kullanır.
+• c. Sonuç: Oylama sonucuna göre en çok oyu alan 1 kişi asılarak oyundan elenir. Gündüz kullanılan rollerin ve oylamanın sonuçları tüm kasabaya yansıtılır.
+2. Gece Fazı
+Gece fazında herkes uyur (gözlerini kapatır/kendi ekranına döner) ve gizli eylemler gerçekleşir.
+• a. Gece Rolü Kullanımı: Gece yeteneği olan tüm karakterler (Doktor, Vampirler, Seri Katil vb.) hedeflerini seçerek rollerini kullanırlar.
+• b. Animasyonlar (Sonuçların Yansıması): Seçilen rollere ve eylemlerin kendi içindeki mantık sırasına göre gece olayları gerçekleşir. Bu aşamada bazı oyuncular, yeteneklerine göre spesifik animasyonlar/olaylar görür.
+• Örnek: Gözcü gece (2.a) "A" kişisini izlemeyi seçti. Seri Katil ve Doktor da hedef olarak "A" kişisini seçti. Animasyon aşamasında (2.b); Gözcü, Seri Katil'in ve Doktor'un "A" kişisinin evine girdiğini görür.
+👥 TAKIMLAR VE ROLLER
+🕊️ KÖY TAKIMI
+Amacı: Tüm Vampirleri ve düşmanca Tarafsız rolleri (Seri Katil, Kundakçı) bularak oyundan elemektir.
+• 1- Köylü: Herhangi bir özel rolü ve yeteneği yoktur. Sadece gündüzleri oy kullanarak kasabayı savunur.
+• Gizli Görev (Oduncu): Oyuna başlayan sıradan köylülerden biri rastgele ve gizlice Oduncu olarak seçilir. Oduncu hayatta olduğu sürece kasabanın ortasındaki kamp ateşi yanar. Oduncu herhangi bir sebeple öldüğünde kamp ateşi söner.
+• Vampir İstisnası: Vampirler (karanlık doğaları gereği) kasabanın kamp ateşini göremezler. Bu nedenle ateşin sönüp sönmediğini fark etmezler ve ölen birinin gizli Oduncu olup olmadığını bu görsel yolla anlayamazlar.
+• 2- Doktor: Gece kullanır. Seçtiği hedefi iyileştirir/korur; o evden ölü çıkmaz.
+• Arka arkaya 2 tur aynı kişiyi koruyamaz.
+• Oyun boyunca toplam sadece 1 kez kendini koruyabilir.
+• 3- İntikamcı: (Gündüz Rolü) Oyunun ilk günü (Gündüz 1.a fazında) gizlice bir hedef belirler. Eğer İntikamcı gündüz oylamasında köy tarafından asılarak öldürülürse, ilk gün seçtiği o hedef kişi de anında ölür.
+• 4- Uyurgezer: Her gece rastgele/kendi belirlediği bir hedefin evine gider.
+• Gittiği hedef Kırmızı Takımdansa (Vampir vb.) uyurgezer ölür.
+• Gittiği hedefin evine standart bir saldırı düzenlenirse (örneğin vampirler o eve saldırdıysa) uyurgezer arada kaynar ve ölür. (Seri Katil istisnasına bakınız)
+• Kendi evine standart bir saldırı düzenlenirse gece kendi evinde olmadığı için ölmez. (Seri Katil istisnasına bakınız)
+• Seri Katil Etkileşimleri (Özel İstisnalar): Seri Katil gece çok erken harekete geçtiği ve çok hızlı olduğu için Uyurgezer ile olan etkileşimleri farklıdır:
+• Uyurgezer'in gittiği eve Seri Katil saldırmışsa, Uyurgezer ölmez. Çünkü Uyurgezer o eve vardığında cinayet çoktan yaşanıp bitmiş olur.
+• Seri Katil hedef olarak Uyurgezer'i seçip evine gelirse, Uyurgezer ölür. Çünkü Uyurgezer henüz evinden ayrılmaya fırsat bulamadan Seri Katil onu yakalamış olur.
+• Uyurgezer gece Seri Katil'in evine giderse (ve eve kimse saldırmazsa) ölmez. Çünkü Seri Katil o sırada cinayet işlemek için dışarı çıkmıştır ve ev boştur.
+• (Üçlü Çarpışma): Uyurgezer gece Seri Katil'in evine giderse ve o gece Vampirler de Seri Katil'in evine saldırı düzenlerse, Uyurgezer ölür. Seri Katil evde olmadığı için hayatta kalır ancak boş eve saldıran vampirler içeride uyurgezeri bulup parçalarlar.
+• 5- Gözcü: Gece kullanır. Seçtiği eve o gece giren herkesi (Doktor, Vampir vb.) görür. Seri Katil'i de görebilir.
+• 6- Dedektif: Gece kullanır. Seçtiği iki kişinin aynı takımdan olup olmadığını görür (Rollerini göremez, sadece "Aynı Takım" veya "Farklı Takım" bilgisi alır).
+• 7- Şerif: Gündüz kullanır. Silahında sadece 1 mermisi vardır. Oyun boyu istediği bir gündüz seçtiği kişiyi vurarak öldürür. Ancak vurduğu kişi Köy takımından masum biriyse, Şerif de vicdan azabından intihar eder (ölür).
+• 8- Tuzakçı: Gece kullanır. Seçtiği hedefin evine tuzak kurar. O hedefe gitmeye çalışan birileri olursa tuzağa takılır ve eylemleri engellenir. (Seri Katil'i engelleyemez).
+• 9- Polis: Gece kullanır. Seçtiği kişinin o gece evden dışarı çıkmasını engeller (Rol bloklar). (Seri Katil'e engel olamaz).
+• 10- İzci: Gece kullanır. Seçtiği kişinin o gece kesin rolünün ne olduğunu (Doktor, Şerif, Kundakçı vb.) öğrenir.
+• 11- Deli: Kendini yukarıdaki köy rollerinden biri zanneder (Örneğin ekranında "Sen Dedektifsin" yazar). Ancak aldığı tüm gece bilgileri tamamen rastgeledir (yanlıştır). Öldüğünde kasaba onun aslında Deli olduğunu anlar.
+🩸 VAMPİR TAKIMI (Kırmızı Takım)
+Amacı: Köylüleri ortadan kaldırıp kasabada çoğunluğu ele geçirmektir.
+• Temel Vampir Mekaniği: Tüm vampirler birbirini tanır. Her gece aralarında anlaşarak (veya toplu oy kullanarak) bir köylüyü öldürürler.
+• Sıradan Vampir: Herhangi bir ekstra özel yeteneği yoktur. Sadece geceleri diğer vampirlerle birlikte kimin kurban edileceğine karar vermek için oy kullanır.
+• Dracula: Vampirlerin lideridir. Gizlenmekte ustadır. Dedektif tarafından kontrol edildiğinde veya İzci tarafından bakıldığında "Köylü" rolünde görünür.
+• İzci (Vampir İzcisi): Gece kullanır. Seçtiği kişinin kesin rolünü (Doktor, Şerif, vb.) öğrenerek takımına bilgi sağlar.
+• Profesyonel: Oyun boyunca sadece 1 kullanım hakkı vardır. Hakkını kullandığı gece, Vampir takımının seçtiği ana kurban kesinlikle ölür. (Doktor tarafından korunsa veya hedef Seri Katil olsa bile ölür).
+• Zehirli: Oyun boyunca sadece 1 kullanım hakkı vardır. Gece yapılan standart toplu vampir saldırısına "ek olarak" başka 1 kişiyi daha zehirleyebilir.
+• Zehirlenen kişi o gece değil, 1 gün sonra ölür.
+• Doktor, zehirlenen kişiyi ilk gece veya ertesi gece korursa zehri temizleyebilir.
+🃏 TARAFSIZ TAKIM
+Amacı: Her birinin kendi kişisel kazanma koşulu vardır. Kasaba veya Vampirlerin kazanması onları bağlamaz.
+• Soytarı: Oyunu kazanmak için tek amacı gündüz oylamasında kasaba tarafından asılarak idam edilmektir. Kendini şüpheli gösterip astırmaya çalışır. (Gece ölürse kaybeder).
+• Hırsız: Oyunun ilk gecesi kendisine bir hedef seçer. Seçtiği o hedef kişi oyunda herhangi bir sebeple öldüğünde, Hırsız ölen kişinin rolünü çalar ve o rol olarak oyuna devam eder. (Hedefi ölene kadar herhangi bir yeteneği yoktur).
+• Kundakçı: Her gece 1 evin etrafına benzin döker (gizlice). İstediği bir gece "Ateşle" yeteneğini kullanarak, o güne kadar benzin döktüğü tüm evleri aynı anda yakarak içindekileri topluca öldürür. (Bir gecede hem benzin döküp hem ateşe veremez, ikisinden birini seçmelidir).
+• Seri Katil: Gecelerin en acımasız katilidir. Vampirler tarafından öldürülemez. Her gece seçtiği 1 kişiyi öldürür. Tuzakçılara ve Polislere karşı bağışıklığı vardır (engellenemez). Sadece Gündüz asılarak veya Şerif/Profesyonel tarafından öldürülebilir. Amacı kendisi hariç herkesin ölmesidir.

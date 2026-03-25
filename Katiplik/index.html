@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Paira Katiplik Düellosu | Hızlı Klavye Yarışı ve On Parmak Pratiği</title>
+    <meta name="description" content="Klavye hızını test et, arkadaşlarına meydan oku! Paira Katiplik Düellosu ile on parmak yazma yeteneğini geliştir, zabıt katipliği sınavlarına hazırlan ve en hızlı sen ol.">
+    <meta name="keywords" content="paira katiplik, klavye yarışı, katiplik sınavı hazırlık, on parmak testi, hızlı yazma oyunu, typing race online, klavye hız testi">
+    <meta name="author" content="Paira Games">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Paira Katiplik Düellosu - Arkadaşınla Hız Yarışına Gir!">
+    <meta property="og:description" content="En hızlı kim yazıyor? Katiplik Düellosu'nda gerçek zamanlı klavye savaşlarına katıl ve hızını herkese göster.">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Paira Katiplik Düellosu - Arkadaşınla Hız Yarışına Gir!">
+    <meta property="twitter:description" content="En hızlı kim yazıyor? Katiplik Düellosu'nda gerçek zamanlı klavye savaşlarına katıl ve hızını herkese göster.">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira Katiplik Düellosu",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Typing Game",
+      "description": "Katiplik Düellosu, kullanıcıların metinleri en hızlı ve hatasız şekilde yazarak birbirleriyle yarıştığı, WPM ve doğruluk odaklı bir klavye hızı oyunudur.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira Games"
+      }
+    }
+    </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container">
+                    <div style="display:inline-flex; align-items:center; justify-content:center; width: 100px; height: 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); animation: float 6s ease-in-out infinite; background: var(--card-bg); font-size: 4rem;">⌨️</div>
+                </div>
+                <h1 class="gradient-text">Katiplik Düellosu</h1>
+                <p class="seo-description">Parmaklarına güveniyor musun? **Paira Katiplik Düellosu**'nda ister tek başına pratik yap, ister arkadaşlarınla gerçek zamanlı düellolara katıl. En yüksek WPM değerine ulaş ve rekorları kır!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-solo" class="btn btn-success btn-block" style="padding: 14px; font-size: 1.1rem;">Solo Pratik Yap</button>
+                    
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Arkadaşına Meydan Oku (Oda Kur)</button>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
+                    </div>
+                    
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-seo-info custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Modunu Seç</h3>
+                        <p>Solo Pratik ile kendini geliştir veya Düello moduyla arkadaşlarına meydan oku.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Metni Yaz</h3>
+                        <p>Ekranda beliren metni, imla kurallarına dikkat ederek en hızlı şekilde kutucuğa yaz.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Hızını Ölç</h3>
+                        <p>Yazdıkça dakikadaki kelime sayın (WPM) ve doğruluk oranın anlık olarak hesaplanır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Düelloyu Kazan</h3>
+                        <p>Arkadaşından daha hızlı ve hatasız yazarak klavye şampiyonu ol!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Katiplik Düellosu Hakkında</h2>
+        <p>Klavye hızına güveniyor musun? On parmak yazma yeteneğini geliştirmek, zabıt katipliği sınavlarına hazırlanmak veya sadece arkadaşlarınla kıyasıya bir hız yarışına girmek istiyorsan <strong>Paira Katiplik Düellosu</strong> tam sana göre!</p>
+        <p>İster tek başınıza antrenman yapıp kişisel rekorlarınızı kırmaya çalışın, ister arkadaşlarınızla aynı odada buluşup gerçek zamanlı bir klavye savaşına katılın. Oyunda karşınıza çıkan resmi yazışmalar, hukuki makaleler ve edebi metinleri en kısa sürede, hatasız olarak yazmanız gerekir. Sistem; yazdığınız kelime sayısını, dakikadaki vuruş hızınızı (WPM) ve hata oranınızı anlık olarak ölçer.</p>
+        <p>Arkadaşlarla oynanan çok oyunculu modda, kimin kelimeleri daha hızlı erittiğini canlı olarak görebilirsiniz. Yanlış yazılan kelimeler ilerlemenizi yavaşlatır, bu yüzden sadece hızlı olmak değil, doğru tuşlara basmak da zafere giden yolda kritik bir rol oynar. Hiçbir kurulum yapmadan tarayıcın üzerinden klavyenin başına geç ve parmaklarının hızını herkese göster!</p>
+    </div>
+
+    <script src="../shared/login.js"></script>
+</body>
+</html>

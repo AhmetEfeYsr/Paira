@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Paira ÇizBil | Online Çizim ve Tahmin Oyunu</title>
+    <meta name="description" content="ÇizBil ile arkadaşlarınla online çizim yap ve tahminlerde bulun! Gartic.io tarzı bu eğlenceli oyunda hayal gücünü konuştur, en çok puanı topla. Paira ÇizBil ücretsiz!">
+    <meta name="keywords" content="paira cizbil, gartic oyna, online çizim oyunu, arkadaşlarla çizim oyunu, ücretsiz multiplayer oyunlar">
+    <meta name="author" content="Paira">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="ÇizBil - Hayal Gücünü Çizgilere Dök!">
+    <meta property="og:description" content="Arkadaşlarınla online çizim ve tahmin yarışı! En hızlı kim tahmin edecek?">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="ÇizBil - Hayal Gücünü Çizgilere Dök!">
+    <meta property="twitter:description" content="Arkadaşlarınla online çizim ve tahmin yarışı! En hızlı kim tahmin edecek?">
+
+    <!-- Schema.org (JSON-LD) for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira ÇizBil",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Drawing Game",
+      "description": "ÇizBil, oyuncuların sırayla kelimeleri çizdiği ve diğerlerinin bu çizimleri tahmin etmeye çalıştığı çok oyunculu, tarayıcı tabanlı bir eğlence oyunudur.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <!-- GİRİŞ EKRANI -->
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container" ><img src="../logolar/cizbil.svg" alt="ÇizBil Logo" ></div>
+                <h1 class="gradient-text">ÇizBil</h1>
+                <p class="seo-description">Çizim yeteneğine (veya komik çizimlerine) güveniyor musun? **Paira ÇizBil**'de arkadaşlarınla toplan, çiz ve tahmin et! En hızlı bilen puanları toplar.</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır? 🎨</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Oda Kur</h3>
+                        <p>Bir oda oluşturup linki arkadaşlarına gönder veya mevcut bir odaya katıl.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Kelimeni Seç</h3>
+                        <p>Sıra sana geldiğinde, sana sunulan kelimelerden birini seç ve çizmeye başla.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Tahmin Et</h3>
+                        <p>Diğer oyuncular çizerken, ne çizdiklerini sohbete yazarak tahmin etmeye çalış.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Puanları Topla</h3>
+                        <p>Ne kadar hızlı tahmin edersen ve çizimin ne kadar çok kişi tarafından bilinirse o kadar çok puan kazanırsın!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira ÇizBil Hakkında</h2>
+        <p>Çizim yeteneğine ne kadar güveniyorsun? Ya da arkadaşlarının senin ne çizdiğini anlayabileceğine? <strong>Paira ÇizBil</strong>, birinizin çizdiği diğerlerinin ise ne çizildiğini bulmaya çalıştığı son derece komik ve rekabetçi bir tahmin oyunudur.</p>
+
+        <p>Oyun başladığında sırası gelen oyuncuya bir kelime verilir. Oyuncu bu kelimeyi fırça ve renkleri kullanarak tuvale yansıtmaya çalışır. Bu esnada diğer oyuncular da ortaya çıkan esere bakarak sohbet ekranından kelimeyi tahmin etmeye çalışırlar. Kelimeyi ilk doğru tahmin eden oyuncu en yüksek puanı alırken, çizimi anlaşılan çizer de puan kazanır. Çizim ne kadar kötüyse, tahminler de bir o kadar komik olur!</p>
+
+        <p>Hiçbir şey indirmene gerek kalmadan, arkadaşlarınla aynı odada buluşarak bu eğlenceli deneyime hemen ortak olabilirsin. Sanatını konuştur ya da berbat çizimlerinle herkesi güldür, seçim senin!</p>
+    </div>
+
+    <!-- index.js only handles username, connection setup and redirection -->
+
+    <script src="../shared/login.js"></script>
+</body>
+</html>

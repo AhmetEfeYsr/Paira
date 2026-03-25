@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>ÇizimZinciri | Paira ÇizimZinciri - Eğlenceli Online Çizim ve Tahmin Oyunu</title>
+    <meta name="description" content="Arkadaşlarınızla kahkahalara boğulacağınız ücretsiz online çizim oyunu! Paira ÇizimZinciri ile cümleleri çizimlere, çizimleri komik hikayelere dönüştürün.">
+    <meta name="keywords" content="paira çizimzinciri, gartic phone benzeri, online çizim oyunu, arkadaşlarla oynanacak oyunlar, kulaktan kulağa çizim, ücretsiz multiplayer oyun">
+    <meta name="author" content="Paira Games">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="ÇizimZinciri - Kelimelerin Çizgiyle Komik Dansı">
+    <meta property="og:description" content="Cümleler çizime, çizimler kaosa dönüşüyor! Arkadaşlarınla Paira ÇizimZinciri oyna ve eğlencenin tadını çıkar.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="ÇizimZinciri - Kelimelerin Çizgiyle Komik Dansı">
+    <meta property="twitter:description" content="Cümleler çizime, çizimler kaosa dönüşüyor! Arkadaşlarınla Paira ÇizimZinciri oyna ve eğlencenin tadını çıkar.">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira ÇizimZinciri",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Party Game",
+      "description": "ÇizimZinciri, arkadaşlarınızla oynayabileceğiniz, çizim ve tahmin temelli eğlenceli bir zincirleme anlatı oyunudur.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+</head>
+<body style="justify-content: center;">
+    <div class="glass-bg"></div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container"><img src="../logolar/cizim-zinciri.svg" alt="ÇizimZinciri Logo"></div>
+                <h1 class="gradient-text">ÇizimZinciri</h1>
+                <p class="seo-description">Klasik kulaktan kulağa oyununu çizimlerle oynamaya ne dersin? **Paira ÇizimZinciri**'nde bir cümleyle başla, arkadaşın çizsin, diğeri tahmin etsin! Sonuçlara inanamayacaksın.</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="15">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="6" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Cümle Yaz</h3>
+                        <p>Oyuna herkes gizli bir cümle yazarak başlar.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Çizim Yap</h3>
+                        <p>Sana gelen cümleyi en iyi (veya en komik) şekilde çizmeye çalış.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Tahmin Et</h3>
+                        <p>Sana gelen çizimin ne anlatmak istediğini bir cümleyle tahmin et.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Albümü İncele</h3>
+                        <p>Oyun sonunda başlangıç cümlesinin nasıl evrildiğini tüm arkadaşlarınla birlikte gör ve eğlen!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira ÇizimZinciri Hakkında</h2>
+        <p>Bildiğimiz kulaktan kulağa oyununu alıp kelimeler yerine çizimler koysak ne olurdu? Ortaya tam bir kaos ve kahkaha tufanı çıkardı! <strong>Paira ÇizimZinciri</strong>, arkadaşlarınla birlikte oynarken gözyaşlarına boğulacağınız eşsiz bir online eğlence sunuyor.</p>
+
+        <p>Oyunun başında herkes kendi belirlediği bir cümleyi yazar. Ardından bu cümleler karışır ve önüne gelen cümleyi çizerek anlatman istenir. Senin çizimin bir sonraki oyuncuya gider ancak o oyuncu orijinal cümleyi bilmez; sadece senin çizimine bakarak bunun ne olduğunu tahmin edip yazıya döker. Bu yazı başka bir oyuncuya çizim için gider ve zincir böylece devam eder.</p>
+
+        <p>Turlar bittiğinde, başlangıçtaki o masum cümlenin elden ele dolaşırken nasıl saçma sapan ve komik bir şeye dönüştüğünü hep beraber ekranda izlersiniz. Profesyonel çizer olmana hiç gerek yok, hatta ne kadar kötü çizersen oyun o kadar eğlenceli olur! Hemen odanı kur, arkadaşlarını davet et ve zinciri başlat.</p>
+    </div>
+
+    <script>
+        document.getElementById('btn-host').addEventListener('click', () => {
+            const name = document.getElementById('username-input').value.trim();
+            if(!name) {
+                if (window.showToast) window.showToast('Lütfen bir kullanıcı adı giriniz.', 'error');
+                else alert('Lütfen bir kullanıcı adı giriniz.');
+                return;
+            }
+            sessionStorage.setItem('playerName', name);
+            sessionStorage.setItem('isHost', 'true');
+            window.location.href = 'game.html';
+        });
+
+        document.getElementById('btn-join').addEventListener('click', () => {
+            const name = document.getElementById('username-input').value.trim();
+            const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+
+            if(!name) {
+                if (window.showToast) window.showToast('Lütfen bir kullanıcı adı giriniz.', 'error');
+                else alert('Lütfen bir kullanıcı adı giriniz.');
+                return;
+            }
+            if(!code || code.length !== 6) {
+                if (window.showToast) window.showToast('Lütfen 6 haneli geçerli bir oda kodu giriniz.', 'error');
+                else alert('Lütfen 6 haneli geçerli bir oda kodu giriniz.');
+                return;
+            }
+
+            sessionStorage.setItem('playerName', name);
+            sessionStorage.setItem('roomCode', code);
+            sessionStorage.setItem('isHost', 'false');
+            window.location.href = 'game.html';
+        });
+    </script>
+    <script src="../shared/shared.js"></script>
+</body>
+</html>

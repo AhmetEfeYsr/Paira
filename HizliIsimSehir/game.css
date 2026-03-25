@@ -1,0 +1,317 @@
+/* Additional styles for game.html specific to Isim Sehir */
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.game-input-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.game-input-wrapper label {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.game-input-wrapper input {
+    width: 100%;
+    padding: 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--lilac-muted);
+    color: var(--text-main);
+    border-radius: 12px;
+    font-size: 1.25rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.game-input-wrapper input:focus {
+    border-color: var(--neon-purple);
+    background: var(--glass-shadow);
+    outline: none;
+}
+
+.game-input-wrapper input:disabled {
+    opacity: 0.6;
+    background: var(--card-bg);
+    cursor: not-allowed;
+}
+
+.game-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+
+/* Scoreboard */
+.scoreboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.scoreboard-table th, .scoreboard-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--lilac-muted);
+}
+
+.scoreboard-table th {
+    color: var(--lilac);
+    font-weight: 600;
+}
+
+.scoreboard-table tr:hover {
+    background: var(--input-bg);
+}
+
+/* Status Dot in Lobby */
+.is-host::after {
+    content: '👑';
+    font-size: 0.9rem;
+    margin-left: 5px;
+}
+
+/* Circular Table Layout */
+.circular-table-layout {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(400px, 60vh, 600px);
+    overflow: hidden;
+}
+
+/* Center Prompt */
+.center-prompt {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 10;
+    text-align: center;
+    background: var(--overlay-bg);
+    padding: 20px;
+    border-radius: 50%;
+    width: 320px;
+    height: 320px;
+    box-shadow: 0 0 30px var(--neon-glow-rgba);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--neon-glow-rgba);
+}
+
+.center-letter-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.center-category-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.center-timer-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-top: 0;
+}
+
+.center-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.center-letter {
+    font-size: 3rem;
+    color: var(--neon-purple);
+    line-height: 1;
+    text-shadow: 0 0 15px var(--neon-glow-rgba);
+}
+
+.center-category-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-align: center;
+}
+
+.center-timer {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--lilac);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Players Circle */
+.players-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* Let clicks pass through to center if needed */
+}
+
+.player-node {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    transform: translate(-50%, -50%);
+    transform-origin: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border: 2px solid var(--lilac-muted);
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.15);
+    transition: all 0.3s ease;
+    opacity: 0.6;
+    pointer-events: auto;
+}
+
+.player-node.active-turn {
+    opacity: 1;
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 20px var(--neon-glow-rgba);
+    transform: translate(-50%, -50%) scale(1.15);
+    z-index: 20;
+    animation: activePulse 2s infinite;
+}
+
+@keyframes activePulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+
+.node-avatar {
+    font-size: 1.5rem;
+    margin-bottom: 2px;
+}
+
+.node-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.node-score {
+    font-size: 0.8rem;
+    color: var(--lilac);
+    font-weight: 800;
+    background: var(--input-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 4px;
+}
+
+/* Compact Input Area */
+.compact-input-area {
+    position: relative;
+    margin-top: auto;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 30;
+    padding: 0 20px;
+}
+
+#finish-status-text {
+    background: var(--input-bg);
+    padding: 4px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    backdrop-filter: blur(4px);
+    color: var(--text-muted);
+}
+
+.compact-input-group {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    background: var(--card-bg);
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid var(--lilac-muted);
+    box-shadow: 0 10px 25px var(--overlay-bg);
+    backdrop-filter: blur(10px);
+}
+
+.compact-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+    color: var(--text-main);
+    border-radius: 12px;
+    outline: none;
+    text-align: center;
+}
+
+.compact-input:focus {
+    background: var(--btn-secondary-bg);
+}
+
+.compact-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.compact-btn {
+    border-radius: 12px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compact-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--btn-secondary-bg);
+    color: var(--text-muted);
+}

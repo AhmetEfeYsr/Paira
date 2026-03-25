@@ -1,0 +1,177 @@
+ <!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Paira Katiplik Düellosu | Hızlı Klavye Yarışı ve On Parmak Pratiği</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <!-- PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/webp" href="https://pairaaa.com/main_logo.webp">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.webp">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    
+    <main id="app-container" class="glass-panel custom-scrollbar">
+    
+        <!-- Bağlantı Bekleme Ekranı -->
+        <section id="waiting-screen" class="view-state active" style="justify-content: center; align-items: center; min-height: 100%;">
+            <div class="card" style="text-align: center; max-width: 400px; padding: 2.5rem; width: 100%;">
+                <div class="game-logo-container" style="font-size: 3rem; margin: 0 auto 1.5rem; display:inline-flex; align-items:center; justify-content:center; width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); animation: float 6s ease-in-out infinite; background: var(--card-bg);">⏳</div>
+                <h2 style="margin-bottom: 0.5rem; color: var(--text-main);">Rakip Bekleniyor</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Oda kodunu arkadaşınla paylaş:</p>
+                
+                <div class="code-container" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--code-bg); padding: 10px 20px; border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed var(--btn-secondary-bg);">
+                    <span id="display-room-code" style="font-family: monospace; font-size: 2rem; letter-spacing: 4px; color: var(--neon-purple); font-weight: bold; cursor: pointer;" title="Kopyalamak için tıkla">----</span>
+                </div>
+                
+                <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                    <div class="spinner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    </div>
+                </div>
+                
+                <button id="btn-cancel-wait" class="btn btn-secondary btn-block" style="margin-top: 1rem;">İptal</button>
+            </div>
+        </section>
+
+        <!-- Oyun Ekranı -->
+        <section id="game-screen" class="view-state hidden" style="flex-direction: column; flex: 1;">
+        <!-- Header: Oyuncu Bilgileri -->
+        <header class="game-header card" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; flex-direction: row;">
+            <div class="player-info" id="player1-info">
+                <div class="player-avatar" style="border-color: var(--success); color: var(--success);">👤</div>
+                <div class="player-details">
+                    <span class="player-name" id="p1-name" style="color: var(--success);">Oyuncu 1</span>
+                    <span class="player-wpm" id="p1-wpm">0 WPM</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="p1-progress" style="width: 0%; background: var(--success);"></div>
+                </div>
+            </div>
+            
+            <div class="timer-container">
+                <span id="game-timer" style="color: var(--neon-purple);">00:00</span>
+            </div>
+            
+            <div class="player-info" id="player2-info">
+                <div class="progress-bar-container" style="justify-content: flex-end; transform: scaleX(-1);">
+                    <div class="progress-bar" id="p2-progress" style="width: 0%; background: var(--danger);"></div>
+                </div>
+                <div class="player-details" style="text-align: right;">
+                    <span class="player-name" id="p2-name" style="color: var(--danger);">Oyuncu 2</span>
+                    <span class="player-wpm" id="p2-wpm">0 WPM</span>
+                </div>
+                <div class="player-avatar" style="border-color: var(--danger); color: var(--danger);">👤</div>
+            </div>
+        </header>
+
+        <!-- Kategori Seçimi (Sadece Kurucu) -->
+        <div id="category-selection" class="category-selection card custom-scrollbar" style="display: none; flex-grow: 1; overflow-y: auto;">
+            <h3 style="text-align: center; margin-bottom: 1.5rem; color: var(--lilac);">Metin Kategorisi Seç</h3>
+            
+            <div class="settings-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--input-bg); padding: 1rem; border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label style="margin: 0; color: var(--text-main); font-weight: 500;">İmla Modu</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer; color: var(--text-main);">
+                            <input type="radio" name="imla-mode" value="imlali" checked style="margin: 0; transform: scale(1.2);"> İmlalı
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer; color: var(--text-main);">
+                            <input type="radio" name="imla-mode" value="imlasiz" style="margin: 0; transform: scale(1.2);"> İmlasız
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label style="margin: 0; color: var(--text-main); font-weight: 500;">Klavye Düzeni</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer; color: var(--text-main);">
+                            <input type="radio" name="kb-mode" value="tr" checked style="margin: 0; transform: scale(1.2);"> Türkçe Klavye
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer; color: var(--text-main);">
+                            <input type="radio" name="kb-mode" value="en" style="margin: 0; transform: scale(1.2);"> İngilizce Klavye
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-grid" id="category-grid">
+                <!-- Kategoriler JS ile doldurulacak -->
+            </div>
+            <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
+                <button id="btn-start-game" class="btn btn-primary btn-block" disabled style="padding: 14px; font-size: 1.1rem; max-width: 300px; margin: 0 auto;">Oyunu Başlat</button>
+            </div>
+        </div>
+
+        <!-- Yazı Alanı -->
+        <div id="typing-area" class="typing-area" style="display: none; flex-grow: 1;">
+            <div id="text-display" class="text-display card custom-scrollbar" style="flex-grow: 1; overflow-y: auto; align-items: flex-start; justify-content: flex-start;">
+                <!-- Metin kelimeleri JS ile buraya eklenecek -->
+            </div>
+            <textarea id="text-input" class="text-input card" placeholder="Buraya yazın..." autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" disabled style="min-height: 120px; font-size: 1.5rem; border: 2px solid var(--btn-secondary-border);"></textarea>
+        </div>
+
+            <!-- Sonuç Ekranı -->
+            <div id="result-screen" class="result-screen card" style="display: none; text-align: center; margin: auto; max-width: 600px; width: 100%; padding: 3rem 2rem;">
+                <h2 id="result-title" style="margin-bottom: 2rem; font-size: 2.5rem; color: var(--text-main);"></h2>
+                <div class="stats-grid" style="display: flex; justify-content: space-around; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+                    <div class="stat-box" style="background: var(--input-bg);">
+                        <span class="stat-label">Hız (WPM)</span>
+                        <span class="stat-value" id="final-wpm" style="color: var(--success);">0</span>
+                    </div>
+                    <div class="stat-box" style="background: var(--input-bg);">
+                        <span class="stat-label">Doğruluk</span>
+                        <span class="stat-value" id="final-accuracy" style="color: var(--neon-purple);">%0</span>
+                    </div>
+                    <div class="stat-box" style="background: var(--input-bg);">
+                        <span class="stat-label">Süre</span>
+                        <span class="stat-value" id="final-time" style="color: var(--warning);">0s</span>
+                    </div>
+                </div>
+                <button id="btn-play-again" class="btn btn-primary btn-block" style="display: none; padding: 14px; font-size: 1.1rem; max-width: 300px; margin: 0 auto;">Tekrar Oyna</button>
+                <div id="waiting-rematch-text" style="display: none; color: var(--text-muted); margin-top: 1rem; font-size: 1.1rem;">Kurucunun yeni oyunu başlatması bekleniyor...</div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Katiplik Düellosu Hakkında</h2>
+        <p>Klavye hızına güveniyor musun? On parmak yazma yeteneğini geliştirmek, zabıt katipliği sınavlarına hazırlanmak veya sadece arkadaşlarınla kıyasıya bir hız yarışına girmek istiyorsan <strong>Paira Katiplik Düellosu</strong> tam sana göre!</p>
+        <p>İster tek başınıza antrenman yapıp kişisel rekorlarınızı kırmaya çalışın, ister arkadaşlarınızla aynı odada buluşup gerçek zamanlı bir klavye savaşına katılın. Oyunda karşınıza çıkan resmi yazışmalar, hukuki makaleler ve edebi metinleri en kısa sürede, hatasız olarak yazmanız gerekir. Sistem; yazdığınız kelime sayısını, dakikadaki vuruş hızınızı (WPM) ve hata oranınızı anlık olarak ölçer.</p>
+        <p>Arkadaşlarla oynanan çok oyunculu modda, kimin kelimeleri daha hızlı erittiğini canlı olarak görebilirsiniz. Yanlış yazılan kelimeler ilerlemenizi yavaşlatır, bu yüzden sadece hızlı olmak değil, doğru tuşlara basmak da zafere giden yolda kritik bir rol oynar. Hiçbir kurulum yapmadan tarayıcın üzerinden klavyenin başına geç ve parmaklarının hızını herkese göster!</p>
+    </div>
+
+    <!-- Chat Bölümü -->
+    <button id="chat-toggle" class="chat-toggle">💬</button>
+    <div id="chat-panel" class="chat-panel">
+        <div class="chat-header">
+            <span>Sohbet</span>
+            <button id="chat-close">✖</button>
+        </div>
+        <div id="chat-messages" class="chat-messages custom-scrollbar"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
+            <button id="chat-send">➤</button>
+        </div>
+    </div>
+
+    <script src="../shared/peer_manager.js"></script>
+    <script src="../shared/base_network.js"></script>
+    <script src="../shared/state_proxy.js"></script>
+    <script src="../shared/lobby_manager.js"></script>
+    <script src="../shared/chat.js"></script>
+    <script src="network.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

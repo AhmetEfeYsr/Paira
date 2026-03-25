@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>ÇizimZinciri | Paira ÇizimZinciri - Eğlenceli Online Çizim ve Tahmin Oyunu</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/webp" href="https://pairaaa.com/main_logo.webp">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.webp">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    <main id="app-container" class="glass-panel custom-scrollbar">
+
+        <header class="app-header" style="position: relative;">
+            <h1 class="gradient-text" style="font-size: 2rem;">ÇizimZinciri</h1>
+            <button id="btn-leave" class="btn btn-secondary btn-sm" style="position: absolute; right: 0; top: 0;">Çıkış</button>
+        </header>
+
+        <!-- LOBİ EKRANI -->
+        <section id="lobby-screen" class="view-state active">
+            <header class="lobby-header">
+                <div class="code-container">
+                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
+                </div>
+                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
+            </header>
+
+            <div class="lobby-grid">
+                <aside class="players-panel card">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar"></ul>
+                </aside>
+
+                <section class="settings-panel card custom-scrollbar" id="host-settings" style="display: none; overflow-y: auto;">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyun Ayarları</h3>
+                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Sayısı</label><input type="number" id="round-count" value="3" min="1" max="10"></div>
+                    </div>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Oyunu Başlat (Min 3 Kişi)</button>
+                </section>
+
+                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
+                    <div style="color: var(--primary-purple); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu oyunu başlatacak.</p>
+                </section>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI -->
+        <section id="game-screen" class="view-state hidden">
+            <header class="game-topbar card" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: bold; color: var(--primary);" id="task-title">Ne yapman gerekiyor?</div>
+                <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center;">
+                    <div id="timer-display" class="timer" style="font-size: 2rem; font-weight: bold; color: var(--warning);">00</div>
+                </div>
+            </header>
+
+            <div class="cizim-zinciri-layout" style="display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px;">
+
+                <!-- YAZI YAZMA EKRANI (PROMPT / TAHMİN) -->
+                <div id="prompt-container" class="card" style="width: 100%; max-width: 600px; display: none; flex-direction: column; gap: 15px; align-items: center;">
+                    <h3 id="prompt-instruction" style="text-align: center; color: var(--text-main);">Komik bir cümle yaz!</h3>
+
+                    <!-- Sadece tahmin ekranında gösterilecek önceki çizim -->
+                    <div id="previous-drawing-container" style="display: none; width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--btn-secondary-border);">
+                        <img id="previous-drawing" src="" alt="Önceki Çizim" style="width: 100%; height: auto; display: block; background: white;">
+                    </div>
+
+                    <input type="text" id="prompt-input" class="game-input" placeholder="Örn: Uzayda kahve içen zürafa..." maxlength="60" style="font-size: 1.2rem; text-align: center;">
+                    <button id="btn-submit-prompt" class="btn btn-primary" style="padding: 10px 30px; font-size: 1.2rem;">Gönder & Bekle</button>
+                </div>
+
+                <!-- ÇİZİM EKRANI -->
+                <div id="draw-container" class="card" style="width: 100%; max-width: 800px; display: none; flex-direction: column; gap: 15px; padding: 10px;">
+                    <div style="text-align: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; color: var(--warning);" id="word-to-draw">ÇİZİLECEK KELİME</div>
+
+                    <div class="canvas-container">
+                        <canvas id="drawing-board" width="800" height="450"></canvas>
+                    </div>
+
+                    <div class="toolbar" id="toolbar">
+                        <div class="color-picker" id="color-picker">
+                            <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                            <div class="color-swatch" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                            <div class="color-swatch" style="background: #3498db;" data-color="#3498db"></div>
+                            <div class="color-swatch" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                            <div class="color-swatch" style="background: #f1c40f;" data-color="#f1c40f"></div>
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;" data-color="#ffffff"></div>
+                            <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); display: flex; align-items: center; justify-content: center; position: relative;" data-color="#ff0000" title="Özel Renk">
+                                <span style="color: white; font-weight: bold; pointer-events: none; text-shadow: 0 0 2px black;">+</span>
+                                <input type="color" class="custom-color-input" value="#ff0000" style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
+                            </div>
+                        </div>
+
+                        <div class="size-picker" id="size-picker">
+                            <div class="size-btn" data-size="3" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 4px; height: 4px;"></div></div>
+                            <div class="size-btn active" data-size="8" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 8px; height: 8px;"></div></div>
+                            <div class="size-btn" data-size="15" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 14px; height: 14px;"></div></div>
+                            <div class="size-btn" data-size="25" style="background: var(--btn-secondary-bg); border-color: var(--btn-secondary-border);"><div class="size-dot" style="width: 20px; height: 20px;"></div></div>
+                        </div>
+
+                        <div class="tool-picker" id="tool-picker" style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn active" data-tool="brush" title="Fırça" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2l4 4-10 10H8v-4L18 2z"></path><path d="M14 6l4 4"></path><path d="M3 21h18"></path></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="fill" title="Doldur" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2a2 2 0 0 0 2.8 0L19 11Z"></path><path d="M5 2l5 5"></path><path d="M2 13h15"></path><path d="M22 20a2 2 0 1 1-4 0c0-1.6 2-5 2-5s2 3.4 2 5Z"></path></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="rect" title="Kare" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="circle" title="Daire" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="line" title="Çizgi" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                        </div>
+
+                        <div class="tools" style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm btn-icon" id="btn-undo" title="Geri Al" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-icon" id="btn-clear" title="Temizle" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                            <button class="btn btn-primary btn-sm" id="btn-submit-drawing" style="font-weight:bold; display: flex; align-items: center; justify-content: center; padding: 8px 16px;">Tamamla & Gönder</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BEKLEME EKRANI (Tur sonu herkesin bitirmesini beklerken) -->
+                <div id="wait-container" class="card" style="width: 100%; max-width: 600px; display: none; flex-direction: column; gap: 15px; align-items: center; text-align: center;">
+                    <div style="font-size: 3rem;">⏳</div>
+                    <h3>Diğer oyuncular bekleniyor...</h3>
+                    <p style="color: var(--text-muted);">Sürenin bitmesi veya herkesin tamamlaması gerekiyor.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ALBÜM EKRANI (Sonuçlar) -->
+        <section id="album-screen" class="view-state hidden">
+            <h1 class="gradient-text">Albüm</h1>
+            <p style="text-align:center; color: var(--text-muted); margin-bottom: 20px;">Hikayeler nasıl gelişti görelim!</p>
+
+            <div id="album-container" class="custom-scrollbar" style="display:flex; flex-direction:column; gap:20px; align-items:center; max-height: 70vh; overflow-y:auto; padding-bottom: 50px;">
+                <!-- Hikayeler buraya eklenecek -->
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
+                <button id="btn-next-story" class="btn btn-primary" style="display: none; padding: 10px 30px; font-size: 1.2rem;">Sonraki Hikaye</button>
+                <button id="btn-back-to-lobby" class="btn btn-secondary" style="display: none; padding: 10px 30px; font-size: 1.2rem;">Lobiye Dön</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira ÇizimZinciri Hakkında</h2>
+        <p>Bildiğimiz kulaktan kulağa oyununu alıp kelimeler yerine çizimler koysak ne olurdu? Ortaya tam bir kaos ve kahkaha tufanı çıkardı! <strong>Paira ÇizimZinciri</strong>, arkadaşlarınla birlikte oynarken gözyaşlarına boğulacağınız eşsiz bir online eğlence sunuyor.</p>
+
+        <p>Oyunun başında herkes kendi belirlediği bir cümleyi yazar. Ardından bu cümleler karışır ve önüne gelen cümleyi çizerek anlatman istenir. Senin çizimin bir sonraki oyuncuya gider ancak o oyuncu orijinal cümleyi bilmez; sadece senin çizimine bakarak bunun ne olduğunu tahmin edip yazıya döker. Bu yazı başka bir oyuncuya çizim için gider ve zincir böylece devam eder.</p>
+
+        <p>Turlar bittiğinde, başlangıçtaki o masum cümlenin elden ele dolaşırken nasıl saçma sapan ve komik bir şeye dönüştüğünü hep beraber ekranda izlersiniz. Profesyonel çizer olmana hiç gerek yok, hatta ne kadar kötü çizersen oyun o kadar eğlenceli olur! Hemen odanı kur, arkadaşlarını davet et ve zinciri başlat.</p>
+    </div>
+
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/peer_manager.js"></script>
+    <script src="../shared/drawing.js"></script>
+    <script src="../shared/cizbil_words.js"></script>
+    <script src="network.js" type="module"></script>
+    <script src="game.js" type="module"></script>
+
+</body>
+</html>

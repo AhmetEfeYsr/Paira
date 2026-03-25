@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Kelime Avı | Oyun Odası</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=Pacifico&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/webp" href="https://pairaaa.com/main_logo.webp">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.webp">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    <main id="app-container" class="glass-panel custom-scrollbar">
+
+        <!-- LOBİ EKRANI -->
+        <section id="lobby-screen" class="view-state active">
+            <header class="lobby-header">
+                <div class="code-container">
+                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
+                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
+                </div>
+                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
+            </header>
+
+            <div class="lobby-grid">
+                <!-- Sol Panel: Oyuncular -->
+                <aside class="players-panel card">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar"></ul>
+                </aside>
+
+                <!-- Sağ Panel: Kurucu Ayarları -->
+                <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyun Ayarları</h3>
+                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="45" min="20" max="180"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Toplam Tur</label><input type="number" id="round-count" value="5" min="1" max="20"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Süre Artışı (Sn)</label><input type="number" id="time-increase" value="15" min="0" max="60" title="Masumlar bildikçe süre ne kadar artsın?"></div>
+                    </div>
+
+                    <!-- Gelişmiş Ayarlar (Toggle) -->
+                    <button id="btn-toggle-advanced" class="btn btn-secondary btn-block" style="margin-bottom: 1rem; padding: 10px;">⚙️ Gelişmiş Puanlama Ayarları</button>
+
+                    <div id="advanced-settings" class="settings-grid hidden" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--code-bg); padding: 15px; border-radius: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;"><label>Ebe Avlarsa Puanı</label><input type="number" id="pts-ebe-win" value="2" min="1" max="10"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Masum Eşleşme Puanı</label><input type="number" id="pts-masum-win" value="1" min="1" max="10"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Jackpot Puanı</label><input type="number" id="pts-jackpot" value="5" min="1" max="20"></div>
+                    </div>
+
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Oyunu Başlat</button>
+                </section>
+
+                <!-- Katılımcı Bekleme Paneli -->
+                <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
+                    <div style="color: var(--primary-purple); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu oyunu başlatacak.</p>
+                </section>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI -->
+        <section id="game-screen" class="view-state hidden">
+            <header class="game-topbar card">
+                <div class="round-indicator" id="round-indicator">Tur 1 / 5</div>
+
+                <!-- Süre -->
+                <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center; flex-grow: 1;">
+                    <div id="timer-display" class="timer">00:00</div>
+                </div>
+            </header>
+
+            <div class="play-area" style="margin-top: 1rem; display: flex; flex-direction: column; align-items: center; width: 100%;">
+
+                <div id="game-status-message" class="status-badge" style="max-width: 600px;">Roller Dağıtılıyor...</div>
+
+                <!-- Harf Ekranı -->
+                <div class="letter-display-container">
+                    <h2 id="current-letters" style="font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 5px; color: var(--text-main); background: var(--code-bg); padding: 15px 40px; border-radius: 15px; border: 2px solid var(--neon-purple);">...</h2>
+                </div>
+
+                <!-- MASUM ALANI -->
+                <div id="masum-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--success); box-shadow: 0 5px 20px var(--success-bg);">
+                    <h3 style="color: var(--success); margin-bottom: 0.5rem; font-size: 1.4rem;">Bir Kelimede Anlaşın!</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Ekranda yazan harf ile başlayan bir kelimede <strong>çaktırmadan</strong> eşleşin. Ebe aranızda ve sizi dinliyor!</p>
+                    <div class="form-group">
+                        <input type="text" id="masum-word-input" placeholder="Kelimenizi buraya yazın..." autocomplete="off" maxlength="30" style="text-align: center; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">
+                    </div>
+                    <button id="btn-submit-masum" class="btn btn-success btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Gönder & Eşleşmeyi Bekle</button>
+                </div>
+
+                <!-- EBE ALANI -->
+                <div id="ebe-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--danger); box-shadow: 0 5px 20px var(--danger-bg);">
+                    <h3 style="color: var(--danger); margin-bottom: 0.5rem; font-size: 1.4rem;">Sohbeti Dinle ve Avla!</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Masumlar aralarında anlaşıyor. Sohbetten yola çıkıp hangi kelimede eşleşeceklerini tahmin et!</p>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem;">
+                        <input type="text" id="ebe-guess-1" placeholder="1. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-2" placeholder="2. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-3" placeholder="3. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-4" placeholder="4. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                        <input type="text" id="ebe-guess-5" placeholder="5. Tahmin (Zorunlu değil)" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
+                    </div>
+
+                    <button id="btn-submit-ebe" class="btn btn-danger btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Tahminleri Kilitle</button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- BİTİŞ EKRANI -->
+        <section id="winner-screen" class="view-state hidden">
+            <h1 class="gradient-text">Oyun Bitti!</h1>
+            <div class="card" style="max-width: 500px; width: 100%; text-align: center; margin: 0 auto; display: flex; flex-direction: column;">
+                <h2 style="font-size: 2rem; margin-bottom: 20px; color: var(--neon-purple);">Sıralama Tablosu</h2>
+
+                <div id="final-scores" style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;" class="custom-scrollbar">
+                    <!-- Skorlar buraya basılacak -->
+                </div>
+
+                <button id="btn-back-to-lobby" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.15rem; margin-top: auto;">Lobiye Dön</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Kelime Avı Nasıl Oynanır?</h2>
+        <p>Kelime Avı, strateji, dikkat ve kelime bilgisini bir araya getiren heyecan verici bir çevrimiçi sosyal çıkarım oyunudur. Arkadaş grupları için tasarlanan bu oyunda temel amaç, aranızdaki gizli ebeyi (ajanı) ele vermeden ortak bir kelime üzerinde buluşmaktır. Her turda sistem tarafından belirlenen rollerle oyun başlar. Oyuncular 'Masum' ve 'Ebe' olmak üzere iki gruba ayrılır. Masumlar sadece gizli kelimenin baş harfini bilirken, Ebe kelimenin tamamını bilmektedir. Bu durum, oyunun her anını merak uyandırıcı ve rekabetçi kılar.</p>
+
+        <p>Oyunun işleyişi oldukça derindir: Masumlar, birbirlerine gizli kelimeyi çağrıştıracak ancak ebenin anlamayacağı kadar kapalı ipuçları verirler. Amaç, masumların kendi aralarında aynı kelimeyi kastettiklerinden emin olmalarıdır. Eğer iki masum aynı kelimeyi düşündüğüne inanırsa "Eşleş" diyerek birbirlerini kontrol ederler. Ancak bu süreçte çok açık konuşmamak hayati önem taşır; çünkü ebe masumların konuşmalarını dinleyerek asıl kelimenin ne olduğunu çözmeye ve masum taklidi yaparak onları yanıltmaya çalışır. Eğer ebe masumların kelimesini bulursa veya masumları yanlış yönlendirmeyi başarırsa oyunu kazanır.</p>
+
+        <p>Kelime Avı, sadece bir kelime oyunu değil, aynı zamanda bir psikolojik savaş ve çıkarım sanatıdır. Farklı zorluk seviyeleri ve özelleştirilebilir oda ayarları ile her seferinde benzersiz bir deneyim sunar. SEO uyumlu altyapısı ve akıcı arayüzü sayesinde tarayıcınız üzerinden anında oynamaya başlayabilirsiniz. Kelime dağarcığınızı test ederken aynı zamanda arkadaşlarınızın düşünce yapısını çözmeye çalışacağınız bu oyun, sosyal toplantılarınızın vazgeçilmezi olacaktır. Hemen bir oda kurun, stratejinizi belirleyin ve Kelime Avı dünyasında kimin daha zeki olduğunu kanıtlayın!</p>
+    </div>
+
+    <script src="../shared/shared.js"></script>
+    <script src="../shared/peer_manager.js"></script>
+    <script src="../shared/base_network.js"></script>
+    <script src="../shared/state_proxy.js"></script>
+    <script src="../shared/lobby_manager.js"></script>
+    <script src="game.js"></script>
+    <script src="network.js"></script>
+
+</body>
+</html>

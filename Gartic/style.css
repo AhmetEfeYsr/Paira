@@ -1,0 +1,109 @@
+/* Gartic/style.css */
+
+.cizbil-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg-deep); }
+.game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; position: relative; }
+.sidebar { flex: 1; min-width: 300px; max-width: 350px; background: var(--card-bg); border-left: 1px solid var(--lilac-muted); display: flex; flex-direction: column; padding: 1rem; box-shadow: -5px 0 20px var(--input-bg); z-index: 10; backdrop-filter: blur(10px); }
+
+.header-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+.word-display { font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon-glow-rgba); background: var(--card-bg); padding: 0.5rem 2rem; border-radius: 1rem; border: 1px solid var(--lilac-muted); box-shadow: var(--glass-shadow); backdrop-filter: blur(10px); z-index: 998; }
+
+.canvas-container { position: relative; width: 100%; max-width: 800px; background: #ffffff; border-radius: 1rem; overflow: hidden; box-shadow: var(--glass-shadow); cursor: crosshair; touch-action: none; border: 4px solid var(--lilac-muted); transition: border-color 0.3s, box-shadow 0.3s; flex-shrink: 0; }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 16/9; background: transparent; }
+[data-theme="light"] .canvas-container { border-color: rgba(58, 134, 255, 0.4); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+
+/* The toolbar is extremely important for drawing */
+.toolbar { display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--lilac-muted); width: 100%; max-width: 800px; justify-content: center; align-items: center; flex-wrap: wrap; box-shadow: var(--glass-shadow); backdrop-filter: blur(10px); }
+
+/* Color picker colors - they are drawing colors so they should remain static */
+.color-picker { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; background: var(--input-bg); padding: 0.5rem; border-radius: 1.5rem; }
+.color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.active { border-color: var(--text-main); box-shadow: 0 0 12px var(--text-main); transform: scale(1.1); }
+.custom-color-btn { display: flex; align-items: center; justify-content: center; position: relative; font-weight: bold; color: white; text-shadow: 0 0 2px black; }
+.custom-color-input { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; }
+
+.size-picker { display: flex; gap: 0.5rem; align-items: center; background: var(--input-bg); padding: 0.5rem 0.8rem; border-radius: 1.5rem; }
+.size-btn { width: 32px; height: 32px; border-radius: 50%; background: transparent; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+.size-btn:hover { background: var(--item-hover-bg); }
+.size-btn.active { background: var(--header-bg); border-color: var(--lilac-muted); }
+.size-dot { background: var(--text-main); border-radius: 50%; }
+
+.tool-picker, .tools { display: flex; gap: 0.5rem; background: var(--input-bg); padding: 0.5rem; border-radius: 1.2rem; }
+.tool-btn, .tools .btn { margin-bottom: 0 !important; }
+
+.sidebar-header { font-size: 1.1rem; font-weight: 700; color: var(--lilac); margin-bottom: 0.8rem; border-bottom: 1px solid var(--lilac-muted); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+.chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; margin-bottom: 1rem; }
+.chat-msg { background: var(--msg-bg); padding: 0.6rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; word-break: break-word; border-left: 3px solid transparent; animation: fadeIn 0.3s ease; }
+.chat-msg strong { color: var(--neon-purple); font-weight: 600; }
+.chat-msg.correct { background: var(--success-bg); border-left-color: var(--success); }
+.chat-msg.correct strong { color: var(--success); }
+
+.leaderboard { height: 35%; border-top: 1px solid var(--lilac-muted); padding-top: 1rem; display: flex; flex-direction: column; }
+.leaderboard-list { overflow-y: auto; flex: 1; font-size: 0.95rem; padding-right: 0.5rem; }
+.leaderboard-item { display: flex; justify-content: space-between; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--btn-secondary-bg); background: var(--item-bg); border-radius: 8px; margin-bottom: 6px; transition: background 0.2s; align-items: center; }
+.leaderboard-item:hover { background: var(--item-hover-bg); }
+.leaderboard-item .uname { font-weight: 600; }
+.leaderboard-item .score { color: var(--primary-purple); font-weight: bold; background: var(--header-bg); padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; }
+
+/* Word Choice Modal */
+.word-choice-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--modal-bg);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--lilac-muted);
+    box-shadow: 0 20px 50px var(--overlay-bg);
+    min-width: 320px;
+    text-align: center;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.word-choice-title {
+    color: var(--lilac);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+.word-choice-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+.word-choice-buttons button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+.word-choice-overlay-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: var(--overlay-bg);
+    z-index: 999;
+    backdrop-filter: blur(5px);
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .cizbil-layout { flex-direction: column; height: 100vh; overflow-y: auto; overflow-x: hidden; }
+    .game-area { flex: none; height: auto; min-height: 60vh; padding: 0.5rem; }
+    .sidebar { max-width: 100%; height: 40vh; flex: none; border-left: none; border-top: 1px solid var(--lilac-muted); }
+    .leaderboard { display: none; }
+    .word-display { font-size: 1.2rem; padding: 0.4rem 1rem; position: static !important; width: 100%; text-align: center; margin-bottom: 0.5rem; }
+}
+
+@keyframes drawCorrect {
+    0% { border-color: var(--lilac-muted); box-shadow: var(--glass-shadow); }
+    50% { border-color: var(--success); box-shadow: 0 0 30px rgba(46, 204, 113, 0.6); }
+    100% { border-color: var(--lilac-muted); box-shadow: var(--glass-shadow); }
+}
+.canvas-correct { animation: drawCorrect 2s ease; }

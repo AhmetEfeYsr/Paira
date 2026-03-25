@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Allow: /logolar/
+
+Sitemap: https://pairaaa.com/sitemap.xml

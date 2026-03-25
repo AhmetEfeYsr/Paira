@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Vampir Köylü Online | Paira Games - Sosyal Çıkarım Oyunu</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.162.0/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar">
+
+        <!-- LOBİ EKRANI -->
+        <section id="lobby-screen" class="view-state active">
+            <header class="lobby-header" style="justify-content: space-between;">
+                <div class="code-container" style="flex-grow: 1; justify-content: center; gap: 12px;">
+                    <h2 style="margin:0; font-size: 1.1rem; color: var(--text-muted); font-weight: 500;">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 4px; font-family: monospace; font-size: 1.5rem; user-select: none; font-weight: bold; min-width: 140px; text-align: center;">••••••••</span>
+                    <button id="btn-toggle-code" class="btn btn-icon toggle-btn" title="Göster/Gizle" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
+                        <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    </button>
+                </div>
+                <button id="btn-copy-room" class="btn btn-secondary" style="display: flex; gap: 8px; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopyala
+                </button>
+            </header>
+
+            <div class="lobby-grid">
+                <aside class="players-panel card" style="display: flex; flex-direction: column;">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 0;">Oyuncular (<span id="player-count">0</span>/12)</h3>
+                    <ul id="players-list" class="custom-scrollbar" style="flex-grow: 1; margin: 12px 0;"></ul>
+                </aside>
+
+                <!-- HOST SETTINGS -->
+                <section class="settings-panel card custom-scrollbar host-only hidden" id="host-settings" style="overflow-y: auto; display: flex; flex-direction: column;">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 15px;">Oyun Ayarları</h3>
+
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <!-- Toplam Rol ve Oyuncu Durumu -->
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--btn-secondary-border);">
+                                <span style="display: block; font-size: 0.85rem; color: var(--text-muted);">Toplam Slot / Oyuncu</span>
+                                <span id="slot-status" style="font-weight: bold; font-size: 1.2rem; color: var(--neon-purple);">0 / 0</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Tartışma Süresi (Sn)</label>
+                            <input type="number" id="setting-discussion-time" value="90" min="30" max="300" style="padding: 10px; width: 100%;">
+                        </div>
+                    </div>
+
+                    <div class="roles-settings-grid custom-scrollbar" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; padding-right: 5px;">
+                        
+                        <div class="role-category" style="background: rgba(157,78,221,0.1); padding: 10px; border-radius: 8px;">
+                            <h4 style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 5px;">
+                                <span style="display:flex; align-items:center; gap:8px;">🎲 Rastgele Rol <button id="btn-edit-random-pool" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">⚙️ Havuz Ayarı</button></span>
+                                <div class="counter-control" style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 3px;">
+                                    <button class="btn-counter btn-minus" data-target="RASTGELE">-</button>
+                                    <span class="role-count" id="RASTGELE" data-roleslot="RASTGELE" style="min-width: 20px; text-align: center; font-weight: bold; display: inline-block;">0</span>
+                                    <button class="btn-counter btn-plus" data-target="RASTGELE">+</button>
+                                </div>
+                            </h4>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Özelleştirilen havuzdan rastgele roller atar.</div>
+                        </div>
+
+                        <!-- VAMPİRLER -->
+                        <div class="role-category">
+                            <h4>😈 Vampirler</h4>
+                            <div class="role-counters">
+                                <div class="role-counter-item">
+                <span class="role-name">Vampir</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="VAMPIR">-</button>
+                    <span class="role-count" id="VAMPIR" data-roleslot="VAMPIR">1</span>
+                    <button class="btn-counter btn-plus" data-target="VAMPIR">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Dracula</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="DRACULA">-</button>
+                    <span class="role-count" id="DRACULA" data-roleslot="DRACULA">0</span>
+                    <button class="btn-counter btn-plus" data-target="DRACULA">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Profesyonel</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="PROFESYONEL">-</button>
+                    <span class="role-count" id="PROFESYONEL" data-roleslot="PROFESYONEL">0</span>
+                    <button class="btn-counter btn-plus" data-target="PROFESYONEL">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Zehirli</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="ZEHIRLI">-</button>
+                    <span class="role-count" id="ZEHIRLI" data-roleslot="ZEHIRLI">0</span>
+                    <button class="btn-counter btn-plus" data-target="ZEHIRLI">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Vampir İzcisi</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="VAMPIR_IZCISI">-</button>
+                    <span class="role-count" id="VAMPIR_IZCISI" data-roleslot="VAMPIR_IZCISI">0</span>
+                    <button class="btn-counter btn-plus" data-target="VAMPIR_IZCISI">+</button>
+                </div>
+            </div>
+                            </div>
+                        </div>
+
+                        <!-- İYİLER -->
+                        <div class="role-category">
+                            <h4>🛡️ Köylüler (İyiler)</h4>
+                            <div class="role-counters">
+                                <div class="role-counter-item">
+                <span class="role-name">Köylü</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="KOYLU">-</button>
+                    <span class="role-count" id="KOYLU" data-roleslot="KOYLU">0</span>
+                    <button class="btn-counter btn-plus" data-target="KOYLU">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Doktor</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="DOKTOR">-</button>
+                    <span class="role-count" id="DOKTOR" data-roleslot="DOKTOR">1</span>
+                    <button class="btn-counter btn-plus" data-target="DOKTOR">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Gözcü</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="GOZCU">-</button>
+                    <span class="role-count" id="GOZCU" data-roleslot="GOZCU">0</span>
+                    <button class="btn-counter btn-plus" data-target="GOZCU">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Dedektif</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="DEDEKTIF">-</button>
+                    <span class="role-count" id="DEDEKTIF" data-roleslot="DEDEKTIF">0</span>
+                    <button class="btn-counter btn-plus" data-target="DEDEKTIF">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Şerif</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="SERIF">-</button>
+                    <span class="role-count" id="SERIF" data-roleslot="SERIF">0</span>
+                    <button class="btn-counter btn-plus" data-target="SERIF">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Polis</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="POLIS">-</button>
+                    <span class="role-count" id="POLIS" data-roleslot="POLIS">0</span>
+                    <button class="btn-counter btn-plus" data-target="POLIS">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">İzci</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="IZCI">-</button>
+                    <span class="role-count" id="IZCI" data-roleslot="IZCI">0</span>
+                    <button class="btn-counter btn-plus" data-target="IZCI">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Tuzakçı</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="TUZAKCI">-</button>
+                    <span class="role-count" id="TUZAKCI" data-roleslot="TUZAKCI">0</span>
+                    <button class="btn-counter btn-plus" data-target="TUZAKCI">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">İntikamcı</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="INTIKAMCI">-</button>
+                    <span class="role-count" id="INTIKAMCI" data-roleslot="INTIKAMCI">0</span>
+                    <button class="btn-counter btn-plus" data-target="INTIKAMCI">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Uyurgezer</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="UYURGEZER">-</button>
+                    <span class="role-count" id="UYURGEZER" data-roleslot="UYURGEZER">0</span>
+                    <button class="btn-counter btn-plus" data-target="UYURGEZER">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Deli</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="DELI">-</button>
+                    <span class="role-count" id="DELI" data-roleslot="DELI">0</span>
+                    <button class="btn-counter btn-plus" data-target="DELI">+</button>
+                </div>
+            </div>
+                            </div>
+                        </div>
+
+                        <!-- TARAFSIZLAR -->
+                        <div class="role-category">
+                            <h4>🎭 Tarafsızlar</h4>
+                            <div class="role-counters">
+                                <div class="role-counter-item">
+                <span class="role-name">Seri Katil</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="SERI_KATIL">-</button>
+                    <span class="role-count" id="SERI_KATIL" data-roleslot="SERI_KATIL">0</span>
+                    <button class="btn-counter btn-plus" data-target="SERI_KATIL">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Kundakçı</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="KUNDAKCI">-</button>
+                    <span class="role-count" id="KUNDAKCI" data-roleslot="KUNDAKCI">0</span>
+                    <button class="btn-counter btn-plus" data-target="KUNDAKCI">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Hırsız</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="HIRSIZ">-</button>
+                    <span class="role-count" id="HIRSIZ" data-roleslot="HIRSIZ">0</span>
+                    <button class="btn-counter btn-plus" data-target="HIRSIZ">+</button>
+                </div>
+            </div><div class="role-counter-item">
+                <span class="role-name">Soytarı</span>
+                <div class="counter-control">
+                    <button class="btn-counter btn-minus" data-target="SOYTARI">-</button>
+                    <span class="role-count" id="SOYTARI" data-roleslot="SOYTARI">0</span>
+                    <button class="btn-counter btn-plus" data-target="SOYTARI">+</button>
+                </div>
+            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Random Pool Modal -->
+                    <div id="random-pool-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center;">
+                        <div class="card" style="width: 90%; max-width: 450px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); max-height: 90vh; display: flex; flex-direction: column;">
+                            <h3 style="color: var(--neon-purple); border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 10px; margin-bottom: 10px;">🎲 Rastgele Havuzu Ayarı</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">"Rastgele" seçilen rollerin buradaki işaretli rollerden biri olmasını sağlar.</p>
+                            
+                            <div class="pool-checkbox-grid custom-scrollbar" style="overflow-y: auto; padding-right: 5px; margin-bottom: 15px; flex: 1;">
+                                <label><input type="checkbox" class="pool-toggle" value="VAMPIR" checked> Vampir</label><label><input type="checkbox" class="pool-toggle" value="DRACULA" checked> Dracula</label><label><input type="checkbox" class="pool-toggle" value="PROFESYONEL" checked> Profesyonel</label><label><input type="checkbox" class="pool-toggle" value="ZEHIRLI" checked> Zehirli</label><label><input type="checkbox" class="pool-toggle" value="VAMPIR_IZCISI" checked> Vampir İzcisi</label><label><input type="checkbox" class="pool-toggle" value="KOYLU" checked> Köylü</label><label><input type="checkbox" class="pool-toggle" value="DOKTOR" checked> Doktor</label><label><input type="checkbox" class="pool-toggle" value="GOZCU" checked> Gözcü</label><label><input type="checkbox" class="pool-toggle" value="DEDEKTIF" checked> Dedektif</label><label><input type="checkbox" class="pool-toggle" value="SERIF" checked> Şerif</label><label><input type="checkbox" class="pool-toggle" value="POLIS" checked> Polis</label><label><input type="checkbox" class="pool-toggle" value="IZCI" checked> İzci</label><label><input type="checkbox" class="pool-toggle" value="TUZAKCI" checked> Tuzakçı</label><label><input type="checkbox" class="pool-toggle" value="INTIKAMCI" checked> İntikamcı</label><label><input type="checkbox" class="pool-toggle" value="UYURGEZER" checked> Uyurgezer</label><label><input type="checkbox" class="pool-toggle" value="DELI" checked> Deli</label><label><input type="checkbox" class="pool-toggle" value="SERI_KATIL" checked> Seri Katil</label><label><input type="checkbox" class="pool-toggle" value="KUNDAKCI" checked> Kundakçı</label><label><input type="checkbox" class="pool-toggle" value="HIRSIZ" checked> Hırsız</label><label><input type="checkbox" class="pool-toggle" value="SOYTARI" checked> Soytarı</label>
+                            </div>
+                            
+                            <button id="btn-close-random-pool" class="btn btn-primary" style="padding: 12px;">Havuzu Kaydet ve Kapat</button>
+                        </div>
+                    </div>
+                
+
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; letter-spacing: 1px; display: flex; gap: 10px; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 3l14 9-14 9V3z"></path></svg>
+                        Oyunu Başlat
+                    </button>
+                    <p id="start-error-text" class="text-muted" style="text-align: center; color: var(--danger); margin-top: 10px; display: none;"></p>
+                </section>
+
+                <!-- CLIENT WAITING -->
+                <section class="settings-panel card client-only hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center; flex-direction: column;">
+                    <div class="spinner" style="margin-bottom: 1.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    </div>
+                    <h3>Bekleniyor...</h3>
+                    <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu (<strong id="host-name-display">...</strong>) oyunu başlatacak.</p>
+                </section>
+            </div>
+        </section>
+
+        <!-- OYUN EKRANI -->
+        <section id="game-screen" class="view-state hidden" style="flex-direction: column;">
+            
+            <header class="game-topbar card" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="phase-indicator" style="font-size: 1.15rem; background: var(--input-bg); padding: 8px 20px; border-radius: 12px; font-weight: bold;">
+                    <span id="current-phase">Gece</span> - Gün <span id="current-day">1</span>
+                </div>
+
+                <div class="role-display" style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 1.1rem; color: var(--text-muted);">Rolünüz:</span>
+                    <strong id="my-role" style="font-size: 1.5rem; color: var(--neon-purple);">Gizli</strong>
+                </div>
+
+                <div class="timer-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div id="timer-display" class="timer" style="font-size: 1.5rem; font-weight: bold; font-family: monospace;">--:--</div>
+                </div>
+            </header>
+
+            <!-- Sol Üst: Rol Bilgisi (HUD) -->
+            <div id="roles-hud" class="card hud-panel" style="position: absolute; top: 100px; left: 20px; width: 250px; z-index: 10; pointer-events: none;">
+                <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Oyundaki Roller</h4>
+                <ul id="roles-list" style="list-style: none; margin: 0; padding: 0; font-size: 0.85rem; color: #ddd; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <!-- Roles will be injected here -->
+                </ul>
+            </div>
+
+            <!-- Sağ Alt: Not Defteri (HUD) -->
+            <div id="notepad-hud" class="card hud-panel" style="position: absolute; bottom: 0; right: 0; margin: 10px; width: 300px; z-index: 10; display: flex; flex-direction: column; max-height: 40vh; pointer-events: auto;">
+                <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--lilac); display: flex; justify-content: space-between; align-items: center;">
+                    <span>📝 Not Defteri</span>
+                </h4>
+                <textarea id="personal-notes" class="custom-scrollbar" placeholder="Şüphelendiğiniz kişileri veya öğrendiğiniz rolleri buraya not edebilirsiniz..." style="width: 100%; height: 120px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 10px; resize: none; font-family: inherit; font-size: 0.9rem; margin-bottom: 10px;"></textarea>
+                <div id="private-info-logs" class="custom-scrollbar" style="flex: 1; background: rgba(157,78,221,0.1); border-radius: 8px; padding: 10px; font-size: 0.85rem; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; border: 1px solid rgba(157,78,221,0.2);">
+                    <div style="color: var(--text-muted); font-style: italic;">Henüz özel bir bilgi almadınız.</div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex: 1; gap: 1rem; margin-top: 1rem; min-height: 0; position: relative;">
+                
+                <!-- PLAYERS LIST FOR ACTIONS (Minimal Panel) -->
+                <div id="action-panel" class="card custom-scrollbar hidden" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 20; min-width: 320px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); padding: 15px;">
+                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 12px; text-align: center;" id="action-title">Kimi seçeceksin?</h3>
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: -5px; margin-bottom: 10px;">Sahnede bir eve tıklayarak seçim yapın.</p>
+                    <div id="action-selected-name" style="text-align: center; color: var(--neon-purple); font-weight: bold; font-size: 1.2rem; min-height: 28px; margin-bottom: 15px;">Seçilen: Hiçbiri</div>
+                    
+                    <div id="action-players-container" style="display: none;">
+                        <!-- Hidden container as players are clicked in 3D now -->
+                    </div>
+                    
+                    <div class="action-footer" style="margin-top: auto; padding-top: 10px; text-align: center; border-top: 1px solid var(--btn-secondary-border); display: flex; gap: 10px;">
+                        <button id="btn-confirm-action" class="btn btn-primary hidden" style="padding: 10px 20px; flex: 1;">Onayla</button>
+                        <button id="btn-skip-action" class="btn btn-secondary hidden" style="padding: 10px 20px; flex: 1;">Pas Geç</button>
+                    </div>
+                </div>
+
+                <!-- GAME LOGS (Sol Altta) -->
+                <div class="card custom-scrollbar hud-panel" style="position: absolute; bottom: 20px; left: 20px; width: 350px; height: 200px; display: flex; flex-direction: column; overflow-y: auto; pointer-events: auto;">
+                    <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Oyun Geçmişi</h4>
+                    <div id="game-logs" style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                        <!-- Logs appended here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Animation Status Overlay (U3) -->
+            <div id="animation-overlay" class="card hidden" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 15; padding: 2rem 3rem; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                <h3 id="animation-status-text" style="color: var(--lilac); margin: 0;">Gece sonuçları hesaplanıyor...</h3>
+            </div>
+
+            <!-- Role Info Modal (U1) -->
+            <div id="role-modal" class="card hidden" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 25; padding: 2rem; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.9); max-width: 400px; width: 90%;">
+                <h2 id="role-modal-title" style="color: var(--neon-purple); margin-bottom: 0.5rem;">Rolünüz</h2>
+                <h3 id="role-modal-name" style="color: var(--lilac); margin-bottom: 1rem;"></h3>
+                <p id="role-modal-desc" style="color: var(--text-main); line-height: 1.6; margin-bottom: 1.5rem;"></p>
+                <button id="btn-close-role-modal" class="btn btn-primary" style="padding: 12px 30px;">Anladım</button>
+            </div>
+            
+        </section>
+
+        <!-- OYUN SONU EKRANI -->
+        <section id="score-screen" class="view-state hidden">
+            <header class="game-topbar card" style="justify-content: center;">
+                <h2 style="margin: 0;" id="end-game-title">Oyun Bitti</h2>
+            </header>
+
+            <div class="card custom-scrollbar" style="flex: 1; overflow-y: auto; overflow-x: auto; margin-top: 15px; text-align: center;">
+                <h3 id="winner-text" style="font-size: 2rem; color: var(--neon-purple); margin-bottom: 1rem;">Kazanan: ...</h3>
+                
+                <table class="scoreboard-table">
+                    <thead>
+                        <tr>
+                            <th>Oyuncu</th>
+                            <th>Rolü</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="endgame-body">
+                        <!-- Roles injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="score-actions card host-only hidden" style="margin-top: 15px; padding: 15px; flex-shrink: 0; display: flex; justify-content: center;">
+                <button id="btn-play-again" class="btn btn-primary" style="padding: 16px 40px; font-size: 1.15rem;">Yeniden Oyna (Aynı Lobi)</button>
+            </div>
+        </section>
+
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Vampir Köylü Hakkında</h2>
+        <p>Arkadaşlarınızla oynarken kimin ne kadar iyi yalan söylediğini veya kimin analiz yeteneğinin daha güçlü olduğunu görmek ister misiniz? <strong>Paira Vampir Köylü</strong>; yalanın, stratejinin ve ikna kabiliyetinin ön plana çıktığı, adrenalin dolu bir sosyal çıkarım oyunudur.</p>
+
+        <p>Oyun başladığında herkese gizli bir rol atanır. Temel olarak oyuncular ikiye ayrılır: Geceleri masum köylüleri avlayan Vampirler ve aralarındaki haini bulmaya çalışan Köylüler. Gece evresinde herkes gözlerini (ekranını) kapatır; vampirler uyanıp kurbanlarını seçerken, şifacı veya büyücü gibi özel rollere sahip oyuncular da gizli yeteneklerini kullanır. Gündüz olduğunda ise tüm köy uyanır, gece ölenler açıklanır ve hararetli bir tartışma başlar. Köylüler mantık yürüterek vampirleri bulmaya çalışırken, vampirler de kendilerini gizleyip suçu başkalarına atmaya uğraşır.</p>
+
+        <p>Tur sonunda yapılan oylamayla en çok şüphe çeken kişi köyden sürülür ve gerçek rolü ortaya çıkar. Oyun, ya tüm vampirlerin köyden temizlenmesiyle ya da vampirlerin sayısının köylülere eşitlenmesiyle sona erer. Tarayıcınız üzerinden arkadaşlarınızla anında oynayabileceğiniz bu efsanevi parti oyununda stratejinizi kurun, rolünüzü iyi yapın ve takımınızı zafere taşıyın!</p>
+    </div>
+
+    <script type="module" src="scene.js"></script>
+    <script src="../shared/shared.js"></script>
+    <script src="network.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

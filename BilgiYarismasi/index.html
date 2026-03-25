@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Paira Bilgi Yarışması | Arkadaşlarınla Online Trivia Keyfi</title>
+    <meta name="description" content="Paira Bilgi Yarışması ile arkadaşlarınla ücretsiz, indirmesiz ve anında online trivia oyna! Binlerce soru arasından en hızlı sen cevapla, liderlik koltuğuna otur.">
+    <meta name="keywords" content="paira bilgi yarismasi, online bilgi yarışması, ücretsiz trivia oyunu, arkadaş grupları için oyunlar, canlı bilgi yarışması, genel kültür testi">
+    <meta name="author" content="Paira">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Paira Bilgi Yarışması - Hızlı Olan Kazansın!">
+    <meta property="og:description" content="Arkadaşlarınla online bilgi yarışması heyecanına katıl! Tarayıcı üzerinden ücretsiz ve anında oyna.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Paira Bilgi Yarışması - Hızlı Olan Kazansın!">
+    <meta property="twitter:description" content="Arkadaşlarınla online bilgi yarışması heyecanına katıl! Tarayıcı üzerinden ücretsiz ve anında oyna.">
+
+    <!-- Schema.org (JSON-LD) for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira Bilgi Yarışması",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Party Game",
+      "description": "Arkadaşlarınızla dilediğiniz yerde, herhangi bir indirme yapmadan tarayıcınız üzerinden ücretsizce oynayabileceğiniz, hız ve genel kültür odaklı bir bilgi yarışmasıdır.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container" ><img src="../logolar/bilgi-yarismasi.svg" alt="BilgiYarismasi Logo" ></div>
+                <h1 class="gradient-text">Bilgi Yarışması</h1>
+                <p class="seo-description">Genel kültürüne güveniyor musun? **Paira Bilgi Yarışması**'nda arkadaşlarınla veya diğer oyuncularla gerçek zamanlı yarış, soruları en hızlı cevaplayan sen ol ve zirveye tırman!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Odaya Katıl</h3>
+                        <p>İster bir oda kurup arkadaşlarına davet kodu gönder, istersen herkese açık bir odaya dahil ol.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Kategorini Seç</h3>
+                        <p>Farklı ilgi alanlarına hitap eden soru havuzlarından dilediğini seçerek yarışmaya başla.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Hızlı Cevapla</h3>
+                        <p>Sorular ekrana geldiğinde doğru şıkkı rakiplerinden önce işaretle. Ne kadar hızlıysan o kadar çok puan kazanırsın.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Şampiyon Ol</h3>
+                        <p>Tüm soruların sonunda en yüksek puanı toplayarak kürsüdeki yerini al!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Bilgi Yarışması Hakkında</h2>
+        <p>Arkadaşlarınla hem eğlenip hem de genel kültürünü test etmeye hazır mısın? <strong>Paira Bilgi Yarışması</strong>, tarihten spora, sinemadan bilime kadar binlerce soruyla dolu hızlı ve rekabetçi bir online trivia oyunudur.</p>
+
+        <p>Oyun başladığında karşına çıkan çoktan seçmeli sorularda sadece doğru cevabı bilmek yetmez, aynı zamanda en hızlı cevap veren sen olmalısın! Hızlı cevapladıkça daha yüksek puan kazanır, yanlış cevaplarda ise puan kaybedebilirsin. Her sorunun ardından gelen ilginç bilgilerle de yeni şeyler öğrenme fırsatı yakalarsın.</p>
+
+        <p>İster kendi başına rekor kırmaya çalış, ister arkadaşlarınla kıyasıya bir rekabete girip aranızdaki en bilgili kişinin kim olduğunu kanıtla. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden anında oynamaya başla ve zirveye adını yazdır!</p>
+    </div>
+
+    <script src="../shared/login.js"></script>
+</body>
+</html>

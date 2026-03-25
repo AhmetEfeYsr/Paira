@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Gizli Kelimeler - Online Ajan ve Kelime Oyunu | Paira Games</title>
+    <meta name="description" content="Arkadaşlarınızla takımlara ayrılın, ajanların gizemli ipuçlarını çözerek kelimeleri rakiplerden önce bulun. Paira Gizli Kelimeler ile strateji ve eğlence bir arada!">
+    <meta name="keywords" content="paira gizli kelimeler, online codenames oyna, kelime bulma oyunu, casus oyunu, arkadaş ortamı oyunları, ücretsiz parti oyunları, kelime ajanları">
+    <meta name="author" content="Paira Games">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Gizli Kelimeler: Takımını Kur, Ajanı Bul!">
+    <meta property="og:description" content="Tek bir ipucuyla tüm kelimeleri bulabilir misin? Suikastçıya dikkat et ve takımını zafere taşı!">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Gizli Kelimeler: Takımını Kur, Ajanı Bul!">
+    <meta property="twitter:description" content="Tek bir ipucuyla tüm kelimeleri bulabilir misin? Suikastçıya dikkat et ve takımını zafere taşı!">
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+</head>
+<body>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container"><img src="../logolar/gizli-kelimeler.svg" alt="Gizli Kelimeler Logo"></div>
+                <h1 class="gradient-text">Gizli Kelimeler</h1>
+                <p class="seo-description">Zekâna ve takım arkadaşına ne kadar güveniyorsun? **Paira Gizli Kelimeler**'de ajanlar ipuçlarını veriyor, takımlar gizli ajanları bulmaya çalışıyor. Aman suikastçıya dikkat!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Takımını Kur</h3>
+                        <p>Kırmızı veya Mavi takıma katıl ve bir "Anlatıcı" seçin.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. İpucu Ver</h3>
+                        <p>Anlatıcı, kendi takımının kelimelerini ortak bir noktada buluşturan tek bir kelime ve sayı söyler.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Ajanları Bul</h3>
+                        <p>Takım arkadaşları, ipucundan yola çıkarak doğru kelimeleri seçmeye çalışır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Suikastçıdan Kaç</h3>
+                        <p>Siyah kartı (suikastçı) seçen takım oyunu anında kaybeder!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Gizli Kelimeler Hakkında</h2>
+        <p>Gizli Kelimeler, kelime dağarcığını stratejiyle birleştiren, arkadaşlarınla takımlar halinde kıyasıya rekabet edebileceğin bir ajan oyunudur. Popüler masa oyunu Codenames'in online versiyonu olan bu oyunda amaç, rakip takımdan önce sahadaki tüm kelimelerinizi bulmaktır.</p>
+        
+        <p>Oyuncular iki takıma ayrılır ve her takım kendi içinden bir kişiyi 'Ajan' (Spymaster) olarak seçer. Sahadaki kelimelerin hangisinin hangi takıma ait olduğunu sadece ajanlar görebilir. Ajanların görevi, kendi kelimelerini buldurmak için takımlarına tek kelimelik bir ipucu ve bu ipucunun kaç kelimeyle bağlantılı olduğunu belirten bir sayı vermektir (Örn: 'Ağaç 2'). Tahminciler ise bu ipucunu mantık süzgecinden geçirerek doğru kelimeleri bulmaya çalışır.</p>
+
+        <p>Tahmin yaparken çok dikkatli olmak gerekir! Eğer rakibin kelimesini seçerseniz sıranız yanar. Fakat asıl tehlike sahadaki 'Suikastçı' kelimesidir. Eğer takımınız yanlışlıkla suikastçı kelimesini seçerse, oyunu anında kaybedersiniz. Arkadaşlarının nasıl düşündüğünü analiz et, ipuçlarını doğru değerlendir ve takımını zafere taşı!</p>
+    </div>
+
+    <footer class="app-footer">
+        <div class="footer-text">
+            &copy; <span id="current-year">2026</span> Paira Games. Tüm hakları saklıdır.
+        </div>
+        <div class="footer-links">
+            <a href="https://kick.com/turgut" target="_blank" class="social-link kick-link" title="Kick'te Canlı İzle!">
+                <svg class="kick-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#53fc18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Kick</span><span>turgut</span>
+            </a>
+            <a href="https://discord.gg/w7RWeBRe" target="_blank" class="social-link" title="Discord Sunucumuza Katıl">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12c.5-1.5 2-2 3-2s2.5.5 3 2"></path><path d="M15.4 17.4c-1.5.5-3.4.5-4.8 0"></path><path d="M21 15.5c-.8 1.4-2.8 3.5-5 3.5-1 0-2.3-.3-4-.3s-3 .3-4 .3c-2.2 0-4.2-2.1-5-3.5C2 13.5 2 9 3 7c2-2 4.5-2 6-2l.5 1c-1.5.5-2.5 1.5-3.5 2.5 1-.5 2.5-1 4.5-1 1.5 0 3 .5 4.5 1-1-1-2-2-3.5-2.5l.5-1c1.5 0 4 0 6 2 1 2 1 6.5 0 8.5z"></path></svg>
+                <span>Discord</span>
+            </a>
+        </div>
+    </footer>
+
+    <script src="../shared/login.js"></script>
+    <script src="../shared/shared.js"></script>
+</body>
+</html>

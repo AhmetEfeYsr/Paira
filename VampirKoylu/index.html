@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Vampir Köylü Online | Paira Games - Sosyal Çıkarım Oyunu</title>
+    <meta name="description" content="Köyü vampirlerden kurtarabilir misin? Vampir Köylü ile arkadaşlarınla online strateji yap, yalanları yakala ve hayatta kal. Paira Vampir Köylü ücretsiz oyna.">
+    <meta name="keywords" content="paira vampir koylu, online vampir köylü oyna, kurt adam oyunu online, sosyal çıkarım oyunları, arkadaş grupları için oyunlar">
+    <meta name="author" content="Paira Games">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Vampir Köylü - Aranızdaki Haini Bulun!">
+    <meta property="og:description" content="Gece çöktüğünde vampirler saldırır, gündüz ise köy karar verir. Hayatta kalmak için stratejini belirle.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Vampir Köylü - Aranızdaki Haini Bulun!">
+    <meta property="twitter:description" content="Gece çöktüğünde vampirler saldırır, gündüz ise köy karar verir. Hayatta kalmak için stratejini belirle.">
+
+    <!-- Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira Vampir Köylü",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Social Deduction Game",
+      "description": "Vampir Köylü, oyuncuların rollerine göre strateji geliştirdiği ve aralarındaki hainleri bulmaya çalıştığı çok oyunculu bir sosyal çıkarım oyunudur.",
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container" style="font-size: 4rem; margin-bottom: 1rem;">🧛‍♂️</div>
+                <h1 class="gradient-text">Vampir Köylü</h1>
+                <p class="seo-description">Gece olduğunda kimseye güvenme! <strong>Paira Vampir Köylü</strong>'de rollere bürünün, tartışın ve aranızdaki vampirleri gün yüzüne çıkarın. Köyü sen kurtarabilir misin?</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-seo-info custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Rolünü Al</h3>
+                        <p>Oyun başında sistem sana gizli bir rol atar (Vampir, Köylü, Doktor, Gözcü vb.).</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Gece Evresi</h3>
+                        <p>Vampirler kurban seçerken, özel roller (Doktor, Gözcü) yeteneklerini gizlice kullanır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Gündüz Evresi</h3>
+                        <p>Köy halkı toplanır, şüphelileri tartışır ve bir kişiyi köyden kovmak (oylamak) için karar verir.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Zaferi Kazan</h3>
+                        <p>Vampirlerin tamamı elenirse köylüler, vampir sayısı köylü sayısına eşitlenirse vampirler kazanır!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Vampir Köylü Hakkında</h2>
+        <p>Arkadaşlarınızla oynarken kimin ne kadar iyi yalan söylediğini veya kimin analiz yeteneğinin daha güçlü olduğunu görmek ister misiniz? <strong>Paira Vampir Köylü</strong>; yalanın, stratejinin ve ikna kabiliyetinin ön plana çıktığı, adrenalin dolu bir sosyal çıkarım oyunudur.</p>
+
+        <p>Oyun başladığında herkese gizli bir rol atanır. Temel olarak oyuncular ikiye ayrılır: Geceleri masum köylüleri avlayan Vampirler ve aralarındaki haini bulmaya çalışan Köylüler. Gece evresinde herkes gözlerini (ekranını) kapatır; vampirler uyanıp kurbanlarını seçerken, şifacı veya büyücü gibi özel rollere sahip oyuncular da gizli yeteneklerini kullanır. Gündüz olduğunda ise tüm köy uyanır, gece ölenler açıklanır ve hararetli bir tartışma başlar. Köylüler mantık yürüterek vampirleri bulmaya çalışırken, vampirler de kendilerini gizleyip suçu başkalarına atmaya uğraşır.</p>
+
+        <p>Tur sonunda yapılan oylamayla en çok şüphe çeken kişi köyden sürülür ve gerçek rolü ortaya çıkar. Oyun, ya tüm vampirlerin köyden temizlenmesiyle ya da vampirlerin sayısının köylülere eşitlenmesiyle sona erer. Tarayıcınız üzerinden arkadaşlarınızla anında oynayabileceğiniz bu efsanevi parti oyununda stratejinizi kurun, rolünüzü iyi yapın ve takımınızı zafere taşıyın!</p>
+    </div>
+
+    <script src="../shared/login.js"></script>
+</body>
+</html>

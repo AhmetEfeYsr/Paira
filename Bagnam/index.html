@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Bağnam | Paira Bağnam - Günlük Anlamsal Kelime Bulmaca</title>
+    <meta name="description" content="Her gün yeni bir gizli kelime! Bağnam ile kelimelerin anlamsal yakınlıklarını ölçerek hedefi bulmaya çalışın. Yapay zeka destekli kelime oyunu deneyimi.">
+    <meta name="keywords" content="paira bagnam, bağnam oyunu, contexto türkçe, semantle türkiye, anlamsal kelime bulmaca, günlük oyun, ücretsiz kelime oyunu">
+    <meta name="author" content="Paira">
+    <meta name="robots" content="index, follow">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Bağnam - Gizli Kelimeyi Bulabilir Misin?">
+    <meta property="og:description" content="Anlamsal yakınlıklara göre sıralanmış binlerce kelime arasından 1 numaralı hedefi en az tahminde bul.">
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Bağnam - Gizli Kelimeyi Bulabilir Misin?">
+    <meta property="twitter:description" content="Anlamsal yakınlıklara göre sıralanmış binlerce kelime arasından 1 numaralı hedefi en az tahminde bul.">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+
+    <!-- Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Bağnam",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Puzzle Game",
+      "description": "Bağnam, binlerce kelime arasındaki anlamsal ilişkileri kullanarak günün gizli hedefini bulmaya çalıştığınız özgün bir günlük bulmaca oyunudur.",
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css"> <!-- Portal style for glassmorphism -->
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+
+        <!-- LOGIN / LANDING SCREEN -->
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container" ><img src="../logolar/bagnam.svg" alt="Bagnam Logo" ></div>
+                <h1 class="gradient-text">Bağnam</h1>
+                <p class="seo-description">Her gün yenilenen **günün gizli kelimesini** bulmak için mantığını kullan! Tahminlerin anlamsal olarak hedefe ne kadar yakınsa, o kadar hızlı 1 numaraya ulaşırsın.</p>
+            </div>
+
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <button id="btn-start" class="btn btn-primary btn-block" style="display: block; width: 100%; text-align: center; margin: 0 auto; padding: 16px; font-size: 1.2rem; margin-bottom: 12px;">Günün Kelimesini Oyna</button>
+
+                <div class="past-games-container" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <label for="past-date-picker" style="font-size: 0.9rem; color: var(--text-muted); text-align: center;">Veya geçmiş bir tarihi oynayın:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="date" id="past-date-picker" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--lilac-muted); background: var(--input-bg); color: var(--text-main); color-scheme: dark;">
+                        <button id="btn-play-past" class="btn btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Oyna</button>
+                    </div>
+                </div>
+
+                <div id="loading-indicator" class="hidden" style="text-align: center; color: var(--text-muted); margin-top: 1rem;">
+                    Veriler yükleniyor... Lütfen bekleyin.
+                </div>
+            </div>
+
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Tahmin Yap</h3>
+                        <p>Aklına gelen herhangi bir Türkçe kelimeyi yazarak başla.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Yakınlığı Gör</h3>
+                        <p>Yazdığın kelimenin gizli kelimeyle anlamsal olarak ne kadar alakalı olduğunu anında öğren.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. İpuçlarını Takip Et</h3>
+                        <p>Sıra numarası küçüldükçe hedefe daha çok yaklaşıyorsun demektir. Renklere dikkat et!</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Hedefi Bul</h3>
+                        <p>Gizli kelime tam 1 numarada. Mantığını kullan, bağlantıları kur ve en az denemede kelimeyi bil!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAMEPLAY SCREEN -->
+        <section id="game-screen" class="view-state" style="padding: 0;">
+            <div class="game-topbar">
+                <div class="score-board" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 600px; margin: 0 auto;">
+                    <span>Tahmin Sayısı: <span id="guess-count" class="timer">0</span></span>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn-hint" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem; background-color: #f39c12; border-color: #f39c12; color: white;">İpucu Al (3)</button>
+                        <button id="btn-giveup" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem; background-color: var(--danger); border-color: var(--danger); color: white;">Pes Et</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="play-area" style="max-width: 600px; width: 100%; margin: 0 auto; padding: 1rem;">
+                <!-- Input Area -->
+                <div class="guess-input-wrapper">
+                    <input type="text" id="word-input" placeholder="Bir kelime girin..." autocomplete="off">
+                    <button id="btn-guess" class="btn btn-primary">Tahmin Et</button>
+                </div>
+
+                <!-- Feedback / Success Message -->
+                <div id="success-message" class="hidden success-banner">
+                    <h2 style="margin:0;">Tebrikler! 🎉</h2>
+                    <p>Günün kelimesini <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p>
+                </div>
+
+                <!-- History List -->
+                <div class="history-panel">
+                    <div class="history-header">
+                        <span>Kelime</span>
+                        <span>Sıra (Benzerlik)</span>
+                    </div>
+                    <ul id="guess-history" class="custom-scrollbar">
+                        <!-- Items will be injected here via JS -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+    <script src="app.js"></script>
+</body>
+</html>

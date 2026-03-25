@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
+    <title>Kelime Avı | Paira Kelime Avı - Sosyal Çıkarım ve Kelime Oyunu</title>
+    <meta name="description" content="Kelime Avı ile aranızdaki gizli ebeyi bulun! Masumlar olarak şifreli konuşun, eşleşin ve ebeyi atlatın. Paira Kelime Avı ücretsiz online parti oyunu.">
+    <meta name="keywords" content="paira kelime avi, sosyal çıkarım oyunu, kelime eşleşme oyunu, arkadaşlarla oynanacak oyunlar online, ücretsiz parti oyunları, casus bulma oyunu">
+    <meta name="author" content="Paira">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Kelime Avı - Şifreli Konuş, Ebeyi Atlat!">
+    <meta property="og:description" content="Sadece baş harfini bildiğin kelimede diğer masumlarla eşleşebilir misin? Ebenin sizi duymasına izin vermeyin!">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Kelime Avı - Şifreli Konuş, Ebeyi Atlat!">
+    <meta property="twitter:description" content="Sadece baş harfini bildiğin kelimede diğer masumlarla eşleşebilir misin? Ebenin sizi duymasına izin vermeyin!">
+
+    <!-- Schema.org (JSON-LD) for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Paira Kelime Avı",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "GameApplication",
+      "genre": "Social Deduction Game",
+      "description": "Kelime Avı, oyuncuların şifreli ipuçlarıyla birbirleriyle eşleşmeye çalıştığı ve aralarındaki gizli ebeyi engellemeye odaklandığı sosyal çıkarım tabanlı bir parti oyunudur.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TRY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Paira"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=Pacifico&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="https://pairaaa.com/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://pairaaa.com/main_logo.png">
+
+    <meta property="og:image" content="https://pairaaa.com/main_logo.png">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.png">
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <!-- GİRİŞ EKRANI -->
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container"><img src="../logolar/kelime-avi.svg" alt="KelimeAvi Logo"></div>
+                <h1 class="gradient-text">Kelime Avı</h1>
+                <p class="seo-description">Arkadaşlarına ne kadar güveniyorsun? **Paira Kelime Avı**'nda masumlar şifreli konuşarak eşleşmeye çalışırken, ebe onları avlamaya çalışıyor. İpuçlarını akıllıca seç!</p>
+            </div>
+
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+                <h2>Nasıl Oynanır?</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Roller Dağıtılır</h3>
+                        <p>Oyun başında bir kişi "Ebe" (kelimeyi bilen) olur, diğerleri "Masum" (sadece baş harfi bilen) olur.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. Şifreli Eşleşme</h3>
+                        <p>Masumlar, o baş harfle başlayan bir kelime üzerine kapalı ipuçları vererek birbirleriyle eşleşmeye çalışır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Ebenin Takibi</h3>
+                        <p>Ebe, masumların hangi kelimede eşleşeceğini anlamaya çalışır. Eğer eşleşmeden önce kelimeyi tahmin ederse kazanır.</p>
+                    </div>
+                    <div class="rule-card">
+                        <h3>4. Jackpot Yap</h3>
+                        <p>Masumlar eğer ebenin elindeki asıl kelimeyi bulursa "Jackpot" yaparak oyunu anında kazanabilir!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="game-seo-info">
+        <h2>Paira Kelime Avı Hakkında</h2>
+        <p>Arkadaşlarının aklından geçenleri ne kadar iyi okuyabilirsin? <strong>Paira Kelime Avı</strong>, kelime bilginizi ve ajanlık yeteneklerinizi test eden eşsiz bir sosyal çıkarım oyunudur. Amacınız, aranızdaki gizli ebeyi uyandırmadan diğer oyuncularla aynı kelime üzerinde buluşmaktır.</p>
+
+        <p>Oyunun başında herkesin rolü gizlice belirlenir. 'Masum' olan oyuncular sadece hedeflenen kelimenin baş harfini görürken, 'Ebe' olan oyuncu kelimenin tamamını bilir. Masumların görevi, o baş harfle başlayan herhangi bir kelime belirleyip, birbirlerine çok kapalı ve şifreli ipuçları vererek aynı kelimede eşleşmektir. Örneğin baş harf 'A' ise, bir masum 'Geceleri gökyüzünde parlar' diyerek 'Ay' kelimesini kastedebilir. İki masum aynı kelimeyi düşündüğüne emin olduğunda 'Eşleş' diyerek kontrol ederler.</p>
+
+        <p>Ancak dikkatli olun! Aranıza sızan Ebe tüm bu konuşmaları dinlemektedir. Eğer ipuçlarını çok açık verirseniz, Ebe ne demek istediğinizi anlar ve sizden önce o kelimeyi tahmin ederek turu kazanır. Hiçbir şey indirmene gerek kalmadan tarayıcınız üzerinden hemen oynayabileceğiniz bu heyecan dolu parti oyununda kelimelerinizi özenle seçin ve aranızdaki ebeyi atlatın!</p>
+    </div>
+
+    <!-- index.js only handles username, connection setup and redirection -->
+
+    <script src="../shared/login.js"></script>
+    <script src="../shared/shared.js"></script>
+</body>
+</html>
