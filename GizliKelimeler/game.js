@@ -266,9 +266,10 @@ class GizliKelimelerView {
 
         const submitClue = () => {
             const word = document.getElementById('clue-word').value.trim();
-            const count = document.getElementById('clue-count').value;
-            if(!word || !count) {
-                this.showToast("Lütfen ipucu ve sayı giriniz!", "warning");
+            const countStr = document.getElementById('clue-count').value;
+            const count = parseInt(countStr);
+            if(!word || isNaN(count) || count < 1) {
+                this.showToast("Lütfen geçerli bir ipucu ve 1'den büyük bir sayı giriniz!", "warning");
                 return;
             }
             this.callbacks.onSubmitClue(word, count);
