@@ -99,14 +99,23 @@
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden" style="flex-direction: column;">
             
-            <header class="game-topbar card" style="display: flex; justify-content: space-between; align-items: center;">
+            <!-- Sol Üst: Rol Bilgisi (HUD) ve Kendi Rolünüz -->
+            <div id="roles-hud" class="card hud-panel" style="position: absolute; top: 0px; left: 0px; width: 250px; z-index: 10; pointer-events: auto; border-radius: 0 0 15px 0;">
+                <div class="role-display" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: help; position: relative;" id="my-role-container">
+                    <span style="font-size: 1rem; color: var(--text-muted);">Rolünüz:</span>
+                    <strong id="my-role" style="font-size: 1.3rem; color: var(--neon-purple);">Gizli</strong>
+                    <div id="role-tooltip" class="hidden" style="position: absolute; top: 100%; left: 0; background: rgba(0,0,0,0.9); border: 1px solid var(--neon-purple); padding: 10px; border-radius: 8px; width: 220px; z-index: 30; font-size: 0.85rem; color: #ddd;"></div>
+                </div>
+                <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Oyundaki Roller</h4>
+                <ul id="roles-list" style="list-style: none; margin: 0; padding: 0; font-size: 0.85rem; color: #ddd; display: flex; flex-direction: column; gap: 5px;">
+                    <!-- Roles will be injected here -->
+                </ul>
+            </div>
+
+            <!-- Sağ Üst: Gün ve Zaman Bilgisi -->
+            <header class="game-topbar card" style="position: absolute; top: 0; right: 0; margin: 0; border-radius: 0 0 0 15px; display: flex; gap: 20px; justify-content: flex-end; align-items: center; z-index: 10;">
                 <div class="phase-indicator" style="font-size: 1.15rem; background: var(--input-bg); padding: 8px 20px; border-radius: 12px; font-weight: bold;">
                     <span id="current-phase">Gece</span> - Gün <span id="current-day">1</span>
-                </div>
-
-                <div class="role-display" style="display: flex; align-items: center; gap: 15px;">
-                    <span style="font-size: 1.1rem; color: var(--text-muted);">Rolünüz:</span>
-                    <strong id="my-role" style="font-size: 1.5rem; color: var(--neon-purple);">Gizli</strong>
                 </div>
 
                 <div class="timer-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -114,16 +123,8 @@
                 </div>
             </header>
 
-            <!-- Sol Üst: Rol Bilgisi (HUD) -->
-            <div id="roles-hud" class="card hud-panel" style="position: absolute; top: 100px; left: 20px; width: 250px; z-index: 10; pointer-events: none;">
-                <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Oyundaki Roller</h4>
-                <ul id="roles-list" style="list-style: none; margin: 0; padding: 0; font-size: 0.85rem; color: #ddd; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <!-- Roles will be injected here -->
-                </ul>
-            </div>
-
             <!-- Sağ Alt: Not Defteri (HUD) -->
-            <div id="notepad-hud" class="card hud-panel" style="position: absolute; bottom: 20px; right: 20px; width: 300px; z-index: 10; display: flex; flex-direction: column; max-height: 40vh; pointer-events: auto;">
+            <div id="notepad-hud" class="card hud-panel" style="position: absolute; bottom: 0px; right: 0px; width: 300px; z-index: 10; display: flex; flex-direction: column; max-height: 40vh; pointer-events: auto; border-radius: 15px 0 0 0; margin: 0;">
                 <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--lilac); display: flex; justify-content: space-between; align-items: center;">
                     <span>📝 Not Defteri</span>
                 </h4>
@@ -136,21 +137,20 @@
             <div style="display: flex; flex: 1; gap: 1rem; margin-top: 1rem; min-height: 0; position: relative;">
                 
                 <!-- PLAYERS LIST FOR ACTIONS (Ortada / Yanda açılan panel) -->
-                <div id="action-panel" class="card custom-scrollbar hidden" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; min-width: 320px; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-                    <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 12px; text-align: center;" id="action-title">Kimi seçeceksin?</h3>
-                    <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: -5px; margin-bottom: 15px;">Sahnede bir eve tıklayarak da seçim yapabilirsiniz.</p>
-                    <div id="action-players-container" style="display: grid; gap: 10px; max-height: 40vh; overflow-y: auto; padding-right: 5px;">
-                        <!-- Players to click on for night action or day voting -->
-                    </div>
-                    
-                    <div class="action-footer" style="margin-top: auto; padding-top: 1rem; text-align: center; border-top: 1px solid var(--btn-secondary-border); display: flex; gap: 10px;">
-                        <button id="btn-confirm-action" class="btn btn-primary hidden" style="padding: 10px 20px; flex: 1;">Seçimi Onayla</button>
-                        <button id="btn-skip-action" class="btn btn-secondary hidden" style="padding: 10px 20px; flex: 1;">Pas Geç</button>
+                <!-- UI panel gizlendi, seçimler sadece 3D sahneden yapılacak -->
+                <div id="action-panel" class="hidden" style="display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; min-width: 320px; display: flex; flex-direction: column; align-items: center; pointer-events: none;">
+                    <div class="card" style="padding: 15px; border-radius: 12px; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; background: rgba(18, 20, 28, 0.85); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        <h3 style="margin: 0; text-align: center; font-size: 1.1rem; color: var(--lilac);" id="action-title">Sahnede birine veya evine tıklayarak seçiminizi yapın</h3>
+                        <div id="action-players-container" style="display: none;"></div>
+                        <div class="action-footer" style="display: flex; gap: 10px; width: 100%;">
+                            <button id="btn-skip-action" class="btn btn-secondary hidden" style="padding: 8px 15px; flex: 1; font-size: 0.9rem;">Pas Geç</button>
+                            <button id="btn-confirm-action" class="btn btn-primary hidden" style="padding: 8px 15px; flex: 1; font-size: 0.9rem;">Seçimi Onayla</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- GAME LOGS (Sol Altta) -->
-                <div class="card custom-scrollbar hud-panel" style="position: absolute; bottom: 20px; left: 20px; width: 350px; height: 200px; display: flex; flex-direction: column; overflow-y: auto; pointer-events: auto;">
+                <div class="card custom-scrollbar hud-panel" style="position: absolute; bottom: 0px; left: 0px; width: 350px; height: 200px; display: flex; flex-direction: column; overflow-y: auto; pointer-events: auto; border-radius: 0 15px 0 0; margin: 0;">
                     <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 5px; color: var(--text-muted); font-size: 0.9rem;">Oyun Geçmişi</h4>
                     <div id="game-logs" style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
                         <!-- Logs appended here -->
@@ -174,7 +174,7 @@
             
         </section>
 
-        <!-- OYUN SONU EKRANI -->
+<!-- OYUN SONU EKRANI -->
         <section id="score-screen" class="view-state hidden">
             <header class="game-topbar card" style="justify-content: center;">
                 <h2 style="margin: 0;" id="end-game-title">Oyun Bitti</h2>
@@ -216,6 +216,8 @@
     <script type="module" src="scene.js"></script>
     <script src="../shared/shared.js"></script>
     <script src="network.js"></script>
+    <script src="roles.js"></script>
+    <script src="ui.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

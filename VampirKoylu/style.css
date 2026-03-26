@@ -30,6 +30,15 @@ body.game-active #game-container {
     pointer-events: auto;
 }
 
+/* Oyun ekranı aktifken global UI elementlerini gizle */
+body.game-active .paira-global-nav,
+body.game-active .floating-top-nav,
+body.game-active .floating-left-nav,
+body.game-active .app-footer,
+body.game-active #seo-footer {
+    display: none !important;
+}
+
 #app-container {
     background: transparent !important;
     border: none !important;

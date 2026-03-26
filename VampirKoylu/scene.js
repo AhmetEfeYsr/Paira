@@ -139,6 +139,23 @@ class PlayerModel {
         this.meshGroup.add(this.trapMesh);
     }
     
+    setHighlight(isSelected) {
+        if (this.isDead) return;
+        if(isSelected) {
+            this.nameSprite.material.color.setHex(0xffff00); // Yellow name
+            if(this.body.children[0]) {
+                this.body.children[0].material.emissive.setHex(0x333333);
+                this.body.children[0].material.emissiveIntensity = 0.5;
+            }
+        } else {
+            this.nameSprite.material.color.setHex(0xffffff);
+            if(this.body.children[0]) {
+                this.body.children[0].material.emissive.setHex(0x000000);
+                this.body.children[0].material.emissiveIntensity = 0;
+            }
+        }
+    }
+
     setDead(isDead) {
         this.isDead = isDead;
         if (isDead) {
@@ -700,7 +717,7 @@ export class GameScene {
         const doorPos = target.homePos.clone();
         doorPos.multiplyScalar(0.85); // Doorstep
         
-        const speed = (actionType === 'KILL' || actionType === 'POLICE_BLOCK') ? 4.5 : 2.5;
+        const speed = (actionType === 'KILL' || actionType === 'POLICE_BLOCK') ? 15.0 : 10.0;
 
         // Walk to target
         actor.setTarget(doorPos, speed);
