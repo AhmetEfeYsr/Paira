@@ -228,18 +228,32 @@ function update3DSceneFromState() {
 function handleStartGame() {
     if (!isHost) return;
     const pCount = Object.keys(gameState.players).length;
-    const vCount = parseInt(els.lobby.vampires.value);
-    const hasDoctor = document.getElementById('setting-doctor')?.value === '1';
-    const hasSeer = document.getElementById('setting-seer')?.value === '1';
     
+    let assignedRoles = {};
+    let totalAssigned = 0;
+    
+    document.querySelectorAll('.role-count-val').forEach(el => {
+        let count = parseInt(el.textContent) || 0;
+        if (count > 0) {
+            assignedRoles[el.dataset.roleKey] = count;
+            totalAssigned += count;
+        }
+    });
+
     if (pCount < 3) { showToast("En az 3 oyuncu gerekli!", "error"); return; }
-    if (vCount >= pCount) { showToast("Vampir sayısı oyuncu sayısından az olmalı!", "error"); return; }
+    if (totalAssigned > pCount) { showToast("Atanan rol sayısı oyuncu sayısından fazla olamaz!", "error"); return; }
+    
+    let vampCount = 0;
+    Object.keys(assignedRoles).forEach(r => {
+        if (ROLES[r] && ROLES[r].team === 'VAMPIR') vampCount += assignedRoles[r];
+    });
+    
+    if (vampCount >= pCount) { showToast("Vampir sayısı toplam oyuncu sayısından az olmalı!", "error"); return; }
+    if (vampCount === 0) { showToast("En az 1 Vampir takımından rol olmalı!", "error"); return; }
 
     gameState.settings = { 
-        vampireCount: vCount, 
-        discussionTime: parseInt(els.lobby.discussionTime.value) || 90,
-        hasDoctor: hasDoctor,
-        hasSeer: hasSeer
+        assignedRoles: assignedRoles,
+        discussionTime: parseInt(els.lobby.discussionTime.value) || 90
     };
     
     assignRoles();
@@ -274,34 +288,19 @@ function assignRoles() {
     }
     
     let index = 0;
-    // Vampires — now includes Dracula, Zehirli, Vampir İzcisi (G1)
-    const vampRolePool = ['VAMPIR'];
-    if (pIds.length >= 6)  vampRolePool.push('PROFESYONEL');
-    if (pIds.length >= 8)  vampRolePool.push('DRACULA');
-    if (pIds.length >= 10) vampRolePool.push('ZEHIRLI');
-    if (pIds.length >= 12) vampRolePool.push('VAMPIR_IZCISI');
-    for (let i = 0; i < gameState.settings.vampireCount; i++) {
-        let vRole = i < vampRolePool.length ? vampRolePool[i] : 'VAMPIR';
-        gameState.players[pIds[index++]].role = vRole;
-    }
+    const assignedRoles = gameState.settings.assignedRoles || {};
     
-    // Other Roles Based on Count — expanded pool
-    const rolesToAdd = [];
-    if(pIds.length >= 3 && gameState.settings.hasDoctor) rolesToAdd.push('DOKTOR');
-    if(pIds.length >= 4 && gameState.settings.hasSeer) rolesToAdd.push('GOZCU');
-    if(pIds.length >= 5) rolesToAdd.push('SERI_KATIL');
-    if(pIds.length >= 6) rolesToAdd.push('POLIS');
-    if(pIds.length >= 7) rolesToAdd.push('SERIF');
-    if(pIds.length >= 8) rolesToAdd.push('TUZAKCI');
-    if(pIds.length >= 9) rolesToAdd.push('IZCI');
-    if(pIds.length >= 10) rolesToAdd.push('DEDEKTIF');
-    if(pIds.length >= 11) rolesToAdd.push('KUNDAKCI');
-    if(pIds.length >= 12) rolesToAdd.push('INTIKAMCI');
-    
-    rolesToAdd.forEach(r => {
-        if(index < pIds.length) gameState.players[pIds[index++]].role = r;
+    // Assign explicit roles
+    Object.keys(assignedRoles).forEach(roleKey => {
+        let count = assignedRoles[roleKey];
+        for (let i = 0; i < count; i++) {
+            if (index < pIds.length) {
+                gameState.players[pIds[index++]].role = roleKey;
+            }
+        }
     });
     
+    // Remaining players become KOYLU
     while (index < pIds.length) {
         gameState.players[pIds[index++]].role = 'KOYLU';
     }

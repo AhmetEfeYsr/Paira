@@ -17,8 +17,11 @@ const els = {
         clientWaiting: document.getElementById('client-waiting'),
         hostNameDisplay: document.getElementById('host-name-display'),
         btnStart: document.getElementById('btn-start-game'),
-        vampires: document.getElementById('setting-vampires'),
-        discussionTime: document.getElementById('setting-discussion-time')
+        discussionTime: document.getElementById('setting-discussion-time'),
+        rmPlayerCount: document.getElementById('rm-player-count'),
+        rmAssignedCount: document.getElementById('rm-assigned-count'),
+        rmRemainingCount: document.getElementById('rm-remaining-count'),
+        rolesContainer: document.getElementById('roles-container')
     },
     game: {
         phase: document.getElementById('current-phase'),
@@ -70,6 +73,7 @@ function setupUI() {
         els.lobby.btnStart.addEventListener('click', handleStartGame);
         els.score.btnPlayAgain.classList.remove('hidden');
         els.score.btnPlayAgain.addEventListener('click', handlePlayAgain);
+        initRoleManagementUI();
     } else {
         els.lobby.clientWaiting.classList.remove('hidden');
     }
@@ -117,6 +121,142 @@ function updateLobbyPlayersList(playersObj) {
         els.lobby.playersList.appendChild(li);
         if (p.isHost) els.lobby.hostNameDisplay.textContent = p.name;
     });
+
+    if (isHost) updateRoleManagementStats();
+}
+
+function initRoleManagementUI() {
+    if (!els.lobby.rolesContainer) return;
+    els.lobby.rolesContainer.innerHTML = '';
+    
+    // Default roles that we want to pre-fill (1 vampir, rest 0)
+    const teams = {
+        'KOY': { name: 'Köylüler', color: 'var(--success)' },
+        'VAMPIR': { name: 'Vampirler', color: 'var(--danger)' },
+        'TARAFSIZ': { name: 'Tarafsızlar', color: 'var(--warning)' }
+    };
+    
+    const rolesByTeam = { 'KOY': [], 'VAMPIR': [], 'TARAFSIZ': [] };
+    
+    Object.keys(ROLES).forEach(roleKey => {
+        if (roleKey === 'KOYLU') return; // Köylü is calculated automatically
+        const r = ROLES[roleKey];
+        if (rolesByTeam[r.team]) rolesByTeam[r.team].push({ key: roleKey, ...r });
+    });
+    
+    Object.keys(teams).forEach(teamKey => {
+        if (rolesByTeam[teamKey].length === 0) return;
+        
+        const groupDiv = document.createElement('div');
+        groupDiv.style.marginBottom = '10px';
+        
+        const header = document.createElement('h5');
+        header.textContent = teams[teamKey].name;
+        header.style.margin = '0 0 8px 0';
+        header.style.color = teams[teamKey].color;
+        header.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+        header.style.paddingBottom = '4px';
+        
+        groupDiv.appendChild(header);
+        
+        const listDiv = document.createElement('div');
+        listDiv.style.display = 'flex';
+        listDiv.style.flexDirection = 'column';
+        listDiv.style.gap = '6px';
+        
+        rolesByTeam[teamKey].forEach(role => {
+            const roleRow = document.createElement('div');
+            roleRow.style.display = 'flex';
+            roleRow.style.justifyContent = 'space-between';
+            roleRow.style.alignItems = 'center';
+            roleRow.style.background = 'rgba(0,0,0,0.2)';
+            roleRow.style.padding = '6px 10px';
+            roleRow.style.borderRadius = '6px';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = role.name;
+            nameSpan.title = role.desc;
+            nameSpan.style.cursor = 'help';
+            nameSpan.style.fontSize = '0.9rem';
+            
+            const ctrlDiv = document.createElement('div');
+            ctrlDiv.style.display = 'flex';
+            ctrlDiv.style.alignItems = 'center';
+            ctrlDiv.style.gap = '8px';
+            
+            const btnMinus = document.createElement('button');
+            btnMinus.className = 'btn btn-secondary';
+            btnMinus.style.padding = '2px 8px';
+            btnMinus.style.minWidth = '28px';
+            btnMinus.textContent = '-';
+            
+            const valSpan = document.createElement('span');
+            valSpan.className = 'role-count-val';
+            valSpan.dataset.roleKey = role.key;
+            valSpan.textContent = role.key === 'VAMPIR' ? '1' : '0';
+            valSpan.style.width = '20px';
+            valSpan.style.textAlign = 'center';
+            valSpan.style.fontWeight = 'bold';
+            
+            const btnPlus = document.createElement('button');
+            btnPlus.className = 'btn btn-secondary';
+            btnPlus.style.padding = '2px 8px';
+            btnPlus.style.minWidth = '28px';
+            btnPlus.textContent = '+';
+            
+            btnMinus.onclick = () => {
+                let v = parseInt(valSpan.textContent);
+                if (v > 0) {
+                    valSpan.textContent = v - 1;
+                    updateRoleManagementStats();
+                }
+            };
+            
+            btnPlus.onclick = () => {
+                let v = parseInt(valSpan.textContent);
+                valSpan.textContent = v + 1;
+                updateRoleManagementStats();
+            };
+            
+            ctrlDiv.appendChild(btnMinus);
+            ctrlDiv.appendChild(valSpan);
+            ctrlDiv.appendChild(btnPlus);
+            
+            roleRow.appendChild(nameSpan);
+            roleRow.appendChild(ctrlDiv);
+            listDiv.appendChild(roleRow);
+        });
+        
+        groupDiv.appendChild(listDiv);
+        els.lobby.rolesContainer.appendChild(groupDiv);
+    });
+    
+    updateRoleManagementStats();
+}
+
+function updateRoleManagementStats() {
+    if (!isHost || !els.lobby.rmPlayerCount) return;
+    
+    let pCount = Object.keys(gameState.players).length;
+    if (pCount === 0 && network && network.players) pCount = Object.keys(network.players).length;
+    
+    els.lobby.rmPlayerCount.textContent = pCount;
+    
+    let assigned = 0;
+    document.querySelectorAll('.role-count-val').forEach(el => {
+        assigned += parseInt(el.textContent) || 0;
+    });
+    
+    els.lobby.rmAssignedCount.textContent = assigned;
+    
+    let rem = pCount - assigned;
+    els.lobby.rmRemainingCount.textContent = rem;
+    
+    if (rem < 0) {
+        els.lobby.rmRemainingCount.style.color = 'var(--danger)';
+    } else {
+        els.lobby.rmRemainingCount.style.color = 'var(--success)';
+    }
 }
 
 function switchScreen(screenId) {
