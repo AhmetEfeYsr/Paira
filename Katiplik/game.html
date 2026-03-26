@@ -106,20 +106,25 @@
                 </div>
             </div>
 
-            <div class="category-grid" id="category-grid">
-                <!-- Kategoriler JS ile doldurulacak -->
+            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="color: var(--text-main); font-weight: 500;">Metin Seçin</label>
+                <input type="text" id="category-search" placeholder="Metin ara..." style="width: 100%; padding: 1rem; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--btn-secondary-border); color: var(--text-main); font-size: 1.1rem; outline: none;" autocomplete="off">
+                <select id="category-select" size="6" class="custom-scrollbar" style="width: 100%; padding: 0.5rem; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--btn-secondary-border); color: var(--text-main); font-size: 1rem; outline: none; cursor: pointer;">
+                    <!-- Seçenekler JS ile doldurulacak -->
+                </select>
             </div>
+            
             <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
                 <button id="btn-start-game" class="btn btn-primary btn-block" disabled style="padding: 14px; font-size: 1.1rem; max-width: 300px; margin: 0 auto;">Oyunu Başlat</button>
             </div>
         </div>
 
         <!-- Yazı Alanı -->
-        <div id="typing-area" class="typing-area" style="display: none; flex-grow: 1;">
-            <div id="text-display" class="text-display card custom-scrollbar" style="flex-grow: 1; overflow-y: auto; align-items: flex-start; justify-content: flex-start;">
+        <div id="typing-area" class="typing-area" style="display: none; flex-grow: 1; flex-direction: column;">
+            <div id="text-display" class="text-display custom-scrollbar" style="flex-grow: 1; overflow-y: auto; text-align: left; display: block;">
                 <!-- Metin kelimeleri JS ile buraya eklenecek -->
             </div>
-            <textarea id="text-input" class="text-input card" placeholder="Buraya yazın..." autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" disabled style="min-height: 120px; font-size: 1.5rem; border: 2px solid var(--btn-secondary-border);"></textarea>
+            <textarea id="text-input" class="text-input" placeholder="Buraya yazın..." autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" disabled style="min-height: 120px; font-size: 1.5rem;"></textarea>
         </div>
 
             <!-- Sonuç Ekranı -->
@@ -152,25 +157,10 @@
         <p>Arkadaşlarla oynanan çok oyunculu modda, kimin kelimeleri daha hızlı erittiğini canlı olarak görebilirsiniz. Yanlış yazılan kelimeler ilerlemenizi yavaşlatır, bu yüzden sadece hızlı olmak değil, doğru tuşlara basmak da zafere giden yolda kritik bir rol oynar. Hiçbir kurulum yapmadan tarayıcın üzerinden klavyenin başına geç ve parmaklarının hızını herkese göster!</p>
     </div>
 
-    <!-- Chat Bölümü -->
-    <button id="chat-toggle" class="chat-toggle">💬</button>
-    <div id="chat-panel" class="chat-panel">
-        <div class="chat-header">
-            <span>Sohbet</span>
-            <button id="chat-close">✖</button>
-        </div>
-        <div id="chat-messages" class="chat-messages custom-scrollbar"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
-            <button id="chat-send">➤</button>
-        </div>
-    </div>
-
     <script src="../shared/peer_manager.js"></script>
     <script src="../shared/base_network.js"></script>
     <script src="../shared/state_proxy.js"></script>
     <script src="../shared/lobby_manager.js"></script>
-    <script src="../shared/chat.js"></script>
     <script src="network.js"></script>
     <script src="game.js"></script>
 </body>

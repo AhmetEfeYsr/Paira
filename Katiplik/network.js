@@ -1,45 +1,3 @@
-class ChatManager {
-    constructor(network, playerName) {
-        this.network = network;
-        this.playerName = playerName;
-        this.bindEvents();
-    }
-    
-    bindEvents() {
-        document.getElementById('chat-toggle')?.addEventListener('click', () => {
-            document.getElementById('chat-panel')?.classList.toggle('active');
-        });
-        document.getElementById('chat-close')?.addEventListener('click', () => {
-            document.getElementById('chat-panel')?.classList.remove('active');
-        });
-        const input = document.getElementById('chat-input');
-        const sendBtn = document.getElementById('chat-send');
-        if (input && sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendChat(input.value));
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.sendChat(input.value);
-            });
-        }
-    }
-    
-    sendChat(text) {
-        if (!text.trim()) return;
-        this.addMessage(this.playerName, text, true);
-        this.network.sendMessage({ type: 'chat', text: text, sender: this.playerName });
-        document.getElementById('chat-input').value = '';
-    }
-    
-    addMessage(sender, text, isSelf) {
-        const container = document.getElementById('chat-messages');
-        if (!container) return;
-        const div = document.createElement('div');
-        div.className = `chat-message ${isSelf ? 'self' : 'other'}`;
-        div.innerHTML = `<strong>${sender}:</strong> <span>${text}</span>`;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-    }
-}
-
 class KatiplikNetwork extends BaseGameNetwork {
     constructor(game) {
         super({
@@ -124,11 +82,6 @@ class KatiplikNetwork extends BaseGameNetwork {
         if (!data || !data.type) return;
 
         switch (data.type) {
-            case 'chat':
-                if (this.game.chat) {
-                    this.game.chat.addMessage(data.sender, data.text, false);
-                }
-                break;
             case 'player_info':
                 this.game.opponentName = data.name;
                 document.getElementById('p2-name').textContent = data.name;

@@ -21,10 +21,9 @@ class KatiplikGame {
         this.opponentWpm = 0;
         this.opponentAccuracy = 0;
 
-        // Ağ Yöneticisi ve Sohbet
+        // Ağ Yöneticisi
         if (!this.isSolo) {
             this.network = new KatiplikNetwork(this);
-            this.chat = new ChatManager(this.network, this.playerName);
             this.network.initialize(this.isHost, this.roomCode);
         } else {
             this.setupSoloGame();
@@ -115,29 +114,45 @@ class KatiplikGame {
     }
 
     renderCategories() {
-        const grid = document.getElementById('category-grid');
+        const select = document.getElementById('category-select');
         const startBtn = document.getElementById('btn-start-game');
-        grid.innerHTML = '';
+        const searchInput = document.getElementById('category-search');
         
-        this.selectedCategory = null;
+        if (select) {
+            this.selectedCategory = null;
+            startBtn.disabled = true;
 
-        this.categories.forEach((cat, index) => {
-            const card = document.createElement('div');
-            card.className = 'category-card';
-            card.innerHTML = `
-                <h4>Metin ${index + 1}</h4>
-                <p style="font-size:0.9rem; color:var(--text-muted);">${cat.title}</p>
-            `;
-            
-            card.addEventListener('click', () => {
-                document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                this.selectedCategory = cat;
-                startBtn.disabled = false;
+            const renderOptions = (filterText = '') => {
+                select.innerHTML = '';
+                const lowerFilter = filterText.toLocaleLowerCase('tr-TR');
+                
+                this.categories.forEach((cat, index) => {
+                    const titleText = `Metin ${index + 1} - ${cat.title}`;
+                    if (!filterText || titleText.toLocaleLowerCase('tr-TR').includes(lowerFilter)) {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = titleText;
+                        select.appendChild(option);
+                    }
+                });
+            };
+
+            renderOptions();
+
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderOptions(e.target.value);
+                });
+            }
+
+            select.addEventListener('change', (e) => {
+                const selectedIndex = parseInt(e.target.value, 10);
+                if (!isNaN(selectedIndex) && this.categories[selectedIndex]) {
+                    this.selectedCategory = this.categories[selectedIndex];
+                    startBtn.disabled = false;
+                }
             });
-            
-            grid.appendChild(card);
-        });
+        }
     }
 
     initGameWithSelectedCategory() {
@@ -195,6 +210,9 @@ class KatiplikGame {
         document.getElementById('p2-wpm').textContent = '0 WPM';
         
         this.renderText();
+        
+        const textDisplay = document.getElementById('text-display');
+        textDisplay.scrollTop = 0;
         
         const textInput = document.getElementById('text-input');
         textInput.disabled = false;

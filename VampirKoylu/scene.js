@@ -137,6 +137,16 @@ class PlayerModel {
         this.trapMesh.position.y = -0.4;
         this.trapMesh.visible = false;
         this.meshGroup.add(this.trapMesh);
+
+        // Tombstone (hidden by default)
+        this.tombstone = new THREE.Group();
+        const stone = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.2), new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.9 }));
+        stone.position.y = 0.5;
+        const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 }));
+        base.position.y = 0.1;
+        this.tombstone.add(stone, base);
+        this.tombstone.visible = false;
+        this.meshGroup.add(this.tombstone);
     }
     
     setHighlight(isSelected) {
@@ -159,12 +169,20 @@ class PlayerModel {
     setDead(isDead) {
         this.isDead = isDead;
         if (isDead) {
-            this.meshGroup.rotation.x = -Math.PI / 2;
-            this.meshGroup.position.y = 0.2;
-            this.nameSprite.position.y = 0.8;
-            this.nameSprite.position.z = 1.0;
-            this.nameSprite.material.opacity = 0.5;
+            this.body.visible = false;
+            this.leftLeg.visible = false;
+            this.rightLeg.visible = false;
+            this.tombstone.visible = true;
+            this.meshGroup.rotation.x = 0;
+            this.meshGroup.position.y = 0.0;
+            this.nameSprite.position.y = 1.4;
+            this.nameSprite.position.z = 0.0;
+            this.nameSprite.material.opacity = 0.6;
         } else {
+            this.body.visible = true;
+            this.leftLeg.visible = true;
+            this.rightLeg.visible = true;
+            this.tombstone.visible = false;
             this.meshGroup.rotation.x = 0;
             this.meshGroup.position.y = 1.0;
             this.nameSprite.position.y = 1.6;
@@ -686,6 +704,21 @@ export class GameScene {
     watchHouse(targetId) {
         this.cameraMode = 'fire';
         this.cameraFollowTarget = null;
+    }
+
+    getPlayerScreenCoords(playerId) {
+        if (!this.playerModels[playerId]) return null;
+        const playerPos = this.playerModels[playerId].mesh.position.clone();
+        
+        // Y offset for head
+        playerPos.y += 3.5;
+        
+        playerPos.project(this.camera);
+
+        const x = (playerPos.x *  .5 + .5) * window.innerWidth;
+        const y = (playerPos.y * -.5 + .5) * window.innerHeight;
+
+        return { x, y };
     }
 
     updatePlayerTargets(mode = "fire") {

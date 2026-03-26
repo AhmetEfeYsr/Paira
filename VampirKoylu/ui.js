@@ -43,7 +43,10 @@ const els = {
         roleModal: document.getElementById('role-modal'),
         roleModalName: document.getElementById('role-modal-name'),
         roleModalDesc: document.getElementById('role-modal-desc'),
-        btnCloseRoleModal: document.getElementById('btn-close-role-modal')
+        btnCloseRoleModal: document.getElementById('btn-close-role-modal'),
+        chatForm: document.getElementById('chat-form'),
+        chatInput: document.getElementById('chat-input'),
+        willNotes: document.getElementById('personal-notes')
     },
     score: {
         title: document.getElementById('end-game-title'),
@@ -107,6 +110,24 @@ function setupUI() {
     });
     els.game.myRoleContainer.addEventListener('mouseleave', () => {
         els.game.roleTooltip.classList.add('hidden');
+    });
+
+    els.game.chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msg = els.game.chatInput.value.trim();
+        if(msg) {
+            network.sendToHost({ type: 'CHAT_MESSAGE', msg: msg });
+            els.game.chatInput.value = '';
+        }
+    });
+
+    els.game.willNotes.addEventListener('input', () => {
+        // Debounced will update
+        clearTimeout(els.game.willNotes.timeout);
+        els.game.willNotes.timeout = setTimeout(() => {
+            const willText = els.game.willNotes.value.trim();
+            network.sendToHost({ type: 'UPDATE_WILL', will: willText });
+        }, 1000);
     });
 }
 
@@ -307,10 +328,16 @@ function renderGameScreen() {
     els.game.day.textContent = gameState.dayCount;
     
     const myPlayer = gameState.players[myId];
-    els.game.myRole.textContent = myPlayer ? (ROLES[myPlayer.role]?.name || myPlayer.role) : 'Seyirci';
-    
     if (myPlayer && myPlayer.role) {
         const rDef = ROLES[myPlayer.role];
+        let roleText = rDef?.name || myPlayer.role;
+        if (rDef && rDef.maxUses) {
+            let used = myPlayer.usedAbility ? 0 : 1;
+            roleText += ` (Mermi: ${used}/${rDef.maxUses})`;
+        }
+        els.game.myRole.textContent = roleText;
+        
+        if (rDef) {
         if (rDef) {
             els.game.roleTooltip.textContent = rDef.desc || '';
             if (!roleModalShown && gameState.dayCount === 1 && gameState.status === 'NIGHT') {
@@ -318,6 +345,12 @@ function renderGameScreen() {
                 showRoleModal(rDef.name, rDef.desc || '');
             }
         }
+    } else {
+        els.game.myRole.textContent = 'Seyirci';
+    }
+    
+    if(myPlayer && myPlayer.will) {
+        els.game.willNotes.value = myPlayer.will;
     }
     
     renderLogs();
@@ -341,6 +374,7 @@ function renderGameScreen() {
     els.game.btnConfirm.classList.add('hidden');
     pendingActionTarget = null;
     els.game.actionPlayers.innerHTML = '';
+    els.game.actionPlayers.style.display = 'none';
 
     const rDef = ROLES[myPlayer.role];
 
@@ -350,8 +384,8 @@ function renderGameScreen() {
                 els.game.actionPanel.classList.add('hidden');
                 return;
             }
-            let isDedektif = myPlayer.role === 'DEDEKTIF';
-            if (myPlayer.role === 'DELI') isDedektif = false;
+            let fakeRole = myPlayer.fakeRole;
+            let isDedektif = myPlayer.role === 'DEDEKTIF' || (myPlayer.role === 'DELI' && fakeRole === 'DEDEKTIF');
             els.game.actionTitle.textContent = isDedektif ? 'Gece Aksiyonu: 2 Hedef Seç' : 'Gece Aksiyonu: Hedef Seç';
             let excludeSelfForVamp = ROLES[myPlayer.role]?.team === 'VAMPIR';
             renderActionList(excludeSelfForVamp, isDedektif ? 2 : 1); 
@@ -375,6 +409,30 @@ function renderGameScreen() {
         els.game.actionTitle.textContent = 'Kimi oylayacaksın?';
         els.game.btnSkip.classList.remove('hidden');
         renderActionList(true); 
+    } else if (gameState.status === 'JUDGEMENT') {
+        els.game.actionTitle.textContent = gameState.players[gameState.defensePlayerId].name + ' asılsın mı?';
+        els.game.btnSkip.classList.remove('hidden');
+        
+        // Custom UI for Judgement
+        _currentMaxSelect = 1;
+        _currentSelectedIds = [];
+        _validActionTargets = ['guilty', 'innocent'];
+        
+        els.game.actionPlayers.innerHTML = `
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button id="btn-judge-guilty" class="btn btn-primary" style="flex: 1; background: var(--danger); border-color: var(--danger);">Suçlu</button>
+                <button id="btn-judge-innocent" class="btn btn-primary" style="flex: 1; background: var(--success); border-color: var(--success);">Masum</button>
+            </div>
+        `;
+        els.game.actionPlayers.style.display = 'block';
+        
+        document.getElementById('btn-judge-guilty').onclick = () => { window.onPlayerSelected('guilty'); };
+        document.getElementById('btn-judge-innocent').onclick = () => { window.onPlayerSelected('innocent'); };
+
+        els.game.btnConfirm.classList.add('hidden');
+        els.game.actionPanel.style.left = '50%';
+        els.game.actionPanel.style.top = '50%';
+        els.game.actionPanel.style.display = 'flex';
     }
 }
 
@@ -401,6 +459,8 @@ function renderActionList(excludeSelf, maxSelect = 1) {
     });
 
     els.game.btnConfirm.classList.add('hidden');
+    els.game.actionPanel.style.left = '50%';
+    els.game.actionPanel.style.top = '50%';
     els.game.actionPanel.style.display = 'flex';
 }
 
@@ -409,10 +469,23 @@ window.onPlayerSelected = (id) => {
     if (els.game.actionPanel.classList.contains('hidden') || els.game.actionPanel.style.display === 'none') return;
     if (!_validActionTargets.includes(id)) return;
 
+    if (id === 'guilty' || id === 'innocent') {
+        submitAction(id);
+        return;
+    }
+
+    if(window.gameScene) {
+        const coords = window.gameScene.getPlayerScreenCoords(id);
+        if (coords) {
+            els.game.actionPanel.style.left = coords.x + 'px';
+            els.game.actionPanel.style.top = coords.y + 'px';
+        }
+    }
+
     if (_currentMaxSelect === 1) {
         pendingActionTarget = id;
         els.game.btnConfirm.classList.remove('hidden');
-        els.game.actionTitle.textContent = "Seçilen: " + gameState.players[id].name;
+        els.game.actionTitle.textContent = "Seçilen: " + (gameState.players[id] ? gameState.players[id].name : id);
         
         if(window.gameScene) {
             Object.values(window.gameScene.playerModels).forEach(p => p.setHighlight(false));
@@ -431,6 +504,8 @@ window.onPlayerSelected = (id) => {
             els.game.actionTitle.textContent = "Seçilenler: " + _currentSelectedIds.map(i => gameState.players[i].name).join(', ');
         } else {
             els.game.actionTitle.textContent = "Sahnede birine veya evine tıklayarak seçiminizi yapın";
+            els.game.actionPanel.style.left = '50%';
+            els.game.actionPanel.style.top = '50%';
         }
         
         if(window.gameScene) {

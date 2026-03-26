@@ -198,6 +198,100 @@ function onStateUpdate(senderId, data) {
         if (window.gameScene) {
             window.gameScene.animateHang(data.targetId);
         }
+    } else if (data.type === 'CHAT_MESSAGE' && isHost) {
+        handleChatMessage(senderId, data.msg);
+    } else if (data.type === 'UPDATE_WILL' && isHost) {
+        if (gameState.players[senderId] && gameState.players[senderId].isAlive) {
+            gameState.players[senderId].will = data.will;
+        }
+    }
+}
+
+function handleChatMessage(senderId, msg) {
+    const sender = gameState.players[senderId];
+    if (!sender) return;
+
+    // Fısıldaşma (Whisper) kontrolü
+    if (msg.startsWith('/w ')) {
+        if (!sender.isAlive) {
+            sendPrivateLog(senderId, "Ölüler fısıldaşamaz.");
+            return;
+        }
+        if (gameState.status !== 'DAY_DISCUSSION') {
+            sendPrivateLog(senderId, "Sadece gündüz tartışmasında fısıldaşabilirsiniz.");
+            return;
+        }
+        const parts = msg.split(' ');
+        if (parts.length >= 3) {
+            const targetName = parts[1];
+            const whisperMsg = parts.slice(2).join(' ');
+            const targetId = Object.keys(gameState.players).find(id => gameState.players[id].name.toLowerCase() === targetName.toLowerCase());
+            
+            if (targetId) {
+                if (!gameState.players[targetId].isAlive) {
+                    sendPrivateLog(senderId, "Ölü birine fısıldayamazsın.");
+                    return;
+                }
+                const formattedMsg = `(Fısıltı) ${sender.name}: ${whisperMsg}`;
+                network.sendTo(targetId, { type: 'PRIVATE_LOG', msg: formattedMsg, target: targetId });
+                network.sendTo(senderId, { type: 'PRIVATE_LOG', msg: `(Fısıltı -> ${gameState.players[targetId].name}): ${whisperMsg}`, target: senderId });
+                
+                // Kasabaya fısıldaşıldığı bilgisi (Gözüküyor ama içerik yok)
+                const publicLog = `[Gözlem] ${sender.name}, ${gameState.players[targetId].name} kişisine fısıldıyor...`;
+                gameState.logs.push(publicLog);
+                broadcastState();
+            } else {
+                sendPrivateLog(senderId, "Oyuncu bulunamadı.");
+            }
+        }
+        return;
+    }
+
+    // Gece Vampir Sohbeti
+    if (gameState.status === 'NIGHT') {
+        if (sender.team === 'VAMPIR') {
+            const formattedMsg = `![Vampir] ${sender.name}: ${msg}`; // ! starts purple color in UI, but we can make it red
+            Object.values(gameState.players).forEach(p => {
+                if (p.team === 'VAMPIR') {
+                    network.sendTo(p.id, { type: 'PRIVATE_LOG', msg: formattedMsg, target: p.id });
+                }
+            });
+        } else {
+            sendPrivateLog(senderId, "Gece sadece vampirler konuşabilir.");
+        }
+        return;
+    }
+
+    // Savunma fazı
+    if (gameState.status === 'DEFENSE') {
+        if (senderId !== gameState.defensePlayerId) {
+            sendPrivateLog(senderId, "Şu an sadece savunma yapan kişi konuşabilir.");
+            return;
+        }
+        const formattedMsg = `[SAVUNMA] ${sender.name}: ${msg}`;
+        gameState.logs.push(formattedMsg);
+        broadcastState();
+        return;
+    }
+
+    // Ölülerin Sohbeti (Sadece ölüler görür)
+    if (!sender.isAlive) {
+        const formattedMsg = `[Mezarlık] ${sender.name}: ${msg}`;
+        Object.values(gameState.players).forEach(p => {
+            if (!p.isAlive) {
+                network.sendTo(p.id, { type: 'PRIVATE_LOG', msg: formattedMsg, target: p.id });
+            }
+        });
+        return;
+    }
+
+    // Gündüz normal sohbet
+    if (gameState.status === 'DAY_DISCUSSION') {
+        const formattedMsg = `${sender.name}: ${msg}`;
+        gameState.logs.push(formattedMsg);
+        broadcastState();
+    } else {
+        sendPrivateLog(senderId, "Şu an konuşamazsınız.");
     }
 }
 
@@ -615,12 +709,18 @@ function resolveNight() {
         if (p.role === 'GOZCU' || (isDeli && fakeRole === 'GOZCU')) {
             if (visit(aid, tid)) {
                 let seen = (visits[tid] || []).filter(id => id !== aid && gameState.players[id]);
-                if (isDeli) seen = [Object.keys(gameState.players)[Math.floor(Math.random()*Object.keys(gameState.players).length)]];
+                if (isDeli) {
+                    if (Math.random() > 0.6) {
+                        let randId = Object.keys(gameState.players)[Math.floor(Math.random()*Object.keys(gameState.players).length)];
+                        seen = [randId];
+                    }
+                }
                 sendPrivateLog(aid, `${gameState.players[tid].name} evine girenler: ${seen.map(id => gameState.players[id]?.name || 'Biri').join(', ') || 'Kimse'}`);
                 
                 network.sendTo(aid, { type: 'PLAY_ANIMATIONS', target: aid, anims: [], watchHouseId: tid });
                 
                 seen.forEach(visitorId => {
+                    if (!gameState.players[visitorId]) return;
                     let aType = 'WALK';
                     if (blockedPlayers.has(visitorId)) aType = 'POLICE_BLOCK';
                     else if (traps.has(tid)) aType = 'TRAPPED';
@@ -633,10 +733,13 @@ function resolveNight() {
                 clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
                 let tr = gameState.players[tid].role;
                 if(tr === 'DRACULA') tr = 'KOYLU';
-                if(isDeli) tr = Object.keys(ROLES)[Math.floor(Math.random()*Object.keys(ROLES).length)];
+                if(isDeli && Math.random() > 0.5) {
+                    let roleKeys = Object.keys(ROLES).filter(k => k !== tr);
+                    tr = roleKeys[Math.floor(Math.random()*roleKeys.length)];
+                }
                 sendPrivateLog(aid, `${gameState.players[tid].name} rolü: ${ROLES[tr]?.name || tr}`);
             }
-        } else if (p.role === 'DEDEKTIF') {
+        } else if (p.role === 'DEDEKTIF' || (isDeli && fakeRole === 'DEDEKTIF')) {
             if (Array.isArray(tid) && tid.length === 2) {
                 if (visit(aid, tid[0]) && visit(aid, tid[1])) {
                     clientAnimations[aid].push({ actorId: aid, targetId: tid[0], type: 'WALK' });
@@ -646,16 +749,9 @@ function resolveNight() {
                     if (gameState.players[tid[0]].role === 'DRACULA') team1 = 'KOY'; 
                     if (gameState.players[tid[1]].role === 'DRACULA') team2 = 'KOY'; 
                     let sameTeam = team1 === team2;
+                    if (isDeli && Math.random() > 0.6) sameTeam = !sameTeam;
                     sendPrivateLog(aid, `${gameState.players[tid[0]].name} ve ${gameState.players[tid[1]].name} ${sameTeam ? 'Aynı Takımda' : 'Farklı Takımda'}`);
                 }
-            }
-        } else if (isDeli && fakeRole === 'DEDEKTIF') {
-            if (visit(aid, tid)) {
-                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
-                let sameTeam = Math.random() > 0.5;
-                let other = Object.keys(gameState.players).find(id => id !== tid && gameState.players[id].isAlive);
-                let otherName = other ? gameState.players[other].name : 'Biri';
-                sendPrivateLog(aid, `${gameState.players[tid].name} ve ${otherName} ${sameTeam ? 'Aynı Takımda' : 'Farklı Takımda'}`);
             }
         }
     });
@@ -695,6 +791,11 @@ function resolveNight() {
                     if(gameState.players[d.id].isOduncu) {
                         gameState.campfireActive = false;
                         addLog('Kamp ateşi söndü...');
+                    }
+                    
+                    if(gameState.players[d.id].will) {
+                        addLog(`📜 ${gameState.players[d.id].name} kişisinin vasiyeti:`);
+                        addLog(`"${gameState.players[d.id].will}"`);
                     }
                 }
             });
@@ -774,8 +875,66 @@ function resolveVoting() {
     }
     
     if (eliminatedId && !tie) {
+        gameState.status = 'DEFENSE';
+        gameState.defensePlayerId = eliminatedId;
+        addLog(`Oylama sonucu: ${gameState.players[eliminatedId].name} savunma kürsüsüne çıkıyor! Savunma için 20 saniye.`);
+        broadcastState();
+        
+        startTimer(20, () => {
+            gameState.status = 'JUDGEMENT';
+            gameState.votes = {}; // reset votes for judgement
+            addLog(`Savunma bitti. Oylama başlıyor: Suçlu mu, Masum mu?`);
+            broadcastState();
+        });
+    } else {
+        addLog('Oylama berabere bitti veya pas geçildi. Kimse asılmadı.');
+        if (checkWin()) return;
+        
+        gameState.status = 'NIGHT';
+        gameState.dayCount++;
+        gameState.nightActions = {};
+        addLog('Gece çöküyor...');
+        broadcastState();
+    }
+}
+
+function handlePlayerAction(senderId, actionType, targetId) {
+    if (actionType === 'NIGHT') {
+        gameState.nightActions[senderId] = targetId;
+        checkNightEnd();
+    } else if (actionType === 'DAY_DISCUSSION') {
+        gameState.dayActions[senderId] = targetId;
+    } else if (actionType === 'VOTING') {
+        gameState.votes[senderId] = targetId;
+        checkVotingEnd();
+    } else if (actionType === 'JUDGEMENT') {
+        if (senderId !== gameState.defensePlayerId) {
+            gameState.votes[senderId] = targetId;
+            checkJudgementEnd();
+        }
+    }
+}
+
+function checkJudgementEnd() {
+    let aliveCount = Object.values(gameState.players).filter(p => p.isAlive).length;
+    // exclude the person on defense
+    if (Object.keys(gameState.votes).length >= aliveCount - 1) {
+        resolveJudgement();
+    }
+}
+
+function resolveJudgement() {
+    let guilty = 0, innocent = 0;
+    Object.values(gameState.votes).forEach(t => {
+        if (t === 'guilty') guilty++;
+        else if (t === 'innocent') innocent++;
+    });
+    
+    let eliminatedId = gameState.defensePlayerId;
+    addLog(`Yargılama sonucu: ${guilty} Suçlu, ${innocent} Masum.`);
+    
+    if (guilty > innocent) {
         gameState.status = 'DAY_ANIMATION';
-        els.game.actionPanel.classList.add('hidden');
         broadcastState();
         
         network.broadcast({ type: 'HANG_ANIMATION', targetId: eliminatedId });
@@ -784,6 +943,11 @@ function resolveVoting() {
             gameState.players[eliminatedId].isAlive = false;
             let roleName = ROLES[gameState.players[eliminatedId].role]?.name || 'Bilinmiyor';
             addLog(`${gameState.players[eliminatedId].name} asıldı. Rolü: ${roleName}`);
+            
+            if(gameState.players[eliminatedId].will) {
+                addLog(`📜 ${gameState.players[eliminatedId].name} kişisinin vasiyeti:`);
+                addLog(`"${gameState.players[eliminatedId].will}"`);
+            }
             
             if(gameState.players[eliminatedId].role === 'SOYTARI') {
                 addLog(`Soytarı asıldı! Soytarı kazandı.`);
@@ -807,7 +971,7 @@ function resolveVoting() {
         }, 5500);
 
     } else {
-        addLog('Oylama berabere bitti veya pas geçildi. Kimse asılmadı.');
+        addLog(`${gameState.players[eliminatedId].name} affedildi.`);
         if (checkWin()) return;
         
         gameState.status = 'NIGHT';
@@ -888,7 +1052,14 @@ function startClientTimer(endTime) {
         const now = window.PairaTime ? window.PairaTime.now() : Date.now();
         let left = Math.floor((endTime - now)/1000);
         if (left < 0) left = 0;
-        if(els.game.timer) els.game.timer.textContent = `${Math.floor(left/60).toString().padStart(2,'0')}:${(left%60).toString().padStart(2,'0')}`;
+        if(els.game.timer) {
+            els.game.timer.textContent = `${Math.floor(left/60).toString().padStart(2,'0')}:${(left%60).toString().padStart(2,'0')}`;
+            if (left <= 10 && left > 0) {
+                els.game.timer.classList.add('timer-danger');
+            } else {
+                els.game.timer.classList.remove('timer-danger');
+            }
+        }
         if (left <= 0) clearInterval(timerInterval);
     }, 1000);
 }
