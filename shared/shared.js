@@ -9,6 +9,7 @@ class PairaSharedUI {
             this.injectSharedUI();
             this.injectSEOFooter();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
+            this.initFullscreenToggle();
         };
 
         if (document.readyState === 'loading') {
@@ -173,6 +174,39 @@ class PairaSharedUI {
                 banner.style.display = 'none';
             }, 500);
         }
+    }
+
+    initFullscreenToggle() {
+        const btnToggle = document.getElementById('btn-fullscreen-toggle');
+        if (!btnToggle) return;
+
+        let isFullscreen = false;
+
+        btnToggle.addEventListener('click', () => {
+            isFullscreen = !isFullscreen;
+            if (isFullscreen) {
+                document.body.classList.add('fullscreen-active');
+                btnToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>';
+                btnToggle.setAttribute('title', 'Tam Ekrandan Çık');
+                
+                // Trigger window resize so canvas scales
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+            } else {
+                document.body.classList.remove('fullscreen-active');
+                btnToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>';
+                btnToggle.setAttribute('title', 'Tam Ekran Çizim');
+
+                // Trigger window resize so canvas scales back
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+            }
+        });
+        
+        // Handle ESC key to exit fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                btnToggle.click();
+            }
+        });
     }
 }
 

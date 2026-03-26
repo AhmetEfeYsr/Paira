@@ -307,14 +307,14 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border-radius: clamp(16px, 3vw, 24px);
     box-shadow: var(--glass-shadow);
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px; /* Büyütülmüş panel alanı */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     flex: 1;
-    min-height: 500px;
-    max-height: 900px;
+    min-height: 600px;
+    max-height: 95vh;
 }
 
 #app-container {
@@ -323,7 +323,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* Footer */
 .app-footer {
-    width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;
+    width: 100%; max-width: 1400px; display: flex; justify-content: space-between; align-items: center;
     padding: clamp(0.6rem, 1.5vw, 1rem) clamp(1rem, 2.5vw, 2rem); margin-top: clamp(0.4rem, 1vw, 0.8rem); margin-bottom: clamp(0.4rem, 1vw, 0.8rem); background: var(--footer-bg); border-radius: clamp(10px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px) 0 0;
     border: var(--glass-border); flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 -2px 10px var(--card-bg); flex-shrink: 0;
 }
@@ -499,7 +499,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 /* Game SEO Info */
 .game-seo-info {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 2rem auto;
     padding: 2rem;
     background: var(--card-bg);
@@ -895,3 +895,166 @@ body:has(.cookie-banner.show) #app-container {
         --neutral-color: #8397c4;
         --assassin-color: #040a1f;
     }
+
+/* Fullscreen Drawing Mode */
+body.fullscreen-active {
+    overflow: hidden !important;
+}
+
+body.fullscreen-active .paira-global-nav,
+body.fullscreen-active .app-footer,
+body.fullscreen-active .game-seo-info,
+body.fullscreen-active .app-header {
+    display: none !important;
+}
+
+body.fullscreen-active .glass-panel {
+    border-radius: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body.fullscreen-active .cizbil-layout,
+body.fullscreen-active .cizim-zinciri-layout,
+body.fullscreen-active .game-layout {
+    flex-direction: column;
+    height: 100vh;
+    gap: 0 !important;
+    padding: 0 !important;
+}
+
+body.fullscreen-active .game-topbar {
+    margin-bottom: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    padding: 0.5rem 1rem;
+    z-index: 50;
+    flex-shrink: 0;
+}
+
+body.fullscreen-active .game-area,
+body.fullscreen-active #draw-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    padding: 0 !important;
+    max-width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+body.fullscreen-active #word-to-draw {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    background: rgba(0,0,0,0.6);
+    padding: 5px 15px;
+    border-radius: 10px;
+}
+
+body.fullscreen-active .canvas-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    border: none;
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body.fullscreen-active .toolbar {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    z-index: 60;
+    background: rgba(var(--primary-rgb), 0.9);
+    backdrop-filter: blur(10px);
+    margin: 0;
+    margin-bottom: 10px;
+    padding: 0.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+}
+
+/* Hide extra sidebars when drawing in fullscreen */
+body.fullscreen-active.hide-sidebar .sidebar {
+    display: none !important;
+}
+
+/* Chat floating overlay in fullscreen if needed */
+body.fullscreen-active .sidebar {
+    position: absolute;
+    right: 10px;
+    bottom: 80px;
+    width: 300px;
+    max-height: 40vh;
+    z-index: 50;
+    background: transparent;
+    pointer-events: none; /* Let clicks pass to canvas */
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+body.fullscreen-active .sidebar > * {
+    pointer-events: auto;
+}
+
+body.fullscreen-active .chat-panel {
+    background: rgba(21, 18, 54, 0.7);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    height: auto;
+    max-height: 100%;
+}
+
+body.fullscreen-active .leaderboard {
+    display: none; /* Hide leaderboard in fullscreen */
+}
+
+/* Fullscreen Button in Canvas */
+.btn-fullscreen-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-fullscreen-toggle:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .btn-fullscreen-toggle {
+    background: rgba(255, 255, 255, 0.7);
+    color: black;
+}
+
+[data-theme="light"] .btn-fullscreen-toggle:hover {
+    background: rgba(255, 255, 255, 0.9);
+}

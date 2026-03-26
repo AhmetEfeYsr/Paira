@@ -41,7 +41,7 @@ class CizBilNetwork extends BaseGameNetwork {
                 const isHostDrawer = (this.myId === state.currentDrawer);
                 
                 if (!isHostDrawer && hostState.status === 'playing' && hostState.currentWord) {
-                    hostState.currentWord = hostState.currentWord.replace(/[^\s]/g, '_ ');
+                    hostState.currentWord = hostState.currentWord.split(/\s+/).map(word => '_ '.repeat(word.length).trim()).join('   ');
                     hostState.choices = null;
                 }
                 
@@ -75,7 +75,7 @@ class CizBilNetwork extends BaseGameNetwork {
             safeState.wordsLeft = [];
             
             if (!isDrawer && safeState.status === 'playing' && safeState.currentWord) {
-                safeState.currentWord = safeState.currentWord.replace(/[^\s]/g, '_ ');
+                safeState.currentWord = safeState.currentWord.split(/\s+/).map(word => '_ '.repeat(word.length).trim()).join('   ');
                 safeState.choices = null;
             }
             

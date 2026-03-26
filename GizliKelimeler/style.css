@@ -240,15 +240,19 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
     max-width: 1200px;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    flex-grow: 1;
+    padding-bottom: 1rem;
 }
 
 .game-board {
     display: grid;
-    gap: 10px;
+    gap: clamp(6px, 1.5vw, 12px);
     width: 100%;
-    max-width: 800px; /* prevent it from becoming too wide */
-    margin: 0 auto; /* center horizontally */
+    max-width: 900px; /* little bit wider for better aspect ratios */
+    margin: 0 auto; 
+    /* Force grid to maintain reasonable aspect ratios if possible */
+    grid-auto-rows: 1fr;
 }
 
 .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
@@ -259,10 +263,10 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
     background: var(--input-bg);
     border: 2px solid var(--glass-border);
     border-radius: 12px;
-    padding: 1.5rem 0.5rem;
+    padding: clamp(0.5rem, 1vw, 1rem) 0.5rem;
     text-align: center;
     font-weight: 800;
-    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    font-size: clamp(0.7rem, 1.5vw, 1.1rem);
     color: var(--text-main);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -272,11 +276,12 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
     justify-content: center;
     word-break: break-word;
     overflow-wrap: anywhere;
-    min-height: 80px;
+    min-height: clamp(50px, 8vh, 90px); /* Dynamically scale height based on viewport */
     min-width: 0;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     position: relative;
     z-index: 10;
+    aspect-ratio: 2 / 1; /* Makes the card look like a Codenames card */
 }
 
 .board-card:hover {
@@ -287,6 +292,40 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 
 /* Revealed States */
 .board-card.revealed { cursor: default; transform: none; box-shadow: none; color: white !important;}
+
+/* Marked state for Guesser */
+.board-card.marked {
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.6);
+    transform: translateY(-4px);
+}
+
+.guess-confirm-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--neon-purple);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 20;
+    border: 2px solid var(--footer-bg);
+}
+
+.guess-confirm-btn:hover {
+    transform: scale(1.15);
+    background: var(--success);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.6);
+}
 
 /* Spymaster hint backgrounds vs Revealed backgrounds */
 .board-card.team-a.spymaster { background: var(--team-a-bg); border-color: var(--team-a-color); color: var(--team-a-color); }
@@ -302,6 +341,7 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 /* Mobile adjustments */
 @media (max-width: 768px) {
     #clue-input-section { flex-wrap: wrap; justify-content: center; }
-    .board-card { padding: 0.5rem 0.2rem; min-height: 50px; font-size: clamp(0.65rem, 2.5vw, 0.9rem); line-height: 1.2; }
+    .board-card { padding: 0.4rem 0.2rem; min-height: 45px; font-size: clamp(0.6rem, 2.5vw, 0.85rem); line-height: 1.2; aspect-ratio: auto; }
     .game-board { gap: 6px; }
+    .board-container { align-items: stretch; }
 }

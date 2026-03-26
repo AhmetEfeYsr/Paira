@@ -74,18 +74,37 @@ class AdvancedDrawingBoard {
         const rect = this.canvas.parentElement.getBoundingClientRect();
 
         let oldImg = null;
-        if (this.canvas.width > 0 && this.canvas.height > 0) {
-            oldImg = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        let oldWidth = this.canvas.width;
+        let oldHeight = this.canvas.height;
+        if (oldWidth > 0 && oldHeight > 0) {
+            oldImg = this.ctx.getImageData(0, 0, oldWidth, oldHeight);
         }
 
-        this.canvas.width = rect.width;
-        this.canvas.height = rect.width * (9/16);
+        const targetRatio = 16 / 9;
+        // Default to taking full width
+        let finalWidth = rect.width;
+        let finalHeight = finalWidth / targetRatio;
+
+        // If parent has a specific height (like in fullscreen) and it's less than our calculated height,
+        // we scale based on height instead.
+        if (rect.height > 0 && finalHeight > rect.height) {
+            finalHeight = rect.height;
+            finalWidth = finalHeight * targetRatio;
+        }
+
+        this.canvas.width = finalWidth;
+        this.canvas.height = finalHeight;
 
         this.ctx.fillStyle = "#ffffff";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (oldImg) {
-            this.ctx.putImageData(oldImg, 0, 0);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = oldWidth;
+            tempCanvas.height = oldHeight;
+            tempCanvas.getContext('2d').putImageData(oldImg, 0, 0);
+            
+            this.ctx.drawImage(tempCanvas, 0, 0, finalWidth, finalHeight);
         }
     }
 
@@ -240,25 +259,24 @@ class AdvancedDrawingBoard {
     drawSmoothLine(pos) {
         this.points.push({ x: pos.x, y: pos.y });
 
-        this.ctx.putImageData(this.snapshot, 0, 0);
-
-        this.ctx.beginPath();
-        let p1 = this.points[0];
-        let p2 = this.points[this.points.length > 1 ? 1 : 0];
-
-        this.ctx.moveTo(p1.x, p1.y);
-
-        for (let i = 1, len = this.points.length; i < len; i++) {
-            const midPoint = {
-                x: p1.x + (p2.x - p1.x) / 2,
-                y: p1.y + (p2.y - p1.y) / 2
-            };
-            this.ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
-            p1 = this.points[i];
-            p2 = this.points[i+1] ? this.points[i+1] : p1;
+        const len = this.points.length;
+        if (len < 3) {
+            const p1 = this.points[0];
+            const p2 = this.points[1] || p1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(p1.x, p1.y);
+            this.ctx.lineTo(p2.x, p2.y);
+            this.ctx.stroke();
+            return;
         }
 
-        this.ctx.lineTo(p1.x, p1.y);
+        const p1 = this.points[len - 3];
+        const p2 = this.points[len - 2];
+        const p3 = this.points[len - 1];
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x + (p2.x - p1.x) / 2, p1.y + (p2.y - p1.y) / 2);
+        this.ctx.quadraticCurveTo(p2.x, p2.y, p2.x + (p3.x - p2.x) / 2, p2.y + (p3.y - p2.y) / 2);
         this.ctx.stroke();
     }
 

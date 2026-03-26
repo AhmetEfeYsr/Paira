@@ -24,7 +24,7 @@ body {
 /* ANA PANEL */
 .glass-panel {
     width: 100%;
-    max-width: 1000px; /* Biraz daha dar tuttuk */
+    max-width: 1400px; /* Büyütüldü */
     flex-grow: 1;
     background: var(--bg-panel);
     backdrop-filter: blur(20px);
@@ -132,13 +132,13 @@ input:focus, select:focus { border-color: var(--neon-purple); background: var(--
 }
 @media (min-width: 900px) {
     .cizbil-layout { flex-direction: row; align-items: stretch; }
-    .game-area { flex: 2; display: flex; flex-direction: column; }
-    .sidebar { flex: 1; max-width: 350px; display: flex; flex-direction: column; }
+    .game-area { flex: 3; display: flex; flex-direction: column; }
+    .sidebar { flex: 1; max-width: 320px; display: flex; flex-direction: column; }
 }
 
 .canvas-container { border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 4px solid var(--border-color); width: 100%; background: #fff; touch-action: none; position: relative; cursor: crosshair; }
 
-.toolbar { display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); width: 100%; max-width: 800px; justify-content: center; align-items: center; flex-wrap: wrap; margin-left: auto; margin-right: auto; }
+.toolbar { display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); width: 100%; max-width: 1000px; justify-content: center; align-items: center; flex-wrap: wrap; margin-left: auto; margin-right: auto; }
 .color-picker { display: flex; gap: 0.5rem; }
 .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
 .color-swatch:hover { transform: scale(1.1); }

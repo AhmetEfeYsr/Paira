@@ -68,6 +68,10 @@ class GizliKelimelerNetworkManager {
                 if (this.isHost) this.engine.processAction('SUBMIT_CLUE', { word, count }, this.myId);
                 else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'SUBMIT_CLUE', payload: { word, count } });
             },
+            onMarkWord: (index) => {
+                if (this.isHost) this.engine.processAction('MARK_WORD', { index }, this.myId);
+                else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'MARK_WORD', payload: { index } });
+            },
             onGuessWord: (index) => {
                 if (this.isHost) this.engine.processAction('GUESS_WORD', { index }, this.myId);
                 else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'GUESS_WORD', payload: { index } });

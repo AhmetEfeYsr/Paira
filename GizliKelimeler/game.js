@@ -9,6 +9,7 @@ class GizliKelimelerEngine {
             phase: 'CLUE', // 'CLUE' | 'GUESS'
             currentClue: null, // { word, count, remaining }
             board: [],
+            marks: {}, // index -> array of playerIds
             boardSize: 25,
             winnerTeam: null,
             turnDuration: 90
@@ -81,6 +82,7 @@ class GizliKelimelerEngine {
         this.state.phase = 'CLUE';
         this.state.currentClue = null;
         this.state.winnerTeam = null;
+        this.state.marks = {};
 
         this.generateBoard(size, this.state.turnTeam);
         this.setState(this.state);
@@ -191,6 +193,20 @@ class GizliKelimelerEngine {
             this.setState(this.state);
             if(this.onSound) this.onSound('tick');
         }
+        else if (actionType === 'MARK_WORD' && this.state.phase === 'GUESS' && p.role === 'GUESSER') {
+            const cellIdx = payload.index;
+            if (!this.state.marks) this.state.marks = {};
+            if (!this.state.marks[cellIdx]) this.state.marks[cellIdx] = [];
+
+            const marks = this.state.marks[cellIdx];
+            const idx = marks.indexOf(senderId);
+            if (idx > -1) {
+                marks.splice(idx, 1);
+            } else {
+                marks.push(senderId);
+            }
+            this.setState(this.state);
+        }
         else if (actionType === 'GUESS_WORD' && this.state.phase === 'GUESS' && p.team === this.state.turnTeam && p.role === 'GUESSER') {
             const cellIdx = payload.index;
             const cell = this.state.board[cellIdx];
@@ -237,6 +253,7 @@ class GizliKelimelerEngine {
         this.state.turnTeam = this.state.turnTeam === 'A' ? 'B' : 'A';
         this.state.phase = 'CLUE';
         this.state.currentClue = null;
+        this.state.marks = {}; // Clear marks on turn switch
 
         this.startTimer();
     }
@@ -452,13 +469,40 @@ class GizliKelimelerView {
                 else if (cell.team === 'ASSASSIN') card.classList.add('assassin');
             }
 
+            let isMarkedByMe = false;
+            // Network Marked state check (someone marked it)
+            if (state.marks && state.marks[idx] && state.marks[idx].length > 0 && !cell.revealed) {
+                card.classList.add('marked');
+                if (state.marks[idx].includes(this.myId)) {
+                    isMarkedByMe = true;
+                    card.style.boxShadow = "0 0 15px rgba(var(--primary-rgb), 0.9)";
+                }
+            }
+
             if (!cell.revealed && canGuess) {
                 card.style.cursor = 'pointer';
                 card.onclick = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.callbacks.onGuessWord(idx);
+                    if (this.callbacks.onMarkWord) {
+                        this.callbacks.onMarkWord(idx);
+                    }
                 };
+
+                // Eğer kelime bizim tarafımızdan işaretlenmişse "Tahmin" (tik) butonunu ekle
+                if (isMarkedByMe) {
+                    const guessBtn = document.createElement('div');
+                    guessBtn.className = 'guess-confirm-btn';
+                    guessBtn.innerHTML = '✓';
+                    guessBtn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation(); // Kartın kendi tıklanmasını (mark/unmark) engelle
+                        if (this.callbacks.onGuessWord) {
+                            this.callbacks.onGuessWord(idx);
+                        }
+                    };
+                    card.appendChild(guessBtn);
+                }
             } else {
                 card.style.cursor = 'default';
                 card.onclick = null;
