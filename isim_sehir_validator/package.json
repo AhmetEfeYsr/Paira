@@ -1,0 +1,18 @@
+{
+  "name": "isim_sehir_validator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=validateWord",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^5.0.2",
+    "@google/generative-ai": "^0.24.1"
+  }
+}
