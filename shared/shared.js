@@ -281,7 +281,7 @@ window.PairaTime = {
                     return;
                 }
             } catch (e) {
-                console.warn(`Time API sync failed for ${api}`, e);
+                // Silently fail individual APIs as we have fallbacks
             }
         }
         console.warn("All Time API syncs failed, using local time.");

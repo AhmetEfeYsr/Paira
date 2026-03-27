@@ -86,6 +86,8 @@ function setupUI() {
         if(window.gameScene) {
             Object.values(window.gameScene.playerModels).forEach(p => p.setHighlight(false));
         }
+        showToast("Aksiyon pas geçildi.", "info");
+        showWaitingActionPanel();
     });
 
     els.game.btnConfirm.addEventListener('click', () => {
@@ -95,6 +97,8 @@ function setupUI() {
             if(window.gameScene) {
                 Object.values(window.gameScene.playerModels).forEach(p => p.setHighlight(false));
             }
+            showToast("Aksiyon onaylandı.", "success");
+            showWaitingActionPanel();
         }
     });
 
@@ -102,7 +106,7 @@ function setupUI() {
         els.game.roleModal.classList.add('hidden');
     });
 
-    // Hover for Role
+    // Hover & Click for Role (Mobile Support)
     els.game.myRoleContainer.addEventListener('mouseenter', () => {
         if (els.game.roleTooltip.textContent) {
             els.game.roleTooltip.classList.remove('hidden');
@@ -110,6 +114,11 @@ function setupUI() {
     });
     els.game.myRoleContainer.addEventListener('mouseleave', () => {
         els.game.roleTooltip.classList.add('hidden');
+    });
+    els.game.myRoleContainer.addEventListener('click', () => {
+        if (els.game.roleTooltip.textContent) {
+            els.game.roleTooltip.classList.toggle('hidden');
+        }
     });
 
     els.game.chatForm.addEventListener('submit', (e) => {
@@ -127,8 +136,41 @@ function setupUI() {
         els.game.willNotes.timeout = setTimeout(() => {
             const willText = els.game.willNotes.value.trim();
             network.sendToHost({ type: 'UPDATE_WILL', will: willText });
+            
+            // Show saved feedback
+            let feedback = document.getElementById('will-saved-feedback');
+            if(!feedback) {
+                feedback = document.createElement('span');
+                feedback.id = 'will-saved-feedback';
+                feedback.style.color = 'var(--success)';
+                feedback.style.fontSize = '0.75rem';
+                feedback.style.marginLeft = '10px';
+                feedback.innerHTML = '✓ Kaydedildi';
+                
+                // insert near h4
+                const willHeader = els.game.willNotes.previousElementSibling;
+                if(willHeader) {
+                    willHeader.style.display = 'flex';
+                    willHeader.style.justifyContent = 'space-between';
+                    willHeader.appendChild(feedback);
+                }
+            }
+            feedback.style.opacity = '1';
+            setTimeout(() => { feedback.style.opacity = '0'; }, 2000);
+            
         }, 1000);
     });
+}
+
+function showWaitingActionPanel() {
+    els.game.actionTitle.textContent = "Diğer oyuncular bekleniyor...";
+    els.game.actionPlayers.style.display = 'none';
+    els.game.btnSkip.classList.add('hidden');
+    els.game.btnConfirm.classList.add('hidden');
+    // Ensure the panel is centered and visible
+    els.game.actionPanel.style.left = '50%';
+    els.game.actionPanel.style.top = '50%';
+    els.game.actionPanel.style.display = 'flex';
 }
 
 function updateLobbyPlayersList(playersObj) {
@@ -152,12 +194,13 @@ function initRoleManagementUI() {
     
     // Default roles that we want to pre-fill (1 vampir, rest 0)
     const teams = {
+        'RASTGELE': { name: 'Rastgele Seçenekler', color: 'var(--neon-purple)' },
         'KOY': { name: 'Köylüler', color: 'var(--success)' },
         'VAMPIR': { name: 'Vampirler', color: 'var(--danger)' },
         'TARAFSIZ': { name: 'Tarafsızlar', color: 'var(--warning)' }
     };
     
-    const rolesByTeam = { 'KOY': [], 'VAMPIR': [], 'TARAFSIZ': [] };
+    const rolesByTeam = { 'RASTGELE': [], 'KOY': [], 'VAMPIR': [], 'TARAFSIZ': [] };
     
     Object.keys(ROLES).forEach(roleKey => {
         if (roleKey === 'KOYLU') return; // Köylü is calculated automatically
@@ -328,8 +371,10 @@ function renderGameScreen() {
     els.game.day.textContent = gameState.dayCount;
     
     const myPlayer = gameState.players[myId];
+    let rDef = null;
+
     if (myPlayer && myPlayer.role) {
-        const rDef = ROLES[myPlayer.role];
+        rDef = ROLES[myPlayer.role];
         let roleText = rDef?.name || myPlayer.role;
         if (rDef && rDef.maxUses) {
             let used = myPlayer.usedAbility ? 0 : 1;
@@ -337,7 +382,6 @@ function renderGameScreen() {
         }
         els.game.myRole.textContent = roleText;
         
-        if (rDef) {
         if (rDef) {
             els.game.roleTooltip.textContent = rDef.desc || '';
             if (!roleModalShown && gameState.dayCount === 1 && gameState.status === 'NIGHT') {
@@ -375,8 +419,6 @@ function renderGameScreen() {
     pendingActionTarget = null;
     els.game.actionPlayers.innerHTML = '';
     els.game.actionPlayers.style.display = 'none';
-
-    const rDef = ROLES[myPlayer.role];
 
     if (gameState.status === 'NIGHT') {
         if (rDef && rDef.hasNightAction) {
@@ -527,6 +569,8 @@ window.onPlayerSelected = (id) => {
 };
 
 function renderLogs() {
+    const isAtBottom = els.game.logs.scrollHeight - els.game.logs.scrollTop - els.game.logs.clientHeight < 50;
+    
     els.game.logs.innerHTML = '';
     gameState.logs.forEach(l => {
         const d = document.createElement('div');
@@ -539,17 +583,25 @@ function renderLogs() {
         }
         els.game.logs.appendChild(d);
     });
-    els.game.logs.scrollTop = els.game.logs.scrollHeight;
+    
+    if (isAtBottom || els.game.logs.innerHTML === '') {
+        els.game.logs.scrollTop = els.game.logs.scrollHeight;
+    }
 }
 
 function addPrivateLog(msg) {
+    const isAtBottom = els.game.privateLogs.scrollHeight - els.game.privateLogs.scrollTop - els.game.privateLogs.clientHeight < 50;
+
     if(els.game.privateLogs.innerHTML.includes('Henüz özel bir bilgi almadınız')) {
         els.game.privateLogs.innerHTML = '';
     }
     const d = document.createElement('div');
     d.textContent = '• ' + msg;
     els.game.privateLogs.appendChild(d);
-    els.game.privateLogs.scrollTop = els.game.privateLogs.scrollHeight;
+    
+    if (isAtBottom) {
+        els.game.privateLogs.scrollTop = els.game.privateLogs.scrollHeight;
+    }
 }
 
 function renderEndGame() {
