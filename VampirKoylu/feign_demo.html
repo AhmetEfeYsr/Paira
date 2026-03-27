@@ -537,8 +537,18 @@
                     this.houseRadius = Math.max(12, count * 1.8);
                     
                     this.mainDirt.scale.setScalar(this.houseRadius / 10);
-                    this.targetCamZ = Math.max(38, this.houseRadius * 2.5);
-                    this.targetCamY = Math.max(22, this.houseRadius * 1.5);
+                    const aspect = window.innerWidth / window.innerHeight;
+                    const baseRadius = this.houseRadius + 5; 
+                    let distanceZ = baseRadius * 1.8;
+                    let distanceY = baseRadius * 1.2;
+
+                    if (aspect < 1.0) {
+                        distanceZ = (baseRadius * 2.2) / aspect;
+                        distanceY = (baseRadius * 1.5) / aspect;
+                    }
+
+                    this.targetCamY = Math.max(12, distanceY);
+                    this.targetCamZ = Math.max(18, distanceZ);
 
                     const colors = this.generateColors(count);
 

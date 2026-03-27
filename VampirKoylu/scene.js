@@ -808,8 +808,21 @@ export class GameScene {
         // Camera Update logic
         // POV daima aynı (kuşbakışı) kalır
         this.targetCamX = 0;
-        this.targetCamY = Math.max(22, this.houseRadius * 1.5);
-        this.targetCamZ = Math.max(38, this.houseRadius * 2.5);
+        const aspect = window.innerWidth / window.innerHeight;
+        // Make camera zoom adaptive to screen aspect ratio and house radius
+        // We ensure a minimum radius to keep things looking good, but allow much closer zooms.
+        const baseRadius = this.houseRadius + 5; // 5 is margin for UI
+        let distanceZ = baseRadius * 1.8;
+        let distanceY = baseRadius * 1.2;
+
+        if (aspect < 1.0) {
+            // Mobile (portrait) - need to zoom out more to fit width
+            distanceZ = (baseRadius * 2.2) / aspect;
+            distanceY = (baseRadius * 1.5) / aspect;
+        }
+
+        this.targetCamY = Math.max(12, distanceY);
+        this.targetCamZ = Math.max(18, distanceZ);
 
         this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.targetCamX, delta * 2);
         this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.targetCamY, delta * 2);
