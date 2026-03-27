@@ -340,7 +340,7 @@ function handleStartGame() {
     
     let vampCount = 0;
     Object.keys(assignedRoles).forEach(r => {
-        if (ROLES[r] && ROLES[r].team === 'VAMPIR') vampCount += assignedRoles[r];
+        if (ROLES[r] && (ROLES[r].team === 'VAMPIR' || r === 'RASTGELE_VAMPIR' || r === 'RASTGELE_KOTU')) vampCount += assignedRoles[r];
     });
     
     if (vampCount >= pCount) { showToast("Vampir sayısı toplam oyuncu sayısından az olmalı!", "error"); return; }
@@ -389,15 +389,22 @@ function assignRoles() {
     let resolvedRoles = [];
     
     // Yardımcı fonksiyon: Belirli bir takımdan (veya genel) rastgele rol seç
-    const getRandomRole = (teamFilter) => {
+    const getRandomRole = (teamFilter, customPoolKey) => {
         let pool = Object.keys(ROLES).filter(k => {
             let r = ROLES[k];
             if (r.isRandom) return false;
             if (k === 'KOYLU') return false; // Köylü rastgele havuzuna girmez
             if (teamFilter && r.team !== teamFilter) return false;
+            if (customPoolKey && window.customRandomPools && window.customRandomPools[customPoolKey]) {
+                if (!window.customRandomPools[customPoolKey].includes(k)) return false;
+            }
             return true;
         });
-        if (pool.length === 0) return 'KOYLU'; // Fallback
+        if (pool.length === 0) {
+            // Eğer oyuncu tüm rolleri kapatmışsa varsayılan havuzdan seçmeye devam et
+            pool = Object.keys(ROLES).filter(k => !ROLES[k].isRandom && k !== 'KOYLU' && (!teamFilter || ROLES[k].team === teamFilter));
+        }
+        if (pool.length === 0) return 'KOYLU'; // Mutlak fallback
         return pool[Math.floor(Math.random() * pool.length)];
     };
 
@@ -408,10 +415,10 @@ function assignRoles() {
             let finalRole = roleKey;
             
             // Eğer rol rastgele bir slot ise, onu gerçek bir role çevir
-            if (roleKey === 'RASTGELE_HERHANGI') finalRole = getRandomRole(null);
-            else if (roleKey === 'RASTGELE_KOY') finalRole = getRandomRole('KOY');
-            else if (roleKey === 'RASTGELE_VAMPIR') finalRole = getRandomRole('VAMPIR');
-            else if (roleKey === 'RASTGELE_TARAFSIZ') finalRole = getRandomRole('TARAFSIZ');
+            if (roleKey === 'RASTGELE_HERHANGI') finalRole = getRandomRole(null, null);
+            else if (roleKey === 'RASTGELE_KOY' || roleKey === 'RASTGELE_IYI') finalRole = getRandomRole('KOY', 'RASTGELE_IYI');
+            else if (roleKey === 'RASTGELE_VAMPIR' || roleKey === 'RASTGELE_KOTU') finalRole = getRandomRole('VAMPIR', 'RASTGELE_KOTU');
+            else if (roleKey === 'RASTGELE_TARAFSIZ' || roleKey === 'RASTGELE_NOTR') finalRole = getRandomRole('TARAFSIZ', 'RASTGELE_NOTR');
             
             resolvedRoles.push(finalRole);
         }

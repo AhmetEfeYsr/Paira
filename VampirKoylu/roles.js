@@ -27,7 +27,7 @@ const ROLES = {
 
     // Rastgele Roller (Sadece lobi aşamasında görünürler, oyun başlarken gerçek rollere dönüşürler)
     RASTGELE_HERHANGI: { name: 'Rastgele Rol', team: 'RASTGELE', isRandom: true, desc: 'Tüm roller arasından rastgele bir rol atanır.' },
-    RASTGELE_KOY: { name: 'Rastgele Köylü', team: 'KOY', isRandom: true, desc: 'Sıradan Köylü HARİÇ tüm Köylü rolleri arasından rastgele bir rol atanır.' },
-    RASTGELE_VAMPIR: { name: 'Rastgele Vampir', team: 'VAMPIR', isRandom: true, desc: 'Tüm Vampir rolleri arasından rastgele bir rol atanır.' },
-    RASTGELE_TARAFSIZ: { name: 'Rastgele Tarafsız', team: 'TARAFSIZ', isRandom: true, desc: 'Tüm Tarafsız roller arasından rastgele bir rol atanır.' }
+    RASTGELE_IYI: { name: 'Rastgele İyi Rol', team: 'RASTGELE', isRandom: true, desc: 'Sıradan Köylü HARİÇ tüm Köylü rolleri arasından rastgele bir rol atanır.', uiColor: 'var(--success)' },
+    RASTGELE_KOTU: { name: 'Rastgele Kötü Rol', team: 'RASTGELE', isRandom: true, desc: 'Tüm Vampir rolleri arasından rastgele bir rol atanır.', uiColor: 'var(--danger)' },
+    RASTGELE_NOTR: { name: 'Rastgele Nötr Rol', team: 'RASTGELE', isRandom: true, desc: 'Tüm Tarafsız roller arasından rastgele bir rol atanır.', uiColor: '#3b82f6' }
 };

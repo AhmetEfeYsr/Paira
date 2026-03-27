@@ -195,9 +195,9 @@ function initRoleManagementUI() {
     // Default roles that we want to pre-fill (1 vampir, rest 0)
     const teams = {
         'RASTGELE': { name: 'Rastgele Seçenekler', color: 'var(--neon-purple)' },
-        'KOY': { name: 'Köylüler', color: 'var(--success)' },
-        'VAMPIR': { name: 'Vampirler', color: 'var(--danger)' },
-        'TARAFSIZ': { name: 'Tarafsızlar', color: 'var(--warning)' }
+        'KOY': { name: 'Yeşil Takım (İyiler)', color: 'var(--success)' },
+        'VAMPIR': { name: 'Kırmızı Takım (Kötüler)', color: 'var(--danger)' },
+        'TARAFSIZ': { name: 'Mavi Takım (Nötr)', color: '#3b82f6' }
     };
     
     const rolesByTeam = { 'RASTGELE': [], 'KOY': [], 'VAMPIR': [], 'TARAFSIZ': [] };
@@ -238,12 +238,30 @@ function initRoleManagementUI() {
             roleRow.style.borderRadius = '6px';
             
             const nameSpan = document.createElement('span');
+            nameSpan.className = 'custom-tooltip-wrapper';
             nameSpan.textContent = role.name;
-            nameSpan.title = role.desc;
-            nameSpan.style.cursor = 'help';
             nameSpan.style.fontSize = '0.9rem';
+            if (role.uiColor) nameSpan.style.color = role.uiColor;
+            
+            const tooltipContent = document.createElement('span');
+            tooltipContent.className = 'custom-tooltip-content';
+            tooltipContent.textContent = role.desc;
+            nameSpan.appendChild(tooltipContent);
             
             const ctrlDiv = document.createElement('div');
+            
+            if (['RASTGELE_IYI', 'RASTGELE_KOTU', 'RASTGELE_NOTR'].includes(role.key)) {
+                const btnConfig = document.createElement('button');
+                btnConfig.className = 'btn btn-secondary';
+                btnConfig.innerHTML = '⚙️';
+                btnConfig.title = 'Hangi rollerin seçilebileceğini ayarla';
+                btnConfig.style.padding = '2px 6px';
+                btnConfig.style.background = 'transparent';
+                btnConfig.style.border = 'none';
+                btnConfig.style.fontSize = '1.1rem';
+                btnConfig.onclick = () => window.openRandomRoleConfig(role.key);
+                ctrlDiv.appendChild(btnConfig);
+            }
             ctrlDiv.style.display = 'flex';
             ctrlDiv.style.alignItems = 'center';
             ctrlDiv.style.gap = '8px';
@@ -297,6 +315,94 @@ function initRoleManagementUI() {
     
     updateRoleManagementStats();
 }
+
+window.customRandomPools = null;
+
+window.openRandomRoleConfig = (roleKey) => {
+    if (!window.customRandomPools) {
+        window.customRandomPools = {
+            'RASTGELE_IYI': [],
+            'RASTGELE_KOTU': [],
+            'RASTGELE_NOTR': []
+        };
+        Object.keys(ROLES).forEach(k => {
+            let r = ROLES[k];
+            if (r.isRandom || k === 'KOYLU') return;
+            if (r.team === 'KOY') window.customRandomPools['RASTGELE_IYI'].push(k);
+            else if (r.team === 'VAMPIR') window.customRandomPools['RASTGELE_KOTU'].push(k);
+            else if (r.team === 'TARAFSIZ') window.customRandomPools['RASTGELE_NOTR'].push(k);
+        });
+    }
+
+    let targetTeam = '';
+    if (roleKey === 'RASTGELE_IYI') targetTeam = 'KOY';
+    else if (roleKey === 'RASTGELE_KOTU') targetTeam = 'VAMPIR';
+    else if (roleKey === 'RASTGELE_NOTR') targetTeam = 'TARAFSIZ';
+
+    let availableRoles = Object.keys(ROLES).filter(k => {
+        let r = ROLES[k];
+        return !r.isRandom && k !== 'KOYLU' && r.team === targetTeam;
+    });
+
+    // Create Modal UI
+    let modalOverlay = document.getElementById('random-roles-overlay');
+    if (!modalOverlay) {
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = 'random-roles-overlay';
+        modalOverlay.className = 'random-roles-modal-overlay';
+        document.body.appendChild(modalOverlay);
+
+        const modal = document.createElement('div');
+        modal.id = 'random-roles-modal';
+        modal.className = 'random-roles-modal';
+        
+        modal.innerHTML = `
+            <h3 id="rr-modal-title" style="margin-bottom: 5px;">Rol Havuzu</h3>
+            <p style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">Bu rastgele kategori için seçilebilecek rolleri işaretleyin.</p>
+            <div id="rr-modal-list" class="random-roles-list"></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                <button id="rr-modal-close" class="btn btn-primary">Tamam</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('rr-modal-close').onclick = () => {
+            document.getElementById('random-roles-overlay').classList.add('hidden');
+            document.getElementById('random-roles-modal').classList.add('hidden');
+        };
+    }
+
+    document.getElementById('rr-modal-title').textContent = ROLES[roleKey].name + " Havuzu";
+    const listDiv = document.getElementById('rr-modal-list');
+    listDiv.innerHTML = '';
+
+    availableRoles.forEach(k => {
+        const lbl = document.createElement('label');
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = window.customRandomPools[roleKey].includes(k);
+        
+        chk.onchange = (e) => {
+            if (e.target.checked) {
+                if (!window.customRandomPools[roleKey].includes(k)) {
+                    window.customRandomPools[roleKey].push(k);
+                }
+            } else {
+                window.customRandomPools[roleKey] = window.customRandomPools[roleKey].filter(id => id !== k);
+            }
+        };
+
+        const span = document.createElement('span');
+        span.textContent = ROLES[k].name;
+        
+        lbl.appendChild(chk);
+        lbl.appendChild(span);
+        listDiv.appendChild(lbl);
+    });
+
+    document.getElementById('random-roles-overlay').classList.remove('hidden');
+    document.getElementById('random-roles-modal').classList.remove('hidden');
+};
 
 function updateRoleManagementStats() {
     if (!isHost || !els.lobby.rmPlayerCount) return;
