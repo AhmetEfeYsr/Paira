@@ -710,6 +710,10 @@ function resolveNight() {
         if (p.role === 'KUNDAKCI' && p.isAlive && tid !== 'skip') {
             if (tid === aid) {
                 // Ignite!
+                if (blockedPlayers.has(aid)) {
+                    clientAnimations[aid].push({ actorId: aid, targetId: aid, type: 'POLICE_BLOCK' });
+                    return;
+                }
                 Object.values(gameState.players).forEach(target => {
                     if (target.isAlive && target.isDoused) {
                         deaths.push({ id: target.id, killer: 'KUNDAKCI' });
@@ -759,9 +763,20 @@ function resolveNight() {
                     clientAnimations[aid].push({ actorId: visitorId, targetId: tid, type: aType });
                 });
             }
-        } else if (p.role === 'IZCI' || (isDeli && fakeRole === 'IZCI')) {
-            if (visit(aid, tid)) {
-                clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+        } else if (p.role === 'IZCI' || p.role === 'VAMPIR_IZCISI' || (isDeli && fakeRole === 'IZCI')) {
+            let isVampIzci = p.role === 'VAMPIR_IZCISI';
+            let success = false;
+            
+            if (isVampIzci) {
+                success = true; // They are immune and visit was handled in section 5
+            } else {
+                success = visit(aid, tid);
+            }
+            
+            if (success) {
+                if (!isVampIzci) {
+                    clientAnimations[aid].push({ actorId: aid, targetId: tid, type: 'WALK' });
+                }
                 let tr = gameState.players[tid].role;
                 if(tr === 'DRACULA') tr = 'KOYLU';
                 if(isDeli && Math.random() > 0.5) {
@@ -809,20 +824,7 @@ function resolveNight() {
                     gameState.players[d.id].isAlive = false;
                     addLog(`${gameState.players[d.id].name} gece öldürüldü!`);
                     
-                    // Hırsız logic
-                    Object.values(gameState.players).forEach(p => {
-                        if(p.role === 'HIRSIZ' && p.isAlive && p.hirsizTarget === d.id && !p.usedAbility) {
-                            p.role = gameState.players[d.id].role;
-                            p.team = gameState.players[d.id].team;
-                            p.usedAbility = true;
-                            sendPrivateLog(p.id, `Hedefin öldü! Yeni rolün: ${ROLES[p.role].name}`);
-                        }
-                    });
-
-                    if(gameState.players[d.id].isOduncu) {
-                        gameState.campfireActive = false;
-                        addLog('Kamp ateşi söndü...');
-                    }
+                    processDeath(d.id);
                     
                     if(gameState.players[d.id].will) {
                         addLog(`📜 ${gameState.players[d.id].name} kişisinin vasiyeti:`);
@@ -861,9 +863,11 @@ function resolveDayActions() {
                 if(target && target.isAlive) {
                     target.isAlive = false;
                     addLog(`Şerif ${p.name}, ${target.name} kişisini vurdu!`);
+                    processDeath(target.id);
                     if(target.team === 'KOY') {
                         p.isAlive = false;
                         addLog(`Şerif ${p.name} masum birini vurduğu için vicdan azabından intihar etti.`);
+                        processDeath(p.id);
                     }
                 }
             }
@@ -977,6 +981,7 @@ function resolveJudgement() {
             gameState.players[eliminatedId].isAlive = false;
             let roleName = ROLES[gameState.players[eliminatedId].role]?.name || 'Bilinmiyor';
             addLog(`${gameState.players[eliminatedId].name} asıldı. Rolü: ${roleName}`);
+            processDeath(eliminatedId);
             
             if(gameState.players[eliminatedId].will) {
                 addLog(`📜 ${gameState.players[eliminatedId].name} kişisinin vasiyeti:`);
@@ -992,6 +997,7 @@ function resolveJudgement() {
                 if (iTarget && gameState.players[iTarget] && gameState.players[iTarget].isAlive) {
                     gameState.players[iTarget].isAlive = false;
                     addLog(`İntikamcı asılırken yanında ${gameState.players[iTarget].name}'i de götürdü!`);
+                    processDeath(iTarget);
                 }
             }
             
@@ -1019,24 +1025,44 @@ function resolveJudgement() {
 function checkWin() {
     if(gameState.status === 'END') return true;
     
-    let vamps = 0, koyluler = 0, sk = 0;
+    let vamps = 0, koyluler = 0, sk = 0, kundakci = 0;
     Object.values(gameState.players).forEach(p => {
         if (p.isAlive) {
             if (p.team === 'VAMPIR') vamps++;
             else if (p.role === 'SERI_KATIL') sk++;
-            else koyluler++;
+            else if (p.role === 'KUNDAKCI') kundakci++;
+            else if (p.team === 'KOY') koyluler++;
         }
     });
     
-    let totalAlive = vamps + koyluler + sk;
+    let totalAlive = Object.values(gameState.players).filter(p => p.isAlive).length;
     
     if (totalAlive === 0) { endGame('Berabere! Herkes öldü.'); return true; }
-    if (sk === 1 && totalAlive === 1) { endGame('Seri Katil Kazandı!'); return true; }
-    if (sk === 1 && totalAlive === 2 && vamps === 0) { endGame('Seri Katil Kazandı!'); return true; }
-    if (vamps === 0 && sk === 0) { endGame('Köylüler Kazandı!'); return true; }
-    if (vamps >= koyluler + sk) { endGame('Vampirler Kazandı!'); return true; }
+    if (sk > 0 && totalAlive === sk) { endGame('Seri Katil Kazandı!'); return true; }
+    if (kundakci > 0 && totalAlive === kundakci) { endGame('Kundakçı Kazandı!'); return true; }
+    if (sk === 1 && totalAlive === 2 && vamps === 0 && kundakci === 0) { endGame('Seri Katil Kazandı!'); return true; }
+    if (vamps === 0 && sk === 0 && kundakci === 0) { endGame('Köylüler Kazandı!'); return true; }
+    if (vamps >= (totalAlive - vamps)) { endGame('Vampirler Kazandı!'); return true; }
     
     return false;
+}
+
+function processDeath(deadId) {
+    let pObj = gameState.players[deadId];
+    if(pObj && pObj.isOduncu && gameState.campfireActive) {
+        gameState.campfireActive = false;
+        addLog('Kamp ateşi söndü...');
+    }
+    
+    Object.values(gameState.players).forEach(p => {
+        if(p.role === 'HIRSIZ' && p.isAlive && p.hirsizTarget === deadId && !p.hirsizStole) {
+            p.role = gameState.players[deadId].role;
+            p.team = gameState.players[deadId].team;
+            p.hirsizStole = true;
+            p.usedAbility = false; 
+            sendPrivateLog(p.id, `Hedefin öldü! Yeni rolün: ${ROLES[p.role]?.name || p.role}`);
+        }
+    });
 }
 
 function endGame(winnerMsg) {
@@ -1061,6 +1087,7 @@ function handlePlayAgain() {
         p.fakeRole = null;
         p.usedAbility = false;
         p.hirsizTarget = null;
+        p.hirsizStole = false;
         p.intikamciTarget = null;
         p.lastHealed = null;
         p.selfHealCount = 0;
