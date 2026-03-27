@@ -45,7 +45,7 @@ functions.http('validateWord', async (req, res) => {
     // we use gemini-1.5-flash which is the standard model that supports Google Search Grounding.
     // In production you could swap this out for gemini-2.0-flash-lite if available.
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.1-flash-lite-preview", // Use the flash model for grounding capabilities
       tools: [{
         googleSearch: {} // Enables Google Search grounding to prevent hallucinations
       }]

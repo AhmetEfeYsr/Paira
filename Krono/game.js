@@ -182,8 +182,8 @@ class KronoGame {
         this.settings.roundCount = gameData.totalRounds;
         this.settings.turnDuration = gameData.timeLimit;
         
-        // Shuffle events so they are not in correct order
-        this.currentRoundEvents = [...gameData.events].sort(() => 0.5 - Math.random());
+        // Initial random order is already provided by host in gameData.events
+        this.currentRoundEvents = [...gameData.events];
         this.correctOrder = gameData.correctOrder;
         
         this.hintsRemaining = 2;
@@ -222,8 +222,16 @@ class KronoGame {
                 <div class="event-order">${index + 1}</div>
                 <div class="event-title">${ev.olay}</div>
                 <div class="event-date">${yearStr}</div>
-                <div class="drag-handle">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <div class="order-controls">
+                    <button class="btn-order btn-up" aria-label="Yukarı taşı" onclick="window.gameInstance.moveCard(this, -1)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    </button>
+                    <div class="drag-handle" title="Sürükleyerek taşı">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    </div>
+                    <button class="btn-order btn-down" aria-label="Aşağı taşı" onclick="window.gameInstance.moveCard(this, 1)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
                 </div>
             `;
             container.appendChild(el);
@@ -243,11 +251,70 @@ class KronoGame {
         });
     }
 
+    moveCard(btn, direction) {
+        if (this.gameState !== 'PLAYING') return;
+        
+        const card = btn.closest('.event-card');
+        if (card.classList.contains('locked')) return;
+
+        const container = document.getElementById('events-container');
+        const cards = Array.from(container.children);
+        const index = cards.indexOf(card);
+        const newIndex = index + direction;
+
+        if (newIndex >= 0 && newIndex < cards.length) {
+            const targetCard = cards[newIndex];
+            if (targetCard.classList.contains('locked')) {
+                // Eğer hedef kart kilitliyse, kilitli olmayan bir sonraki/önceki karta geç
+                let nextAvailableIndex = newIndex + direction;
+                while(nextAvailableIndex >= 0 && nextAvailableIndex < cards.length) {
+                    if(!cards[nextAvailableIndex].classList.contains('locked')) {
+                        if (direction < 0) {
+                            container.insertBefore(card, cards[nextAvailableIndex]);
+                        } else {
+                            container.insertBefore(card, cards[nextAvailableIndex].nextSibling);
+                        }
+                        this.updateOrderNumbers();
+                        return;
+                    }
+                    nextAvailableIndex += direction;
+                }
+                // Gidecek yer yoksa hiçbir şey yapma
+                return;
+            }
+
+            // Normal yer değiştirme
+            if (direction < 0) {
+                container.insertBefore(card, targetCard);
+            } else {
+                container.insertBefore(card, targetCard.nextSibling);
+            }
+            
+            // Sıralamayı güncelle ve animasyon ekle
+            card.style.transform = direction < 0 ? 'translateY(10px)' : 'translateY(-10px)';
+            setTimeout(() => card.style.transform = '', 150);
+            
+            this.updateOrderNumbers();
+        }
+    }
+
     updateOrderNumbers() {
         const cards = document.querySelectorAll('.event-card');
         cards.forEach((card, index) => {
             const orderEl = card.querySelector('.event-order');
             if (orderEl) orderEl.textContent = index + 1;
+            
+            // Yukarı/Aşağı butonlarını duruma göre gizle/göster (kilitli kartları hesaba katarak)
+            const upBtn = card.querySelector('.btn-up');
+            const downBtn = card.querySelector('.btn-down');
+            
+            if (upBtn && downBtn) {
+                upBtn.style.opacity = index === 0 ? '0.3' : '1';
+                upBtn.style.pointerEvents = index === 0 ? 'none' : 'auto';
+                
+                downBtn.style.opacity = index === cards.length - 1 ? '0.3' : '1';
+                downBtn.style.pointerEvents = index === cards.length - 1 ? 'none' : 'auto';
+            }
         });
     }
 

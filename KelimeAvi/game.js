@@ -311,14 +311,7 @@ class KelimeAviGameEngine {
         }, 5000);
     }
 
-    backToLobby() {
-        this.state.status = 'lobby';
-        Object.keys(this.state.players).forEach(pId => {
-            this.state.players[pId].score = 0;
-            this.state.players[pId].disconnected = false;
-        });
-        this.setState(this.state);
-    }
+    backToLobby() { this.state.status = 'lobby'; Object.keys(this.state.players).forEach(pId => { if (this.state.players[pId].disconnected) { delete this.state.players[pId]; } else { this.state.players[pId].score = 0; } }); this.setState(this.state); }
 
     startRenderTimer() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
@@ -546,3 +539,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.KelimeAviGameEngine = KelimeAviGameEngine;
     window.KelimeAviView = KelimeAviView;
 }
+

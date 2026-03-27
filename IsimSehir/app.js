@@ -750,7 +750,9 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                 })
             });
             const data = await response.json();
-            const result = JSON.parse(data.text);
+            let text = data.text;
+            text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+            const result = JSON.parse(text);
             return { valid: !!result.valid, reason: result.reason || "" };
         } catch (e) {
             console.error("LLM Validation Error:", e);
@@ -1328,7 +1330,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                     finalVote = tiedValues[0];
                 } else {
                     // Prefer 5 if tied, otherwise pick the lower value
-                    finalVote = tiedValues.includes(5) ? 5 : Math.min(...tiedValues);
+                    finalVote = tiedValues.includes(5) ? 5 : Math.max(...tiedValues);
                 }
 
                 if (finalScores[targetPlayerId]) {

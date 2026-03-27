@@ -164,7 +164,7 @@ class KatiplikGame {
         const imlaMode = document.querySelector('input[name="imla-mode"]:checked')?.value || 'imlali';
         const kbMode = document.querySelector('input[name="kb-mode"]:checked')?.value || 'tr';
         
-        let words = text.split(/\s+/).filter(w => w.trim() !== "");
+        let words = text.split(/[\s\n\r]+/).filter(w => w.trim() !== "");
         
         if (type === 'random') {
             for (let i = words.length - 1; i > 0; i--) {
@@ -196,7 +196,7 @@ class KatiplikGame {
         document.getElementById('typing-area').style.display = 'flex';
         
         this.targetText = text;
-        this.words = text.split(/\s+/).filter(w => w.trim() !== "");
+        this.words = text.split(/[\s\n\r]+/).filter(w => w.trim() !== "");
         this.currentWordIndex = 0;
         this.totalKeystrokes = 0;
         this.correctKeystrokes = 0;

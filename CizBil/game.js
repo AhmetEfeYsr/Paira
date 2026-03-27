@@ -171,7 +171,10 @@ class CizBilGameEngine {
         if (!this.state.currentWord || this.state.choices) return false; 
         if (senderId === this.state.currentDrawer) return false;
 
-        if (this.state.guessedCorrectly.includes(senderId)) return false;
+        if (this.state.guessedCorrectly.includes(senderId)) {
+            if (this.isMatch(text, this.state.currentWord)) return 'spoiler';
+            return false;
+        }
 
         if (this.isMatch(text, this.state.currentWord)) {
             this.state.guessedCorrectly.push(senderId);

@@ -23,5 +23,11 @@ const ROLES = {
     SOYTARI: { name: 'Soytarı', team: 'TARAFSIZ', hasNightAction: false, hasDayAction: false, desc: 'Tek amacın oylamada asılmak. Asılırsan kazanırsın!' },
     HIRSIZ: { name: 'Hırsız', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'İlk gece birini seçersin. Hedefin ölürse, onun rolünü ve takımını devralırsın.' },
     KUNDAKCI: { name: 'Kundakçı', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini benzinle ıslat. Kendini seçersen ıslatılmış herkes yanar.' },
-    SERI_KATIL: { name: 'Seri Katil', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini öldürürsün. Polis seni bloklamaya çalışırsa başarısız olur. Son hayatta kalan ol.' }
+    SERI_KATIL: { name: 'Seri Katil', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'Her gece birini öldürürsün. Polis seni bloklamaya çalışırsa başarısız olur. Son hayatta kalan ol.' },
+
+    // Rastgele Roller (Sadece lobi aşamasında görünürler, oyun başlarken gerçek rollere dönüşürler)
+    RASTGELE_HERHANGI: { name: 'Rastgele Rol', team: 'RASTGELE', isRandom: true, desc: 'Tüm roller arasından rastgele bir rol atanır.' },
+    RASTGELE_KOY: { name: 'Rastgele Köylü', team: 'KOY', isRandom: true, desc: 'Sıradan Köylü HARİÇ tüm Köylü rolleri arasından rastgele bir rol atanır.' },
+    RASTGELE_VAMPIR: { name: 'Rastgele Vampir', team: 'VAMPIR', isRandom: true, desc: 'Tüm Vampir rolleri arasından rastgele bir rol atanır.' },
+    RASTGELE_TARAFSIZ: { name: 'Rastgele Tarafsız', team: 'TARAFSIZ', isRandom: true, desc: 'Tüm Tarafsız roller arasından rastgele bir rol atanır.' }
 };

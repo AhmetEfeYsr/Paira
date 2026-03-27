@@ -106,10 +106,16 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 .code-container { display: flex; align-items: center; gap: 10px; background: var(--code-bg); padding: 6px 14px; border-radius: 10px; }
 
 .lobby-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
     gap: clamp(1rem, 2.5vw, 2rem);
     flex-grow: 1; min-height: 0; overflow-y: auto;
+    flex-wrap: wrap;
+}
+.lobby-grid > aside {
+    flex: 1; min-width: 250px; max-width: 400px;
+}
+.lobby-grid > section {
+    flex: 2; min-width: 320px;
 }
 
 .players-panel ul { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin-top: 10px; }

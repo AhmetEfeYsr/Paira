@@ -94,6 +94,7 @@ function onPlayerLeave(player) {
             // Aksiyonları yeniden kontrol et
             if (gameState.status === 'NIGHT') checkNightEnd();
             else if (gameState.status === 'VOTING') checkVotingEnd();
+            else if (gameState.status === 'JUDGEMENT') checkJudgementEnd();
             checkWin();
         }
     }
@@ -384,17 +385,46 @@ function assignRoles() {
     let index = 0;
     const assignedRoles = gameState.settings.assignedRoles || {};
     
-    // Assign explicit roles
+    // Resolve random roles before assigning to players
+    let resolvedRoles = [];
+    
+    // Yardımcı fonksiyon: Belirli bir takımdan (veya genel) rastgele rol seç
+    const getRandomRole = (teamFilter) => {
+        let pool = Object.keys(ROLES).filter(k => {
+            let r = ROLES[k];
+            if (r.isRandom) return false;
+            if (k === 'KOYLU') return false; // Köylü rastgele havuzuna girmez
+            if (teamFilter && r.team !== teamFilter) return false;
+            return true;
+        });
+        if (pool.length === 0) return 'KOYLU'; // Fallback
+        return pool[Math.floor(Math.random() * pool.length)];
+    };
+
+    // Tüm atanan rolleri bir listeye (resolvedRoles) ekle
     Object.keys(assignedRoles).forEach(roleKey => {
         let count = assignedRoles[roleKey];
         for (let i = 0; i < count; i++) {
-            if (index < pIds.length) {
-                gameState.players[pIds[index++]].role = roleKey;
-            }
+            let finalRole = roleKey;
+            
+            // Eğer rol rastgele bir slot ise, onu gerçek bir role çevir
+            if (roleKey === 'RASTGELE_HERHANGI') finalRole = getRandomRole(null);
+            else if (roleKey === 'RASTGELE_KOY') finalRole = getRandomRole('KOY');
+            else if (roleKey === 'RASTGELE_VAMPIR') finalRole = getRandomRole('VAMPIR');
+            else if (roleKey === 'RASTGELE_TARAFSIZ') finalRole = getRandomRole('TARAFSIZ');
+            
+            resolvedRoles.push(finalRole);
+        }
+    });
+
+    // Oyunculara rolleri dağıt
+    resolvedRoles.forEach(r => {
+        if (index < pIds.length) {
+            gameState.players[pIds[index++]].role = r;
         }
     });
     
-    // Remaining players become KOYLU
+    // Kalan oyuncular KOYLU olur
     while (index < pIds.length) {
         gameState.players[pIds[index++]].role = 'KOYLU';
     }
@@ -476,22 +506,16 @@ function addLog(msg) {
     if(!isHost) renderLogs();
 }
 
-function handlePlayerAction(senderId, actionType, targetId) {
-    if (actionType === 'NIGHT') {
-        gameState.nightActions[senderId] = targetId;
-        checkNightEnd();
-    } else if (actionType === 'DAY_DISCUSSION') {
-        gameState.dayActions[senderId] = targetId;
-    } else if (actionType === 'VOTING') {
-        gameState.votes[senderId] = targetId;
-        checkVotingEnd();
-    }
-}
-
 function checkNightEnd() {
     let requiredActions = 0;
     Object.values(gameState.players).forEach(p => {
-        if (p.isAlive && ROLES[p.role]?.hasNightAction) requiredActions++;
+        if (p.isAlive && ROLES[p.role]?.hasNightAction) {
+            // Hırsız sadece ilk gece aksiyon alabilir
+            if (p.role === 'HIRSIZ' && gameState.dayCount > 1) {
+                return;
+            }
+            requiredActions++;
+        }
     });
     
     if (Object.keys(gameState.nightActions).length >= requiredActions) {
@@ -899,6 +923,9 @@ function resolveVoting() {
 }
 
 function handlePlayerAction(senderId, actionType, targetId) {
+    const player = gameState.players[senderId];
+    if (!player || !player.isAlive) return; // Ölü oyuncular aksiyon yapamaz
+
     if (actionType === 'NIGHT') {
         gameState.nightActions[senderId] = targetId;
         checkNightEnd();

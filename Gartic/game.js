@@ -89,13 +89,21 @@ function initCanvas() {
             const target = e.target.closest('.color-swatch');
             target.classList.add('active');
             drawingBoard.setColor(target.dataset.color);
-            if (target.dataset.color === '#ffffff') drawingBoard.setTool('eraser');
-            else drawingBoard.setTool('brush');
-            
-            // Re-select brush button visually if eraser is not selected
-            if (target.dataset.color !== '#ffffff') {
+            if (target.dataset.color === '#ffffff') {
+                drawingBoard.setTool('eraser');
                 document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                document.querySelector('.tool-btn[data-tool="brush"]').classList.add('active');
+                const eraserBtn = document.querySelector('.tool-btn[data-tool="eraser"]');
+                if (eraserBtn) eraserBtn.classList.add('active');
+            } else {
+                const currentToolBtn = document.querySelector('.tool-btn.active');
+                if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                    drawingBoard.setTool('brush');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    const brushBtn = document.querySelector('.tool-btn[data-tool="brush"]');
+                    if (brushBtn) brushBtn.classList.add('active');
+                } else {
+                    drawingBoard.setTool(currentToolBtn.dataset.tool);
+                }
             }
         });
     });

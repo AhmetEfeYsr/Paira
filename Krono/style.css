@@ -137,6 +137,10 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
     color: var(--success);
 }
 
+.event-card.locked .order-controls {
+    display: none;
+}
+
 .event-card.wrong {
     border-color: var(--danger);
     background: rgba(var(--danger-rgb), 0.1);
@@ -185,12 +189,50 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
     font-size: 1.1rem;
 }
 
+.order-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-order {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-order:hover:not(:disabled) {
+    background-color: var(--item-hover-bg);
+    color: var(--lilac);
+}
+
+.btn-order:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 .drag-handle {
     cursor: grab;
     color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.drag-handle:hover {
+    background-color: var(--item-hover-bg);
+    color: var(--lilac);
 }
 
 @media (max-width: 900px) {

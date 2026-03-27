@@ -57,7 +57,7 @@
                 </aside>
 
                 <!-- HOST SETTINGS -->
-                <section class="settings-panel card custom-scrollbar host-only hidden" id="host-settings" style="overflow-y: auto; display: flex; flex-direction: column;">
+                <section class="settings-panel card custom-scrollbar host-only hidden" id="host-settings" style="display: flex; flex-direction: column;">
                     <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px; margin-bottom: 15px;">Oyun Ayarları</h3>
 
                     <div class="form-group" style="margin-bottom: 1rem;">
@@ -65,16 +65,16 @@
                         <input type="number" id="setting-discussion-time" value="90" min="30" max="300" style="width: 100%;">
                     </div>
 
-                    <div id="role-management" style="flex: 1; display: flex; flex-direction: column; overflow-y: hidden; min-height: 250px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 10px; margin-bottom: 10px;">
+                    <div id="role-management" style="display: flex; flex-direction: column; flex-shrink: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 10px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                             <h4 style="margin: 0; color: var(--text-main);">Rol Dağılımı</h4>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); text-align: right; display: flex; gap: 10px;">
+                            <div style="font-size: 0.85rem; color: var(--text-muted); text-align: right; display: flex; gap: 10px; flex-wrap: wrap;">
                                 <span>Oyuncu: <strong id="rm-player-count">0</strong></span>|
                                 <span>Atanan: <strong id="rm-assigned-count">0</strong></span>|
                                 <span>Köylü Olacak: <strong id="rm-remaining-count">0</strong></span>
                             </div>
                         </div>
-                        <div id="roles-container" class="custom-scrollbar" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px; padding-right: 5px;">
+                        <div id="roles-container" class="roles-grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px;">
                             <!-- Rol grupları js ile eklenecek -->
                         </div>
                     </div>

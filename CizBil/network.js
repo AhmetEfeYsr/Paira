@@ -105,7 +105,10 @@ class CizBilNetwork extends BaseGameNetwork {
         if (action === 'GUESS') {
             if (senderId === this.engine.state.currentDrawer) return; // Drawer cannot guess
             
-            const isCorrect = this.engine.handleGuess(senderId, payload.text);
+            const guessResult = this.engine.handleGuess(senderId, payload.text);
+            if (guessResult === 'spoiler') return; // Ignore if spoiler
+            
+            const isCorrect = guessResult === true;
             const name = this.engine.state.players[senderId]?.name || 'Oyuncu';
             const chatMsg = { name, text: payload.text, isCorrect };
             
