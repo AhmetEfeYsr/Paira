@@ -106,6 +106,16 @@ function setupUI() {
         els.game.roleModal.classList.add('hidden');
     });
 
+    document.getElementById('btn-role-info').addEventListener('click', () => {
+        const myPlayer = gameState.players[myId];
+        if (myPlayer && myPlayer.role) {
+            const rDef = ROLES[myPlayer.role];
+            if (rDef) {
+                showRoleModal(rDef.name, rDef.desc || '');
+            }
+        }
+    });
+
     // Hover & Click for Role (Mobile Support)
     els.game.myRoleContainer.addEventListener('mouseenter', () => {
         if (els.game.roleTooltip.textContent) {
@@ -452,15 +462,53 @@ function renderRolesHUD() {
     if (!roleCounts) {
         roleCounts = {};
         Object.values(gameState.players).forEach(p => {
-            let rName = ROLES[p.role]?.name || 'Bilinmiyor';
-            roleCounts[rName] = (roleCounts[rName] || 0) + 1;
+            let rKey = p.role;
+            if (rKey) {
+                roleCounts[rKey] = (roleCounts[rKey] || 0) + 1;
+            }
         });
     }
     
-    Object.entries(roleCounts).forEach(([rName, count]) => {
-        const li = document.createElement('li');
-        li.textContent = `${rName}: ${count}`;
-        els.game.rolesList.appendChild(li);
+    // roleCounts can contain roleKeys or roleNames depending on broadcast version,
+    // we updated it to send proper counts, but let's handle both.
+    // If it's a name, we try to match it back to find the icon.
+    Object.entries(roleCounts).forEach(([rKeyOrName, count]) => {
+        let roleDef = ROLES[rKeyOrName];
+        if (!roleDef) {
+            roleDef = Object.values(ROLES).find(r => r.name === rKeyOrName);
+        }
+        
+        const span = document.createElement('span');
+        span.className = 'custom-tooltip-wrapper';
+        span.style.cursor = 'help';
+        span.textContent = roleDef?.icon || '❓';
+        
+        const countBadge = document.createElement('div');
+        countBadge.textContent = count;
+        countBadge.style.position = 'absolute';
+        countBadge.style.bottom = '-5px';
+        countBadge.style.right = '-5px';
+        countBadge.style.background = 'var(--bg-deep)';
+        countBadge.style.color = 'white';
+        countBadge.style.fontSize = '0.65rem';
+        countBadge.style.width = '16px';
+        countBadge.style.height = '16px';
+        countBadge.style.borderRadius = '50%';
+        countBadge.style.display = 'flex';
+        countBadge.style.alignItems = 'center';
+        countBadge.style.justifyContent = 'center';
+        countBadge.style.border = '1px solid var(--neon-purple)';
+        span.appendChild(countBadge);
+
+        const tooltip = document.createElement('span');
+        tooltip.className = 'custom-tooltip-content';
+        tooltip.style.fontSize = '0.8rem';
+        tooltip.style.whiteSpace = 'pre-wrap';
+        tooltip.style.minWidth = '180px';
+        tooltip.innerHTML = `<strong>${roleDef?.name || rKeyOrName}</strong><br/>${roleDef?.desc || ''}`;
+        span.appendChild(tooltip);
+        
+        els.game.rolesList.appendChild(span);
     });
 }
 
@@ -610,6 +658,26 @@ function renderActionList(excludeSelf, maxSelect = 1) {
     els.game.actionPanel.style.left = '50%';
     els.game.actionPanel.style.top = '50%';
     els.game.actionPanel.style.display = 'flex';
+
+    els.game.actionPlayers.innerHTML = '';
+    _validActionTargets.forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.style.width = '100%';
+        btn.style.textAlign = 'left';
+        btn.style.padding = '8px 12px';
+        btn.textContent = gameState.players[id].name;
+        btn.onclick = () => window.onPlayerSelected(id);
+        els.game.actionPlayers.appendChild(btn);
+    });
+    
+    els.game.actionPlayers.style.display = 'flex';
+    els.game.actionPlayers.style.flexDirection = 'column';
+    els.game.actionPlayers.style.gap = '5px';
+    els.game.actionPlayers.style.width = '100%';
+    els.game.actionPlayers.style.maxHeight = '150px';
+    els.game.actionPlayers.style.overflowY = 'auto';
+    els.game.actionPlayers.style.marginTop = '10px';
 }
 
 window.onPlayerSelected = (id) => {
@@ -651,7 +719,7 @@ window.onPlayerSelected = (id) => {
         if (_currentSelectedIds.length > 0) {
             els.game.actionTitle.textContent = "Seçilenler: " + _currentSelectedIds.map(i => gameState.players[i].name).join(', ');
         } else {
-            els.game.actionTitle.textContent = "Sahnede birine veya evine tıklayarak seçiminizi yapın";
+            els.game.actionTitle.textContent = "Seçiminizi yapın";
             els.game.actionPanel.style.left = '50%';
             els.game.actionPanel.style.top = '50%';
         }
