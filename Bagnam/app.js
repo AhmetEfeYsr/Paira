@@ -145,7 +145,7 @@ async function handleGuess() {
     if(!word) return;
 
     // Check if already guessed
-    if(guesses.some(g => g.word === word)) {
+    if(guesses.some(g => g.word === word.replace(/_\d+$/, ''))) {
         showToast("Bu kelimeyi zaten tahmin ettiniz!", "warning");
         inputEl.value = "";
         inputEl.focus();
@@ -208,36 +208,51 @@ async function handleGuess() {
             inputEl.classList.add('error-shake');
             setTimeout(() => inputEl.classList.remove('error-shake'), 400);
         } else {
-            // Add all found homonyms as guesses
+            // Group homonyms by base word and keep the one with the highest score
+            let groupedData = {};
             for (const item of foundData) {
                 const finalData = item.data;
-                const finalWord = item.word;
+                const baseWord = item.word.replace(/_\d+$/, '');
                 
                 if (typeof finalData === "object" && typeof finalData.r === "number" && typeof finalData.s === "number") {
-                    const rank = finalData.r;
-                    const score = finalData.s;
-
-                    // Eğer kelime önceden eklenmişse atla (örneğin arka arkaya devrim_1 yazarsa)
-                    if(guesses.some(g => g.word === finalWord)) {
-                        continue;
+                    if (!groupedData[baseWord] || finalData.s > groupedData[baseWord].s) {
+                        groupedData[baseWord] = {
+                            word: baseWord,
+                            r: finalData.r,
+                            s: finalData.s
+                        };
                     }
+                }
+            }
 
-                    // Add guess
-                    guesses.push({
-                        word: finalWord,
-                        rank: rank,
-                        score: score
-                    });
+            // Add grouped best homonyms as guesses
+            let addedAny = false;
+            for (const baseWord in groupedData) {
+                const bestData = groupedData[baseWord];
+                const rank = bestData.r;
+                const score = bestData.s;
 
-                    // Check win condition
-                    if(rank === 1) {
-                        hasWon = true;
-                    }
+                // Eğer kelime önceden eklenmişse atla
+                if(guesses.some(g => g.word === baseWord)) {
+                    continue;
+                }
+
+                // Add guess
+                guesses.push({
+                    word: baseWord,
+                    rank: rank,
+                    score: score
+                });
+                addedAny = true;
+
+                // Check win condition
+                if(rank === 1) {
+                    hasWon = true;
                 }
             }
             
             // Eğer none valid (foundData var ama data geçersizse)
-            if (guesses.length === 0 && !hasWon) {
+            if (!addedAny && guesses.length === 0 && !hasWon) {
                  throw new Error("Geçersiz veri formatı döndü.");
             }
 
@@ -353,7 +368,7 @@ async function handleGiveUp() {
 
             // Show failure/give up message in the success banner area
             const successMsg = document.getElementById('success-message');
-            successMsg.innerHTML = `<h2 style="margin:0; color: var(--danger);">Oyun Bitti!</h2><p>Günün kelimesi: <strong>${targetWord.toLocaleUpperCase('tr-TR')}</strong></p>`;
+            successMsg.innerHTML = `<h2 style="margin:0; color: var(--danger);">Oyun Bitti!</h2><p>Günün kelimesi: <strong>${targetWord.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR')}</strong></p>`;
             successMsg.classList.remove('hidden');
             successMsg.style.borderColor = 'var(--danger)';
             successMsg.style.background = 'rgba(231, 76, 60, 0.1)';
@@ -424,7 +439,7 @@ async function handleHint() {
         const data = await response.json();
 
         if (data) {
-            let displayData = isDefinition ? data : data.toLocaleUpperCase('tr-TR');
+            let displayData = isDefinition ? data : data.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR');
             let hintMessage = `İpucu ${hintsUsed + 1} (${hintTitle}):\n\n${displayData}`;
             
             hintsUsed++;
