@@ -60,6 +60,10 @@ class AdvancedDrawingBoard {
         /** @type {boolean} */
         this.readOnly = options.readOnly || false;
 
+        /** @type {boolean} FIX: Prevent touch+mouse double firing */
+        this._lastInputWasTouch = false;
+        this._touchEndTimer = null;
+
         this.initEvents();
         this.resize();
         this.saveState();
@@ -106,6 +110,11 @@ class AdvancedDrawingBoard {
             
             this.ctx.drawImage(tempCanvas, 0, 0, finalWidth, finalHeight);
         }
+
+        // FIX: Reset history after resize since old ImageData dimensions are now invalid
+        this.history = [];
+        this.historyStep = -1;
+        this.saveState();
     }
 
     /** @param {string} color Hex color string. */
@@ -151,7 +160,14 @@ class AdvancedDrawingBoard {
 
     initEvents() {
         const start = (e) => {
-            if (e.type === 'touchstart') e.preventDefault();
+            // FIX: Prevent touch+mouse double firing on hybrid devices
+            if (e.type === 'touchstart') {
+                e.preventDefault();
+                this._lastInputWasTouch = true;
+                clearTimeout(this._touchEndTimer);
+            } else if (e.type === 'mousedown' && this._lastInputWasTouch) {
+                return; // Skip mouse event that follows touch
+            }
             if (this.readOnly) return;
             this.isDrawing = true;
             const pos = this.getPos(e);
@@ -186,6 +202,7 @@ class AdvancedDrawingBoard {
         const draw = (e) => {
             if (!this.isDrawing || this.readOnly) return;
             if (e.type === 'touchmove') e.preventDefault();
+            if (e.type === 'mousemove' && this._lastInputWasTouch) return;
 
             const pos = this.getPos(e);
 
@@ -221,6 +238,12 @@ class AdvancedDrawingBoard {
         const end = (e) => {
             if (!this.isDrawing || this.readOnly) return;
             this.isDrawing = false;
+
+            // FIX: Reset touch flag after a short delay to allow mouse events again
+            if (e.type === 'touchend') {
+                clearTimeout(this._touchEndTimer);
+                this._touchEndTimer = setTimeout(() => { this._lastInputWasTouch = false; }, 400);
+            }
 
             const pos = this.getPos(e);
 

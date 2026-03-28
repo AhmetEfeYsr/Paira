@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="style.css">
 
     <!-- Favicons -->
-    <link rel="icon" type="image/webp" href="https://pairaaa.com/main_logo.webp">
-    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.webp">
+    <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
 
     <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
@@ -64,8 +64,9 @@
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card" style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-weight: bold; color: var(--primary);" id="task-title">Ne yapman gerekiyor?</div>
+                <div id="round-indicator" style="font-weight: 600; font-size: 0.95rem; color: var(--lilac); background: var(--code-bg); padding: 5px 15px; border-radius: 10px;">Tur 1/?</div>
                 <div class="timer-wrapper" style="display: flex; align-items: center; justify-content: center;">
-                    <div id="timer-display" class="timer" style="font-size: 2rem; font-weight: bold; color: var(--warning);">00</div>
+                    <div id="timer-display" class="timer" style="font-size: 2rem; font-weight: bold; color: var(--warning);">--</div>
                 </div>
             </header>
 
@@ -81,6 +82,7 @@
                     </div>
 
                     <input type="text" id="prompt-input" class="game-input" placeholder="Örn: Uzayda kahve içen zürafa..." maxlength="60" style="font-size: 1.2rem; text-align: center;">
+                    <div id="char-counter" style="font-size: 0.8rem; color: var(--text-muted); text-align: right; width: 100%;">0/60</div>
                     <button id="btn-submit-prompt" class="btn btn-primary" style="padding: 10px 30px; font-size: 1.2rem;">Gönder & Bekle</button>
                 </div>
 
@@ -165,7 +167,7 @@
             </div>
 
             <div style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
-                <button id="btn-next-story" class="btn btn-primary" style="display: none; padding: 10px 30px; font-size: 1.2rem;">Sonraki Hikaye</button>
+                <button id="btn-next-story" class="btn btn-primary" style="display: none; padding: 10px 30px; font-size: 1.2rem;">Sonraki Adım →</button>
                 <button id="btn-back-to-lobby" class="btn btn-secondary" style="display: none; padding: 10px 30px; font-size: 1.2rem;">Lobiye Dön</button>
             </div>
         </section>

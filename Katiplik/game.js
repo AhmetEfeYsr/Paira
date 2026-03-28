@@ -35,23 +35,30 @@ class KatiplikGame {
 
     bindEvents() {
         const textInput = document.getElementById('text-input');
+        this._spaceHandledByKeydown = false;
+        
+        textInput.addEventListener('keydown', (e) => {
+            if (this.isFinished) return;
+            // Prevent default space behavior for immediate visual feedback on desktop
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                this._spaceHandledByKeydown = true;
+                this.handleWordCompletion(textInput.value.trim());
+            }
+        });
         
         textInput.addEventListener('input', (e) => {
             if (this.isFinished) return;
             const val = e.target.value;
-            // Handle space or newline entered via input (especially for mobile)
+            // Handle space or newline entered via input (especially for mobile where keydown may not fire)
             if (val.length > 0 && (val.endsWith(' ') || val.endsWith('\n'))) {
-                this.handleWordCompletion(val.trim());
+                if (!this._spaceHandledByKeydown) {
+                    this.handleWordCompletion(val.trim());
+                }
+                this._spaceHandledByKeydown = false;
             } else {
+                this._spaceHandledByKeydown = false;
                 this.handleTyping(e);
-            }
-        });
-        
-        textInput.addEventListener('keydown', (e) => {
-            // Prevent default space behavior for immediate visual feedback on desktop
-            if (e.code === 'Space' || e.key === ' ') {
-                e.preventDefault();
-                this.handleWordCompletion(textInput.value.trim());
             }
         });
         
@@ -139,19 +146,28 @@ class KatiplikGame {
 
             renderOptions();
 
-            if (searchInput) {
+            // Prevent duplicate listeners by cloning and replacing elements
+            if (searchInput && !searchInput._katipBound) {
+                searchInput._katipBound = true;
+                searchInput.value = '';
                 searchInput.addEventListener('input', (e) => {
                     renderOptions(e.target.value);
                 });
+            } else if (searchInput) {
+                // Just re-render options with current search value
+                renderOptions(searchInput.value);
             }
 
-            select.addEventListener('change', (e) => {
-                const selectedIndex = parseInt(e.target.value, 10);
-                if (!isNaN(selectedIndex) && this.categories[selectedIndex]) {
-                    this.selectedCategory = this.categories[selectedIndex];
-                    startBtn.disabled = false;
-                }
-            });
+            if (!select._katipBound) {
+                select._katipBound = true;
+                select.addEventListener('change', (e) => {
+                    const selectedIndex = parseInt(e.target.value, 10);
+                    if (!isNaN(selectedIndex) && this.categories[selectedIndex]) {
+                        this.selectedCategory = this.categories[selectedIndex];
+                        startBtn.disabled = false;
+                    }
+                });
+            }
         }
     }
 
@@ -458,6 +474,15 @@ class KatiplikGame {
         const title = document.getElementById('result-title');
         const playAgainBtn = document.getElementById('btn-play-again');
         const waitingText = document.getElementById('waiting-rematch-text');
+        
+        // Show opponent stats
+        const oppStats = document.getElementById('opponent-stats');
+        if (oppStats && !this.isSolo) {
+            oppStats.style.display = 'block';
+            document.getElementById('opp-final-wpm').textContent = this.opponentWpm || 0;
+            document.getElementById('opp-final-accuracy').textContent = `%${this.opponentAccuracy || 0}`;
+            document.getElementById('opp-final-time').textContent = `${this.opponentFinishedTime || 0}s`;
+        }
         
         const wpmText = document.getElementById('final-wpm').textContent;
         const myWpm = parseInt(wpmText) || 0;

@@ -390,6 +390,12 @@ function handlePlayingState(lastAction) {
     initGameUI(networkState, myId);
     updateGameStateUI(networkState, myId);
 
+    // Update round indicator
+    const roundEl = document.getElementById('round-indicator');
+    if (roundEl) {
+        roundEl.textContent = `Tur ${networkState.roundCount}/${networkState.maxRounds}`;
+    }
+
     if (lastAction?.action === 'START_PHASE') {
         startTimer(networkState.turnDuration, networkState, myId);
     }

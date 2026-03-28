@@ -5,6 +5,7 @@ let wordDatabase = [...window.cizbilWords];
 let currentWordIndex = 0;
 let currentWord = "";
 let chatListener = null;
+let wordCount = 0; // Track how many words have been played
 
 let state = {
     platform: '',
@@ -63,6 +64,15 @@ const isMatch = (guess, target) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize audio on first user interaction (AudioContext requires user gesture)
+    const initAudioOnce = () => {
+        if (window.PairaAudio) window.PairaAudio.init();
+        document.removeEventListener('pointerdown', initAudioOnce);
+        document.removeEventListener('keydown', initAudioOnce);
+    };
+    document.addEventListener('pointerdown', initAudioOnce, { once: true });
+    document.addEventListener('keydown', initAudioOnce, { once: true });
+
     if (document.getElementById('main-word')) {
         initGame();
         initCanvas();
@@ -205,19 +215,48 @@ async function initGame() {
         return;
     }
 
-    chatListener = new ChatListener(platform, channel, handleChatMessage);
-
     const statusBadge = document.getElementById('status-badge');
     statusBadge.textContent = 'Bağlanıyor...';
 
-    chatListener.start();
+    chatListener = new ChatListener(platform, channel, handleChatMessage);
 
-    setTimeout(() => {
+    // Listen for real connection status via ChatListener callbacks
+    const origOnOpen = chatListener.onOpen;
+    const origOnError = chatListener.onError;
+    const origOnClose = chatListener.onClose;
+    
+    chatListener.onOpen = () => {
         statusBadge.textContent = 'Bağlandı';
         statusBadge.style.color = 'var(--success)';
         statusBadge.style.borderColor = 'var(--success)';
         if (window.showToast) window.showToast('Chat bağlantısı başarılı.', 'success');
-    }, 2000);
+        if (origOnOpen) origOnOpen();
+    };
+    chatListener.onError = (err) => {
+        statusBadge.textContent = 'Bağlantı Hatası';
+        statusBadge.style.color = 'var(--danger)';
+        statusBadge.style.borderColor = 'var(--danger)';
+        if (window.showToast) window.showToast('Chat bağlantısı başarısız.', 'error');
+        if (origOnError) origOnError(err);
+    };
+    chatListener.onClose = () => {
+        statusBadge.textContent = 'Bağlantı Kesildi';
+        statusBadge.style.color = 'var(--warning)';
+        statusBadge.style.borderColor = 'var(--warning)';
+        if (origOnClose) origOnClose();
+    };
+
+    chatListener.start();
+
+    // Fallback: If no event fires within 5 seconds, assume connected
+    // (some ChatListener implementations may not fire onOpen)
+    setTimeout(() => {
+        if (statusBadge.textContent === 'Bağlanıyor...') {
+            statusBadge.textContent = 'Bağlandı';
+            statusBadge.style.color = 'var(--success)';
+            statusBadge.style.borderColor = 'var(--success)';
+        }
+    }, 5000);
 
     // Controls
     document.getElementById('btn-skip').addEventListener('click', () => {
@@ -263,7 +302,12 @@ function startWord(selectedWord) {
     document.getElementById('word-choice-overlay-bg').style.display = 'none';
     document.getElementById('word-choice-overlay').style.display = 'none';
     currentWord = selectedWord;
+    wordCount++;
     document.getElementById('main-word').textContent = currentWord;
+
+    // Update word counter display
+    const counterEl = document.getElementById('word-counter');
+    if (counterEl) counterEl.textContent = `Kelime #${wordCount}`;
 
     state.isPaused = false;
     document.getElementById('btn-next').style.display = 'none';
@@ -288,7 +332,9 @@ function handleChatMessage(username, message) {
 
     if (isMatch(message, currentWord)) {
         msgDiv.classList.add('correct');
-        textSpan.innerHTML = `<strong>🎉 ${message}</strong> (Doğru bildi!)`;
+        // FIX: Use textContent instead of innerHTML to prevent XSS from chat messages
+        textSpan.textContent = `🎉 ${message} (Doğru bildi!)`;
+        textSpan.style.fontWeight = 'bold';
         handleCorrectGuess(username);
     }
 

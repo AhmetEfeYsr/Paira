@@ -283,19 +283,19 @@ class KelimeAviGameEngine {
     }
 
     handleRoundEndTransition(isJackpot, isEbeWin, isMasumWin) {
-        if (this.state.round >= this.state.totalRounds) {
-            this.state.status = 'finished';
+        if (!isJackpot && !isEbeWin && isMasumWin) {
+            this.state.status = 'playing';
+            this.localEndTime = window.PairaTime.now() + (this.state.timeIncrease * 1000);
+            this.state.submittedWords = {};
+            this.state.ebeGuesses = [];
             this.setState(this.state);
+            this.startRenderTimer();
         } else {
-            this.state.round++;
-            if (!isJackpot && !isEbeWin && isMasumWin) {
-                this.state.status = 'playing';
-                this.localEndTime = window.PairaTime.now() + (this.state.timeIncrease * 1000);
-                this.state.submittedWords = {};
-                this.state.ebeGuesses = [];
+            if (this.state.round >= this.state.totalRounds) {
+                this.state.status = 'finished';
                 this.setState(this.state);
-                this.startRenderTimer();
             } else {
+                this.state.round++;
                 this.startNewTurn();
             }
         }

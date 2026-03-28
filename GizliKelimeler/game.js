@@ -420,8 +420,8 @@ class GizliKelimelerView {
             displaySec.classList.remove('hidden');
 
             document.getElementById('current-clue-word').innerText = state.currentClue ? state.currentClue.word : '';
-            document.getElementById('current-clue-count').innerText = state.currentClue ? `Sayı: ${state.currentClue.count}` : '';
-            document.getElementById('current-clue-rem').innerText = state.currentClue ? `Kalan: ${state.currentClue.remaining}` : '';
+            document.getElementById('current-clue-count').querySelector('span').innerText = state.currentClue ? `Sayı: ${state.currentClue.count}` : '';
+            document.getElementById('current-clue-rem').querySelector('span').innerText = state.currentClue ? `Kalan: ${state.currentClue.remaining}` : '';
 
             if (amITurnTeam && !amISpymaster) {
                 statusMsg.innerText = "Tahmin Yap!";
@@ -493,7 +493,8 @@ class GizliKelimelerView {
                 if (isMarkedByMe) {
                     const guessBtn = document.createElement('div');
                     guessBtn.className = 'guess-confirm-btn';
-                    guessBtn.innerHTML = '✓';
+                    guessBtn.title = 'Tahmin Et';
+                    guessBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
                     guessBtn.onclick = (e) => {
                         e.preventDefault();
                         e.stopPropagation(); // Kartın kendi tıklanmasını (mark/unmark) engelle

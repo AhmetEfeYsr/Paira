@@ -387,10 +387,10 @@ class KronoGame {
         
         if (this.timeLeft <= 10) {
             display.style.color = 'var(--danger)';
-            display.style.transform = 'scale(1.1)';
-            setTimeout(() => display.style.transform = 'scale(1)', 200);
+            display.classList.add('timer-pulse');
         } else {
             display.style.color = 'var(--lilac)';
+            display.classList.remove('timer-pulse');
         }
     }
 
@@ -398,6 +398,7 @@ class KronoGame {
         if (this.gameState !== 'PLAYING') return;
         this.gameState = 'FINISHED';
         clearInterval(this.timer);
+        document.getElementById('timer-display')?.classList.remove('timer-pulse');
         
         document.getElementById('btn-hint').classList.add('disabled');
         document.getElementById('btn-submit').classList.add('disabled');
@@ -467,23 +468,37 @@ class KronoGame {
         }
 
         if (this.finishedPlayers >= totalPlayers) {
-            // Everyone finished
-            setTimeout(() => {
-                if (this.network.isHost) {
-                    if (this.currentRound >= this.settings.roundCount) {
-                        // Game Over
-                        const finalScores = this.players.map(p => ({ id: p.id, name: p.name, score: p.score }));
-                        this.network.send({
-                            type: 'ROUND_OVER',
-                            scores: finalScores
-                        });
-                        this.endRound(finalScores);
+            // Everyone finished - show countdown before next action
+            const isLastRound = this.currentRound >= this.settings.roundCount;
+            const statusMsg = document.getElementById('game-status-message');
+            const currentText = statusMsg.textContent;
+            let countdown = 4;
+            
+            const updateCountdown = () => {
+                if (countdown > 0) {
+                    if (isLastRound) {
+                        statusMsg.textContent = `${currentText} • Sonuçlar ${countdown}s sonra...`;
                     } else {
-                        // Next round
-                        this.startNewRound();
+                        statusMsg.textContent = `${currentText} • Sonraki tur ${countdown}s sonra...`;
+                    }
+                    countdown--;
+                    setTimeout(updateCountdown, 1000);
+                } else {
+                    if (this.network.isHost) {
+                        if (isLastRound) {
+                            const finalScores = this.players.map(p => ({ id: p.id, name: p.name, score: p.score }));
+                            this.network.send({
+                                type: 'ROUND_OVER',
+                                scores: finalScores
+                            });
+                            this.endRound(finalScores);
+                        } else {
+                            this.startNewRound();
+                        }
                     }
                 }
-            }, 4000); // 4 seconds review time
+            };
+            updateCountdown();
         } else {
             document.getElementById('game-status-message').textContent = 'Rakibin bitirmesi bekleniyor...';
         }

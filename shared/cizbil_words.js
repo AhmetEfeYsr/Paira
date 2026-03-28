@@ -17,11 +17,22 @@ if (typeof window !== 'undefined') {
             const response = await fetch('../Gartic/gartic.json');
             if (!response.ok) throw new Error('Failed to fetch gartic.json');
 
-            // The JSON is currently malformed with an unquoted array [ word, word, ... ]
-            // We read as text, remove brackets and newlines, and split by comma.
             const textData = await response.text();
-            const cleanedText = textData.trim().replace(/^\[/, '').replace(/\]$/, '');
-            const parsed = cleanedText.split(',').map(x => x.trim().replace(/\n/g, '')).filter(x => x.length > 0);
+            let parsed = [];
+
+            // FIX: Try proper JSON.parse first, fallback to text splitting
+            try {
+                const jsonData = JSON.parse(textData);
+                if (Array.isArray(jsonData)) {
+                    parsed = jsonData.map(x => String(x).trim()).filter(x => x.length > 0);
+                }
+            } catch (jsonErr) {
+                // Fallback: malformed JSON - remove brackets and split by comma
+                const cleanedText = textData.trim().replace(/^\[/, '').replace(/\]$/, '');
+                parsed = cleanedText.split(',')
+                    .map(x => x.trim().replace(/\n/g, '').replace(/^["']|["']$/g, ''))
+                    .filter(x => x.length > 0);
+            }
 
             if (parsed.length > 0) {
                 window.cizbilWords = parsed;

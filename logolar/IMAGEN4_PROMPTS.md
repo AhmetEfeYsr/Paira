@@ -1,89 +1,93 @@
 # Imagen 4 Logo Üretim Promptları (Paira Games)
 
-Bu dosya, oyunların kodlarına ve temalarına (CSS renk paletlerine) göre özel olarak hazırlanmış Imagen 4 (veya Midjourney/DALL-E 3) promptlarını içerir. Logolar sade, yaratıcı, modern web UI standartlarına uygun ve oyunun mantığını yansıtacak şekilde tasarlanmıştır. Tüm logolar kendileri için ayrılan alana tam oturacak şekilde çerçevelenmiştir.
+Bu dosya, oyunların kodlarına ve temalarına (CSS renk paletlerine) göre özel olarak hazırlanmış Imagen 4 (veya Midjourney/DALL-E 3) promptlarını içerir. Logolar sade, yaratıcı, modern web UI standartlarına uygun ve oyunun mantığını yansıtacak şekilde tasarlanmıştır.
 
-## 🎨 Tema Renk Paletleri (Genel Yapı)
+## 🎨 Tasarım Standartları (Design Language)
 
-Yapay zeka araçlarının en verimli şekilde çalışması için promptlar **İngilizce** yazılmıştır. Her oyunun promptu şu 2 temaya göre özelleştirilmiştir (Logoların tasarımları ve şekilleri tamamen aynıdır, sadece renkleri temaya göre değişmektedir):
+Tüm logolar aşağıdaki ortak özelliklere sahiptir:
+- **Style:** Minimalist Flat Vector with Premium 3D Frosted Glassmorphism.
+- **Composition:** Perfectly centered, framed within a square aspect ratio.
+- **Details:** Vibrant neon glows, subtle shadows, clean geometric shapes.
+- **Constraint:** Strictly NO text, NO labels, high contrast.
 
-**1. Paira Teması (Karanlık/Mor):** Arka plan `#0a0816` (Koyu Lacivert), vurgular `#8a2be2`, `#b266ff`, `#d8b4fe` (Mor tonları) ve cam/neon parlaması.
-**2. Space Teması (Uzay/Turkuaz):** Arka plan `#040a1f` (Derin Uzay Mavisi), vurgular `#00d2ff`, `#3aedaf` (Cam göbeği ve neon yeşil) ve cam/neon parlaması.
+**1. Paira Teması (Karanlık/Mor):** Arka plan `#0a0816` (Koyu Lacivert), vurgular `#8a2be2`, `#b266ff`, `#d8b4fe` (Mor tonları).
+**2. Space Teması (Uzay/Turkuaz):** Arka plan `#040a1f` (Derin Uzay Mavisi), vurgular `#00d2ff`, `#3aedaf` (Cam göbeği ve neon yeşil).
 
 ---
 
-## 🎮 Oyun Logoları İçin Tam Promptlar (Kopyala-Yapıştır)
+## 🎮 Oyun Logoları Promptları
 
 ### 1. Bağnam
-*Oyun Mantığı: Günün gizli kelimesini tahmin et! Kelimelerin birbirine anlamsal olarak ne kadar yakın olduğunu renk ipuçlarıyla görerek doğru kelimeye ulaşmaya çalış.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing semantic network or a minimalist target consisting of interconnected word nodes and colored proximity rings. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing semantic network or a minimalist target consisting of interconnected word nodes and colored proximity rings. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Semantic Word Game - Guess the secret word based on semantic proximity.*
+- **Paira:** A minimalist, premium flat vector app logo of a glowing semantic network. The design features interconnected word nodes forming a central glowing core with concentric proximity rings. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a glowing semantic network. The design features interconnected word nodes forming a central glowing core with concentric proximity rings. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 2. Krono
-*Oyun Mantığı: Tarihi olayları kronolojik sıraya dizin! Tek başınıza rekor kırmaya çalışın veya bir arkadaşınızla zamana karşı yarışın.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing hourglass merging with a historical timeline or ancient pillars, representing the flow of time and history. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing hourglass merging with a historical timeline or ancient pillars, representing the flow of time and history. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Chronology - Arrange events in time.*
+- **Paira:** A minimalist, premium flat vector app logo of a sleek digital hourglass merging with a glowing timeline axis. Represents the flow of history. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a sleek digital hourglass merging with a glowing timeline axis. Represents the flow of history. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 3. Tabu
-*Oyun Mantığı: Arkadaşlarınızla takımlara ayrılın, yasaklı kelimeleri kullanmadan hedeflenen kelimeyi anlatarak en yüksek puanı toplayın. Klasik eğlenceyi online yaşayın!*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a stylized playing card with abstract shapes representing forbidden words, overlaid with a modern 'X' or a "shhh" symbol. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a stylized playing card with abstract shapes representing forbidden words, overlaid with a modern 'X' or a "shhh" symbol. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Forbidden Words - Describe without using forbidden words.*
+- **Paira:** A minimalist, premium flat vector app logo of a stylized playing card with a sleek glowing 'X' slash overlay, symbolizing "forbidden". Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a stylized playing card with a sleek glowing 'X' slash overlay, symbolizing "forbidden". Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 4. Gizli Kelimeler
-*Oyun Mantığı: Takımınıza liderlik eden ajanın tek kelimelik ipuçlarını takip ederek kendi kelimelerinizi bulun. Dikkat edin, suikastçıya yakalanmayın!*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a sleek secret agent's fedora hat and modern sunglasses, hovering over abstract word tiles. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a sleek secret agent's fedora hat and modern sunglasses, hovering over abstract word tiles. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Codenames - Secret agent finding target words.*
+- **Paira:** A minimalist, premium flat vector app logo of a sleek secret agent silhouette with a glowing digital fedora hat. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a sleek secret agent silhouette with a glowing digital fedora hat. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 5. Kelime Avı
-*Oyun Mantığı: Aralarınızdaki gizli ebeyi uyandırmadan sadece baş harfi verilen kelimede diğer oyuncularla eşleşmeye çalışın. Çok açık verirseniz ebe sizi yakalar!*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing magnifying glass revealing a single highlighted letter block among hidden geometric shapes, symbolizing hunting for words. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing magnifying glass revealing a single highlighted letter block among hidden geometric shapes, symbolizing hunting for words. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Social Deduction / Word Match - Innocent players secretly matching words while avoiding the hidden "seeker/spy".*
+- **Paira:** A minimalist, premium flat vector app logo of two glowing stylized speech bubbles connected by a lock-and-key symbol, surrounded by a subtle shadow of an eavesdropping spy. Represents encrypted communication and social deduction. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of two glowing stylized speech bubbles connected by a lock-and-key symbol, surrounded by a subtle shadow of an eavesdropping spy. Represents encrypted communication and social deduction. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 6. Vampir Köylü
-*Oyun Mantığı: Köydeki haini bul veya köylüleri avla! Gizli rollerle dolu bu efsanevi parti oyununu arkadaşlarınızla online oynayın.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a split stylized face or mask, half peaceful villager silhouette and half sharp vampire fangs, representing hidden roles and deception. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a split stylized face or mask, half peaceful villager silhouette and half sharp vampire fangs, representing hidden roles and deception. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Social Deduction - Hidden roles, deception.*
+- **Paira:** A minimalist, premium flat vector app logo of a split-face mask: one half a peaceful villager, the other a sharp-fanged shadow. Represents hidden roles. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a split-face mask: one half a peaceful villager, the other a sharp-fanged shadow. Represents hidden roles. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
-### 7. İsim Şehir
-*Oyun Mantığı: Defter kalemi bırakın, efsane oyun dijitalde! Belirlenen harfle en hızlı şekilde kategorileri doldurup rakiplerinizi geride bırakın.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a modern digital map pin interacting with a stylized glowing digital pen and a segmented circle representing categories. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a modern digital map pin interacting with a stylized glowing digital pen and a segmented circle representing categories. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+### 7. İsim Şehir (İsim Şehir Hayvan)
+*Logic: Scattergories - Fast category filling.*
+- **Paira:** A minimalist, premium flat vector app logo of a digital map pin combined with a sleek flowing ink pen tip. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a digital map pin combined with a sleek flowing ink pen tip. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 8. Hızlı İsim Şehir
-*Oyun Mantığı: Klasik oyunun daha da hızlandırılmış, heyecan dolu versiyonu! Tek bir harf ve kategori için yarışın, süreniz bitmeden en uzun kelimeyi bulun.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a lightning bolt striking a modern digital map pin and a glowing stopwatch, conveying extreme speed in word finding. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a lightning bolt striking a modern digital map pin and a glowing stopwatch, conveying extreme speed in word finding. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Fast Scattergories - Lightning speed word finding.*
+- **Paira:** A minimalist, premium flat vector app logo of a digital map pin with a dynamic lightning bolt and a stopwatch ring. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a digital map pin with a dynamic lightning bolt and a stopwatch ring. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 9. Bilgi Yarışması
-*Oyun Mantığı: Genel kültürden eğlenceli konulara kadar birçok alanda bilginizi konuşturun. Soruları en hızlı cevaplayan siz olun, puanları toplayın!*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a stylized glowing geometric brain intersecting with a bright star or a dynamic question mark. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a stylized glowing geometric brain intersecting with a bright star or a dynamic question mark. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Quiz - Knowledge and speed.*
+- **Paira:** A minimalist, premium flat vector app logo of a glowing geometric brain with a central spark of intelligence. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a glowing geometric brain with a central spark of intelligence. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 10. Katiplik Düellosu
-*Oyun Mantığı: Klavye hızınızı test edin! Arkadaşlarınıza meydan okuyun, metinleri hatasız ve en hızlı şekilde yazarak düelloyu kazanın.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts two crossed glowing digital keyboards or dynamic typing fingers resembling a duel, conveying typing speed and competition. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts two crossed glowing digital keyboards or dynamic typing fingers resembling a duel, conveying typing speed and competition. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Typing Duel - High-speed typing competition.*
+- **Paira:** A minimalist, premium flat vector app logo of two intersecting glowing mechanical keyboard switches or stylized keyboards in a duel stance. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of two intersecting glowing mechanical keyboard switches or stylized keyboards in a duel stance. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 11. ÇizBil
-*Oyun Mantığı: Biri çizsin, diğerleri tahmin etsin! Arkadaşlarınızla aynı odada buluşup çizim ve tahmin yeteneklerinizi yarıştırın.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing digital stylus or paintbrush elegantly creating a glowing question mark or an eye symbol. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing digital stylus or paintbrush elegantly creating a glowing question mark or an eye symbol. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Draw & Guess - Creativity and guessing.*
+- **Paira:** A minimalist, premium flat vector app logo of a digital stylus drawing a glowing eye of inspiration. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a digital stylus drawing a glowing eye of inspiration. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 12. Çizim Zinciri
-*Oyun Mantığı: Kulaktan kulağa oyununun çizimli hali! Cümleler çizime, çizimler cümlelere dönüşürken ortaya çıkan komik sonuçlara inanamayacaksınız.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts two abstract digital canvases or clipboards connected by a continuous flowing line of paint forming an infinity symbol or chain link. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts two abstract digital canvases or clipboards connected by a continuous flowing line of paint forming an infinity symbol or chain link. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Chain Reaction Drawing - Sequential drawing and guessing.*
+- **Paira:** A minimalist, premium flat vector app logo of two glowing digital canvases connected by a continuous fluid ink chain. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of two glowing digital canvases connected by a continuous fluid ink chain. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 13. Elementler
-*Oyun Mantığı: Suyu dondur, ateşi harlayarak rüzgarı yönet! 1-4 kişilik bu aksiyon dolu platform oyununda zekanızı ve takım ruhunuzu kullanarak bölümleri geçin.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts four abstract elemental shapes (a minimalist flame, a water drop, a geometric leaf, and wind lines) harmoniously interlocking into a dynamic sphere. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts four abstract elemental shapes (a minimalist flame, a water drop, a geometric leaf, and wind lines) harmoniously interlocking into a dynamic sphere. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Action Platformer - Controlling natural elements.*
+- **Paira:** A minimalist, premium flat vector app logo of four stylized element icons (Flame, Drop, Leaf, Wind) orbiting a central glowing sphere. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of four stylized element icons (Flame, Drop, Leaf, Wind) orbiting a central glowing sphere. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
 ### 14. Chat Tabu
-*Oyun Mantığı: Siz anlatın, sohbetinizdeki izleyiciler tahmin etsin! Canlı yayında izleyicilerinizle etkileşiminizi artıracak eğlenceli bir tabu deneyimi.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing chat speech bubble containing a stylized playing card with a modern 'X' or "shhh" symbol, merging chat interaction with forbidden words. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing chat speech bubble containing a stylized playing card with a modern 'X' or "shhh" symbol, merging chat interaction with forbidden words. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+*Logic: Streamer Interactive Tabu - Tabu for streamers/chat.*
+- **Paira:** A minimalist, premium flat vector app logo of a glowing chat bubble containing the stylized 'X' card from the Tabu game. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a glowing chat bubble containing the stylized 'X' card from the Tabu game. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.
 
-### 15. Chat ÇizBil
-*Oyun Mantığı: Çizim yeteneğinizi konuşturun, izleyicileriniz chatten tahmin etsin! İnteraktif bir canlı yayın şöleni sizi bekliyor.*
-- **Paira:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing digital stylus or paintbrush drawing an abstract chat speech bubble that resembles a question mark or an eye. Clean UI icon style, transparent or solid dark navy background (#0a0816), with vibrant purple (#8a2be2), neon purple (#b266ff), and lilac (#d8b4fe) accents. Subtle glowing glassmorphism effect, no text.
-- **Space:** A minimalist, highly creative flat vector app logo perfectly framed and centered in a square aspect ratio. The logo depicts a glowing digital stylus or paintbrush drawing an abstract chat speech bubble that resembles a question mark or an eye. Clean UI icon style, transparent or solid deep space blue background (#040a1f), with bright cyan (#00d2ff) and neon teal (#3aedaf) accents. Subtle glowing glassmorphism effect, no text.
+### 15. Chat ÇizBil (Gartic)
+*Logic: Streamer Interactive Draw - Drawing for streamers/chat.*
+- **Paira:** A minimalist, premium flat vector app logo of a digital stylus drawing a glowing chat bubble that forms an eye shape. Professional 3D frosted glassmorphism, vibrant neon purple (#8a2be2) and lilac (#d8b4fe) accents, centered on a solid dark navy (#0a0816) background. No text.
+- **Space:** A minimalist, premium flat vector app logo of a digital stylus drawing a glowing chat bubble that forms an eye shape. Professional 3D frosted glassmorphism, bright cyan (#00d2ff) and neon teal (#3aedaf) accents, centered on a solid deep space blue (#040a1f) background. No text.

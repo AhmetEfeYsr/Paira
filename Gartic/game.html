@@ -3,7 +3,7 @@
 <head>
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira Gartic | Twitch ve Kick İçin İnteraktif Çizim Oyunu</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
 
@@ -11,19 +11,21 @@
     <link rel="stylesheet" href="style.css">
 
     <!-- Favicons -->
-    <link rel="icon" type="image/webp" href="https://pairaaa.com/main_logo.webp">
-    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.webp">
+    <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
 
     <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
 </head>
 <body>
+    <div id="toast-container" class="toast-container"></div>
     <div class="cizbil-layout">
         <div class="game-area">
             <div class="header-bar">
                 <div class="word-display" id="main-word" title="Bu kelimeyi yayın programında gizleyebilirsiniz">Yükleniyor...</div>
 
                 <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span id="word-counter" style="font-size: 0.85rem; color: var(--text-muted); background: var(--input-bg); padding: 4px 10px; border-radius: 8px;">Kelime #0</span>
                     <div style="font-size: 1rem; font-weight: bold; color: var(--text-main);">
                         <span id="status-badge" style="color: var(--warning); padding: 6px 12px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--warning);">Bağlanıyor...</span>
                     </div>

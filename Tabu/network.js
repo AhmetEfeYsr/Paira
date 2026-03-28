@@ -129,7 +129,7 @@ class TabuNetworkManager extends BaseGameNetwork {
     handlePlayerLeave(peerId) {
         const p = this.engine.state.players[peerId];
         if (p) {
-            this.view.showToast(`${p.name} ayrıldı.`, "info");
+            window.showToast(`${p.name} ayrıldı.`, "info");
             const isCurrentTurn = (this.engine.state.turnId === peerId && this.engine.state.status === 'playing');
             this.engine.removePlayer(peerId);
             if (isCurrentTurn) {
@@ -217,7 +217,7 @@ class TabuNetworkManager extends BaseGameNetwork {
             this.sendToPeer(id, 'KICKED');
             setTimeout(() => {
                 this._handleDisconnection(id); // Force drop
-                this.view.showToast("Oyuncu atıldı.", "info");
+                window.showToast("Oyuncu atıldı.", "info");
             }, 500);
         }
     }

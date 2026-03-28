@@ -105,6 +105,18 @@ export function initGameUI(networkState, myId) {
             if (e.key === 'Enter') submitPrompt(window._networkState, window._myId);
         });
 
+        // Character counter for prompt input
+        const promptInput = document.getElementById('prompt-input');
+        const charCounter = document.getElementById('char-counter');
+        if (promptInput && charCounter) {
+            promptInput.addEventListener('input', () => {
+                const len = promptInput.value.length;
+                const max = promptInput.maxLength || 60;
+                charCounter.textContent = `${len}/${max}`;
+                charCounter.style.color = len >= max ? 'var(--danger)' : 'var(--text-muted)';
+            });
+        }
+
         document.getElementById('btn-submit-drawing').addEventListener('click', () => submitDrawing(window._networkState, window._myId));
     }
 }

@@ -14,8 +14,8 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <!-- Favicons -->
-    <link rel="icon" type="image/webp" href="https://pairaaa.com/main_logo.webp">
-    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.webp">
+    <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
 
     <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
@@ -130,7 +130,7 @@
             <!-- Sonuç Ekranı -->
             <div id="result-screen" class="result-screen card" style="display: none; text-align: center; margin: auto; max-width: 600px; width: 100%; padding: 3rem 2rem;">
                 <h2 id="result-title" style="margin-bottom: 2rem; font-size: 2.5rem; color: var(--text-main);"></h2>
-                <div class="stats-grid" style="display: flex; justify-content: space-around; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+                <div class="stats-grid" style="display: flex; justify-content: space-around; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
                     <div class="stat-box" style="background: var(--input-bg);">
                         <span class="stat-label">Hız (WPM)</span>
                         <span class="stat-value" id="final-wpm" style="color: var(--success);">0</span>
@@ -142,6 +142,14 @@
                     <div class="stat-box" style="background: var(--input-bg);">
                         <span class="stat-label">Süre</span>
                         <span class="stat-value" id="final-time" style="color: var(--warning);">0s</span>
+                    </div>
+                </div>
+                <div id="opponent-stats" style="display: none; margin-bottom: 2rem; padding: 1rem; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--btn-secondary-border);">
+                    <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.8rem; font-weight: 500;">Rakip İstatistikleri</div>
+                    <div style="display: flex; justify-content: space-around; gap: 0.5rem; flex-wrap: wrap;">
+                        <div style="text-align: center;"><span style="color: var(--text-muted); font-size: 0.8rem; display: block;">WPM</span><strong id="opp-final-wpm" style="color: var(--danger); font-size: 1.3rem;">0</strong></div>
+                        <div style="text-align: center;"><span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Doğruluk</span><strong id="opp-final-accuracy" style="color: var(--danger); font-size: 1.3rem;">%0</strong></div>
+                        <div style="text-align: center;"><span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Süre</span><strong id="opp-final-time" style="color: var(--danger); font-size: 1.3rem;">0s</strong></div>
                     </div>
                 </div>
                 <button id="btn-play-again" class="btn btn-primary btn-block" style="display: none; padding: 14px; font-size: 1.1rem; max-width: 300px; margin: 0 auto;">Tekrar Oyna</button>

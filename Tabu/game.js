@@ -71,11 +71,24 @@ class TabuGameEngine {
         this.allWords = words && words.length > 0 ? words : this.fallbackWords;
     }
 
-    filterWords(category) {
+    filterWords(category, minDifficulty = 1, maxDifficulty = 100) {
         let pool = this.allWords;
-        if (category && category !== 'Hepsi') {
-            pool = pool.filter(w => w.kategori === category);
+        
+        // Category filtering - handle both string and array
+        if (category) {
+            const cats = Array.isArray(category) ? category : [category];
+            const hasAll = cats.includes('Hepsi');
+            if (!hasAll && cats.length > 0) {
+                pool = pool.filter(w => cats.includes(w.kategori));
+            }
         }
+        
+        // Difficulty filtering
+        pool = pool.filter(w => {
+            const d = w.zorluk || 50;
+            return d >= minDifficulty && d <= maxDifficulty;
+        });
+        
         if (pool.length === 0) pool = this.fallbackWords;
         this.state.activeWords = [...pool];
         this.seededShuffle(this.state.activeWords, this.gameSeed);
@@ -128,7 +141,7 @@ class TabuGameEngine {
         this.state.tabooPenalty = parseInt(settings.penalty) || 1;
 
         this.gameSeed = window.PairaTime.now();
-        this.filterWords(settings.category);
+        this.filterWords(settings.category, parseInt(settings.minDifficulty) || 1, parseInt(settings.maxDifficulty) || 100);
 
         this.state.turnOrder = this.generateTurnOrder();
         this.state.turnIndex = 0;

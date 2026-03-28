@@ -83,6 +83,7 @@ class CizBilGameEngine {
         let dIndex = activePlayers.indexOf(this.state.currentDrawer);
         dIndex = (dIndex + 1) % activePlayers.length;
         this.state.currentDrawer = activePlayers[dIndex];
+        this._timerShortened = false; // Reset timer shortened flag for new round
         this.state.guessedCorrectly = [];
         this.state.revealWord = null;
 
@@ -204,7 +205,8 @@ class CizBilGameEngine {
 
         if (activeGuessersCount > 0 && this.state.guessedCorrectly.length >= activeGuessersCount) {
             this.checkWinOrNextRound();
-        } else if (this.state.guessedCorrectly.length === 1 && activeGuessersCount > 1) {
+        } else if (this.state.guessedCorrectly.length === 1 && activeGuessersCount > 1 && !this._timerShortened) {
+            this._timerShortened = true;
             clearTimeout(this.turnTimeout);
             this.localTurnEndTime = window.PairaTime.now() + 10000;
             this.setState(this.state);
@@ -502,10 +504,17 @@ class CizBilView {
             return;
         }
 
+        // FIX: Disable chat input for the drawer, enable for guessers
+        const chatInput = document.getElementById('chat-input');
+        const btnSendChat = document.getElementById('btn-send-chat');
+
         if (state.currentDrawer === this.myId) {
             msgEl.textContent = 'Çizen Sensin!';
             document.getElementById('toolbar').style.display = 'flex';
             document.getElementById('canvas-overlay').style.display = 'none';
+            // Disable chat for drawer
+            if (chatInput) { chatInput.disabled = true; chatInput.placeholder = 'Çizen kişi mesaj gönderemez'; }
+            if (btnSendChat) btnSendChat.disabled = true;
 
             if (state.choices) {
                 document.getElementById('word-choice-overlay').style.display = 'flex';
@@ -521,6 +530,9 @@ class CizBilView {
             msgEl.textContent = 'Tahmin Et!';
             document.getElementById('toolbar').style.display = 'none';
             document.getElementById('canvas-overlay').style.display = 'block';
+            // Enable chat for guessers
+            if (chatInput) { chatInput.disabled = false; chatInput.placeholder = 'Tahmin yaz...'; }
+            if (btnSendChat) btnSendChat.disabled = false;
             document.getElementById('word-choice-overlay').style.display = 'none';
 
             if (state.choices) {
