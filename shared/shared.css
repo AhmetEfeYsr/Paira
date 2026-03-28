@@ -66,39 +66,6 @@
     --warning-hover: rgba(255, 209, 102, 0.3);
 }
 
-[data-theme="light"] {
-    --bg-deep: #fdfdfd; --bg-navy: #f0f2f5; --bg-panel: rgba(255, 255, 255, 0.95);
-    --card-bg: rgba(255, 255, 255, 0.6);
-    --footer-bg: #F0F0FF;
-    --primary-purple: #3a86ff; --neon-purple: #4ea8de; --lilac: #48cae4;
-    --lilac-muted: rgba(58, 134, 255, 0.3); --text-main: #2b2d42;
-    --text-muted: #6c757d; --glass-border: 1px solid rgba(58, 134, 255, 0.3);
-    --glass-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.05);
-    --neon-glow-rgba: rgba(78, 168, 222, 0.3);
-    --primary-rgb: 58, 134, 255;
-    --gradient-end: #90e0ef;
-    --success: #2a9d8f; --danger: #e63946; --warning: #e9c46a;
-    --input-bg: rgba(0, 0, 0, 0.03);
-    --item-bg: rgba(0, 0, 0, 0.03);
-    --item-hover-bg: rgba(0, 0, 0, 0.06);
-    --msg-bg: rgba(0, 0, 0, 0.05);
-    --msg-self-bg: rgba(var(--primary-rgb), 0.15);
-    --btn-secondary-bg: rgba(0, 0, 0, 0.05);
-    --btn-secondary-border: rgba(0, 0, 0, 0.1);
-    --btn-secondary-hover: rgba(0, 0, 0, 0.15);
-    --overlay-bg: rgba(255, 255, 255, 0.8);
-    --modal-bg: rgba(255, 255, 255, 0.95);
-    --toast-bg: rgba(255, 255, 255, 0.95);
-    --code-bg: rgba(0, 0, 0, 0.05);
-    --header-bg: rgba(var(--primary-rgb), 0.1);
-    --success-bg: rgba(42, 157, 143, 0.2);
-    --success-hover: rgba(42, 157, 143, 0.3);
-    --danger-bg: rgba(230, 57, 70, 0.2);
-    --danger-hover: rgba(230, 57, 70, 0.3);
-    --warning-bg: rgba(233, 196, 106, 0.2);
-    --warning-hover: rgba(233, 196, 106, 0.3);
-}
-
 .rule-card {
     background: var(--item-bg);
     border: 1px solid var(--lilac-muted);
@@ -184,18 +151,6 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     outline: none;
     border-color: var(--neon-purple);
     background: rgba(var(--primary-rgb), 0.1);
-    box-shadow: 0 0 15px var(--neon-glow-rgba);
-}
-
-[data-theme="light"] input[type="text"], [data-theme="light"] input[type="email"], [data-theme="light"] input[type="password"], [data-theme="light"] input[type="number"], [data-theme="light"] textarea, [data-theme="light"] select {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid var(--btn-secondary-bg);
-    color: var(--text-main);
-}
-
-[data-theme="light"] input[type="text"]:focus, [data-theme="light"] input[type="email"]:focus, [data-theme="light"] input[type="password"]:focus, [data-theme="light"] input[type="number"]:focus, [data-theme="light"] textarea:focus, [data-theme="light"] select:focus {
-    background: var(--text-main);
-    border-color: var(--neon-purple);
     box-shadow: 0 0 15px var(--neon-glow-rgba);
 }
 
@@ -838,22 +793,6 @@ body:has(.cookie-banner.show) #app-container {
     border-color: var(--neon-purple);
 }
 
-[data-theme="light"] .floating-top-nav .theme-select-btn,
-[data-theme="light"] .floating-top-nav .nav-btn,
-[data-theme="light"] .floating-left-nav .nav-btn {
-    background: var(--card-bg);
-    border: 1px solid var(--btn-secondary-border);
-    color: var(--text-main);
-    box-shadow: 0 2px 10px var(--input-bg);
-}
-
-[data-theme="light"] .floating-top-nav .theme-select-btn:hover,
-[data-theme="light"] .floating-top-nav .nav-btn:hover,
-[data-theme="light"] .floating-left-nav .nav-btn:hover {
-    background: var(--bg-panel);
-    box-shadow: 0 4px 12px var(--input-bg);
-}
-
 @media (max-width: 600px) {
     .floating-top-nav .nav-text,
     .floating-left-nav .nav-text {
@@ -878,14 +817,6 @@ body:has(.cookie-banner.show) #app-container {
         --team-b-bg: rgba(52, 152, 219, 0.2);
         --neutral-color: #95a5a6;
         --assassin-color: #000000;
-    }
-    [data-theme="light"] {
-        --team-a-color: #e63946;
-        --team-b-color: #3a86ff;
-        --team-a-bg: rgba(230, 57, 70, 0.2);
-        --team-b-bg: rgba(58, 134, 255, 0.2);
-        --neutral-color: #8d99ae;
-        --assassin-color: #1d3557;
     }
     [data-theme="space"] {
         --team-a-color: #ff4d4d;
@@ -1048,13 +979,4 @@ body.fullscreen-active .leaderboard {
 
 .btn-fullscreen-toggle:hover {
     background: rgba(0, 0, 0, 0.8);
-}
-
-[data-theme="light"] .btn-fullscreen-toggle {
-    background: rgba(255, 255, 255, 0.7);
-    color: black;
-}
-
-[data-theme="light"] .btn-fullscreen-toggle:hover {
-    background: rgba(255, 255, 255, 0.9);
 }

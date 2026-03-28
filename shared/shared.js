@@ -69,7 +69,6 @@ class PairaSharedUI {
                 <select class="theme-select-btn" onchange="window.pairaUI.switchTheme(this.value)">
                     <option value="paira" ${savedTheme === 'paira' ? 'selected' : ''}>Paira</option>
                     <option value="space" ${savedTheme === 'space' ? 'selected' : ''}>Space</option>
-                    <option value="light" ${savedTheme === 'light' ? 'selected' : ''}>Light</option>
                 </select>
             </div>`;
 
