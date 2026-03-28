@@ -6,6 +6,8 @@ let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, s
 let hasWon = false;
 let hintsUsed = 0; // Kaç ipucu kullanıldı
 let hintDataCache = null;
+let lastHintStage = null;
+let lastHintType = null;
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -48,10 +50,12 @@ function resetGameState() {
     hasWon = false;
     hintsUsed = 0;
     hintDataCache = null;
+    lastHintStage = null;
+    lastHintType = null;
 
     const btnHint = document.getElementById('btn-hint');
     if (btnHint) {
-        btnHint.textContent = "İpucu Al (3)";
+        btnHint.textContent = "İpucu Al";
         btnHint.disabled = false;
         btnHint.style.opacity = "1";
     }
@@ -389,45 +393,50 @@ async function handleGiveUp() {
 // Utils
 async function handleHint() {
     if (hasWon) return;
-    if (hintsUsed >= 3) {
-        showToast("Tüm ipucu haklarınızı kullandınız.", "warning");
-        return;
-    }
 
     const btnHint = document.getElementById('btn-hint');
     btnHint.disabled = true;
+
+    const stages = [500, 300, 150, 100, 50, 30, 10, 5, 3];
+    let targetN = null;
+
+    // Bulunan kelimelerden herhangi birinin sırası (rank) aşama (N) değerinden küçük eşit mi?
+    // Küçük veya eşit değilse, o aşama için ipucu vereceğiz.
+    for (const n of stages) {
+        if (!guesses.some(g => g.rank <= n)) {
+            targetN = n;
+            break;
+        }
+    }
+
+    if (targetN === null) {
+        showToast("Artık ipucuna ihtiyacınız yok, çok yaklaştınız!", "success");
+        btnHint.disabled = false;
+        return;
+    }
 
     let hintKey = "";
     let hintTitle = "";
     let isDefinition = true;
 
-    // Hint mantığı:
-    // 1. İpucu: 300. tanım
-    // 2. İpucu: 300 bilinmediyse 300 kelime, bilindiyse 200 tanım
-    // 3. İpucu: 200 bilinmediyse 200 kelime, bilindiyse 100 tanım
-
-    if (hintsUsed === 0) {
-        hintKey = "hint-300-tanim";
-        hintTitle = "300. Kelime Tanımı";
-    } else if (hintsUsed === 1) {
-        const is300Guessed = guesses.some(g => g.rank === 300);
-        if (!is300Guessed) {
-            hintKey = "hint-300-kelime";
-            hintTitle = "300. Kelime";
+    if (targetN !== lastHintStage) {
+        // Yeni bir aşamaya geçildi, tanım vereceğiz.
+        lastHintStage = targetN;
+        lastHintType = "tanim";
+        hintKey = `hint-${targetN}-tanim`;
+        hintTitle = `${targetN}. Kelime Tanımı`;
+    } else {
+        // Zaten bu aşamanın tanımını aldıysa kelimeyi vereceğiz.
+        if (lastHintType === "tanim") {
+            lastHintType = "kelime";
+            hintKey = `hint-${targetN}-kelime`;
+            hintTitle = `${targetN}. Kelime`;
             isDefinition = false;
-        } else {
-            hintKey = "hint-200-tanim";
-            hintTitle = "200. Kelime Tanımı";
-        }
-    } else if (hintsUsed === 2) {
-        const is200Guessed = guesses.some(g => g.rank === 200);
-        if (!is200Guessed) {
-            hintKey = "hint-200-kelime";
-            hintTitle = "200. Kelime";
+        } else if (lastHintType === "kelime") {
+            // Zaten kelimeyi aldı ama tahmin etmediyse tekrar hatırlatacağız
+            hintKey = `hint-${targetN}-kelime`;
+            hintTitle = `${targetN}. Kelime`;
             isDefinition = false;
-        } else {
-            hintKey = "hint-100-tanim";
-            hintTitle = "100. Kelime Tanımı";
         }
     }
 
@@ -440,10 +449,9 @@ async function handleHint() {
 
         if (data) {
             let displayData = isDefinition ? data : data.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR');
-            let hintMessage = `İpucu ${hintsUsed + 1} (${hintTitle}):\n\n${displayData}`;
+            let hintMessage = `İpucu (${hintTitle}):\n\n${displayData}`;
             
             hintsUsed++;
-            btnHint.textContent = `İpucu Al (${3 - hintsUsed})`;
             alert(hintMessage);
         } else {
             showToast("İpucu verisi bulunamadı.", "error");
@@ -452,12 +460,7 @@ async function handleHint() {
         console.error("İpucu çekilirken hata:", error);
         showToast("İpucu alınamadı. Lütfen tekrar deneyin.", "error");
     } finally {
-        if (hintsUsed < 3) {
-            btnHint.disabled = false;
-        } else {
-            btnHint.disabled = true;
-            btnHint.style.opacity = "0.5";
-        }
+        btnHint.disabled = false;
     }
 }
 
