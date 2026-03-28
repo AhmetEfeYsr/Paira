@@ -212,15 +212,15 @@ async function handleGuess() {
             inputEl.classList.add('error-shake');
             setTimeout(() => inputEl.classList.remove('error-shake'), 400);
         } else {
-            // Group homonyms by base word and keep the one with the highest score
-            let groupedData = {};
+            // Find the single best match among all variants and homonyms
+            let bestMatch = null;
             for (const item of foundData) {
                 const finalData = item.data;
                 const baseWord = item.word.replace(/_\d+$/, '');
                 
                 if (typeof finalData === "object" && typeof finalData.r === "number" && typeof finalData.s === "number") {
-                    if (!groupedData[baseWord] || finalData.s > groupedData[baseWord].s) {
-                        groupedData[baseWord] = {
+                    if (!bestMatch || finalData.s > bestMatch.s) {
+                        bestMatch = {
                             word: baseWord,
                             r: finalData.r,
                             s: finalData.s
@@ -229,16 +229,19 @@ async function handleGuess() {
                 }
             }
 
-            // Add grouped best homonyms as guesses
             let addedAny = false;
-            for (const baseWord in groupedData) {
-                const bestData = groupedData[baseWord];
-                const rank = bestData.r;
-                const score = bestData.s;
 
-                // Eğer kelime önceden eklenmişse atla
-                if(guesses.some(g => g.word === baseWord)) {
-                    continue;
+            if (bestMatch) {
+                const baseWord = bestMatch.word;
+                const rank = bestMatch.r;
+                const score = bestMatch.s;
+
+                // Eğer kelime önceden eklenmişse uyarı ver ve iptal et
+                if (guesses.some(g => g.word === baseWord)) {
+                    showToast("Bu kelimeyi zaten tahmin ettiniz!", "warning");
+                    inputEl.value = "";
+                    inputEl.focus();
+                    return;
                 }
 
                 // Add guess
