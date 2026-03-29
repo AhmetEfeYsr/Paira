@@ -1,0 +1,23 @@
+{
+  "name": "Paira Games",
+  "short_name": "Paira",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f0220",
+  "theme_color": "#1f0220",
+  "description": "Paira Games, arkadaşlarınızla oynanacak parti oyunları, ücretsiz tarayıcı oyunları, Kick.com yayıncı oyunları ve indirmesiz oyunlar sunan lider bir online çok oyunculu platformdur.",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
