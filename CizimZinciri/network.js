@@ -310,7 +310,7 @@ function forceSubmitTasks() {
             networkState.stories[ownerId].push({
                 type: isDrawingTurn ? 'draw' : 'text',
                 authorId: pid,
-                content: isDrawingTurn ? '' : '... (Zamanında yazamadı)'
+                content: isDrawingTurn ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' : '... (Zamanında yazamadı)'
             });
             networkState.completedTasks[pid] = true;
         }

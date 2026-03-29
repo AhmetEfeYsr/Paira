@@ -191,7 +191,9 @@ class ChatTabuGameEngine {
             this.setState(this.state);
         }
 
-        if (this.onTimeUp) this.onTimeUp(this.state);
+        if (!this.state.isGameOver) {
+            this.startTimer();
+        }
     }
 
     startTimer() {

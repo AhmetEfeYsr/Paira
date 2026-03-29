@@ -98,7 +98,7 @@ class GizliKelimelerEngine {
     }
 
     startRenderTimer() {
-        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.renderFrame) clearTimeout(this.renderFrame);
 
         let lastTickSec = -1;
 
@@ -124,9 +124,9 @@ class GizliKelimelerEngine {
                 return;
             }
 
-            this.renderFrame = requestAnimationFrame(tick);
+            this.renderFrame = setTimeout(tick, 100);
         };
-        this.renderFrame = requestAnimationFrame(tick);
+        this.renderFrame = setTimeout(tick, 100);
     }
 
     generateBoard(size, startingTeam) {

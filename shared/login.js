@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById('username-input');
     const roomCodeInput = document.getElementById('room-code-input');
 
+    if (usernameInput) {
+        const savedName = localStorage.getItem('savedUsername');
+        if (savedName) {
+            usernameInput.value = savedName;
+        }
+    }
+
     const handleLogin = (isHosting, isSolo = false) => {
         if (window.PairaAudio) window.PairaAudio.init();
         
@@ -40,6 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check Easter Egg
         const delay = window.checkEasterEgg ? window.checkEasterEgg(nameInput) : 0;
+
+        localStorage.setItem('savedUsername', nameInput);
 
         // Store info in sessionStorage to use in app.js / network.js / game.js
         // We set both 'username' and 'playerName' to ensure compatibility with all games

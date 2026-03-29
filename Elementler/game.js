@@ -431,7 +431,13 @@ class GameManager {
     triggerFinish(role) {
         showToast(`${role.toUpperCase()} kapıya ulaştı! Bekliyor...`, 'success');
         if(NetworkManager.isHost()) {
-            // Host logicTick'te kontrol ediyor
+            const myId = NetworkManager.getMyId();
+            const p = this.engine.players[myId];
+            if (p) {
+                p.vx = 0; p.vy = 0; p.finished = true;
+                this.executeActionLocally('MARK_FINISH_DOOR', { role: p.role });
+                NetworkManager.sendGameAction('MARK_FINISH_DOOR', { role: p.role });
+            }
         } else {
             NetworkManager.sendGameAction('PLAYER_FINISH', { role });
         }

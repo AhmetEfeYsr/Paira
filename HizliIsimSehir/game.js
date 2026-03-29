@@ -56,9 +56,13 @@ class HizliIsimSehirGameEngine {
                 this.state.status = 'PLAYING';
                 const totalPlayers = Object.keys(this.state.players).length;
                 if (this.state.currentPlayerIndex >= totalPlayers) {
+                    this.state.status = 'SCOREBOARD';
+                    this.setState({ players: this.state.players });
                     if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores(null, 0));
+                    return;
                 } else {
                     this.startNextTurn(this.state.round, this.state.currentPlayerIndex);
+                    return;
                 }
             }
         }
@@ -458,6 +462,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         const totalPlayers = Object.keys(this.state.players).length;
 
         if (this.state.currentPlayerIndex >= totalPlayers) {
+            this.state.status = 'SCOREBOARD';
+            this.setState(this.state);
             if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores(null, 0));
         } else {
             this.startNextTurn(this.state.round, this.state.currentPlayerIndex);

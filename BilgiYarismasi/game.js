@@ -160,6 +160,7 @@ class BilgiYarismasiGameEngine {
 
     handleAnswer(playerId, choiceIndex) {
         if (!this.isHost || this.state.status !== 'playing' || this.isRoundEnding) return;
+        if (!this.state.players[playerId]) return;
         if (this.state.answersInRound[playerId]) return; 
 
         const timeRemaining = Math.max(0, this.localTurnEndTime - window.PairaTime.now());

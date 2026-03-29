@@ -40,8 +40,10 @@ class CizBilNetwork extends BaseGameNetwork {
                 const hostState = JSON.parse(JSON.stringify(state));
                 const isHostDrawer = (this.myId === state.currentDrawer);
                 
-                if (!isHostDrawer && hostState.status === 'playing' && hostState.currentWord) {
-                    hostState.currentWord = hostState.currentWord.split(/\s+/).map(word => '_ '.repeat(word.length).trim()).join('   ');
+                if (!isHostDrawer && hostState.status === 'playing') {
+                    if (hostState.currentWord) {
+                        hostState.currentWord = hostState.currentWord.split(/\s+/).map(word => '_ '.repeat(word.length).trim()).join('   ');
+                    }
                     hostState.choices = null;
                 }
                 
@@ -74,8 +76,10 @@ class CizBilNetwork extends BaseGameNetwork {
             const safeState = JSON.parse(JSON.stringify(fullState));
             safeState.wordsLeft = [];
             
-            if (!isDrawer && safeState.status === 'playing' && safeState.currentWord) {
-                safeState.currentWord = safeState.currentWord.split(/\s+/).map(word => '_ '.repeat(word.length).trim()).join('   ');
+            if (!isDrawer && safeState.status === 'playing') {
+                if (safeState.currentWord) {
+                    safeState.currentWord = safeState.currentWord.split(/\s+/).map(word => '_ '.repeat(word.length).trim()).join('   ');
+                }
                 safeState.choices = null;
             }
             
@@ -110,7 +114,8 @@ class CizBilNetwork extends BaseGameNetwork {
             
             const isCorrect = guessResult === true;
             const name = this.engine.state.players[senderId]?.name || 'Oyuncu';
-            const chatMsg = { name, text: payload.text, isCorrect };
+            const chatMsgText = isCorrect ? '***' : payload.text;
+            const chatMsg = { name, text: chatMsgText, isCorrect };
             
             this.view.addChatMessage(name, payload.text, isCorrect);
             if (isCorrect && window.PairaAudio) window.PairaAudio.play('correct');

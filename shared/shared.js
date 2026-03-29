@@ -73,6 +73,20 @@ class PairaSharedUI {
         const basePath = this.getBasePath();
         const isGamePage = window.location.pathname.endsWith('game.html');
 
+        // Oyun sayfasına doğrudan girişi engelle (Eğer gerekli bilgiler sessionStorage'da yoksa)
+        if (isGamePage) {
+            const hasUsername = sessionStorage.getItem('username') || sessionStorage.getItem('playerName');
+            const isSolo = sessionStorage.getItem('isSolo') === 'true';
+            const hasRoomCode = sessionStorage.getItem('roomCode');
+            const isHost = sessionStorage.getItem('isHost') === 'true';
+
+            // Tek kişilik oyun değilse ve oda kodu yoksa (veya host değilse) ya da kullanıcı adı yoksa
+            if (!hasUsername || (!isSolo && !hasRoomCode && !isHost)) {
+                window.location.href = 'index.html';
+                return;
+            }
+        }
+
         // Top Navigation (Theme Switcher only, on the right)
         const savedTheme = localStorage.getItem('paira_theme') || 'paira';
         let topNavHTML = `

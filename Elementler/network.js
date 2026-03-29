@@ -190,7 +190,9 @@ function handleData(data, peerId) {
             return;
         }
         // Sıradaki boş elementi ata
-        let assignedRole = ELEMENT_ROLES[playerCount];
+        const assignedRoles = Object.values(window.gameApp.state.players).map(p => p.role);
+        let assignedRole = ELEMENT_ROLES.find(r => !assignedRoles.includes(r));
+        if (!assignedRole) assignedRole = ELEMENT_ROLES[0]; // fallback
 
         window.gameApp.state.players[data.id] = {
             id: data.id,

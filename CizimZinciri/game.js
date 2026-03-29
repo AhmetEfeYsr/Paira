@@ -262,7 +262,7 @@ export function renderAlbumState(networkState) {
             title.style.textAlign = 'center';
             title.style.fontSize = '2rem';
             title.style.marginTop = '20px';
-            title.textContent = `${networkState.players[item.ownerId].name}'in Başlattığı Hikaye`;
+            title.textContent = `${networkState.players[item.ownerId]?.name || 'Bilinmeyen'}'in Başlattığı Hikaye`;
             container.appendChild(title);
         } else if (item.type === 'ENTRY') {
             const step = item.stepData;

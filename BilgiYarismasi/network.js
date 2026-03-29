@@ -50,11 +50,15 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
                 this.broadcastState({ state: stateCopy, hostId: this.myId });
             };
 
+            let lastSyncSec = -1;
             this.engine.onTimerTick = (secs) => {
                 this.view.updateTimer(secs);
-                if (secs % 5 === 0 || secs <= 5) {
-                    const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
-                    this.broadcast('SYNC_TIME', { durationLeft });
+                if (lastSyncSec !== secs) {
+                    lastSyncSec = secs;
+                    if (secs % 5 === 0 || secs <= 5) {
+                        const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
+                        this.broadcast('SYNC_TIME', { durationLeft });
+                    }
                 }
             };
             

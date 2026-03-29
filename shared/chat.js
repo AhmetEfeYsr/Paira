@@ -51,6 +51,7 @@ class ChatListener {
             this.ws.send('PASS SCHMOOPIIE');
             this.ws.send(`NICK justinfan${Math.floor(Math.random() * 80000)}`);
             this.ws.send(`JOIN #${this.channel}`);
+            if (this.onOpen) this.onOpen();
         };
 
         this.ws.onmessage = (event) => {
@@ -75,6 +76,7 @@ class ChatListener {
 
         this.ws.onclose = () => {
             console.log('[Twitch] Disconnected.');
+            if (this.onClose) this.onClose();
         };
     }
 
@@ -116,6 +118,7 @@ class ChatListener {
                 }
             });
             this.ws.send(subscribeMsg);
+            if (this.onOpen) this.onOpen();
         };
 
         this.ws.onmessage = (event) => {
@@ -142,6 +145,7 @@ class ChatListener {
 
         this.ws.onclose = () => {
             console.log('[Kick] Disconnected from Pusher.');
+            if (this.onClose) this.onClose();
         };
     }
 }

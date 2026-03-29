@@ -259,7 +259,7 @@ async function handleGuess() {
             }
             
             // Eğer none valid (foundData var ama data geçersizse)
-            if (!addedAny && guesses.length === 0 && !hasWon) {
+            if (!addedAny && !hasWon) {
                  throw new Error("Geçersiz veri formatı döndü.");
             }
 
