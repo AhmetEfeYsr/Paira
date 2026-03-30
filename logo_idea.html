@@ -37,10 +37,13 @@
             background: linear-gradient(145deg, var(--modal-bg), #1a1640);
             border: 3px solid var(--neon-purple);
             border-radius: 20px;
-            width: 320px;
+            width: 280px; /* Narrower width for a vertical rectangle */
+            min-height: 400px; /* Taller height */
             text-align: center;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(138, 43, 226, 0.3);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
             animation: float 6s ease-in-out infinite;
         }
 
@@ -51,12 +54,13 @@
 
         .card-header {
             background: var(--header-bg);
-            padding: 20px;
+            padding: 25px 20px;
             border-bottom: 2px solid var(--primary-purple);
+            flex-shrink: 0;
         }
 
         .card-header h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: var(--text-main);
             margin: 0;
             letter-spacing: 1px;
@@ -69,31 +73,32 @@
 
         .forbidden-words {
             list-style: none;
-            padding: 25px;
+            padding: 40px 25px;
             margin: 0;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 20px;
         }
 
         .forbidden-words li {
-            font-size: 1.2rem;
-            margin-bottom: 12px;
+            font-size: 1.3rem;
             color: var(--lilac);
             font-weight: 600;
             letter-spacing: 0.5px;
             opacity: 0.9;
         }
 
-        .forbidden-words li:last-child {
-            margin-bottom: 0;
-        }
-
         .card-footer {
-            padding: 10px;
+            padding: 15px;
             font-size: 0.7rem;
             color: var(--primary-purple);
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: 600;
             border-top: 1px solid rgba(138, 43, 226, 0.1);
+            flex-shrink: 0;
         }
     </style>
 </head>
