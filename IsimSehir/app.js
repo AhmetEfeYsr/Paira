@@ -1278,7 +1278,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (finishedVoters.has(senderId)) return; // Prevent double-counting
 
         finishedVoters.add(senderId);
-        const totalPlayers = Object.keys(network.players).length;
+        const totalPlayers = Math.max(Object.keys(gameState.playerAnswers).length, 1);
         if (finishedVoters.size >= totalPlayers) {
             resolveVotesAndScore();
         }

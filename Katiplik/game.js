@@ -329,6 +329,9 @@ class KatiplikGame {
         const textInput = document.getElementById('text-input');
         textInput.value = '';
         
+        this.calculateWPM();
+        this.updateProgress();
+
         if (this.currentWordIndex >= this.words.length) {
             this.finishGame();
         } else {
@@ -346,10 +349,6 @@ class KatiplikGame {
                     behavior: 'smooth'
                 });
             }
-            
-            // Kelime geçişinde WPM hesapla
-            this.calculateWPM();
-            this.updateProgress();
         }
     }
 
@@ -520,6 +519,9 @@ class KatiplikGame {
         document.getElementById('p2-progress').style.width = "0%";
         document.getElementById('p1-wpm').textContent = "0 WPM";
         document.getElementById('p2-wpm').textContent = "0 WPM";
+        
+        const oppStats = document.getElementById('opponent-stats');
+        if (oppStats) oppStats.style.display = 'none';
         
         const textInput = document.getElementById('text-input');
         if (textInput) {

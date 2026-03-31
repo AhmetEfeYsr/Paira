@@ -850,6 +850,10 @@ function resolveNight() {
             gameState.votes = {};
             addLog('Tartışma bitti. Oylama başladı.');
             broadcastState();
+            
+            startTimer(30, () => {
+                if (gameState.status === 'VOTING') resolveVoting();
+            });
         });
     }, 9000); 
 }
@@ -920,6 +924,10 @@ function resolveVoting() {
             gameState.votes = {}; // reset votes for judgement
             addLog(`Savunma bitti. Oylama başlıyor: Suçlu mu, Masum mu?`);
             broadcastState();
+            
+            startTimer(20, () => {
+                if (gameState.status === 'JUDGEMENT') resolveJudgement();
+            });
         });
     } else {
         addLog('Oylama berabere bitti veya pas geçildi. Kimse asılmadı.');

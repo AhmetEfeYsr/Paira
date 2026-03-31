@@ -211,6 +211,9 @@ class KronoNetwork {
             case 'ROUND_OVER':
                 this.game.endRound(data.scores);
                 break;
+            case 'RETURN_LOBBY':
+                this.game.returnToLobby();
+                break;
         }
     }
 

@@ -7,17 +7,15 @@ class KelimeAviNetwork extends BaseGameNetwork {
             onStateSync: (state) => this.handleStateSync(state),
             onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
             onPlayerLeave: (id) => this.handlePlayerLeave(id),
-            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId)
+            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId),
+            onPeerReady: (id) => {
+                this.view.setMyId(id);
+                this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
+            }
         });
         
         this.engine = engine;
         this.view = view;
-        
-        this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.view.setMyId(id);
-            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
-        };
 
         this.lobbyUI = new SharedLobbyUI({
             roomCode: '',
@@ -144,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const view = new KelimeAviView({
         onStartGame: (settings) => {
             if (!engine.startGame(settings)) {
-                if (window.showToast) window.showToast("Oynamak için en az 1 oyuncu gerekiyor!", "warning");
+                if (window.showToast) window.showToast("Oynamak için en az 3 oyuncu gerekiyor!", "warning");
             }
         },
         onSubmitMasum: (word) => {

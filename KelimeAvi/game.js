@@ -131,7 +131,7 @@ class KelimeAviGameEngine {
     startGame(settings) {
         if (!this.isHost) return;
         const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
-        if (playerIds.length < 1) return false;
+        if (playerIds.length < 3) return false;
 
         this.state.totalRounds = parseInt(settings.totalRounds) || 3;
         this.state.turnDuration = parseInt(settings.turnDuration) || 45;
@@ -285,7 +285,8 @@ class KelimeAviGameEngine {
     handleRoundEndTransition(isJackpot, isEbeWin, isMasumWin) {
         if (!isJackpot && !isEbeWin && isMasumWin) {
             this.state.status = 'playing';
-            this.localEndTime = window.PairaTime.now() + (this.state.timeIncrease * 1000);
+            const left = Math.max(0, this.localEndTime - window.PairaTime.now());
+            this.localEndTime = window.PairaTime.now() + left + (this.state.timeIncrease * 1000);
             this.state.submittedWords = {};
             this.state.ebeGuesses = [];
             this.setState(this.state);

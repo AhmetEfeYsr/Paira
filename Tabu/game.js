@@ -137,8 +137,10 @@ class TabuGameEngine {
         this.state.round = 1;
         this.state.totalRounds = parseInt(settings.rounds) || 3;
         this.state.turnDuration = parseInt(settings.duration) || 60;
-        this.state.passLimit = parseInt(settings.passLimit) || 3;
-        this.state.tabooPenalty = parseInt(settings.penalty) || 1;
+        const pLimit = parseInt(settings.passLimit);
+        this.state.passLimit = isNaN(pLimit) ? 3 : pLimit;
+        const pPen = parseInt(settings.penalty);
+        this.state.tabooPenalty = isNaN(pPen) ? 1 : pPen;
 
         this.gameSeed = window.PairaTime.now();
         this.filterWords(settings.category, parseInt(settings.minDifficulty) || 1, parseInt(settings.maxDifficulty) || 100);

@@ -708,7 +708,7 @@ export class GameScene {
 
     getPlayerScreenCoords(playerId) {
         if (!this.playerModels[playerId]) return null;
-        const playerPos = this.playerModels[playerId].mesh.position.clone();
+        const playerPos = this.playerModels[playerId].meshGroup.position.clone();
         
         // Y offset for head
         playerPos.y += 3.5;

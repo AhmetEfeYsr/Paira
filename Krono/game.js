@@ -246,9 +246,33 @@ class KronoGame {
             handle: '.event-card',
             filter: '.locked',
             onEnd: () => {
-                this.updateOrderNumbers();
+                this.forceLockedCardsToCorrectPosition();
             }
         });
+    }
+
+    forceLockedCardsToCorrectPosition() {
+        const container = document.getElementById('events-container');
+        if (!container) return;
+        const cards = Array.from(container.children);
+        const lockedCards = cards.filter(c => c.classList.contains('locked'));
+        
+        lockedCards.forEach(lockedCard => {
+            const id = parseInt(lockedCard.dataset.id);
+            const correctIndex = this.correctOrder.indexOf(id);
+            const currentIndex = Array.from(container.children).indexOf(lockedCard);
+            
+            if (currentIndex !== correctIndex && correctIndex !== -1) {
+                container.removeChild(lockedCard);
+                if (correctIndex >= container.children.length) {
+                    container.appendChild(lockedCard);
+                } else {
+                    container.insertBefore(lockedCard, container.children[correctIndex]);
+                }
+            }
+        });
+        
+        this.updateOrderNumbers();
     }
 
     moveCard(btn, direction) {
@@ -264,25 +288,6 @@ class KronoGame {
 
         if (newIndex >= 0 && newIndex < cards.length) {
             const targetCard = cards[newIndex];
-            if (targetCard.classList.contains('locked')) {
-                // Eğer hedef kart kilitliyse, kilitli olmayan bir sonraki/önceki karta geç
-                let nextAvailableIndex = newIndex + direction;
-                while(nextAvailableIndex >= 0 && nextAvailableIndex < cards.length) {
-                    if(!cards[nextAvailableIndex].classList.contains('locked')) {
-                        if (direction < 0) {
-                            container.insertBefore(card, cards[nextAvailableIndex]);
-                        } else {
-                            container.insertBefore(card, cards[nextAvailableIndex].nextSibling);
-                        }
-                        this.updateOrderNumbers();
-                        return;
-                    }
-                    nextAvailableIndex += direction;
-                }
-                // Gidecek yer yoksa hiçbir şey yapma
-                return;
-            }
-
             // Normal yer değiştirme
             if (direction < 0) {
                 container.insertBefore(card, targetCard);
@@ -294,7 +299,7 @@ class KronoGame {
             card.style.transform = direction < 0 ? 'translateY(10px)' : 'translateY(-10px)';
             setTimeout(() => card.style.transform = '', 150);
             
-            this.updateOrderNumbers();
+            this.forceLockedCardsToCorrectPosition();
         }
     }
 
@@ -411,7 +416,11 @@ class KronoGame {
             const dateEl = card.querySelector('.event-date');
             dateEl.classList.add('visible'); // reveal all dates
             
-            if (this.correctOrder[index] === id) {
+            const event = this.currentRoundEvents.find(e => e.id === id);
+            const expectedId = this.correctOrder[index];
+            const expectedEvent = this.currentRoundEvents.find(e => e.id === expectedId);
+            
+            if (event && expectedEvent && event.tarih === expectedEvent.tarih) {
                 correctCount++;
                 card.classList.add('locked'); // green
                 card.classList.remove('wrong');
@@ -556,16 +565,13 @@ class KronoGame {
     }
 
     returnToLobby() {
-        // Reset scores
         this.players.forEach(p => p.score = 0);
         this.currentRound = 0;
+        this.gameState = 'LOBBY';
         
-        // Send reset signal? Not strictly needed if we just reload or re-init
-        // For simplicity, let's just reload the page for everyone to avoid state issues.
-        this.network.send({ type: 'SYNC_SETTINGS', settings: this.settings }); // Just to make sure
-        
-        // Actually, just reloading is safer.
-        window.location.reload();
+        this.network.send({ type: 'RETURN_LOBBY' });
+        this.updateLobbyUI();
+        this.switchView('lobby-screen');
     }
 
     updateScoreBoard() {
