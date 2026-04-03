@@ -38,8 +38,6 @@ body {
     padding: clamp(1rem, 2.5vw, 2rem);
     display: flex;
     flex-direction: column;
-    overflow: visible !important;
-    max-height: none !important;
 }
 
 .view-state { display: flex; flex-direction: column; height: auto; animation: fadeIn 0.4s ease; min-height: 0; overflow: visible; }
