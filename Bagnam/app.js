@@ -11,6 +11,14 @@ let lastHintType = null;
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    const usernameInput = document.getElementById('username-input');
+    if (usernameInput) {
+        usernameInput.value = sessionStorage.getItem('playerName') || '';
+        usernameInput.addEventListener('input', (e) => {
+            sessionStorage.setItem('playerName', e.target.value);
+        });
+    }
+
     const btnStart = document.getElementById('btn-start');
     const btnGuess = document.getElementById('btn-guess');
     const wordInput = document.getElementById('word-input');
@@ -103,6 +111,17 @@ function getTodayDateTR() {
 }
 
 async function initGame(selectedDateStr = null) {
+    const usernameInput = document.getElementById('username-input');
+    const playerName = usernameInput ? usernameInput.value.trim() : "";
+
+    if (!playerName) {
+        showToast("Lütfen bir kullanıcı adı girin.", "warning");
+        if (usernameInput) usernameInput.focus();
+        return;
+    }
+
+    sessionStorage.setItem('playerName', playerName);
+
     const btnStart = document.getElementById('btn-start');
     const btnPlayPast = document.getElementById('btn-play-past');
     const loading = document.getElementById('loading-indicator');
