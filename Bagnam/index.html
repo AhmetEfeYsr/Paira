@@ -43,10 +43,9 @@
     }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css"> <!-- Portal style for glassmorphism -->
-    <link rel="stylesheet" href="../shared/shared.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
@@ -56,20 +55,27 @@
         <!-- LOGIN / LANDING SCREEN -->
         <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
-                <div class="game-logo-container" ><img src="../logolar/bagnam_paira.avif" alt="Bagnam Logo"></div>
+                <div class="game-logo-container"><img src="../logolar/bagnam.avif" alt="Bagnam Logo"></div>
                 <h1 class="gradient-text">Bağnam</h1>
-                <p class="seo-description">Her gün yenilenen **günün gizli kelimesini** bulmak için mantığını kullan! Tahminlerin anlamsal olarak hedefe ne kadar yakınsa, o kadar hızlı 1 numaraya ulaşırsın.</p>
+                <p class="seo-description">Her gün yenilenen <strong>günün gizli kelimesini</strong> bulmak için mantığını kullan! Tahminlerin anlamsal olarak hedefe ne kadar yakınsa, o kadar hızlı 1 numaraya ulaşırsın.</p>
             </div>
 
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
-                <button id="btn-start" class="btn btn-primary btn-block" style="display: block; width: 100%; text-align: center; margin: 0 auto; padding: 16px; font-size: 1.2rem; margin-bottom: 12px;">Günün Kelimesini Oyna</button>
-
-                <div class="past-games-container" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <label for="past-date-picker" style="font-size: 0.9rem; color: var(--text-muted); text-align: center;">Veya geçmiş bir tarihi oynayın:</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="date" id="past-date-picker" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--lilac-muted); background: var(--input-bg); color: var(--text-main); color-scheme: dark;">
-                        <button id="btn-play-past" class="btn btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Oyna</button>
+                <div class="form-group">
+                    <label for="username-input">Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-start" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Günün Kelimesini Oyna</button>
+                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
+                        <span>VEYA</span>
+                        <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
+                    </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="date" id="past-date-picker" style="flex: 1; margin: 0; border-radius: 12px; border: 1px solid var(--lilac-muted); background: var(--input-bg); color: var(--text-main); color-scheme: dark; padding: 0 12px;">
+                        <button id="btn-play-past" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Oyna</button>
                     </div>
                 </div>
 
@@ -108,8 +114,8 @@
                 <div class="score-board" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 600px; margin: 0 auto;">
                     <span>Tahmin Sayısı: <span id="guess-count" class="timer">0</span></span>
                     <div style="display: flex; gap: 8px;">
-                        <button id="btn-hint" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem; background-color: #f39c12; border-color: #f39c12; color: white;">İpucu Al (3)</button>
-                        <button id="btn-giveup" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem; background-color: var(--danger); border-color: var(--danger); color: white;">Pes Et</button>
+                        <button id="btn-hint" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem; background-color: #f39c12; border-color: #f39c12; color: white; margin-bottom: 0;">İpucu Al (3)</button>
+                        <button id="btn-giveup" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem; background-color: var(--danger); border-color: var(--danger); color: white; margin-bottom: 0;">Pes Et</button>
                     </div>
                 </div>
             </div>
@@ -118,7 +124,7 @@
                 <!-- Input Area -->
                 <div class="guess-input-wrapper">
                     <input type="text" id="word-input" placeholder="Bir kelime girin..." autocomplete="off">
-                    <button id="btn-guess" class="btn btn-primary">Tahmin Et</button>
+                    <button id="btn-guess" class="btn btn-primary" style="margin-bottom: 0;">Tahmin Et</button>
                 </div>
 
                 <!-- Feedback / Success Message -->
@@ -141,6 +147,14 @@
         </section>
     </main>
 
+    <div class="game-seo-info">
+        <h2>Paira Bağnam Hakkında</h2>
+        <p>Kelimelerin arasındaki gizli bağları keşfetmeye hazır mısınız? <strong>Paira Bağnam</strong>, her gün yenilenen gizli bir hedef kelimeyi, anlamsal yakınlıklarını kullanarak bulmaya çalıştığınız yapay zeka destekli bir kelime oyunudur.</p>
+
+        <p>Oyunun mantığı oldukça basittir: Aklınıza gelen herhangi bir kelimeyi yazarsınız ve sistem size bu kelimenin gizli kelimeye ne kadar yakın olduğunu bir sıra numarası ile söyler. Eğer yazdığınız kelime gizli kelimeye anlamsal olarak çok yakınsa (örneğin 'kedi' ve 'köpek'), sıra numaranız küçük olacaktır. Gizli kelime her zaman 1 numaradadır.</p>
+
+        <p>Bağnam, sadece bir kelime oyunu değil, aynı zamanda bir mantık ve çağrışım testidir. Tahminleriniz sonucunda oluşan renkli liste size hedefe ne kadar yaklaştığınızı görsel olarak da gösterir. Hiçbir kurulum gerektirmeden tarayıcınız üzerinden her gün yeni bir kelimeyle kendinizi test edebilir, geçmiş günlerin kelimelerini de oynayarak kelime dağarcığınızı ve anlamsal bağ kurma yeteneğinizi geliştirebilirsiniz!</p>
+    </div>
 
     <script src="app.js"></script>
 </body>
