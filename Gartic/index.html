@@ -31,10 +31,9 @@
     }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="../shared/shared.css">
-    <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="style.css">
 
     <!-- Favicons -->
@@ -45,8 +44,6 @@
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
 <body>
-    <div class="glass-bg"></div>
-
     <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
         <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
         <div class="hero-content">
@@ -69,8 +66,8 @@
                 <input type="text" id="channel-input"  placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
             </div>
 
-            <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
-            <div id="login-status" class="status-msg"></div>
+            <button id="btn-start" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Oyunu Başlat</button>
+            <div id="login-status" class="status-msg" style="margin-top: 10px; text-align: center; color: var(--danger);"></div>
         </div>
 
         <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
