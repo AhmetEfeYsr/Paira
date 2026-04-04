@@ -322,6 +322,9 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .social-link.kick-link span:first-child { color: var(--success); font-weight: 900; font-size: clamp(0.9rem, 1.5vw, 1rem); letter-spacing: 0.45px; }
 .social-link.kick-link span:last-child { color: var(--neon-purple); font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(1rem, 2vw, 1.2rem); letter-spacing: 1.5px; line-height: 1; }
 
+.social-link.support-link { color: var(--danger); border-color: rgba(231, 76, 60, 0.2); }
+.social-link.support-link:hover { background: rgba(231, 76, 60, 0.1); border-color: var(--danger); }
+
 @media (max-width: 900px) {
     .app-footer { justify-content: center; flex-direction: column; text-align: center; border-radius: clamp(10px, 1.5vw, 16px); }
 }
