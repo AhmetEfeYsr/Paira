@@ -1278,3 +1278,55 @@ body.fullscreen-active .leaderboard {
 .btn-fullscreen-toggle:hover {
     background: rgba(0, 0, 0, 0.8);
 }
+
+/* Ad Placeholders */
+.ad-placeholder {
+    margin: 1.5rem auto;
+    width: 100%;
+    max-width: 1000px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 90px;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.banner-ad-wrapper {
+    min-height: 100px;
+}
+
+.native-ad-wrapper {
+    min-height: 180px;
+}
+
+.portal-native {
+    margin: 0;
+    width: 100%;
+    max-width: 900px;
+}
+
+.gameplay-native {
+    margin-top: 1rem;
+    min-height: 120px;
+}
+
+.square-ad-wrapper {
+    width: 250px;
+    height: 250px;
+    min-height: 250px;
+    margin: 1rem auto;
+    border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .ad-placeholder {
+        margin: 1rem auto;
+        min-height: 60px;
+    }
+}

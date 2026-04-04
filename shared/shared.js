@@ -8,6 +8,7 @@ class PairaSharedUI {
         const initUI = () => {
             this.injectSharedUI();
             this.injectSEOFooter();
+            this.injectAds();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
             this.initFullscreenToggle();
         };
@@ -197,6 +198,115 @@ class PairaSharedUI {
             setTimeout(() => {
                 banner.style.display = 'none';
             }, 500);
+        }
+    }
+
+    injectAds() {
+        // Reduced ad load based on user feedback to prioritize UX.
+        // Mobile-specific logic added to minimize intrusion.
+        const isMobile = window.innerWidth <= 768;
+        const isIndexPage = window.location.pathname.endsWith('index.html');
+        const isGamePage = window.location.pathname.endsWith('game.html');
+        const basePath = this.getBasePath();
+        const isPortal = isIndexPage && basePath === '';
+
+        // 1. Social Bar (Global Desktop Only) - Disabled on mobile for better UX.
+        if (!isMobile) {
+            this.injectSocialBar();
+        }
+
+        // 2. Banner (Portal Only) - A single banner on the main page for visibility.
+        if (isPortal) {
+            this.injectPortalBanner();
+        }
+
+        // 3. Native Banner (Game Landing Only) - Integrated into the pre-game screen.
+        if (isIndexPage && !isPortal) {
+            this.injectGameIndexNative();
+        }
+
+        // 4. Lobby Waiting Ad (Multiplayer Lobby Desktop Only) - Keep mobile lobbies clean.
+        if (isGamePage && !isMobile) {
+            this.injectLobbyWaitingAd();
+        }
+    }
+
+    injectSocialBar() {
+        const script = document.createElement('script');
+        script.src = "//pl29061335.profitablecpmratenetwork.com/23/fc/2b/23fc2b275deb25a844e1bacaa2e0ce40.js";
+        script.async = true;
+        document.body.appendChild(script);
+    }
+
+    injectPortalBanner() {
+        const categories = document.querySelectorAll('.category-section');
+        if (categories.length >= 2) {
+            const adWrapper = document.createElement('div');
+            adWrapper.className = 'ad-placeholder banner-ad-wrapper portal-banner';
+
+            const optionsScript = document.createElement('script');
+            optionsScript.innerHTML = `
+                atOptions = {
+                    'key' : '60edc3c873bc1a0fd87b13486769ddb0',
+                    'format' : 'iframe',
+                    'height' : 90,
+                    'width' : 728,
+                    'params' : {}
+                };
+            `;
+
+            const invokeScript = document.createElement('script');
+            invokeScript.src = "//www.highperformanceformat.com/60edc3c873bc1a0fd87b13486769ddb0/invoke.js";
+
+            adWrapper.appendChild(optionsScript);
+            adWrapper.appendChild(invokeScript);
+            categories[1].after(adWrapper);
+        }
+    }
+
+    injectGameIndexNative() {
+        const rulesContainer = document.querySelector('.seo-rules-container');
+        if (rulesContainer) {
+            const adWrapper = document.createElement('div');
+            adWrapper.className = 'ad-placeholder native-ad-wrapper game-index-native';
+
+            const container = document.createElement('div');
+            container.id = "container-29e233fdeff1131a7527d2f7fcf75c1e";
+
+            const script = document.createElement('script');
+            script.async = true;
+            script.dataset.cfasync = "false";
+            script.src = "//pl29061336.profitablecpmratenetwork.com/29e233fdeff1131a7527d2f7fcf75c1e/invoke.js";
+
+            adWrapper.appendChild(container);
+            adWrapper.appendChild(script);
+            rulesContainer.before(adWrapper);
+        }
+    }
+
+    injectLobbyWaitingAd() {
+        const clientWaiting = document.getElementById('client-waiting');
+        if (clientWaiting) {
+            const adWrapper = document.createElement('div');
+            adWrapper.className = 'ad-placeholder square-ad-wrapper lobby-waiting-ad';
+
+            const optionsScript = document.createElement('script');
+            optionsScript.innerHTML = `
+                atOptions = {
+                    'key' : '1663d5714d42552b6ac37bcfb8f4c0bd',
+                    'format' : 'iframe',
+                    'height' : 250,
+                    'width' : 300,
+                    'params' : {}
+                };
+            `;
+
+            const invokeScript = document.createElement('script');
+            invokeScript.src = "//www.highperformanceformat.com/1663d5714d42552b6ac37bcfb8f4c0bd/invoke.js";
+
+            adWrapper.appendChild(optionsScript);
+            adWrapper.appendChild(invokeScript);
+            clientWaiting.appendChild(adWrapper);
         }
     }
 
