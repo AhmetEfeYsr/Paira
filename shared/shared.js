@@ -135,10 +135,10 @@ class PairaSharedUI {
                         <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="Kick--Streamline-Simple-Icons" height="18" width="18"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#53fc18" stroke-width="1"></path></svg>
                         <span>Paira</span>
                     </a>
-                    <a href="https://www.profitablecpmratenetwork.com/cvk6m0b8e9?key=972046d37116c79934d8e30dbe41ecd8" target="_blank" rel="noopener noreferrer" class="social-link support-link" title="Bize Destek Ol!">
+                    <button onclick="window.pairaUI.showSupportModal()" class="social-link support-link" title="Bize Destek Ol!">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                         <span>Destek Ol</span>
-                    </a>
+                    </button>
                 </div>
             </footer>
             `;
@@ -167,6 +167,25 @@ class PairaSharedUI {
                 if (banner) banner.classList.add('show');
             }, 1000);
         }
+
+        const supportModalHTML = `
+        <div id="supportModal" class="modal-overlay">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <div class="modal-header">
+                    <h2>Destek Ol</h2>
+                    <button class="modal-close" onclick="window.pairaUI.hideSupportModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1.5rem;">Bize destek olmak için bir reklama yönlendirileceksiniz. Onaylıyor musunuz?</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary btn-block" onclick="window.pairaUI.hideSupportModal()" style="margin:0;">Vazgeç</button>
+                        <button class="btn btn-primary btn-block" onclick="window.pairaUI.handleSupportRedirect()" style="margin:0;">Onayla</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', supportModalHTML);
     }
 
     injectSEOFooter() {
@@ -205,12 +224,28 @@ class PairaSharedUI {
         }
     }
 
+    showSupportModal() {
+        const modal = document.getElementById('supportModal');
+        if (modal) modal.classList.add('show');
+    }
+
+    hideSupportModal() {
+        const modal = document.getElementById('supportModal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    handleSupportRedirect() {
+        this.hideSupportModal();
+        window.open('https://www.profitablecpmratenetwork.com/cvk6m0b8e9?key=972046d37116c79934d8e30dbe41ecd8', '_blank');
+    }
+
     injectAds() {
         // Reduced ad load based on user feedback to prioritize UX.
         // Mobile-specific logic added to minimize intrusion.
         const isMobile = window.innerWidth <= 768;
-        const isIndexPage = window.location.pathname.endsWith('index.html');
-        const isGamePage = window.location.pathname.endsWith('game.html');
+        const path = window.location.pathname;
+        const isIndexPage = path.endsWith('index.html') || path.endsWith('/') || path === '';
+        const isGamePage = path.endsWith('game.html');
         const basePath = this.getBasePath();
         const isPortal = isIndexPage && basePath === '';
 
@@ -244,7 +279,8 @@ class PairaSharedUI {
 
     injectPortalBanner() {
         const categories = document.querySelectorAll('.category-section');
-        if (categories.length >= 2) {
+        if (categories.length > 0) {
+            const target = categories[1] || categories[0];
             const adWrapper = document.createElement('div');
             adWrapper.className = 'ad-placeholder banner-ad-wrapper portal-banner';
 
@@ -264,7 +300,7 @@ class PairaSharedUI {
 
             adWrapper.appendChild(optionsScript);
             adWrapper.appendChild(invokeScript);
-            categories[1].after(adWrapper);
+            target.after(adWrapper);
         }
     }
 
