@@ -59,10 +59,10 @@ class PairaSharedUI {
                 const newSrc = `${replaceStr}/generated_logos/${base}_${themeName}.avif`;
                 img.setAttribute('src', newSrc);
                 
-                // Fallback to SVG if AVIF doesn't exist (optional, but good for robustness)
+                // Fallback to base AVIF if themed AVIF doesn't exist (optional, but good for robustness)
                 img.onerror = () => {
-                    if (!img.src.endsWith('.svg')) {
-                        img.src = `${replaceStr}/${base}_${themeName}.svg`;
+                    if (!img.src.endsWith(`${base}.avif`)) {
+                        img.src = `${replaceStr}/${base}.avif`;
                     }
                 };
             }
@@ -405,3 +405,95 @@ window.showScreen = function(screenId) {
         }
     });
 };
+
+window.normalizeTurkishChars = function(str) {
+    const charMap = {
+        'I': 'i', 'İ': 'i', 'ı': 'i',
+        'â': 'a', 'î': 'i', 'û': 'u',
+        'Â': 'a', 'Î': 'i', 'Û': 'u',
+        'ç': 'c', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
+        'Ç': 'c', 'Ğ': 'g', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
+    };
+    return str.replace(/[IİıâîûÂÎÛçğöşüÇĞÖŞÜ]/g, char => charMap[char] || char).toLowerCase();
+};
+
+window.getTodayDateTR = function() {
+    const today = new Date();
+    const utc = today.getTime() + (today.getTimezoneOffset() * 60000);
+    const trDate = new Date(utc + (3600000 * 3)); // UTC + 3 saat
+
+    const yyyy = trDate.getFullYear();
+    const mm = String(trDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(trDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
+
+window.escapeHtml = function(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+};
+
+class FuzzyMatcher {
+    constructor() {
+        this.qwertyMap = {
+            'q': ['w','a','s'], 'w': ['q','e','a','s','d'], 'e': ['w','r','s','d','f'],
+            'r': ['e','t','d','f','g'], 't': ['r','y','f','g','h'], 'y': ['t','u','g','h','j'],
+            'u': ['y','ı','i','h','j','k'], 'ı': ['u','o','j','k','l'], 'o': ['ı','p','k','l','ş'],
+            'p': ['o','ğ','l','ş','i'], 'ğ': ['p','ü','ş','i'], 'ü': ['ğ','ş'],
+            'a': ['q','w','s','z','x'], 's': ['a','d','w','e','z','x','c'], 'd': ['s','f','e','r','x','c','v'],
+            'f': ['d','g','r','t','c','v','b'], 'g': ['f','h','t','y','v','b','n'], 'h': ['g','j','y','u','b','n','m'],
+            'j': ['h','k','u','ı','n','m','ö'], 'k': ['j','l','ı','o','m','ö','ç'], 'l': ['k','ş','o','p','ö','ç'],
+            'ş': ['l','i','p','ğ','ç'], 'i': ['ş','p','ğ'],
+            'z': ['a','s','x'], 'x': ['z','c','s','d'], 'c': ['x','v','d','f'],
+            'v': ['c','b','f','g'], 'b': ['v','n','g','h'], 'n': ['b','m','h','j'],
+            'm': ['n','ö','j','k'], 'ö': ['m','ç','k','l'], 'ç': ['ö','l','ş']
+        };
+    }
+
+    isAdjacent(char1, char2) {
+        if (!this.qwertyMap[char1]) return false;
+        return this.qwertyMap[char1].includes(char2);
+    }
+
+    getDistance(word1, word2) {
+        if (!word1) word1 = "";
+        if (!word2) word2 = "";
+        if (word1.length > 50) word1 = word1.substring(0, 50);
+        if (word2.length > 50) word2 = word2.substring(0, 50);
+        
+        word1 = word1.toLocaleLowerCase('tr-TR');
+        word2 = word2.toLocaleLowerCase('tr-TR');
+
+        const len1 = word1.length;
+        const len2 = word2.length;
+        const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
+
+        for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+        for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= len1; i++) {
+            for (let j = 1; j <= len2; j++) {
+                const cost = word1[i - 1] === word2[j - 1] ? 0 :
+                            (this.isAdjacent(word1[i - 1], word2[j - 1]) ? 0.4 : 1);
+
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j - 1] + cost
+                );
+
+                if (i > 1 && j > 1 && word1[i - 1] === word2[j - 2] && word1[i - 2] === word2[j - 1]) {
+                    matrix[i][j] = Math.min(matrix[i][j], matrix[i - 2][j - 2] + 0.5);
+                }
+            }
+        }
+        return matrix[len1][len2];
+    }
+
+    isMatch(word1, word2, tolerance = 1.2) {
+        return this.getDistance(word1, word2) <= tolerance;
+    }
+}
+window.FuzzyMatcher = FuzzyMatcher;

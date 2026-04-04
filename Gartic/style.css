@@ -7,30 +7,6 @@
 .header-bar { width: 100%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
 .word-display { font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon-glow-rgba); background: var(--card-bg); padding: 0.5rem 2rem; border-radius: 1rem; border: 1px solid var(--lilac-muted); box-shadow: var(--glass-shadow); backdrop-filter: blur(10px); z-index: 998; }
 
-.canvas-container { position: relative; width: 100%; max-width: 1000px; background: #ffffff; border-radius: 1rem; overflow: hidden; box-shadow: var(--glass-shadow); cursor: crosshair; touch-action: none; border: 4px solid var(--lilac-muted); transition: border-color 0.3s, box-shadow 0.3s; flex-shrink: 0; }
-canvas { display: block; width: 100%; height: auto; aspect-ratio: 16/9; background: transparent; }
-[data-theme="light"] .canvas-container { border-color: rgba(58, 134, 255, 0.4); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-
-/* The toolbar is extremely important for drawing */
-.toolbar { display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--lilac-muted); width: 100%; max-width: 1000px; justify-content: center; align-items: center; flex-wrap: wrap; box-shadow: var(--glass-shadow); backdrop-filter: blur(10px); }
-
-/* Color picker colors - they are drawing colors so they should remain static */
-.color-picker { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; background: var(--input-bg); padding: 0.5rem; border-radius: 1.5rem; }
-.color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-.color-swatch:hover { transform: scale(1.15); }
-.color-swatch.active { border-color: var(--text-main); box-shadow: 0 0 12px var(--text-main); transform: scale(1.1); }
-.custom-color-btn { display: flex; align-items: center; justify-content: center; position: relative; font-weight: bold; color: white; text-shadow: 0 0 2px black; }
-.custom-color-input { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; }
-
-.size-picker { display: flex; gap: 0.5rem; align-items: center; background: var(--input-bg); padding: 0.5rem 0.8rem; border-radius: 1.5rem; }
-.size-btn { width: 32px; height: 32px; border-radius: 50%; background: transparent; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
-.size-btn:hover { background: var(--item-hover-bg); }
-.size-btn.active { background: var(--header-bg); border-color: var(--lilac-muted); }
-.size-dot { background: var(--text-main); border-radius: 50%; }
-
-.tool-picker, .tools { display: flex; gap: 0.5rem; background: var(--input-bg); padding: 0.5rem; border-radius: 1.2rem; }
-.tool-btn, .tools .btn { margin-bottom: 0 !important; }
-
 .sidebar-header { font-size: 1.1rem; font-weight: 700; color: var(--lilac); margin-bottom: 0.8rem; border-bottom: 1px solid var(--lilac-muted); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
 .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; margin-bottom: 1rem; }
 .chat-msg { background: var(--msg-bg); padding: 0.6rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; word-break: break-word; border-left: 3px solid transparent; animation: fadeIn 0.3s ease; }

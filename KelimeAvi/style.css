@@ -54,23 +54,7 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 }
 
 
-.lobby-header { display: flex; justify-content: center; align-items: center; gap: clamp(0.8rem, 2vw, 1.2rem); margin-bottom: clamp(1rem, 2.5vw, 2rem); background: var(--card-bg); padding: clamp(0.6rem, 1.5vw, 1rem); border-radius: 15px; flex-wrap: wrap; flex-shrink: 0; }
-.code-container { display: flex; align-items: center; gap: 10px; background: var(--code-bg); padding: 6px 14px; border-radius: 10px; }
-
-.lobby-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: clamp(1rem, 2.5vw, 2rem);
-    flex-grow: 1; min-height: 0; overflow-y: auto;
-}
-
-.players-panel ul { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin-top: 10px; }
-.players-panel li { padding: 10px 12px; margin-bottom: 8px; background: var(--item-bg); border-radius: 8px; border-left: 3px solid var(--neon-purple); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; transition: background 0.2s; font-size: 0.95rem; }
-.players-panel li:hover { background: var(--item-hover-bg); }
-
-.game-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(0.8rem, 2vw, 1.5rem); padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.5rem); flex-wrap: wrap; gap: 0.8rem; background: var(--card-bg); flex-shrink: 0; }
 .round-indicator { font-weight: 600; font-size: 1.1rem; color: var(--lilac); background: var(--code-bg); padding: 5px 15px; border-radius: 10px; }
-.timer { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--lilac); min-width: 90px; text-align: center; font-variant-numeric: tabular-nums; transition: transform 0.1s ease, color 0.3s ease; }
 
 .play-area {
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;

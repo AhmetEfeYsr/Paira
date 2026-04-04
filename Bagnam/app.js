@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set max date to today
     if (datePicker) {
-        datePicker.max = getTodayDateTR();
+        datePicker.max = window.getTodayDateTR();
     }
 
     if(btnStart) btnStart.addEventListener('click', () => initGame());
@@ -78,29 +78,6 @@ function resetGameState() {
     document.getElementById('guess-history').innerHTML = "";
 }
 
-function normalizeTurkishChars(str) {
-    // Şapkalı harfler ve Türkçe karakterlerin İngilizce karşılıkları
-    const charMap = {
-        'I': 'i', 'İ': 'i', 'ı': 'i',
-        'â': 'a', 'î': 'i', 'û': 'u',
-        'Â': 'a', 'Î': 'i', 'Û': 'u',
-        'ç': 'c', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
-        'Ç': 'c', 'Ğ': 'g', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
-    };
-    return str.replace(/[IİıâîûÂÎÛçğöşüÇĞÖŞÜ]/g, char => charMap[char] || char).toLowerCase();
-}
-
-function getTodayDateTR() {
-    const today = new Date();
-    // UTC+3 (Türkiye Saati) ayarı yapıp tarihi YYYY-MM-DD olarak döndür
-    const utc = today.getTime() + (today.getTimezoneOffset() * 60000);
-    const trDate = new Date(utc + (3600000 * 3)); // UTC + 3 saat
-
-    const yyyy = trDate.getFullYear();
-    const mm = String(trDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(trDate.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-}
 
 async function initGame(selectedDateStr = null) {
     const btnStart = document.getElementById('btn-start');
@@ -114,9 +91,9 @@ async function initGame(selectedDateStr = null) {
     resetGameState();
 
     // Artık veri önden yüklenmiyor, sadece tarihi ayarlayıp UI'ı değiştiriyoruz
-    targetDate = selectedDateStr || getTodayDateTR();
+    targetDate = selectedDateStr || window.getTodayDateTR();
 
-    switchScreen('game-screen');
+    window.showScreen('game-screen');
     document.getElementById('word-input').focus();
 
     // Temizle loading
@@ -144,7 +121,7 @@ async function handleGuess() {
     const btnGuess = document.getElementById('btn-guess');
     let rawWord = inputEl.value;
     let word = rawWord.toLowerCase().trim();
-    let normalizedWord = normalizeTurkishChars(word);
+    let normalizedWord = window.normalizeTurkishChars(word);
 
     if(!word) return;
 
@@ -467,10 +444,5 @@ async function handleHint() {
     }
 }
 
-// Utils
-function switchScreen(screenId) {
-    document.querySelectorAll('.view-state').forEach(el => el.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
-}
 
 

@@ -711,20 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let apiCache = {};
     let clientVotes = {};
     
-    function normalizeForSearch(text) {
-        if (!text) return "";
-        return text.toString().toLocaleLowerCase('tr-TR')
-            .replace(/ğ/g, 'g')
-            .replace(/ü/g, 'u')
-            .replace(/ş/g, 's')
-            .replace(/ı/g, 'i')
-            .replace(/ö/g, 'o')
-            .replace(/ç/g, 'c')
-            .replace(/â/g, 'a')
-            .replace(/î/g, 'i')
-            .replace(/û/g, 'u')
-            .trim();
-    }
     let liveVotes = {}; // Host stores: { catId: { targetPlayerId: { voterId: voteValue } } }
     let hasVoted = false;
     let finishedVoters = new Set();
@@ -1372,7 +1358,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             tdIndex.textContent = index + 1;
 
             const tdName = document.createElement('td');
-            tdName.textContent = scoreObj.name + (scoreObj.id === network.myId ? ' (Sen)' : '');
+            tdName.innerHTML = window.escapeHtml(scoreObj.name) + (scoreObj.id === network.myId ? ' (Sen)' : '');
 
             const tdRound = document.createElement('td');
             tdRound.textContent = '+' + scoreObj.roundScore;

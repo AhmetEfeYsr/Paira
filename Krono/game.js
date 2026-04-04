@@ -533,7 +533,7 @@ class KronoGame {
             if (sorted.length > 1 && sorted[0].score === sorted[1].score) {
                 title.textContent = "Berabere!";
             } else {
-                title.textContent = `${winner.name} Kazandı!`;
+                title.textContent = `${window.escapeHtml(winner.name)} Kazandı!`;
             }
         }
 
@@ -551,7 +551,7 @@ class KronoGame {
             el.style.border = index === 0 && !this.network.isSolo ? '1px solid var(--success)' : '1px solid transparent';
             
             el.innerHTML = `
-                <span style="font-weight:600;">${p.name}</span>
+                <span style="font-weight:600;">${window.escapeHtml(p.name)}</span>
                 <strong style="color:var(--primary-purple); font-size:1.5rem;">${p.score}</strong>
             `;
             container.appendChild(el);
@@ -584,7 +584,7 @@ class KronoGame {
             const el = document.createElement('div');
             el.className = 'team';
             el.style.color = color;
-            el.innerHTML = `${p.name}: <span>${p.score}</span>`;
+            el.innerHTML = `${window.escapeHtml(p.name)}: <span>${p.score}</span>`;
             container.appendChild(el);
         });
     }

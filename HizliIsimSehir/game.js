@@ -103,15 +103,6 @@ class HizliIsimSehirGameEngine {
         this.setState(this.state);
     }
 
-    normalizeForSearch(text) {
-        if (!text) return "";
-        return text.toString().toLocaleLowerCase('tr-TR')
-            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-            .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-            .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
-            .trim();
-    }
-
     async checkWikipedia(word, keywords, requiredLetterLower) {
         const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
@@ -119,7 +110,7 @@ class HizliIsimSehirGameEngine {
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search) {
                 const lowerWord = word.toLocaleLowerCase('tr-TR');
-                const normWord = this.normalizeForSearch(lowerWord);
+                const normWord = window.normalizeTurkishChars(lowerWord).trim();
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
@@ -128,14 +119,14 @@ class HizliIsimSehirGameEngine {
                         continue;
                     }
                     
-                    const normTitle = this.normalizeForSearch(title);
-                    const normSnippet = this.normalizeForSearch(snippet);
+                    const normTitle = window.normalizeTurkishChars(title).trim();
+                    const normSnippet = window.normalizeTurkishChars(snippet).trim();
                     
                     if (title === lowerWord || normTitle === normWord) return true;
                     
                     if (title.includes(lowerWord) || snippet.includes(lowerWord) || normTitle.includes(normWord) || normSnippet.includes(normWord)) {
                         if (keywords.length === 0 || keywords.some(kw => {
-                            const normKw = this.normalizeForSearch(kw);
+                            const normKw = window.normalizeTurkishChars(kw).trim();
                             return snippet.includes(kw) || title.includes(kw) || normSnippet.includes(normKw) || normTitle.includes(normKw);
                         })) return true;
                     }
@@ -243,14 +234,14 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                 if (response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
-                        const normWord = this.normalizeForSearch(word);
+                        const normWord = window.normalizeTurkishChars(word).trim();
                         result = data.artists.some(artist => {
                             const artistName = artist.name.toLocaleLowerCase('tr-TR');
-                            const normArtistName = this.normalizeForSearch(artistName);
+                            const normArtistName = window.normalizeTurkishChars(artistName).trim();
                             const matchesName = artistName.includes(word.toLocaleLowerCase('tr-TR')) || normArtistName.includes(normWord) ||
                                 (artist.aliases && artist.aliases.some(a => {
                                     const aliasName = a.name.toLocaleLowerCase('tr-TR');
-                                    return aliasName.includes(word.toLocaleLowerCase('tr-TR')) || this.normalizeForSearch(aliasName).includes(normWord);
+                                    return aliasName.includes(word.toLocaleLowerCase('tr-TR')) || window.normalizeTurkishChars(aliasName).trim().includes(normWord);
                                 }));
                             return matchesName && artistName.startsWith(requiredLetterLower);
                         });
@@ -294,7 +285,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                 arr.forEach(w => {
                     const lower = w.toLocaleLowerCase('tr-TR');
                     dict.add(lower);
-                    const norm = this.normalizeForSearch(lower);
+                    const norm = window.normalizeTurkishChars(lower).trim();
                     if (!normDict.has(norm)) {
                         normDict.set(norm, new Set());
                     }
@@ -326,9 +317,9 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         let word = answers[this.state.currentCategory.id] || "";
         word = word.trim().toLocaleLowerCase('tr-TR');
         
-        const normWord = this.normalizeForSearch(word);
+        const normWord = window.normalizeTurkishChars(word).trim();
         const letterLower = this.state.letter.toLocaleLowerCase('tr-TR');
-        const normLetter = this.normalizeForSearch(this.state.letter);
+        const normLetter = window.normalizeTurkishChars(this.state.letter).trim();
 
         let score = 0;
         let llmReason = "";
@@ -518,13 +509,6 @@ class HizliIsimSehirView {
         this.myId = id;
     }
 
-    escapeHtml(text) {
-        if (text == null) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     switchScreen(screenId) {
         ['lobby-screen', 'game-screen', 'score-screen'].forEach(id => {
             const el = document.getElementById(id);
@@ -685,7 +669,7 @@ class HizliIsimSehirView {
             
             node.innerHTML = `
                 <div class="node-avatar">👽</div>
-                <div class="node-name">${this.escapeHtml(p.name)}</div>
+                <div class="node-name">${window.escapeHtml(p.name)}</div>
                 <div class="node-score">${p.score || 0}</div>
             `;
             circle.appendChild(node);
@@ -710,7 +694,7 @@ class HizliIsimSehirView {
                 turnInd.style.color = "var(--lilac)";
                 turnInd.style.fontWeight = "bold";
             } else {
-                turnInd.textContent = `Sıra: ${currentPlayer ? this.escapeHtml(currentPlayer.name) : 'Bekleniyor'}`;
+                turnInd.textContent = `Sıra: ${currentPlayer ? window.escapeHtml(currentPlayer.name) : 'Bekleniyor'}`;
                 turnInd.style.color = "var(--text-main)";
                 turnInd.style.fontWeight = "normal";
             }
@@ -798,7 +782,7 @@ class HizliIsimSehirView {
 
     showVotingUI(word, categoryName) {
         document.getElementById('voting-overlay')?.classList.remove('hidden');
-        document.getElementById('voting-text').innerHTML = `<strong>${this.escapeHtml(categoryName)}</strong> kategorisi için <strong>"${this.escapeHtml(word)}"</strong> kelimesi kabul edilsin mi?`;
+        document.getElementById('voting-text').innerHTML = `<strong>${window.escapeHtml(categoryName)}</strong> kategorisi için <strong>"${window.escapeHtml(word)}"</strong> kelimesi kabul edilsin mi?`;
         document.getElementById('vote-yes-count').textContent = '0';
         document.getElementById('vote-no-count').textContent = '0';
         document.getElementById('voting-status-text').textContent = '';
@@ -850,7 +834,7 @@ class HizliIsimSehirView {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${idx+1}</td>
-                <td>${this.escapeHtml(s.name)}${s.id === this.myId ? ' (Sen)' : ''}</td>
+                <td>${window.escapeHtml(s.name)}${s.id === this.myId ? ' (Sen)' : ''}</td>
                 <td>+${s.roundScore}</td>
                 <td><strong>${s.totalScore}</strong></td>
             `;

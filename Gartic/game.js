@@ -18,16 +18,6 @@ let state = {
 let drawingBoard;
 
 // Fuzzy Matcher implementation
-const normalizeTurkish = (str) => {
-    return str.replace(/İ/g, 'I').replace(/ı/g, 'I')
-              .replace(/Ş/g, 'S').replace(/ş/g, 'S')
-              .replace(/Ğ/g, 'G').replace(/ğ/g, 'G')
-              .replace(/Ü/g, 'U').replace(/ü/g, 'U')
-              .replace(/Ö/g, 'O').replace(/ö/g, 'O')
-              .replace(/Ç/g, 'C').replace(/ç/g, 'C')
-              .toUpperCase().trim();
-};
-
 const levenshtein = (a, b) => {
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
@@ -51,8 +41,8 @@ const levenshtein = (a, b) => {
 };
 
 const isMatch = (guess, target) => {
-    const nGuess = normalizeTurkish(guess);
-    const nTarget = normalizeTurkish(target);
+    const nGuess = window.normalizeTurkishChars(guess).toUpperCase().trim();
+    const nTarget = window.normalizeTurkishChars(target).toUpperCase().trim();
 
     if (nGuess === nTarget) return true;
 

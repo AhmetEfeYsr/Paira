@@ -135,7 +135,7 @@ class KatiplikGame {
                 
                 this.categories.forEach((cat, index) => {
                     const titleText = `Metin ${index + 1} - ${cat.title}`;
-                    if (!filterText || titleText.toLocaleLowerCase('tr-TR').includes(lowerFilter)) {
+                    if (!filterText || window.normalizeTurkishChars(titleText).includes(window.normalizeTurkishChars(filterText))) {
                         const option = document.createElement('option');
                         option.value = index;
                         option.textContent = titleText;
@@ -249,18 +249,7 @@ class KatiplikGame {
         }
         
         if (this.kbMode === 'en') {
-            const trMap = {
-                'ı': 'i', 'İ': 'I',
-                'ş': 's', 'Ş': 'S',
-                'ğ': 'g', 'Ğ': 'G',
-                'ü': 'u', 'Ü': 'U',
-                'ö': 'o', 'Ö': 'O',
-                'ç': 'c', 'Ç': 'C',
-                'â': 'a', 'Â': 'A',
-                'î': 'i', 'Î': 'I',
-                'û': 'u', 'Û': 'U'
-            };
-            result = result.replace(/[ıİşŞğĞüÜöÖçÇâÂîÎûÛ]/g, match => trMap[match] || match);
+            result = window.normalizeTurkishChars(result);
         }
         
         return result;

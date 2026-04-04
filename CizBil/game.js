@@ -122,16 +122,6 @@ class CizBilGameEngine {
         }, this.state.turnDuration * 1000);
     }
 
-    normalizeTurkish(str) {
-        return str.replace(/İ/g, 'I').replace(/ı/g, 'I')
-                  .replace(/Ş/g, 'S').replace(/ş/g, 'S')
-                  .replace(/Ğ/g, 'G').replace(/ğ/g, 'G')
-                  .replace(/Ü/g, 'U').replace(/ü/g, 'U')
-                  .replace(/Ö/g, 'O').replace(/ö/g, 'O')
-                  .replace(/Ç/g, 'C').replace(/ç/g, 'C')
-                  .toUpperCase().trim();
-    }
-
     levenshtein(a, b) {
         if (a.length === 0) return b.length;
         if (b.length === 0) return a.length;
@@ -156,8 +146,8 @@ class CizBilGameEngine {
 
     isMatch(guess, target) {
         if (!target) return false;
-        const nGuess = this.normalizeTurkish(guess);
-        const nTarget = this.normalizeTurkish(target);
+        const nGuess = window.normalizeTurkishChars(guess).toUpperCase().trim();
+        const nTarget = window.normalizeTurkishChars(target).toUpperCase().trim();
 
         if (nGuess === nTarget) return true;
         if (nTarget.length > 4) {
@@ -289,13 +279,6 @@ class CizBilView {
 
     setMyId(id) {
         this.myId = id;
-    }
-
-    escapeHtml(text) {
-        if (text == null) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     bindEvents() {
@@ -451,9 +434,9 @@ class CizBilView {
         msg.className = 'chat-msg' + (isCorrect ? ' correct' : '');
 
         if (isCorrect) {
-            msg.innerHTML = `<strong style="color:var(--success)">${this.escapeHtml(name)}</strong> doğru bildi! 🎉`;
+            msg.innerHTML = `<strong style="color:var(--success)">${window.escapeHtml(name)}</strong> doğru bildi! 🎉`;
         } else {
-            msg.innerHTML = `<strong>${this.escapeHtml(name)}:</strong> <span>${this.escapeHtml(text)}</span>`;
+            msg.innerHTML = `<strong>${window.escapeHtml(name)}:</strong> <span>${window.escapeHtml(text)}</span>`;
         }
 
         container.appendChild(msg);
@@ -487,7 +470,7 @@ class CizBilView {
                 li.style.display = 'flex';
                 li.style.justifyContent = 'space-between';
                 li.style.padding = '5px 0';
-                li.innerHTML = `<span>${this.escapeHtml(p.name)}</span> <strong style="color:var(--neon-purple);">${p.score}</strong>`;
+                li.innerHTML = `<span>${window.escapeHtml(p.name)}</span> <strong style="color:var(--neon-purple);">${p.score}</strong>`;
                 list.appendChild(li);
             });
         }
@@ -555,7 +538,7 @@ class CizBilView {
             div.style.padding = '10px';
             div.style.background = 'var(--item-bg)';
             div.style.borderRadius = '8px';
-            div.innerHTML = `<span>${index + 1}. ${this.escapeHtml(p.name)}</span> <strong style="color:var(--neon-purple);">${p.score} Puan</strong>`;
+            div.innerHTML = `<span>${index + 1}. ${window.escapeHtml(p.name)}</span> <strong style="color:var(--neon-purple);">${p.score} Puan</strong>`;
             finalScores.appendChild(div);
         });
     }

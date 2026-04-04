@@ -267,13 +267,6 @@ class BilgiYarismasiView {
         this.myId = id;
     }
 
-    escapeHtml(text) {
-        if (text == null) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     bindEvents() {
         document.getElementById('btn-start-game')?.addEventListener('click', () => {
             const settings = {
@@ -300,7 +293,7 @@ class BilgiYarismasiView {
         cats.forEach(cat => {
             const lbl = document.createElement('label');
             lbl.className = 'category-pill';
-            lbl.innerHTML = `<input type="checkbox" value="${this.escapeHtml(cat)}" checked> ${this.escapeHtml(cat)}`;
+            lbl.innerHTML = `<input type="checkbox" value="${window.escapeHtml(cat)}" checked> ${window.escapeHtml(cat)}`;
             container.appendChild(lbl);
         });
     }
@@ -331,7 +324,7 @@ class BilgiYarismasiView {
                 badge.style.borderRadius = '8px';
                 badge.style.fontSize = '0.9rem';
                 badge.style.border = p.id === this.myId ? '1px solid var(--primary-purple)' : '1px solid transparent';
-                badge.innerHTML = `<strong>${this.escapeHtml(p.name)}:</strong> ${p.score}`;
+                badge.innerHTML = `<strong>${window.escapeHtml(p.name)}:</strong> ${p.score}`;
                 scb.appendChild(badge);
             });
         }
@@ -371,7 +364,7 @@ class BilgiYarismasiView {
                 btn.style.fontSize = '1.1rem';
                 btn.style.height = 'auto';
                 btn.style.whiteSpace = 'normal';
-                btn.innerHTML = `<strong>${letters[idx]})</strong> ${this.escapeHtml(choiceText)}`;
+                btn.innerHTML = `<strong>${letters[idx]})</strong> ${window.escapeHtml(choiceText)}`;
 
                 if (state.currentQuestion.reveal_answer && state.currentQuestion.correct_answer_index !== undefined) {
                     btn.classList.add('disabled');
@@ -432,7 +425,7 @@ class BilgiYarismasiView {
             li.style.color = idx === 0 ? 'var(--neon-purple)' : 'var(--text-main)';
             li.style.fontWeight = idx === 0 ? '800' : '500';
 
-            li.innerHTML = `<span>${idx + 1}. ${this.escapeHtml(p.name)} ${p.id === this.myId ? '(Sen)' : ''}</span> <span>${p.score} Puan</span>`;
+            li.innerHTML = `<span>${idx + 1}. ${window.escapeHtml(p.name)} ${p.id === this.myId ? '(Sen)' : ''}</span> <span>${p.score} Puan</span>`;
             ul.appendChild(li);
         });
     }

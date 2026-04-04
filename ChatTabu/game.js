@@ -61,16 +61,6 @@ class ChatTabuGameEngine {
         this.wordDatabase.sort(() => (Math.random() - 0.5));
     }
 
-    normalizeTurkish(str) {
-        return str.replace(/İ/g, 'I').replace(/ı/g, 'I')
-                  .replace(/Ş/g, 'S').replace(/ş/g, 'S')
-                  .replace(/Ğ/g, 'G').replace(/ğ/g, 'G')
-                  .replace(/Ü/g, 'U').replace(/ü/g, 'U')
-                  .replace(/Ö/g, 'O').replace(/ö/g, 'O')
-                  .replace(/Ç/g, 'C').replace(/ç/g, 'C')
-                  .toUpperCase().trim();
-    }
-
     levenshtein(a, b) {
         if (a.length === 0) return b.length;
         if (b.length === 0) return a.length;
@@ -94,8 +84,8 @@ class ChatTabuGameEngine {
     }
 
     isMatch(guess, target) {
-        const nGuess = this.normalizeTurkish(guess);
-        const nTarget = this.normalizeTurkish(target);
+        const nGuess = window.normalizeTurkishChars(guess).toUpperCase().trim();
+        const nTarget = window.normalizeTurkishChars(target).toUpperCase().trim();
 
         if (nGuess === nTarget) return true;
         if (nTarget.length > 4) {
@@ -236,13 +226,6 @@ class ChatTabuView {
         this.bindEvents();
     }
 
-    escapeHtml(text) {
-        if (text == null) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     bindEvents() {
         // Mode switch
         const modeSelect = document.getElementById('game-mode-select');
@@ -359,11 +342,11 @@ class ChatTabuView {
         list.innerHTML = '';
 
         if (hostName) {
-            list.innerHTML += `<li><strong>${this.escapeHtml(hostName)}</strong> <span class="badge" style="background:var(--primary-purple)">Kurucu</span></li>`;
+            list.innerHTML += `<li><strong>${window.escapeHtml(hostName)}</strong> <span class="badge" style="background:var(--primary-purple)">Kurucu</span></li>`;
         }
 
         if (clientName) {
-            list.innerHTML += `<li><strong>${this.escapeHtml(clientName)}</strong> <span class="badge" style="background:var(--danger)">Rakip</span></li>`;
+            list.innerHTML += `<li><strong>${window.escapeHtml(clientName)}</strong> <span class="badge" style="background:var(--danger)">Rakip</span></li>`;
         }
     }
 
@@ -397,9 +380,9 @@ class ChatTabuView {
 
             let winnerText = "Berabere!";
             if (state.hostScore > state.clientScore) {
-                winnerText = `${this.escapeHtml(state.hostName)} Kazandı!`;
+                winnerText = `${window.escapeHtml(state.hostName)} Kazandı!`;
             } else if (state.clientScore > state.hostScore) {
-                winnerText = `${this.escapeHtml(state.clientName)} Kazandı!`;
+                winnerText = `${window.escapeHtml(state.clientName)} Kazandı!`;
             }
             mainEl.textContent = winnerText;
             fbEl.innerHTML = `<li>Host Puanı: ${state.hostScore}</li><li>Rakip Puanı: ${state.clientScore}</li>`;
@@ -417,7 +400,7 @@ class ChatTabuView {
 
             if (state.activeWord) {
                 mainEl.textContent = state.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
-                fbEl.innerHTML = state.activeWord.yasakli_kelimeler.map(w => `<li>${this.escapeHtml(w.toLocaleUpperCase('tr-TR'))}</li>`).join('');
+                fbEl.innerHTML = state.activeWord.yasakli_kelimeler.map(w => `<li>${window.escapeHtml(w.toLocaleUpperCase('tr-TR'))}</li>`).join('');
             }
         } else {
             statusEl.textContent = "Diğer Yayıncı Anlatıyor...";
@@ -431,7 +414,7 @@ class ChatTabuView {
 
                 if (state.activeWord) {
                     mainEl.textContent = state.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
-                    fbEl.innerHTML = state.activeWord.yasakli_kelimeler.map(w => `<li>${this.escapeHtml(w.toLocaleUpperCase('tr-TR'))}</li>`).join('');
+                    fbEl.innerHTML = state.activeWord.yasakli_kelimeler.map(w => `<li>${window.escapeHtml(w.toLocaleUpperCase('tr-TR'))}</li>`).join('');
                 }
             } else {
                 controls.style.display = "none";

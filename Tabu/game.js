@@ -403,7 +403,7 @@ class TabuView {
             return;
         }
 
-        document.getElementById('turn-name').innerText = `${tPlayer.name} (T-${tPlayer.team})`;
+        document.getElementById('turn-name').innerText = `${window.escapeHtml(tPlayer.name)} (T-${tPlayer.team})`;
 
         const myTeam = state.players[this.myId]?.team;
         const amINarrator = state.turnId === this.myId;
@@ -427,7 +427,7 @@ class TabuView {
                 gameStatusMessage.className = "status-badge guesser-mode";
             } else {
                 startTurnContainer.classList.add('hidden');
-                gameStatusMessage.innerText = `${tPlayer.name} hazırlanıyor...`;
+                gameStatusMessage.innerText = `${window.escapeHtml(tPlayer.name)} hazırlanıyor...`;
                 gameStatusMessage.className = "status-badge";
             }
         } else {
@@ -484,8 +484,8 @@ class TabuView {
         if (!cBox) return;
         const div = document.createElement('div');
         div.className = `chat-msg ${isSelf ? 'self' : ''}`;
-        const safeSender = sender.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const safeMsg = msg.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeSender = window.escapeHtml(sender);
+        const safeMsg = window.escapeHtml(msg);
         div.innerHTML = `<strong>${safeSender}:</strong> ${safeMsg}`;
         cBox.appendChild(div);
         cBox.scrollTop = cBox.scrollHeight;

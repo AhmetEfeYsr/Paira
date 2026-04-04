@@ -190,7 +190,7 @@ function updateLobbyPlayersList(playersObj) {
 
     players.forEach(p => {
         const li = document.createElement('li');
-        li.innerHTML = `<span>${p.name}</span>${p.isHost ? '<span style="font-size: 0.8rem; background: var(--lilac); color: var(--bg-deep); padding: 2px 8px; border-radius: 10px; font-weight: bold;">Kurucu</span>' : ''}`;
+        li.innerHTML = `<span>${window.escapeHtml(p.name)}</span>${p.isHost ? '<span style="font-size: 0.8rem; background: var(--lilac); color: var(--bg-deep); padding: 2px 8px; border-radius: 10px; font-weight: bold;">Kurucu</span>' : ''}`;
         els.lobby.playersList.appendChild(li);
         if (p.isHost) els.lobby.hostNameDisplay.textContent = p.name;
     });
@@ -666,7 +666,7 @@ function renderActionList(excludeSelf, maxSelect = 1) {
         btn.style.width = '100%';
         btn.style.textAlign = 'left';
         btn.style.padding = '8px 12px';
-        btn.textContent = gameState.players[id].name;
+        btn.textContent = window.escapeHtml(gameState.players[id].name);
         btn.onclick = () => window.onPlayerSelected(id);
         els.game.actionPlayers.appendChild(btn);
     });
@@ -786,7 +786,7 @@ function renderEndGame() {
     Object.values(gameState.players).forEach(p => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${p.name}</td>
+            <td>${window.escapeHtml(p.name)}</td>
             <td style="color: var(--neon-purple); font-weight: bold;">${ROLES[p.role]?.name || '?'}</td>
             <td>${p.isAlive ? 'Yaşıyor' : 'Öldü'}</td>
         `;
