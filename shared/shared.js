@@ -70,15 +70,10 @@ class PairaSharedUI {
                 
                 // AVIF system implementation: Try to load AVIF first, if it fails or by default use AVIF
                 // We use generated_logos folder for the high-end logos
-                const newSrc = `${replaceStr}/generated_logos/${base}_${themeName}.avif`;
+                const newSrc = `${replaceStr}/${base}_${themeName}.avif`;
                 img.setAttribute('src', newSrc);
                 
-                // Fallback to base AVIF if themed AVIF doesn't exist (optional, but good for robustness)
-                img.onerror = () => {
-                    if (!img.src.endsWith(`${base}.avif`)) {
-                        img.src = `${replaceStr}/${base}.avif`;
-                    }
-                };
+
             }
         });
     }
