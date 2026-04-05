@@ -11,6 +11,7 @@ class PairaSharedUI {
             this.injectAds();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
             this.initFullscreenToggle();
+            this.initAds();
         };
 
         if (document.readyState === 'loading') {
@@ -37,6 +38,19 @@ class PairaSharedUI {
     initTheme() {
         const savedTheme = localStorage.getItem('paira_theme') || 'paira';
         document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
+    initAds() {
+        // Dinamik olarak ad_manager.js'i yükle
+        const script = document.createElement('script');
+        script.src = this.getBasePath() + 'shared/ad_manager.js';
+        script.onload = () => {
+            if (window.PairaAdManager) {
+                const adManager = new window.PairaAdManager();
+                adManager.init();
+            }
+        };
+        document.head.appendChild(script);
     }
 
     switchTheme(themeName) {
