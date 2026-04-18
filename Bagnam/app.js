@@ -71,11 +71,69 @@ function resetGameState() {
     const successMsg = document.getElementById('success-message');
     successMsg.classList.add('hidden');
     // Reset styling from give up failure
-    successMsg.innerHTML = `<h2 style="margin:0;">Tebrikler! 🎉</h2><p>Günün kelimesini <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p>`;
+    successMsg.innerHTML = `<h2 style="margin:0;">Tebrikler! 🎉</h2><p>Günün kelimesini <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p><button id="btn-play-again" class="btn btn-primary hidden" style="margin-top: 10px; padding: 8px 16px;">Tekrar Oyna</button>`;
     successMsg.style.borderColor = 'var(--success)';
     successMsg.style.background = 'var(--success-bg)';
 
+    // Attach listener to the newly inserted play again button
+    const playAgainBtn = document.getElementById('btn-play-again');
+    if(playAgainBtn) {
+        playAgainBtn.addEventListener('click', () => initInfiniteGame());
+    }
+
     document.getElementById('guess-history').innerHTML = "";
+}
+
+async function initInfiniteGame() {
+    resetGameState();
+    isInfiniteMode = true;
+
+    document.getElementById('main-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+
+    // Yükleniyor durumunu göster
+    document.getElementById('word-input').disabled = true;
+    document.getElementById('btn-guess').disabled = true;
+    document.getElementById('word-input').placeholder = "Sonsuz mod yükleniyor...";
+
+    // Daha önce oynanan kelimeleri localStorage'dan al
+    let playedWords = JSON.parse(localStorage.getItem('bagnam_infinite_played') || '[]');
+    let unplayedWords = INFINITE_WORDS.filter(w => !playedWords.includes(w));
+
+    if (unplayedWords.length === 0) {
+        // Tüm kelimeler oynanmışsa sıfırla
+        playedWords = [];
+        localStorage.removeItem('bagnam_infinite_played');
+        unplayedWords = INFINITE_WORDS;
+        showToast("Tüm kelimeleri bitirdiniz! Liste sıfırlandı, yeniden başlıyoruz.", "info");
+    }
+
+    // Rastgele kelime seç
+    const randomIndex = Math.floor(Math.random() * unplayedWords.length);
+    currentInfiniteWord = unplayedWords[randomIndex];
+
+    try {
+        const url = `https://db.pairaaa.com/Sonsuz%20Mod/sonsuz_mod_verileri/${encodeURIComponent(currentInfiniteWord)}.json`;
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error("JSON yüklenemedi");
+
+        infiniteModeData = await response.json();
+
+        // Başarıyla yüklendiğinde localStorage'a kaydet
+        playedWords.push(currentInfiniteWord);
+        localStorage.setItem('bagnam_infinite_played', JSON.stringify(playedWords));
+
+        document.getElementById('word-input').disabled = false;
+        document.getElementById('btn-guess').disabled = false;
+        document.getElementById('word-input').placeholder = "Tahmininizi yazın...";
+        document.getElementById('word-input').focus();
+    } catch (error) {
+        console.error("Sonsuz mod yüklenirken hata:", error);
+        showToast("Veri yüklenemedi, lütfen tekrar deneyin.", "error");
+        document.getElementById('main-screen').classList.remove('hidden');
+        document.getElementById('game-screen').classList.add('hidden');
+    }
 }
 
 
@@ -160,22 +218,34 @@ async function handleGuess() {
             }
         }
 
-        const fetchPromises = wordsToCheck.map(w => 
-            fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${w}.json`)
-        );
-
-        const responses = await Promise.all(fetchPromises);
-        
         let foundData = [];
         
-        for (let i = 0; i < responses.length; i++) {
-            if (responses[i].ok) {
-                const data = await responses[i].json();
-                if (data !== null) {
+        if (isInfiniteMode) {
+            for (let i = 0; i < wordsToCheck.length; i++) {
+                const w = wordsToCheck[i];
+                if (infiniteModeData && infiniteModeData[w]) {
                     foundData.push({
-                        word: wordsToCheck[i],
-                        data: data
+                        word: w,
+                        data: infiniteModeData[w]
                     });
+                }
+            }
+        } else {
+            const fetchPromises = wordsToCheck.map(w =>
+                fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${w}.json`)
+            );
+
+            const responses = await Promise.all(fetchPromises);
+
+            for (let i = 0; i < responses.length; i++) {
+                if (responses[i].ok) {
+                    const data = await responses[i].json();
+                    if (data !== null) {
+                        foundData.push({
+                            word: wordsToCheck[i],
+                            data: data
+                        });
+                    }
                 }
             }
         }
@@ -320,7 +390,12 @@ function handleWin() {
     document.getElementById('final-guess-count').textContent = guesses.length;
     successMsg.classList.remove('hidden');
 
-    showToast("Tebrikler! Günün kelimesini buldunuz.", "success");
+    if (isInfiniteMode) {
+        const playAgainBtn = document.getElementById('btn-play-again');
+        if (playAgainBtn) playAgainBtn.classList.remove('hidden');
+    }
+
+    showToast("Tebrikler! Kelimeyi buldunuz.", "success");
 }
 
 async function handleGiveUp() {
@@ -338,27 +413,40 @@ async function handleGiveUp() {
     btnGiveup.disabled = true;
 
     try {
-        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/ana-kelime-pes.json`;
-        const response = await fetch(url);
+        let targetWord;
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (isInfiniteMode) {
+            targetWord = infiniteModeData["ana-kelime-pes"];
+        } else {
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/ana-kelime-pes.json`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            targetWord = await response.json();
         }
-
-        const targetWord = await response.json();
 
         if (targetWord && typeof targetWord === "string") {
             hasWon = true; // prevent further guesses
 
             // Show failure/give up message in the success banner area
             const successMsg = document.getElementById('success-message');
-            successMsg.innerHTML = `<h2 style="margin:0; color: var(--danger);">Oyun Bitti!</h2><p>Günün kelimesi: <strong>${targetWord.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR')}</strong></p>`;
+            successMsg.innerHTML = `<h2 style="margin:0; color: var(--danger);">Oyun Bitti!</h2><p>Aranan kelime: <strong>${targetWord.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR')}</strong></p><button id="btn-play-again-giveup" class="btn btn-primary" style="margin-top: 10px; padding: 8px 16px;">Tekrar Oyna</button>`;
+
+            const btnPlayAgainGiveup = successMsg.querySelector('#btn-play-again-giveup');
+            if (isInfiniteMode) {
+                btnPlayAgainGiveup.addEventListener('click', () => initInfiniteGame());
+            } else {
+                btnPlayAgainGiveup.style.display = 'none';
+            }
+
             successMsg.classList.remove('hidden');
             successMsg.style.borderColor = 'var(--danger)';
             successMsg.style.background = 'rgba(231, 76, 60, 0.1)';
 
-            showToast("Pes ettiniz.", "warning");
-        } else {
+            showToast("Pes ettiniz.", "warning");        } else {
             throw new Error("Geçersiz veri formatı döndü.");
         }
     } catch (error) {
@@ -421,11 +509,16 @@ async function handleHint() {
     }
 
     try {
-        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
-        const response = await fetch(url);
-        
-        if (!response.ok) throw new Error("Fetch error");
-        const data = await response.json();
+        let data;
+        if (isInfiniteMode) {
+            data = infiniteModeData[hintKey];
+        } else {
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error("Fetch error");
+            data = await response.json();
+        }
 
         if (data) {
             let displayData = isDefinition ? data : data.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR');
