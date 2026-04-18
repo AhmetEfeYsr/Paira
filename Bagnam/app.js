@@ -13,7 +13,7 @@ let isInfiniteMode = false;
 let currentInfiniteWord = "";
 let infiniteModeData = null;
 
-const INFINITE_WORDS = ["güneş","ay","yıldız","dağ","deniz","orman","ağaç","çiçek","su","ateş","toprak","rüzgar","yağmur","bulut","göl","kedi","köpek","kuş","balık","at","aslan","yılan","fare","böcek","inek","baş","göz","kulak","burun","ağız","el","ayak","kalp","beyin","kan","ekmek","süt","çay","kahve","elma","et","peynir","yumurta","çorba","tatlı","tuz","şeker","dünya","bilim","sanat","ev","kapı","pencere","masa","sandalye","yatak","kitap","kalem","kağıt","telefon","araba","bilgisayar","saat","ayna","anahtar","insan","çocuk","kadın","adam","anne","baba","doktor","öğretmen","arkadaş","bebek","okul","hastane","sokak","şehir","köy","yol","park","bina","pazar","mağaza","zaman","gün","gece","sabah","akşam","sevgi","korku","hayat","akıl","bilgi","oyun","rüya","müzik","renk","para"];
+const INFINITE_WORDS = ["güneş","ay","yıldız","dağ","deniz","orman","ağaç","çiçek","su","ateş","toprak","yağmur","bulut","göl","kedi","köpek","kuş","balık","at","aslan","yılan","fare","böcek","inek","baş","göz","kulak","burun","ağız","el","ayak","kalp","beyin","kan","ekmek","süt","çay","kahve","elma","et","peynir","yumurta","çorba","tatlı","tuz","şeker","dünya","bilim","sanat","ev","kapı","pencere","masa","sandalye","yatak","kitap","kalem","telefon","araba","bilgisayar","saat","ayna","anahtar","insan","çocuk","kadın","adam","anne","baba","doktor","öğretmen","arkadaş","bebek","okul","hastane","sokak","şehir","köy","yol","park","bina","pazar","mağaza","zaman","gün","gece","sabah","akşam","sevgi","korku","hayat","akıl","bilgi","oyun","rüya","müzik","renk","para"];
 
 
 document.addEventListener('DOMContentLoaded', () => {
