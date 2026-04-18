@@ -9,9 +9,16 @@ let hintDataCache = null;
 let lastHintStage = null;
 let lastHintType = null;
 
+let isInfiniteMode = false;
+let currentInfiniteWord = "";
+let infiniteModeData = null;
+
+const INFINITE_WORDS = ["güneş","ay","yıldız","dağ","deniz","orman","ağaç","çiçek","su","ateş","toprak","rüzgar","yağmur","bulut","göl","kedi","köpek","kuş","balık","at","aslan","yılan","fare","böcek","inek","baş","göz","kulak","burun","ağız","el","ayak","kalp","beyin","kan","ekmek","süt","çay","kahve","elma","et","peynir","yumurta","çorba","tatlı","tuz","şeker","dünya","bilim","sanat","ev","kapı","pencere","masa","sandalye","yatak","kitap","kalem","kağıt","telefon","araba","bilgisayar","saat","ayna","anahtar","insan","çocuk","kadın","adam","anne","baba","doktor","öğretmen","arkadaş","bebek","okul","hastane","sokak","şehir","köy","yol","park","bina","pazar","mağaza","zaman","gün","gece","sabah","akşam","sevgi","korku","hayat","akıl","bilgi","oyun","rüya","müzik","renk","para"];
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-start');
+    const btnInfinite = document.getElementById('btn-infinite');
     const btnGuess = document.getElementById('btn-guess');
     const wordInput = document.getElementById('word-input');
     const btnGiveup = document.getElementById('btn-giveup');
@@ -25,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if(btnStart) btnStart.addEventListener('click', () => initGame());
+    if(btnInfinite) btnInfinite.addEventListener('click', () => initInfiniteGame());
     if(btnPlayPast && datePicker) {
         btnPlayPast.addEventListener('click', () => {
             if(!datePicker.value) {
@@ -88,8 +96,7 @@ async function initInfiniteGame() {
     resetGameState();
     isInfiniteMode = true;
 
-    document.getElementById('main-screen').classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
+    window.showScreen('game-screen');
 
     // Yükleniyor durumunu göster
     document.getElementById('word-input').disabled = true;
@@ -113,7 +120,7 @@ async function initInfiniteGame() {
     currentInfiniteWord = unplayedWords[randomIndex];
 
     try {
-        const url = `https://db.pairaaa.com/Sonsuz%20Mod/sonsuz_mod_verileri/${encodeURIComponent(currentInfiniteWord)}.json`;
+        const url = `https://db.pairaaa.com/Sonsuz%20Mod/sonsuz_mod_verileri/${encodeURIComponent(currentInfiniteWord + '_1')}.json`;
         const response = await fetch(url);
 
         if (!response.ok) throw new Error("JSON yüklenemedi");
@@ -131,8 +138,7 @@ async function initInfiniteGame() {
     } catch (error) {
         console.error("Sonsuz mod yüklenirken hata:", error);
         showToast("Veri yüklenemedi, lütfen tekrar deneyin.", "error");
-        document.getElementById('main-screen').classList.remove('hidden');
-        document.getElementById('game-screen').classList.add('hidden');
+        window.showScreen('login-screen');
     }
 }
 
