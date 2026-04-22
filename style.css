@@ -21,9 +21,8 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: var(--card-bg); border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 4px; }
+
+
 
 .glass-panel {
     width: 100%;
@@ -50,7 +49,8 @@ body {
 .hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
 .seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: -1rem; margin-bottom: 1rem; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
 
 @keyframes pulseGlow {
     0% { text-shadow: 0 0 10px var(--neon-glow-rgba), 0 0 20px var(--btn-secondary-bg); }

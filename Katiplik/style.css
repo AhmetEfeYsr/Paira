@@ -154,7 +154,7 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 
 .text-display .word.error {
     background: rgba(239, 68, 68, 0.2);
-    color: #ff8a8a;
+    color: var(--danger);
 }
 
 .text-input {

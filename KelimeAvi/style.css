@@ -42,7 +42,8 @@ body {
 .rule-card h3 { font-size: 1.1rem; color: var(--neon-purple); margin-bottom: 0.5rem; }
 .rule-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
 
 h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); letter-spacing: 0.5px; }
 

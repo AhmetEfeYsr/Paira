@@ -7,7 +7,7 @@
 
 #mobile-warning {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: #050814; z-index: 99999; display: flex; flex-direction: column;
+    background: var(--bg-deep); z-index: 99999; display: flex; flex-direction: column;
     justify-content: center; align-items: center; text-align: center; padding: 2rem;
 }
 #mobile-warning.active { display: flex !important; }
@@ -26,7 +26,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #1e293b;
+    background: var(--bg-navy);
 }
 
 .level-node:hover {
@@ -43,8 +43,8 @@
 
 /* States */
 .level-node.state-locked {
-    background: #1e293b;
-    border: 2px solid #334155;
+    background: var(--bg-navy);
+    border: 2px solid var(--lilac-muted);
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -52,10 +52,10 @@
 
 .level-node.state-unlocked {
     background: var(--primary-purple);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.8);
 }
 
 .level-node.state-completed {
-    background: #facc15; 
+    background: var(--warning); 
     box-shadow: 0 0 15px rgba(250, 204, 21, 0.6);
 }
