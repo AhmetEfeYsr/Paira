@@ -75,7 +75,7 @@ body.game-active .game-seo-info {
 }
 
 .card {
-    background: rgba(18, 20, 28, 0.7) !important;
+    background: var(--card-bg);
     backdrop-filter: blur(8px);
 }
 

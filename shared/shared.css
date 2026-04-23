@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap');
                     /* Shared styles for Paira Games (Footer, Modal, Cookies, Top Nav) */
 
 :root, [data-theme="paira"] {
@@ -142,7 +143,7 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     padding: 12px 16px;
     margin-bottom: 1rem;
     font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
+    font-family: inherit;
     transition: all 0.3s ease;
     width: 100%;
 }
@@ -156,7 +157,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 .btn {
     border-radius: 12px;
-    font-family: 'Poppins', sans-serif;
+    font-family: inherit;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
