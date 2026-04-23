@@ -137,6 +137,23 @@ async function handleGuess() {
 
     if(!word) return;
 
+    // 🥚 Easter Egg: "paira" özel kelime
+    if (word === 'paira') {
+        if (guesses.some(g => g.word === 'paira')) {
+            showToast("Bu kelimeyi zaten tahmin ettiniz!", "warning");
+            inputEl.value = "";
+            inputEl.focus();
+            return;
+        }
+        guesses.push({ word: 'paira', rank: 1, score: 1.0, hintAssisted: false, isPairaEgg: true });
+        document.getElementById('guess-count').textContent = guesses.length;
+        inputEl.value = "";
+        renderHistory();
+        showToast("canım ablam 💜", "success");
+        inputEl.focus();
+        return;
+    }
+
     // Check if already guessed
     if(guesses.some(g => g.word === word.replace(/_\d+$/, ''))) {
         showToast("Bu kelimeyi zaten tahmin ettiniz!", "warning");
@@ -316,8 +333,25 @@ function renderHistory() {
         }
         
         const wordText = document.createElement('span');
-        wordText.textContent = g.word;
-        wordDiv.appendChild(wordText);
+
+        // 🥚 Paira easter egg: taç ve canım ablam
+        if (g.isPairaEgg) {
+            const crownIcon = document.createElement('span');
+            crownIcon.textContent = '👑';
+            crownIcon.style.marginRight = '4px';
+            wordDiv.appendChild(crownIcon);
+            
+            wordText.textContent = g.word;
+            wordDiv.appendChild(wordText);
+
+            const loveText = document.createElement('span');
+            loveText.className = 'paira-love-text';
+            loveText.textContent = 'canım ablam 💜';
+            wordDiv.appendChild(loveText);
+        } else {
+            wordText.textContent = g.word;
+            wordDiv.appendChild(wordText);
+        }
 
         const rankDiv = document.createElement('div');
         rankDiv.className = 'rank-score';

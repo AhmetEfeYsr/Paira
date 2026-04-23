@@ -103,6 +103,21 @@
     font-family: 'Poppins', sans-serif;
 }
 
+/* --- Paira Easter Egg --- */
+.paira-love-text {
+    font-size: 0.75rem;
+    color: #b388ff;
+    font-style: italic;
+    margin-left: 8px;
+    opacity: 0.9;
+    animation: pairaPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pairaPulse {
+    0%, 100% { opacity: 0.9; text-shadow: 0 0 4px rgba(179, 136, 255, 0.3); }
+    50% { opacity: 1; text-shadow: 0 0 12px rgba(179, 136, 255, 0.6); }
+}
+
 .guess-input-wrapper {
     display: flex;
     gap: 12px;
