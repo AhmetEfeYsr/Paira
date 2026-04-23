@@ -9,6 +9,7 @@ let hintDataCache = null;
 let lastHintStage = null;
 let lastHintType = null;
 let revealedHintWords = new Set(); // İpucuyla açığa çıkan kelimeler
+let hintHistory = []; // Alınan tüm ipuçları: { title: string, content: string }
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(btnGiveup) btnGiveup.addEventListener('click', handleGiveUp);
     if(btnHint) btnHint.addEventListener('click', handleHint);
+
+    const btnLastHint = document.getElementById('btn-last-hint');
+    if(btnLastHint) btnLastHint.addEventListener('click', showLastHint);
 });
 
 function resetGameState() {
@@ -54,10 +58,16 @@ function resetGameState() {
     lastHintStage = null;
     lastHintType = null;
     revealedHintWords = new Set();
+    hintHistory = [];
+
+    const btnLastHint = document.getElementById('btn-last-hint');
+    if (btnLastHint) {
+        btnLastHint.classList.add('hidden');
+    }
 
     const btnHint = document.getElementById('btn-hint');
     if (btnHint) {
-        btnHint.textContent = "İpucu Al";
+        btnHint.innerHTML = '💡';
         btnHint.disabled = false;
         btnHint.style.opacity = "1";
     }
@@ -511,11 +521,18 @@ async function handleHint() {
             
             let hintMessage = `İpucu (${hintTitle}):\n\n${displayData}`;
             
+            // İpucu geçmişine kaydet
+            hintHistory.push({ title: hintTitle, content: displayData });
+            
             hintsUsed++;
             
-            // İpucu sayacını güncelle
+            // İpucu sayacını badge olarak göster
             const btnHintEl = document.getElementById('btn-hint');
-            if (btnHintEl) btnHintEl.textContent = `İpucu Al (${hintsUsed})`;
+            if (btnHintEl) btnHintEl.innerHTML = `💡<span class="hint-count-badge">${hintsUsed}</span>`;
+            
+            // Son İpucu butonunu göster
+            const btnLastHint = document.getElementById('btn-last-hint');
+            if (btnLastHint) btnLastHint.classList.remove('hidden');
             
             alert(hintMessage);
         } else {
@@ -529,5 +546,12 @@ async function handleHint() {
     }
 }
 
-
+function showLastHint() {
+    if (hintHistory.length === 0) {
+        showToast("Henüz ipucu almadınız.", "warning");
+        return;
+    }
+    const last = hintHistory[hintHistory.length - 1];
+    alert(`Son İpucu (${last.title}):\n\n${last.content}`);
+}
 

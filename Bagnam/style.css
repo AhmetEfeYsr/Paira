@@ -1,5 +1,90 @@
 /* Bağnam specific styles */
 
+/* --- Topbar Action Buttons (Icon-only, mobile-safe) --- */
+.topbar-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.topbar-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    position: relative;
+    flex-shrink: 0;
+    line-height: 1;
+    padding: 0;
+}
+
+.topbar-btn:hover {
+    transform: scale(1.1);
+}
+
+.topbar-btn:active {
+    transform: scale(0.95);
+}
+
+.topbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Hint button - amber */
+.hint-btn {
+    background: rgba(243, 156, 18, 0.2);
+    border-color: rgba(243, 156, 18, 0.6);
+}
+.hint-btn:hover {
+    box-shadow: 0 0 12px rgba(243, 156, 18, 0.4);
+}
+
+/* Last hint button - purple */
+.last-hint-btn {
+    background: rgba(142, 68, 173, 0.2);
+    border-color: rgba(142, 68, 173, 0.6);
+}
+.last-hint-btn:hover {
+    box-shadow: 0 0 12px rgba(142, 68, 173, 0.4);
+}
+
+/* Give up button - red */
+.giveup-btn {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.6);
+}
+.giveup-btn:hover {
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.4);
+}
+
+/* Hint count badge */
+.hint-count-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #f39c12;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    font-family: 'Poppins', sans-serif;
+}
+
 .guess-input-wrapper {
     display: flex;
     gap: 12px;
