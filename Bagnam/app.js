@@ -317,6 +317,11 @@ function renderHistory() {
         li.style.borderTop = `1px solid ${colorStyle.borderSubtle}`;
         li.style.borderBottom = `1px solid ${colorStyle.borderSubtle}`;
 
+        // Dinamik parlama için CSS değişkenleri
+        li.style.setProperty('--item-h', colorStyle.h);
+        li.style.setProperty('--item-s', `${colorStyle.s}%`);
+        li.style.setProperty('--item-l', `${colorStyle.l}%`);
+
         // Giriş animasyonu
         li.style.animationDelay = `${index * 0.03}s`;
 
@@ -389,7 +394,8 @@ function getSimilarityColor(score, rank) {
             bg: 'linear-gradient(135deg, rgba(46, 204, 113, 0.35), rgba(39, 174, 96, 0.4))',
             border: '#2ecc71',
             borderSubtle: 'rgba(46, 204, 113, 0.5)',
-            text: '#2ecc71'
+            text: '#2ecc71',
+            h: 145, s: 63, l: 49
         };
     }
 
@@ -408,7 +414,8 @@ function getSimilarityColor(score, rank) {
         bg: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`,
         border: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
         borderSubtle: `hsla(${hue}, ${saturation}%, ${lightness}%, ${borderAlpha * 0.5})`,
-        text: `hsl(${hue}, ${saturation}%, ${Math.min(lightness + 15, 80)}%)`
+        text: `hsl(${hue}, ${saturation}%, ${Math.min(lightness + 15, 80)}%)`,
+        h: hue, s: saturation, l: lightness
     };
 }
 

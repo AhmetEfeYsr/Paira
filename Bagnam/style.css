@@ -211,7 +211,7 @@
 
 .history-item:hover {
     transform: translateX(4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 16px hsla(var(--item-h, 0), var(--item-s, 0%), var(--item-l, 0%), 0.4);
 }
 
 .history-item .word {
@@ -286,8 +286,8 @@
 }
 
 @keyframes targetShimmer {
-    0%, 100% { box-shadow: 0 0 8px rgba(46, 204, 113, 0.3); }
-    50% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.5), 0 0 40px rgba(46, 204, 113, 0.15); }
+    0%, 100% { box-shadow: 0 0 8px hsla(var(--item-h, 145), var(--item-s, 63%), var(--item-l, 49%), 0.3); }
+    50% { box-shadow: 0 0 20px hsla(var(--item-h, 145), var(--item-s, 63%), var(--item-l, 49%), 0.5), 0 0 40px hsla(var(--item-h, 145), var(--item-s, 63%), var(--item-l, 49%), 0.15); }
 }
 
 /* --- Error Shake --- */
