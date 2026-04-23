@@ -1,0 +1,18 @@
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /Bagnam/ HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /Bagnam/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /shared/shared.js HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /shared/shared.css HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /logolar/bagnam.avif HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /Bagnam/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:38:47] code 404, message File not found
+127.0.0.1 - - [23/Apr/2026 20:38:47] "GET /logolar/generated_logos/bagnam_paira.avif HTTP/1.1" 404 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /Bagnam/ HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /shared/shared.css HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /shared/shared.js HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /Bagnam/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /logolar/bagnam.avif HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /Bagnam/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [23/Apr/2026 20:39:47] code 404, message File not found
+127.0.0.1 - - [23/Apr/2026 20:39:47] "GET /logolar/generated_logos/bagnam_paira.avif HTTP/1.1" 404 -

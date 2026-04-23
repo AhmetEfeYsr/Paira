@@ -9,6 +9,7 @@ let hintDataCache = null;
 let lastHintStage = null;
 let lastHintType = null;
 let revealedHintWords = new Set(); // İpucuyla açığa çıkan kelimeler
+let revealedHintStages = new Set(); // Kelimesi açığa çıkmış ipucu aşamaları
 let hintHistory = []; // Alınan tüm ipuçları: { title: string, content: string }
 
 
@@ -58,6 +59,7 @@ function resetGameState() {
     lastHintStage = null;
     lastHintType = null;
     revealedHintWords = new Set();
+    revealedHintStages.clear();
     hintHistory = [];
 
     const btnLastHint = document.getElementById('btn-last-hint');
@@ -491,7 +493,7 @@ async function handleHint() {
     // Bulunan kelimelerden herhangi birinin sırası (rank) aşama (N) değerinden küçük eşit mi?
     // Küçük veya eşit değilse, o aşama için ipucu vereceğiz.
     for (const n of stages) {
-        if (!guesses.some(g => g.rank <= n)) {
+        if (!guesses.some(g => g.rank <= n) && !revealedHintStages.has(n)) {
             targetN = n;
             break;
         }
@@ -512,40 +514,61 @@ async function handleHint() {
         lastHintStage = targetN;
         lastHintType = "tanim";
         hintKey = `hint-${targetN}-tanim`;
-        hintTitle = `${targetN}. Kelime Tanımı`;
+        hintTitle = `Yakın Bir Kelime Tanımı`;
     } else {
         // Zaten bu aşamanın tanımını aldıysa kelimeyi vereceğiz.
         if (lastHintType === "tanim") {
             lastHintType = "kelime";
             hintKey = `hint-${targetN}-kelime`;
-            hintTitle = `${targetN}. Kelime`;
+            hintTitle = `Yakın Bir Kelime`;
             isDefinition = false;
         } else if (lastHintType === "kelime") {
             // Zaten kelimeyi aldı ama tahmin etmediyse tekrar hatırlatacağız
             hintKey = `hint-${targetN}-kelime`;
-            hintTitle = `${targetN}. Kelime`;
+            hintTitle = `Yakın Bir Kelime`;
             isDefinition = false;
         }
     }
 
     try {
-        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
-        const response = await fetch(url);
-        
-        if (!response.ok) throw new Error("Fetch error");
-        const data = await response.json();
+        let displayData = null;
 
-        if (data) {
-            let displayData;
-            if (isDefinition) {
+        if (isDefinition) {
+            const [tanimRes, kelimeRes] = await Promise.all([
+                fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`),
+                fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/hint-${targetN}-kelime.json`)
+            ]);
+
+            if (!tanimRes.ok) throw new Error("Fetch error");
+            const data = await tanimRes.json();
+
+            if (data) {
                 displayData = data;
-            } else {
-                // Kelime ipucu - bu kelimeyi revealedHintWords'e ekle
+
+                if (kelimeRes.ok) {
+                    const kelimeData = await kelimeRes.json();
+                    if (kelimeData) {
+                        const cleanWord = kelimeData.replace(/_\d+$/, '').toLocaleLowerCase('tr-TR');
+                        revealedHintWords.add(cleanWord);
+                    }
+                }
+            }
+        } else {
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error("Fetch error");
+            const data = await response.json();
+
+            if (data) {
+                revealedHintStages.add(targetN);
                 const cleanWord = data.replace(/_\d+$/, '').toLocaleLowerCase('tr-TR');
                 revealedHintWords.add(cleanWord);
                 displayData = cleanWord.toLocaleUpperCase('tr-TR');
             }
-            
+        }
+
+        if (displayData) {
             let hintMessage = `İpucu (${hintTitle}):\n\n${displayData}`;
             
             // İpucu geçmişine kaydet
