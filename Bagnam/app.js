@@ -536,7 +536,7 @@ async function handleHint() {
             
             alert(hintMessage);
         } else {
-            showToast("İpucu verisi bulunamadı.", "error");
+            showToast(`İpucu verisi bulunamadı (${hintKey}). Günün verisi henüz güncellenmemiş olabilir.`, "error");
         }
     } catch (error) {
         console.error("İpucu çekilirken hata:", error);

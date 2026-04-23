@@ -5,16 +5,18 @@
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+    align-items: center;
 }
 
 .topbar-btn {
     width: 42px;
     height: 42px;
+    min-width: 42px;
+    min-height: 42px;
     border-radius: 10px;
-    border: 2px solid transparent;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     cursor: pointer;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
@@ -22,6 +24,13 @@
     flex-shrink: 0;
     line-height: 1;
     padding: 0;
+    margin: 0;
+    color: white;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    text-decoration: none;
 }
 
 .topbar-btn:hover {
@@ -35,35 +44,44 @@
 .topbar-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    transform: none;
+    transform: none !important;
 }
 
 /* Hint button - amber */
 .hint-btn {
-    background: rgba(243, 156, 18, 0.2);
-    border-color: rgba(243, 156, 18, 0.6);
+    background: rgba(243, 156, 18, 0.25) !important;
+    border: 2px solid rgba(243, 156, 18, 0.7) !important;
 }
 .hint-btn:hover {
-    box-shadow: 0 0 12px rgba(243, 156, 18, 0.4);
+    box-shadow: 0 0 14px rgba(243, 156, 18, 0.5);
+    background: rgba(243, 156, 18, 0.4) !important;
 }
 
 /* Last hint button - purple */
 .last-hint-btn {
-    background: rgba(142, 68, 173, 0.2);
-    border-color: rgba(142, 68, 173, 0.6);
+    background: rgba(142, 68, 173, 0.25) !important;
+    border: 2px solid rgba(142, 68, 173, 0.7) !important;
 }
 .last-hint-btn:hover {
-    box-shadow: 0 0 12px rgba(142, 68, 173, 0.4);
+    box-shadow: 0 0 14px rgba(142, 68, 173, 0.5);
+    background: rgba(142, 68, 173, 0.4) !important;
 }
 
 /* Give up button - red */
 .giveup-btn {
-    background: rgba(231, 76, 60, 0.2);
-    border-color: rgba(231, 76, 60, 0.6);
+    background: rgba(231, 76, 60, 0.25) !important;
+    border: 2px solid rgba(231, 76, 60, 0.7) !important;
 }
 .giveup-btn:hover {
-    box-shadow: 0 0 12px rgba(231, 76, 60, 0.4);
+    box-shadow: 0 0 14px rgba(231, 76, 60, 0.5);
+    background: rgba(231, 76, 60, 0.4) !important;
 }
+
+/* Hidden override for topbar buttons */
+.topbar-btn.hidden {
+    display: none !important;
+}
+
 
 /* Hint count badge */
 .hint-count-badge {
