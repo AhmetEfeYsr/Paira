@@ -2,12 +2,13 @@
 const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/BagnamMockData/main/daily_words.json"; // Placeholder for now
 
 let targetDate = ""; // Hedeflenen tarih (YYYY-MM-DD)
-let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, score: number }
+let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, score: number, hintAssisted: boolean }
 let hasWon = false;
 let hintsUsed = 0; // Kaç ipucu kullanıldı
 let hintDataCache = null;
 let lastHintStage = null;
 let lastHintType = null;
+let revealedHintWords = new Set(); // İpucuyla açığa çıkan kelimeler
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -52,6 +53,7 @@ function resetGameState() {
     hintDataCache = null;
     lastHintStage = null;
     lastHintType = null;
+    revealedHintWords = new Set();
 
     const btnHint = document.getElementById('btn-hint');
     if (btnHint) {
@@ -221,11 +223,13 @@ async function handleGuess() {
                     return;
                 }
 
-                // Add guess
+                // Add guess (ipucuyla açığa çıkmış kelime mi kontrol et)
+                const isHintAssisted = revealedHintWords.has(baseWord);
                 guesses.push({
                     word: baseWord,
                     rank: rank,
-                    score: score
+                    score: score,
+                    hintAssisted: isHintAssisted
                 });
                 addedAny = true;
 
@@ -274,24 +278,50 @@ function renderHistory() {
     // Sort guesses by rank (lowest rank first)
     const sortedGuesses = [...guesses].sort((a, b) => a.rank - b.rank);
 
-    sortedGuesses.forEach(g => {
+    sortedGuesses.forEach((g, index) => {
         const li = document.createElement('li');
-        li.className = `history-item ${getColorClass(g.rank)}`;
+        li.className = 'history-item';
+
+        // Dinamik sıcak-soğuk renk: similarity skora göre HSL gradient
+        const colorStyle = getSimilarityColor(g.score, g.rank);
+        li.style.background = colorStyle.bg;
+        li.style.borderLeft = `4px solid ${colorStyle.border}`;
+        li.style.borderRight = `1px solid ${colorStyle.borderSubtle}`;
+        li.style.borderTop = `1px solid ${colorStyle.borderSubtle}`;
+        li.style.borderBottom = `1px solid ${colorStyle.borderSubtle}`;
+
+        // Giriş animasyonu
+        li.style.animationDelay = `${index * 0.03}s`;
 
         const wordDiv = document.createElement('div');
         wordDiv.className = 'word';
-        wordDiv.textContent = g.word;
+        
+        // İpucuyla bilinen kelimeye sembol ekle
+        if (g.hintAssisted) {
+            const hintIcon = document.createElement('span');
+            hintIcon.className = 'hint-badge';
+            hintIcon.textContent = '💡';
+            hintIcon.title = 'İpucuyla bulunan kelime';
+            wordDiv.appendChild(hintIcon);
+        }
+        
+        const wordText = document.createElement('span');
+        wordText.textContent = g.word;
+        wordDiv.appendChild(wordText);
 
         const rankDiv = document.createElement('div');
         rankDiv.className = 'rank-score';
 
         const rankSpan = document.createElement('span');
         rankSpan.className = 'rank';
-        rankSpan.textContent = `Sıra: ${g.rank}`;
+        rankSpan.style.color = colorStyle.text;
+        rankSpan.textContent = `#${g.rank}`;
 
         const scoreSpan = document.createElement('span');
         scoreSpan.className = 'score';
-        scoreSpan.textContent = `Benzerlik: ${(g.score * 100).toFixed(1)}%`;
+        // Benzerlik bar gösterimi
+        const pct = (g.score * 100).toFixed(1);
+        scoreSpan.innerHTML = `<span class="score-bar-wrap"><span class="score-bar" style="width: ${pct}%; background: ${colorStyle.border};"></span></span><span class="score-text">${pct}%</span>`;
 
         rankDiv.appendChild(rankSpan);
         rankDiv.appendChild(scoreSpan);
@@ -303,12 +333,53 @@ function renderHistory() {
     });
 }
 
-function getColorClass(rank) {
-    if(rank === 1) return 'color-1'; // Target
-    if(rank <= 100) return 'color-2'; // Very close
-    if(rank <= 1000) return 'color-3'; // Close
-    if(rank <= 10000) return 'color-4'; // Moderate
-    return 'color-5'; // Far
+/**
+ * Similarity skora göre sıcak-soğuk renk üretir.
+ * score: 0.0 (soğuk/uzak) - 1.0 (sıcak/yakın)
+ * Renk skalası: Mavi(soğuk) → Cyan → Yeşil → Sarı → Turuncu → Kırmızı(sıcak) → Altın(hedef)
+ */
+function getSimilarityColor(score, rank) {
+    if (rank === 1) {
+        // Hedef kelime - özel altın parıltı
+        return {
+            bg: 'linear-gradient(135deg, rgba(255, 215, 0, 0.35), rgba(46, 204, 113, 0.4))',
+            border: '#ffd700',
+            borderSubtle: 'rgba(255, 215, 0, 0.5)',
+            text: '#ffd700'
+        };
+    }
+
+    // Similarity skoru 0-1 arasında, HSL hue eşleştirmesi:
+    // 0.0 → hue 240 (mavi/soğuk)
+    // 0.5 → hue 60  (sarı/ılık)  
+    // 1.0 → hue 0   (kırmızı/sıcak)
+    // Nonlinear mapping for better visual distribution
+    const t = Math.pow(score, 0.7); // Düşük skorlara daha fazla renk aralığı
+    
+    // Hue: 240 (mavi) → 120 (yeşil) → 60 (sarı) → 0 (kırmızı)
+    let hue;
+    if (t < 0.33) {
+        // Mavi → Cyan → Yeşil
+        hue = 240 - (t / 0.33) * 120; // 240 → 120
+    } else if (t < 0.66) {
+        // Yeşil → Sarı
+        hue = 120 - ((t - 0.33) / 0.33) * 60; // 120 → 60
+    } else {
+        // Sarı → Turuncu → Kırmızı
+        hue = 60 - ((t - 0.66) / 0.34) * 60; // 60 → 0
+    }
+
+    const saturation = 70 + score * 30; // 70-100%
+    const lightness = 45 + (1 - score) * 15; // yakın: 45%, uzak: 60%
+    const alpha = 0.15 + score * 0.25; // 0.15 - 0.40
+    const borderAlpha = 0.4 + score * 0.5; // 0.4 - 0.9
+
+    return {
+        bg: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`,
+        border: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+        borderSubtle: `hsla(${hue}, ${saturation}%, ${lightness}%, ${borderAlpha * 0.5})`,
+        text: `hsl(${hue}, ${saturation}%, ${Math.min(lightness + 15, 80)}%)`
+    };
 }
 
 function handleWin() {
@@ -377,7 +448,7 @@ async function handleHint() {
     const btnHint = document.getElementById('btn-hint');
     btnHint.disabled = true;
 
-    const stages = [500, 300, 150, 100, 50, 30, 10, 5, 3];
+    const stages = [5000, 4000, 3000, 2000, 1500, 1000, 800, 600, 400, 300, 200, 150, 100, 75, 50, 30, 20, 10, 5, 2];
     let targetN = null;
 
     // Bulunan kelimelerden herhangi birinin sırası (rank) aşama (N) değerinden küçük eşit mi?
@@ -428,10 +499,24 @@ async function handleHint() {
         const data = await response.json();
 
         if (data) {
-            let displayData = isDefinition ? data : data.replace(/_\d+$/, '').toLocaleUpperCase('tr-TR');
+            let displayData;
+            if (isDefinition) {
+                displayData = data;
+            } else {
+                // Kelime ipucu - bu kelimeyi revealedHintWords'e ekle
+                const cleanWord = data.replace(/_\d+$/, '').toLocaleLowerCase('tr-TR');
+                revealedHintWords.add(cleanWord);
+                displayData = cleanWord.toLocaleUpperCase('tr-TR');
+            }
+            
             let hintMessage = `İpucu (${hintTitle}):\n\n${displayData}`;
             
             hintsUsed++;
+            
+            // İpucu sayacını güncelle
+            const btnHintEl = document.getElementById('btn-hint');
+            if (btnHintEl) btnHintEl.textContent = `İpucu Al (${hintsUsed})`;
+            
             alert(hintMessage);
         } else {
             showToast("İpucu verisi bulunamadı.", "error");

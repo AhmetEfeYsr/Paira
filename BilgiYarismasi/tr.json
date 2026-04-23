@@ -2,1300 +2,2272 @@
   {
     "soru_metni": "Hangi gezegen 'Kızıl Gezegen' olarak bilinir?",
     "dogru_cevap": "Mars",
-    "yanlis_secenekler": ["Venüs", "Jüpiter", "Satürn"],
+    "yanlis_secenekler": [
+      "Venüs",
+      "Jüpiter",
+      "Satürn"
+    ],
     "zorluk": 15,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Mars'ın yüzeyindeki demir oksit (pas) ona kızıl rengini verir.",
     "gorsel_url": "https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg"
   },
   {
     "soru_metni": "Leonardo da Vinci'nin bu ünlü tablosunun adı nedir?",
     "dogru_cevap": "Mona Lisa",
-    "yanlis_secenekler": ["Son Akşam Yemeği", "İnci Küpeli Kız", "Yıldızlı Gece"],
+    "yanlis_secenekler": [
+      "Son Akşam Yemeği",
+      "İnci Küpeli Kız",
+      "Yıldızlı Gece"
+    ],
     "zorluk": 10,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Mona Lisa'nın kaşlarının olmaması o dönemdeki bir güzellik trendinden kaynaklanıyor olabilir."
   },
   {
     "soru_metni": "Dünyanın en yüksek dağı hangisidir?",
     "dogru_cevap": "Everest Dağı",
-    "yanlis_secenekler": ["K2", "Kilimanjaro", "Ağrı Dağı"],
+    "yanlis_secenekler": [
+      "K2",
+      "Kilimanjaro",
+      "Ağrı Dağı"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Everest Dağı her yıl yaklaşık 4 milimetre kadar yükselmeye devam eder."
   },
   {
     "soru_metni": "Hangi hayvan 'Ormanların Kralı' olarak bilinir?",
     "dogru_cevap": "Aslan",
-    "yanlis_secenekler": ["Kaplan", "Fil", "Kurt"],
+    "yanlis_secenekler": [
+      "Kaplan",
+      "Fil",
+      "Kurt"
+    ],
     "zorluk": 5,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Aslanlar aslında ormanlarda değil, genellikle savanlarda yaşarlar."
   },
   {
     "soru_metni": "Suyun kimyasal formülü nedir?",
     "dogru_cevap": "H2O",
-    "yanlis_secenekler": ["CO2", "O2", "NaCl"],
+    "yanlis_secenekler": [
+      "CO2",
+      "O2",
+      "NaCl"
+    ],
     "zorluk": 10,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "İnsan vücudunun yaklaşık %60-70'i sudan oluşur."
   },
   {
     "soru_metni": "Harry Potter serisinin yazarı kimdir?",
     "dogru_cevap": "J.K. Rowling",
-    "yanlis_secenekler": ["Stephen King", "J.R.R. Tolkien", "George R.R. Martin"],
+    "yanlis_secenekler": [
+      "Stephen King",
+      "J.R.R. Tolkien",
+      "George R.R. Martin"
+    ],
     "zorluk": 20,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "J.K. Rowling, Harry Potter fikrini trende seyahat ederken bulmuştur."
   },
   {
     "soru_metni": "Türkiye'nin başkenti neresidir?",
     "dogru_cevap": "Ankara",
-    "yanlis_secenekler": ["İstanbul", "İzmir", "Antalya"],
+    "yanlis_secenekler": [
+      "İstanbul",
+      "İzmir",
+      "Antalya"
+    ],
     "zorluk": 5,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Ankara, Türkiye'nin coğrafi merkezine oldukça yakın bir konumdadır."
   },
   {
     "soru_metni": "Hangi elementin simgesi 'Au'dur?",
     "dogru_cevap": "Altın",
-    "yanlis_secenekler": ["Gümüş", "Bakır", "Demir"],
+    "yanlis_secenekler": [
+      "Gümüş",
+      "Bakır",
+      "Demir"
+    ],
     "zorluk": 30,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "'Au' simgesi Latince altın anlamına gelen 'Aurum' kelimesinden gelir."
   },
   {
     "soru_metni": "Dünya Kupası'nı en çok kazanan ülke hangisidir?",
     "dogru_cevap": "Brezilya",
-    "yanlis_secenekler": ["Almanya", "İtalya", "Arjantin"],
+    "yanlis_secenekler": [
+      "Almanya",
+      "İtalya",
+      "Arjantin"
+    ],
     "zorluk": 25,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Brezilya, Dünya Kupası'nı 5 kez kazanarak bu alandaki rekoru elinde tutmaktadır."
   },
   {
     "soru_metni": "Eyfel Kulesi hangi şehirdedir?",
     "dogru_cevap": "Paris",
-    "yanlis_secenekler": ["Londra", "Roma", "Berlin"],
+    "yanlis_secenekler": [
+      "Londra",
+      "Roma",
+      "Berlin"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Eyfel Kulesi aslında geçici bir sergi için yapılmıştı ve sonradan yıkılması planlanıyordu.",
     "gorsel_url": "https://upload.wikimedia.org/wikipedia/commons/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg"
   },
   {
     "soru_metni": "Hangi film 'En İyi Film' dalında Oscar kazanan ilk animasyon film olmaya aday gösterilmiştir?",
     "dogru_cevap": "Güzel ve Çirkin",
-    "yanlis_secenekler": ["Aslan Kral", "Oyuncak Hikayesi", "Kayıp Balık Nemo"],
+    "yanlis_secenekler": [
+      "Aslan Kral",
+      "Oyuncak Hikayesi",
+      "Kayıp Balık Nemo"
+    ],
     "zorluk": 50,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Güzel ve Çirkin (1991), bu başarıya ulaşan ilk animasyon filmidir."
   },
   {
     "soru_metni": "Telefonu kim icat etmiştir?",
     "dogru_cevap": "Alexander Graham Bell",
-    "yanlis_secenekler": ["Thomas Edison", "Nikola Tesla", "Isaac Newton"],
+    "yanlis_secenekler": [
+      "Thomas Edison",
+      "Nikola Tesla",
+      "Isaac Newton"
+    ],
     "zorluk": 20,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Bell, telefonu icat ettiğinde annesi ve eşi sağırdı."
   },
   {
     "soru_metni": "Hangi ünlü fizikçi 'Görelilik Kuramı'nı geliştirmiştir?",
     "dogru_cevap": "Albert Einstein",
-    "yanlis_secenekler": ["Isaac Newton", "Galileo Galilei", "Stephen Hawking"],
+    "yanlis_secenekler": [
+      "Isaac Newton",
+      "Galileo Galilei",
+      "Stephen Hawking"
+    ],
     "zorluk": 15,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Einstein, 1921 yılında Nobel Fizik Ödülü'nü Görelilik Kuramı ile değil, fotoelektrik etki açıklamasıyla almıştır."
   },
   {
     "soru_metni": "Dünya'nın en büyük okyanusu hangisidir?",
     "dogru_cevap": "Pasifik Okyanusu",
-    "yanlis_secenekler": ["Atlantik Okyanusu", "Hint Okyanusu", "Arktik Okyanusu"],
+    "yanlis_secenekler": [
+      "Atlantik Okyanusu",
+      "Hint Okyanusu",
+      "Arktik Okyanusu"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Pasifik Okyanusu, Dünya'nın tüm kara alanlarının toplamından daha geniştir."
   },
   {
     "soru_metni": "Satrançta en güçlü taş hangisidir?",
     "dogru_cevap": "Vezir",
-    "yanlis_secenekler": ["Şah", "Kale", "Fil"],
+    "yanlis_secenekler": [
+      "Şah",
+      "Kale",
+      "Fil"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Vezir hem kalenin hem de filin hareketlerini yapabilir."
   },
   {
     "soru_metni": "Mona Lisa tablosu hangi müzede sergilenmektedir?",
     "dogru_cevap": "Louvre Müzesi",
-    "yanlis_secenekler": ["British Museum", "Metropolitan Museum of Art", "Uffizi Galerisi"],
+    "yanlis_secenekler": [
+      "British Museum",
+      "Metropolitan Museum of Art",
+      "Uffizi Galerisi"
+    ],
     "zorluk": 25,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Louvre Müzesi, dünyanın en çok ziyaret edilen sanat müzesidir."
   },
   {
     "soru_metni": "İnsan vücudundaki en büyük organ hangisidir?",
     "dogru_cevap": "Deri",
-    "yanlis_secenekler": ["Karaciğer", "Akciğer", "Kalp"],
+    "yanlis_secenekler": [
+      "Karaciğer",
+      "Akciğer",
+      "Kalp"
+    ],
     "zorluk": 35,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Yetişkin bir insanın derisi yaklaşık 2 metrekarelik bir alanı kaplar."
   },
   {
     "soru_metni": "Hangi ülke 'Yükselen Güneşin Ülkesi' olarak anılır?",
     "dogru_cevap": "Japonya",
-    "yanlis_secenekler": ["Çin", "Güney Kore", "Tayland"],
+    "yanlis_secenekler": [
+      "Çin",
+      "Güney Kore",
+      "Tayland"
+    ],
     "zorluk": 20,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Japonya'nın bayrağındaki kırmızı daire güneşi temsil eder."
   },
   {
     "soru_metni": "Pisa Kulesi hangi ülkededir?",
     "dogru_cevap": "İtalya",
-    "yanlis_secenekler": ["Fransa", "İspanya", "Yunanistan"],
+    "yanlis_secenekler": [
+      "Fransa",
+      "İspanya",
+      "Yunanistan"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Pisa Kulesi'nin eğikliği, zeminin yumuşak olmasından kaynaklanmaktadır."
   },
   {
     "soru_metni": "Titanic filminin yönetmeni kimdir?",
     "dogru_cevap": "James Cameron",
-    "yanlis_secenekler": ["Steven Spielberg", "Christopher Nolan", "Martin Scorsese"],
+    "yanlis_secenekler": [
+      "Steven Spielberg",
+      "Christopher Nolan",
+      "Martin Scorsese"
+    ],
     "zorluk": 30,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "James Cameron, filmi çekmeden önce gerçek Titanic enkazını 33 kez ziyaret etmiştir."
   },
   {
     "soru_metni": "Hangi müzik grubu 'Yesterday' şarkısıyla tanınır?",
     "dogru_cevap": "The Beatles",
-    "yanlis_secenekler": ["The Rolling Stones", "Queen", "Led Zeppelin"],
+    "yanlis_secenekler": [
+      "The Rolling Stones",
+      "Queen",
+      "Led Zeppelin"
+    ],
     "zorluk": 20,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "'Yesterday', tarihte en çok cover'lanan şarkılardan biridir."
   },
   {
     "soru_metni": "Dünyanın en küçük kıtası hangisidir?",
     "dogru_cevap": "Avustralya",
-    "yanlis_secenekler": ["Avrupa", "Antarktika", "Güney Amerika"],
+    "yanlis_secenekler": [
+      "Avrupa",
+      "Antarktika",
+      "Güney Amerika"
+    ],
     "zorluk": 20,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Avustralya hem bir kıta hem de bir ülkedir."
   },
   {
     "soru_metni": "Hangi meyve 'C vitamini' bakımından en zengin olarak bilinir?",
     "dogru_cevap": "Kuşburnu",
-    "yanlis_secenekler": ["Portakal", "Limon", "Elma"],
+    "yanlis_secenekler": [
+      "Portakal",
+      "Limon",
+      "Elma"
+    ],
     "zorluk": 45,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Kuşburnu, portakaldan çok daha fazla C vitamini içerir."
   },
   {
     "soru_metni": "Sherlock Holmes karakterinin yaratıcısı kimdir?",
     "dogru_cevap": "Arthur Conan Doyle",
-    "yanlis_secenekler": ["Agatha Christie", "Edgar Allan Poe", "Charles Dickens"],
+    "yanlis_secenekler": [
+      "Agatha Christie",
+      "Edgar Allan Poe",
+      "Charles Dickens"
+    ],
     "zorluk": 30,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Arthur Conan Doyle aslında bir doktordu."
   },
   {
     "soru_metni": "Avokado aslında bir sebze midir meyve midir?",
     "dogru_cevap": "Meyve",
-    "yanlis_secenekler": ["Sebze", "Baklagil", "Tahıl"],
+    "yanlis_secenekler": [
+      "Sebze",
+      "Baklagil",
+      "Tahıl"
+    ],
     "zorluk": 25,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Avokado botanik olarak tek tohumlu bir 'berry' (meyve) türüdür."
   },
   {
     "soru_metni": "Hangi ülke 2022 FIFA Dünya Kupası'nı kazanmıştır?",
     "dogru_cevap": "Arjantin",
-    "yanlis_secenekler": ["Fransa", "Hırvatistan", "Fas"],
+    "yanlis_secenekler": [
+      "Fransa",
+      "Hırvatistan",
+      "Fas"
+    ],
     "zorluk": 15,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Bu galibiyet, Lionel Messi'nin ilk Dünya Kupası şampiyonluğudur."
   },
   {
     "soru_metni": "Instagram hangi yıl kurulmuştur?",
     "dogru_cevap": "2010",
-    "yanlis_secenekler": ["2008", "2012", "2014"],
+    "yanlis_secenekler": [
+      "2008",
+      "2012",
+      "2014"
+    ],
     "zorluk": 40,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Instagram'da paylaşılan ilk fotoğraf bir köpek fotoğrafıdır."
   },
   {
     "soru_metni": "Hangi gezegenin halkaları en belirgindir?",
     "dogru_cevap": "Satürn",
-    "yanlis_secenekler": ["Jüpiter", "Uranüs", "Neptün"],
+    "yanlis_secenekler": [
+      "Jüpiter",
+      "Uranüs",
+      "Neptün"
+    ],
     "zorluk": 15,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Satürn'ün halkaları çoğunlukla buz ve kaya parçalarından oluşur.",
     "gorsel_url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Saturn_during_Equinox.jpg"
   },
   {
     "soru_metni": "Dante'nin ünlü eserinin adı nedir?",
     "dogru_cevap": "İlahi Komedya",
-    "yanlis_secenekler": ["Sefiller", "Suç ve Ceza", "Don Kişot"],
+    "yanlis_secenekler": [
+      "Sefiller",
+      "Suç ve Ceza",
+      "Don Kişot"
+    ],
     "zorluk": 40,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "İlahi Komedya, İtalyan edebiyatının en önemli eserlerinden biri kabul edilir."
   },
   {
     "soru_metni": "Hangi ünlü ressam kulağını kesmiştir?",
     "dogru_cevap": "Vincent van Gogh",
-    "yanlis_secenekler": ["Pablo Picasso", "Salvador Dali", "Claude Monet"],
+    "yanlis_secenekler": [
+      "Pablo Picasso",
+      "Salvador Dali",
+      "Claude Monet"
+    ],
     "zorluk": 20,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Van Gogh, Yıldızlı Gece tablosunu bir akıl hastanesinde kalırken yapmıştır."
   },
   {
     "soru_metni": "Amerika Birleşik Devletleri'nin ilk başkanı kimdir?",
     "dogru_cevap": "George Washington",
-    "yanlis_secenekler": ["Abraham Lincoln", "Thomas Jefferson", "John Adams"],
+    "yanlis_secenekler": [
+      "Abraham Lincoln",
+      "Thomas Jefferson",
+      "John Adams"
+    ],
     "zorluk": 30,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Washington'un dişleri aslında tahtadan değil, fildişi ve diğer malzemelerden yapılmıştı."
   },
   {
     "soru_metni": "Hangi element periyodik tabloda 'H' harfiyle gösterilir?",
     "dogru_cevap": "Hidrojen",
-    "yanlis_secenekler": ["Helyum", "Hafniyum", "Holmiyum"],
+    "yanlis_secenekler": [
+      "Helyum",
+      "Hafniyum",
+      "Holmiyum"
+    ],
     "zorluk": 10,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Hidrojen, evrende en bol bulunan elementtir."
   },
   {
     "soru_metni": "Örümcek Adam'ın gerçek adı nedir?",
     "dogru_cevap": "Peter Parker",
-    "yanlis_secenekler": ["Bruce Wayne", "Clark Kent", "Tony Stark"],
+    "yanlis_secenekler": [
+      "Bruce Wayne",
+      "Clark Kent",
+      "Tony Stark"
+    ],
     "zorluk": 10,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Örümcek Adam karakteri Stan Lee ve Steve Ditko tarafından yaratılmıştır."
   },
   {
     "soru_metni": "Piyanonun kaç tuşu vardır?",
     "dogru_cevap": "88",
-    "yanlis_secenekler": ["76", "92", "84"],
+    "yanlis_secenekler": [
+      "76",
+      "92",
+      "84"
+    ],
     "zorluk": 55,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Standart bir piyanoda 52 beyaz ve 36 siyah tuş bulunur."
   },
   {
     "soru_metni": "Hangi ülke Avrupa kıtasında yer almaz?",
     "dogru_cevap": "Mısır",
-    "yanlis_secenekler": ["Polonya", "Avusturya", "İsveç"],
+    "yanlis_secenekler": [
+      "Polonya",
+      "Avusturya",
+      "İsveç"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Mısır hem Afrika hem de Asya kıtasında toprakları olan bir ülkedir."
   },
   {
     "soru_metni": "Iphone'u hangi şirket üretmektedir?",
     "dogru_cevap": "Apple",
-    "yanlis_secenekler": ["Samsung", "Google", "Microsoft"],
+    "yanlis_secenekler": [
+      "Samsung",
+      "Google",
+      "Microsoft"
+    ],
     "zorluk": 5,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "İlk iPhone 2007 yılında tanıtılmıştır."
   },
   {
     "soru_metni": "Hangi kuş uçamaz?",
     "dogru_cevap": "Penguen",
-    "yanlis_secenekler": ["Kartal", "Serçe", "Kırlangıç"],
+    "yanlis_secenekler": [
+      "Kartal",
+      "Serçe",
+      "Kırlangıç"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Penguenler uçamazlar ama mükemmel yüzücülerdir."
   },
   {
     "soru_metni": "Netflix'in en çok izlenen dizilerinden biri olan 'Squid Game' hangi ülkeye aittir?",
     "dogru_cevap": "Güney Kore",
-    "yanlis_secenekler": ["Japonya", "Çin", "Tayland"],
+    "yanlis_secenekler": [
+      "Japonya",
+      "Çin",
+      "Tayland"
+    ],
     "zorluk": 20,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Squid Game yayınlandığı ilk ayda 111 milyon izleyiciye ulaşmıştır."
   },
   {
     "soru_metni": "Hangi gezegen Güneş'e en yakındır?",
     "dogru_cevap": "Merkür",
-    "yanlis_secenekler": ["Venüs", "Dünya", "Mars"],
+    "yanlis_secenekler": [
+      "Venüs",
+      "Dünya",
+      "Mars"
+    ],
     "zorluk": 20,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Merkür, Güneş'e en yakın olmasına rağmen Venüs'ten daha soğuktur."
   },
   {
     "soru_metni": "Tavlanın kaç hanesi vardır?",
     "dogru_cevap": "24",
-    "yanlis_secenekler": ["20", "28", "22"],
+    "yanlis_secenekler": [
+      "20",
+      "28",
+      "22"
+    ],
     "zorluk": 50,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Tavla, dünyanın en eski oyunlarından biridir."
   },
   {
     "soru_metni": "Kırmızı ve sarı renklerin karışımından hangi renk oluşur?",
     "dogru_cevap": "Turuncu",
-    "yanlis_secenekler": ["Yeşil", "Mor", "Kahverengi"],
+    "yanlis_secenekler": [
+      "Yeşil",
+      "Mor",
+      "Kahverengi"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Turuncu, enerji ve mutlulukla ilişkilendirilen bir renktir."
   },
   {
     "soru_metni": "Hangi futbolcu 'CR7' lakabıyla bilinir?",
     "dogru_cevap": "Cristiano Ronaldo",
-    "yanlis_secenekler": ["Lionel Messi", "Neymar", "Kylian Mbappe"],
+    "yanlis_secenekler": [
+      "Lionel Messi",
+      "Neymar",
+      "Kylian Mbappe"
+    ],
     "zorluk": 10,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Ronaldo, profesyonel kariyerinde 800'den fazla gol atmıştır."
   },
   {
     "soru_metni": "Büyük Kanyon (Grand Canyon) hangi ülkededir?",
     "dogru_cevap": "ABD",
-    "yanlis_secenekler": ["Kanada", "Avustralya", "Brezilya"],
+    "yanlis_secenekler": [
+      "Kanada",
+      "Avustralya",
+      "Brezilya"
+    ],
     "zorluk": 20,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Büyük Kanyon yaklaşık 2 milyar yıllık bir jeolojik geçmişe sahiptir."
   },
   {
     "soru_metni": "Hangi vitamin güneş ışığı yardımıyla vücutta üretilir?",
     "dogru_cevap": "D Vitamini",
-    "yanlis_secenekler": ["A Vitamini", "C Vitamini", "B12 Vitamini"],
+    "yanlis_secenekler": [
+      "A Vitamini",
+      "C Vitamini",
+      "B12 Vitamini"
+    ],
     "zorluk": 25,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "D vitamini kemik sağlığı için kritik öneme sahiptir."
   },
   {
     "soru_metni": "Nobel Barış Ödülü hangi şehirde verilir?",
     "dogru_cevap": "Oslo",
-    "yanlis_secenekler": ["Stokholm", "Kopenhag", "Cenevre"],
+    "yanlis_secenekler": [
+      "Stokholm",
+      "Kopenhag",
+      "Cenevre"
+    ],
     "zorluk": 60,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Diğer tüm Nobel ödülleri Stokholm'de verilirken, Barış ödülü Oslo'da verilir."
   },
   {
     "soru_metni": "Star Wars serisinde Luke Skywalker'ın babası kimdir?",
     "dogru_cevap": "Darth Vader",
-    "yanlis_secenekler": ["Obi-Wan Kenobi", "Yoda", "Han Solo"],
+    "yanlis_secenekler": [
+      "Obi-Wan Kenobi",
+      "Yoda",
+      "Han Solo"
+    ],
     "zorluk": 15,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "'I am your father' sinema tarihinin en ünlü repliklerinden biridir."
   },
   {
     "soru_metni": "Hangi ünlü besteci sağır olduktan sonra bile beste yapmaya devam etmiştir?",
     "dogru_cevap": "Beethoven",
-    "yanlis_secenekler": ["Mozart", "Bach", "Vivaldi"],
+    "yanlis_secenekler": [
+      "Mozart",
+      "Bach",
+      "Vivaldi"
+    ],
     "zorluk": 25,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Beethoven 9. Senfonisini bestelediğinde neredeyse tamamen sağırdı."
   },
   {
     "soru_metni": "Dünyanın en kalabalık ülkesi hangisidir? (2024 verilerine göre)",
     "dogru_cevap": "Hindistan",
-    "yanlis_secenekler": ["Çin", "ABD", "Endonezya"],
+    "yanlis_secenekler": [
+      "Çin",
+      "ABD",
+      "Endonezya"
+    ],
     "zorluk": 30,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Hindistan, 2023 yılında Çin'i geçerek dünyanın en kalabalık ülkesi olmuştur."
   },
   {
     "soru_metni": "Hangi tatlı 'Gaziantep' şehri ile özdeşleşmiştir?",
     "dogru_cevap": "Baklava",
-    "yanlis_secenekler": ["Künefe", "Güllaç", "Kazandibi"],
+    "yanlis_secenekler": [
+      "Künefe",
+      "Güllaç",
+      "Kazandibi"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Antep Baklavası, AB tescili alan ilk Türk ürünüdür."
   },
   {
     "soru_metni": "Titanic gemisi hangi okyanusta batmıştır?",
     "dogru_cevap": "Atlantik Okyanusu",
-    "yanlis_secenekler": ["Pasifik Okyanusu", "Hint Okyanusu", "Güney Okyanusu"],
+    "yanlis_secenekler": [
+      "Pasifik Okyanusu",
+      "Hint Okyanusu",
+      "Güney Okyanusu"
+    ],
     "zorluk": 20,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Titanic 1912 yılında batmıştır."
   },
   {
     "soru_metni": "Hangi organ kandaki zararlı maddeleri süzmekten sorumludur?",
     "dogru_cevap": "Böbrek",
-    "yanlis_secenekler": ["Kalp", "Mide", "Pankreas"],
+    "yanlis_secenekler": [
+      "Kalp",
+      "Mide",
+      "Pankreas"
+    ],
     "zorluk": 30,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "İnsanlar tek bir böbrekle de sağlıklı bir şekilde yaşayabilirler."
   },
   {
     "soru_metni": "Hangi ülke 2024 Olimpiyat Oyunları'na ev sahipliği yapacaktır?",
     "dogru_cevap": "Fransa",
-    "yanlis_secenekler": ["İngiltere", "ABD", "Japonya"],
+    "yanlis_secenekler": [
+      "İngiltere",
+      "ABD",
+      "Japonya"
+    ],
     "zorluk": 25,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Olimpiyatlar Paris'te gerçekleştirilecektir."
   },
   {
     "soru_metni": "Elon Musk'ın kurucusu olduğu elektrikli otomobil markası hangisidir?",
     "dogru_cevap": "Tesla",
-    "yanlis_secenekler": ["Ford", "Toyota", "Rivian"],
+    "yanlis_secenekler": [
+      "Ford",
+      "Toyota",
+      "Rivian"
+    ],
     "zorluk": 10,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Tesla şirketi ismini mucit Nikola Tesla'dan almıştır."
   },
   {
     "soru_metni": "Hangi dil dünyada en çok 'anadil' olarak konuşulan dildir?",
     "dogru_cevap": "Mandarin Çincesi",
-    "yanlis_secenekler": ["İngilizce", "İspanyolca", "Arapça"],
+    "yanlis_secenekler": [
+      "İngilizce",
+      "İspanyolca",
+      "Arapça"
+    ],
     "zorluk": 40,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "İngilizce en çok konuşulan dildir ancak Mandarin en çok anadil konuşucusuna sahiptir."
   },
   {
     "soru_metni": "Hangi oyun 'Battle Royale' türünün popülerleşmesinde büyük rol oynamıştır?",
     "dogru_cevap": "PUBG",
-    "yanlis_secenekler": ["Minecraft", "League of Legends", "Among Us"],
+    "yanlis_secenekler": [
+      "Minecraft",
+      "League of Legends",
+      "Among Us"
+    ],
     "zorluk": 20,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "PUBG, 'PlayerUnknown' takma adlı Brendan Greene tarafından tasarlanmıştır."
   },
   {
     "soru_metni": "En büyük kuş yumurtası hangi kuşa aittir?",
     "dogru_cevap": "Devekuşu",
-    "yanlis_secenekler": ["Kartal", "Albatros", "Emu"],
+    "yanlis_secenekler": [
+      "Kartal",
+      "Albatros",
+      "Emu"
+    ],
     "zorluk": 15,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Bir devekuşu yumurtası yaklaşık 24 tavuk yumurtasına eşittir."
   },
   {
     "soru_metni": "Hangi ülke 'Laleler' ve 'Değirmenler' ile ünlüdür?",
     "dogru_cevap": "Hollanda",
-    "yanlis_secenekler": ["Belçika", "Danimarka", "İsviçre"],
+    "yanlis_secenekler": [
+      "Belçika",
+      "Danimarka",
+      "İsviçre"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Hollanda aslında lalelerin anavatanı değildir, laleler Osmanlı'dan gitmiştir."
   },
   {
     "soru_metni": "Harry Potter serisindeki 'Sırlar Odası'nı hangi karakter açmıştır? (İlk kitapta)",
     "dogru_cevap": "Ginny Weasley",
-    "yanlis_secenekler": ["Harry Potter", "Draco Malfoy", "Hermione Granger"],
+    "yanlis_secenekler": [
+      "Harry Potter",
+      "Draco Malfoy",
+      "Hermione Granger"
+    ],
     "zorluk": 55,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Ginny, Tom Riddle'ın günlüğünün etkisiyle odayı açmıştır."
   },
   {
     "soru_metni": "Hangi gezegenin 82 tane bilinen uydusu vardır?",
     "dogru_cevap": "Satürn",
-    "yanlis_secenekler": ["Jüpiter", "Dünya", "Mars"],
+    "yanlis_secenekler": [
+      "Jüpiter",
+      "Dünya",
+      "Mars"
+    ],
     "zorluk": 65,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Satürn, 2019'da Jüpiter'i geçerek en çok uyduya sahip gezegen olmuştur."
   },
   {
     "soru_metni": "Eurovision Şarkı Yarışması'nı Türkiye hangi yıl kazanmıştır?",
     "dogru_cevap": "2003",
-    "yanlis_secenekler": ["2000", "2005", "2009"],
+    "yanlis_secenekler": [
+      "2000",
+      "2005",
+      "2009"
+    ],
     "zorluk": 25,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Sertab Erener 'Everyway That I Can' şarkısıyla birinci olmuştur."
   },
   {
     "soru_metni": "Hangi meyve 'Orman Meyveleri' kategorisinde yer almaz?",
     "dogru_cevap": "Muz",
-    "yanlis_secenekler": ["Çilek", "Böğürtlen", "Yaban Mersini"],
+    "yanlis_secenekler": [
+      "Çilek",
+      "Böğürtlen",
+      "Yaban Mersini"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Muz botanik olarak bir 'berry'dir ama ağaçta yetiştiği sanılır (aslında bir ot türüdür)."
   },
   {
     "soru_metni": "Venedik şehri hangi ülkededir?",
     "dogru_cevap": "İtalya",
-    "yanlis_secenekler": ["Hırvatistan", "Yunanistan", "Portekiz"],
+    "yanlis_secenekler": [
+      "Hırvatistan",
+      "Yunanistan",
+      "Portekiz"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Venedik 100'den fazla küçük ada üzerine kurulmuştur."
   },
   {
     "soru_metni": "Hangi element 'Elmas'ın temel yapı taşıdır?",
     "dogru_cevap": "Karbon",
-    "yanlis_secenekler": ["Silisyum", "Azot", "Oksijen"],
+    "yanlis_secenekler": [
+      "Silisyum",
+      "Azot",
+      "Oksijen"
+    ],
     "zorluk": 35,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Elmas ve kömür aynı elementten (karbon) oluşur, fark sadece atomların dizilişidir."
   },
   {
     "soru_metni": "Hangi ünlü oyuncu 'John Wick' karakterini canlandırmaktadır?",
     "dogru_cevap": "Keanu Reeves",
-    "yanlis_secenekler": ["Brad Pitt", "Tom Cruise", "Johnny Depp"],
+    "yanlis_secenekler": [
+      "Brad Pitt",
+      "Tom Cruise",
+      "Johnny Depp"
+    ],
     "zorluk": 15,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Keanu Reeves filmdeki sahnelerin %90'ından fazlasında dublör kullanmadan oynamıştır."
   },
   {
     "soru_metni": "Teleskopu gökyüzü gözlemi için kullanan ilk bilim insanı kimdir?",
     "dogru_cevap": "Galileo Galilei",
-    "yanlis_secenekler": ["Isaac Newton", "Johannes Kepler", "Nicolaus Copernicus"],
+    "yanlis_secenekler": [
+      "Isaac Newton",
+      "Johannes Kepler",
+      "Nicolaus Copernicus"
+    ],
     "zorluk": 45,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Galileo, teleskopuyla Jüpiter'in uydularını keşfetmiştir."
   },
   {
     "soru_metni": "Hangi hayvanın sütü pembe renklidir?",
     "dogru_cevap": "Su Aygırı",
-    "yanlis_secenekler": ["Fil", "Zürafa", "Gergedan"],
+    "yanlis_secenekler": [
+      "Fil",
+      "Zürafa",
+      "Gergedan"
+    ],
     "zorluk": 75,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Su aygırının sütünün pembe olması içindeki özel asitlerden kaynaklanır."
   },
   {
     "soru_metni": "Hangi müzik aleti 'Vurmalı Çalgılar' grubundadır?",
     "dogru_cevap": "Davul",
-    "yanlis_secenekler": ["Keman", "Flüt", "Gitar"],
+    "yanlis_secenekler": [
+      "Keman",
+      "Flüt",
+      "Gitar"
+    ],
     "zorluk": 5,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Davul, tarihteki en eski müzik aletlerinden biridir."
   },
   {
     "soru_metni": "Dünyanın en derin noktası olan 'Mariana Çukuru' hangi okyanustadır?",
     "dogru_cevap": "Pasifik Okyanusu",
-    "yanlis_secenekler": ["Atlantik Okyanusu", "Hint Okyanusu", "Arktik Okyanusu"],
+    "yanlis_secenekler": [
+      "Atlantik Okyanusu",
+      "Hint Okyanusu",
+      "Arktik Okyanusu"
+    ],
     "zorluk": 50,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Mariana Çukuru yaklaşık 11 kilometre derinliğindedir."
   },
   {
     "soru_metni": "Mickey Mouse karakterini kim yaratmıştır?",
     "dogru_cevap": "Walt Disney",
-    "yanlis_secenekler": ["Warner Bros", "Charles Schulz", "Hanna-Barbera"],
+    "yanlis_secenekler": [
+      "Warner Bros",
+      "Charles Schulz",
+      "Hanna-Barbera"
+    ],
     "zorluk": 20,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Mickey Mouse'un ilk adı aslında Mortimer'dı."
   },
   {
     "soru_metni": "Hangi vitaminin eksikliği 'Gece Körlüğü'ne yol açabilir?",
     "dogru_cevap": "A Vitamini",
-    "yanlis_secenekler": ["C Vitamini", "D Vitamini", "E Vitamini"],
+    "yanlis_secenekler": [
+      "C Vitamini",
+      "D Vitamini",
+      "E Vitamini"
+    ],
     "zorluk": 40,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "A vitamini göz sağlığı için vazgeçilmezdir."
   },
   {
     "soru_metni": "Hangi ülke Güney Amerika kıtasında yer alır?",
     "dogru_cevap": "Brezilya",
-    "yanlis_secenekler": ["Meksika", "İspanya", "Kanada"],
+    "yanlis_secenekler": [
+      "Meksika",
+      "İspanya",
+      "Kanada"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Brezilya, Güney Amerika'nın en büyük ülkesidir."
   },
   {
     "soru_metni": "Satranç oyununda kaç kare bulunur?",
     "dogru_cevap": "64",
-    "yanlis_secenekler": ["48", "72", "81"],
+    "yanlis_secenekler": [
+      "48",
+      "72",
+      "81"
+    ],
     "zorluk": 25,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Tahta üzerinde 32 beyaz ve 32 siyah kare vardır."
   },
   {
     "soru_metni": "En hızlı kara hayvanı hangisidir?",
     "dogru_cevap": "Çita",
-    "yanlis_secenekler": ["Aslan", "Ceylan", "At"],
+    "yanlis_secenekler": [
+      "Aslan",
+      "Ceylan",
+      "At"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Çitalar saatte 120 km hıza kadar ulaşabilirler."
   },
   {
     "soru_metni": "Hangi ünlü dahi '1000'den fazla patent'e sahiptir?",
     "dogru_cevap": "Thomas Edison",
-    "yanlis_secenekler": ["Nikola Tesla", "Steve Jobs", "Bill Gates"],
+    "yanlis_secenekler": [
+      "Nikola Tesla",
+      "Steve Jobs",
+      "Bill Gates"
+    ],
     "zorluk": 35,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Edison'un en ünlü icadı ampuldür."
   },
   {
     "soru_metni": "Hangi şehir 'Yedi Tepeli Şehir' olarak da bilinir?",
     "dogru_cevap": "İstanbul",
-    "yanlis_secenekler": ["Roma", "Ankara", "Atina"],
+    "yanlis_secenekler": [
+      "Roma",
+      "Ankara",
+      "Atina"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "İstanbul hem Roma hem de Bizans döneminde bu isimle anılmıştır."
   },
   {
     "soru_metni": "Mavi Balina dünyanın en büyük hayvanı mıdır?",
     "dogru_cevap": "Evet",
-    "yanlis_secenekler": ["Hayır", "Sadece karada", "Sadece okyanusta değil"],
+    "yanlis_secenekler": [
+      "Hayır",
+      "Sadece karada",
+      "Sadece okyanusta değil"
+    ],
     "zorluk": 5,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Mavi balinaların dili bir fil ağırlığında olabilir."
   },
   {
     "soru_metni": "Hangi müzik türü New Orleans'ta doğmuştur?",
     "dogru_cevap": "Caz (Jazz)",
-    "yanlis_secenekler": ["Rock", "Pop", "Klasik Müzik"],
+    "yanlis_secenekler": [
+      "Rock",
+      "Pop",
+      "Klasik Müzik"
+    ],
     "zorluk": 35,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Caz, Afrika ve Avrupa müzik geleneklerinin birleşmesiyle oluşmuştur."
   },
   {
     "soru_metni": "Hangi ülke bayrağında 'Akçaağaç Yaprağı' vardır?",
     "dogru_cevap": "Kanada",
-    "yanlis_secenekler": ["ABD", "Avustralya", "Yeni Zelanda"],
+    "yanlis_secenekler": [
+      "ABD",
+      "Avustralya",
+      "Yeni Zelanda"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Akçaağaç yaprağı Kanada'nın ulusal sembolüdür."
   },
   {
     "soru_metni": "Hangi ünlü fizikçi 'Kara Delikler' üzerine çalışmalarıyla tanınır?",
     "dogru_cevap": "Stephen Hawking",
-    "yanlis_secenekler": ["Isaac Newton", "Albert Einstein", "Marie Curie"],
+    "yanlis_secenekler": [
+      "Isaac Newton",
+      "Albert Einstein",
+      "Marie Curie"
+    ],
     "zorluk": 30,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Hawking, 'Zamanın Kısa Tarihi' adlı çok satan kitabın yazarıdır."
   },
   {
     "soru_metni": "Dünyanın en kalabalık şehri hangisidir? (Metropol alan olarak)",
     "dogru_cevap": "Tokyo",
-    "yanlis_secenekler": ["New York", "Şanghay", "Mumbai"],
+    "yanlis_secenekler": [
+      "New York",
+      "Şanghay",
+      "Mumbai"
+    ],
     "zorluk": 45,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Tokyo metropol alanında 37 milyondan fazla insan yaşamaktadır."
   },
   {
     "soru_metni": "Hangi ünlü oyuncu 'Gladyatör' filminde başrol oynamıştır?",
     "dogru_cevap": "Russell Crowe",
-    "yanlis_secenekler": ["Joaquin Phoenix", "Mel Gibson", "Tom Hardy"],
+    "yanlis_secenekler": [
+      "Joaquin Phoenix",
+      "Mel Gibson",
+      "Tom Hardy"
+    ],
     "zorluk": 35,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Russell Crowe bu rolüyle En İyi Erkek Oyuncu Oscar'ını kazanmıştır."
   },
   {
     "soru_metni": "Hangi gezegenin 'Kırmızı Leke' (Great Red Spot) adlı dev bir fırtınası vardır?",
     "dogru_cevap": "Jüpiter",
-    "yanlis_secenekler": ["Mars", "Satürn", "Neptün"],
+    "yanlis_secenekler": [
+      "Mars",
+      "Satürn",
+      "Neptün"
+    ],
     "zorluk": 40,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Bu fırtına Dünya'dan daha büyüktür ve yüzlerce yıldır devam etmektedir."
   },
   {
     "soru_metni": "Hangi yazar 'Küçük Prens' kitabını yazmıştır?",
     "dogru_cevap": "Antoine de Saint-Exupéry",
-    "yanlis_secenekler": ["Victor Hugo", "Albert Camus", "Jean-Paul Sartre"],
+    "yanlis_secenekler": [
+      "Victor Hugo",
+      "Albert Camus",
+      "Jean-Paul Sartre"
+    ],
     "zorluk": 30,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Yazar aynı zamanda bir pilottu ve uçağı denize düşerek kaybolmuştur."
   },
   {
     "soru_metni": "Hangi ülke 'Pizza' ve 'Makarna'nın anavatanıdır?",
     "dogru_cevap": "İtalya",
-    "yanlis_secenekler": ["Fransa", "Yunanistan", "Türkiye"],
+    "yanlis_secenekler": [
+      "Fransa",
+      "Yunanistan",
+      "Türkiye"
+    ],
     "zorluk": 5,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Margherita pizza, İtalya kraliçesinin adını almıştır."
   },
   {
     "soru_metni": "Dünya üzerindeki en sert doğal madde hangisidir?",
     "dogru_cevap": "Elmas",
-    "yanlis_secenekler": ["Çelik", "Safir", "Kuvars"],
+    "yanlis_secenekler": [
+      "Çelik",
+      "Safir",
+      "Kuvars"
+    ],
     "zorluk": 25,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Elmas sadece başka bir elmas tarafından çizilebilir."
   },
   {
     "soru_metni": "Hangi hayvanın kalbi kafasındadır?",
     "dogru_cevap": "Karides",
-    "yanlis_secenekler": ["Yengeç", "Ahtapot", "Deniz Yıldızı"],
+    "yanlis_secenekler": [
+      "Yengeç",
+      "Ahtapot",
+      "Deniz Yıldızı"
+    ],
     "zorluk": 80,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Karideslerin kalbi başlarının hemen arkasındaki göğüs kafesinde yer alır."
   },
   {
     "soru_metni": "Hangi ülke 2024 yılında Avrupa Futbol Şampiyonası'na (Euro 2024) ev sahipliği yapacaktır?",
     "dogru_cevap": "Almanya",
-    "yanlis_secenekler": ["İngiltere", "Fransa", "İtalya"],
+    "yanlis_secenekler": [
+      "İngiltere",
+      "Fransa",
+      "İtalya"
+    ],
     "zorluk": 15,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Şampiyona Almanya'nın çeşitli şehirlerinde düzenlenecektir."
   },
   {
     "soru_metni": "Harry Potter serisindeki 'Lord Voldemort'un gerçek adı nedir?",
     "dogru_cevap": "Tom Riddle",
-    "yanlis_secenekler": ["Severus Snape", "Lucius Malfoy", "Albus Dumbledore"],
+    "yanlis_secenekler": [
+      "Severus Snape",
+      "Lucius Malfoy",
+      "Albus Dumbledore"
+    ],
     "zorluk": 25,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Tom Marvolo Riddle ismi 'I am Lord Voldemort'un bir anagramıdır."
   },
   {
     "soru_metni": "Hangi ünlü fizikçi 'Radyoaktivite' üzerine çalışmalarıyla iki farklı dalda Nobel almıştır?",
     "dogru_cevap": "Marie Curie",
-    "yanlis_secenekler": ["Albert Einstein", "Nikola Tesla", "Ernest Rutherford"],
+    "yanlis_secenekler": [
+      "Albert Einstein",
+      "Nikola Tesla",
+      "Ernest Rutherford"
+    ],
     "zorluk": 50,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Marie Curie, Nobel ödülü kazanan ilk kadındır."
   },
   {
     "soru_metni": "Hangi spor dalında 'Servis', 'Smaç' ve 'Blok' terimleri kullanılır?",
     "dogru_cevap": "Voleybol",
-    "yanlis_secenekler": ["Basketbol", "Futbol", "Tenis"],
+    "yanlis_secenekler": [
+      "Basketbol",
+      "Futbol",
+      "Tenis"
+    ],
     "zorluk": 10,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Voleybol ilk olarak 1895 yılında bulunmuştur."
   },
   {
     "soru_metni": "Hangi ülke bayrağı kare şekline en yakındır?",
     "dogru_cevap": "İsviçre",
-    "yanlis_secenekler": ["Türkiye", "ABD", "Japonya"],
+    "yanlis_secenekler": [
+      "Türkiye",
+      "ABD",
+      "Japonya"
+    ],
     "zorluk": 65,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Dünyada sadece iki ülkenin bayrağı karedir: İsviçre ve Vatikan."
   },
   {
     "soru_metni": "Hangi ünlü ressam 'Belleğin Azmi' (Eriyen Saatler) tablosunu yapmıştır?",
     "dogru_cevap": "Salvador Dali",
-    "yanlis_secenekler": ["Pablo Picasso", "Claude Monet", "Jackson Pollock"],
+    "yanlis_secenekler": [
+      "Pablo Picasso",
+      "Claude Monet",
+      "Jackson Pollock"
+    ],
     "zorluk": 45,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Dali, sürrealizm akımının en önemli temsilcilerinden biridir."
   },
   {
     "soru_metni": "Sinekli Bakkal romanının yazarı kimdir?",
     "dogru_cevap": "Halide Edib Adıvar",
-    "yanlis_secenekler": ["Reşat Nuri Güntekin", "Yakup Kadri Karaosmanoğlu", "Peyami Safa"],
+    "yanlis_secenekler": [
+      "Reşat Nuri Güntekin",
+      "Yakup Kadri Karaosmanoğlu",
+      "Peyami Safa"
+    ],
     "zorluk": 55,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Roman ilk olarak İngilizce olarak 'The Clown and His Daughter' adıyla yayınlanmıştır."
   },
   {
     "soru_metni": "Hangi elementin simgesi 'Na'dır?",
     "dogru_cevap": "Sodyum",
-    "yanlis_secenekler": ["Azot", "Neon", "Nikel"],
+    "yanlis_secenekler": [
+      "Azot",
+      "Neon",
+      "Nikel"
+    ],
     "zorluk": 35,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Na simgesi Latince 'Natrium' kelimesinden gelir."
   },
   {
     "soru_metni": "İnternetin atası kabul edilen ağ hangisidir?",
     "dogru_cevap": "ARPANET",
-    "yanlis_secenekler": ["NASA-NET", "GOOG-NET", "US-NET"],
+    "yanlis_secenekler": [
+      "NASA-NET",
+      "GOOG-NET",
+      "US-NET"
+    ],
     "zorluk": 60,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "ARPANET, 1969 yılında ABD Savunma Bakanlığı tarafından kurulmuştur."
   },
   {
     "soru_metni": "Hangi müzik grubunun solisti Freddie Mercury'dir?",
     "dogru_cevap": "Queen",
-    "yanlis_secenekler": ["Pink Floyd", "The Doors", "Nirvana"],
+    "yanlis_secenekler": [
+      "Pink Floyd",
+      "The Doors",
+      "Nirvana"
+    ],
     "zorluk": 15,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Freddie Mercury, sinema tarihinin en etkileyici performanslarından birini Live Aid konserinde sergilemiştir."
   },
   {
     "soru_metni": "Hangi organ dengeyi sağlamaktan sorumludur?",
     "dogru_cevap": "Kulak",
-    "yanlis_secenekler": ["Göz", "Beyincik", "Burun"],
+    "yanlis_secenekler": [
+      "Göz",
+      "Beyincik",
+      "Burun"
+    ],
     "zorluk": 45,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "İç kulaktaki yarım daire kanalları vücut dengesini kontrol eder."
   },
   {
     "soru_metni": "Hangi ülke hem Avrupa hem de Asya kıtasında yer alır?",
     "dogru_cevap": "Türkiye",
-    "yanlis_secenekler": ["Yunanistan", "Gürcistan", "İran"],
+    "yanlis_secenekler": [
+      "Yunanistan",
+      "Gürcistan",
+      "İran"
+    ],
     "zorluk": 5,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "İstanbul, dünyada iki kıta üzerinde kurulan tek şehirdir."
   },
   {
     "soru_metni": "Hangi animasyon filminde bir farenin aşçı olma hayali anlatılır?",
     "dogru_cevap": "Ratatouille",
-    "yanlis_secenekler": ["Kayıp Balık Nemo", "Shrek", "Madagaskar"],
+    "yanlis_secenekler": [
+      "Kayıp Balık Nemo",
+      "Shrek",
+      "Madagaskar"
+    ],
     "zorluk": 20,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Filmin başkarakteri farenin adı Remy'dir."
   },
   {
     "soru_metni": "Ekselansları lakaplı ünlü tenisçi kimdir?",
     "dogru_cevap": "Roger Federer",
-    "yanlis_secenekler": ["Rafael Nadal", "Novak Djokovic", "Andy Murray"],
+    "yanlis_secenekler": [
+      "Rafael Nadal",
+      "Novak Djokovic",
+      "Andy Murray"
+    ],
     "zorluk": 30,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Federer, 20 kez Grand Slam şampiyonu olmuştur."
   },
   {
     "soru_metni": "Hangi meyve 'Aşk Elması' olarak da bilinir?",
     "dogru_cevap": "Domates",
-    "yanlis_secenekler": ["Elma", "Nar", "Çilek"],
+    "yanlis_secenekler": [
+      "Elma",
+      "Nar",
+      "Çilek"
+    ],
     "zorluk": 60,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Eskiden domatesin zehirli olduğu sanılırdı."
   },
   {
     "soru_metni": "Hangi gezegenin bir günü, bir yılından daha uzundur?",
     "dogru_cevap": "Venüs",
-    "yanlis_secenekler": ["Merkür", "Mars", "Jüpiter"],
+    "yanlis_secenekler": [
+      "Merkür",
+      "Mars",
+      "Jüpiter"
+    ],
     "zorluk": 70,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Venüs kendi ekseni etrafında o kadar yavaş döner ki, bir turu Güneş etrafındaki turundan uzun sürer."
   },
   {
     "soru_metni": "Hangi yazar 'Dönüşüm' (Gregor Samsa'nın bir böceğe dönüştüğü kitap) eserini yazmıştır?",
     "dogru_cevap": "Franz Kafka",
-    "yanlis_secenekler": ["Fyodor Dostoyevski", "Stefan Zweig", "Albert Camus"],
+    "yanlis_secenekler": [
+      "Fyodor Dostoyevski",
+      "Stefan Zweig",
+      "Albert Camus"
+    ],
     "zorluk": 35,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Kafka ölmeden önce tüm eserlerinin yakılmasını istemiştir."
   },
   {
     "soru_metni": "Dünyanın en büyük adası hangisidir? (Kıta sayılmayan)",
     "dogru_cevap": "Grönland",
-    "yanlis_secenekler": ["Madagaskar", "Avustralya", "Yeni Gine"],
+    "yanlis_secenekler": [
+      "Madagaskar",
+      "Avustralya",
+      "Yeni Gine"
+    ],
     "zorluk": 45,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Grönland, Danimarka Krallığı'na bağlı özerk bir bölgedir."
   },
   {
     "soru_metni": "Hangi şehir 'Aşk Şehri' olarak bilinir?",
     "dogru_cevap": "Paris",
-    "yanlis_secenekler": ["Venedik", "Roma", "Viyana"],
+    "yanlis_secenekler": [
+      "Venedik",
+      "Roma",
+      "Viyana"
+    ],
     "zorluk": 10,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Paris, Eyfel Kulesi ve romantik atmosferiyle bu ünü kazanmıştır."
   },
   {
     "soru_metni": "Hangi hayvan su altında nefes alamaz?",
     "dogru_cevap": "Balina",
-    "yanlis_secenekler": ["Balık", "Köpek Balığı", "Vatoz"],
+    "yanlis_secenekler": [
+      "Balık",
+      "Köpek Balığı",
+      "Vatoz"
+    ],
     "zorluk": 15,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Balinalar memelidir ve nefes almak için su yüzeyine çıkmak zorundadırlar."
   },
   {
     "soru_metni": "Hangi ülke 1917 yılında 'Ekim Devrimi'ni yaşamıştır?",
     "dogru_cevap": "Rusya",
-    "yanlis_secenekler": ["Almanya", "Fransa", "Çin"],
+    "yanlis_secenekler": [
+      "Almanya",
+      "Fransa",
+      "Çin"
+    ],
     "zorluk": 45,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Bu devrim sonucunda Sovyetler Birliği kurulmuştur."
   },
   {
     "soru_metni": "Hangi spor dalı 'Wimbledon' turnuvası ile ünlüdür?",
     "dogru_cevap": "Tenis",
-    "yanlis_secenekler": ["Golf", "Kriket", "At Yarışı"],
+    "yanlis_secenekler": [
+      "Golf",
+      "Kriket",
+      "At Yarışı"
+    ],
     "zorluk": 20,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Wimbledon, dünyanın en eski ve en prestijli tenis turnuvasıdır."
   },
   {
     "soru_metni": "Hangi ünlü oyuncu 'Karayip Korsanları'nda Jack Sparrow'u canlandırmıştır?",
     "dogru_cevap": "Johnny Depp",
-    "yanlis_secenekler": ["Orlando Bloom", "Geoffrey Rush", "Javier Bardem"],
+    "yanlis_secenekler": [
+      "Orlando Bloom",
+      "Geoffrey Rush",
+      "Javier Bardem"
+    ],
     "zorluk": 10,
-    "kategori": ["Sinema ve Dizi"],
+    "kategori": [
+      "Sinema ve Dizi"
+    ],
     "fun_fact": "Johnny Depp, Jack Sparrow karakterini tasarlarken Keith Richards'tan esinlenmiştir."
   },
   {
     "soru_metni": "Hangi elementin atom numarası 1'dir?",
     "dogru_cevap": "Hidrojen",
-    "yanlis_secenekler": ["Helyum", "Lityum", "Oksijen"],
+    "yanlis_secenekler": [
+      "Helyum",
+      "Lityum",
+      "Oksijen"
+    ],
     "zorluk": 25,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Hidrojen periyodik tablonun ilk elementidir."
   },
   {
     "soru_metni": "Hangi şehir Amerika Birleşik Devletleri'nin başkentidir?",
     "dogru_cevap": "Washington D.C.",
-    "yanlis_secenekler": ["New York", "Los Angeles", "Chicago"],
+    "yanlis_secenekler": [
+      "New York",
+      "Los Angeles",
+      "Chicago"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "New York başkent sanılır ama Washington idari merkezdir."
   },
   {
     "soru_metni": "Hangi yazar 'Sefiller' (Les Misérables) romanını yazmıştır?",
     "dogru_cevap": "Victor Hugo",
-    "yanlis_secenekler": ["Emile Zola", "Gustave Flaubert", "Honore de Balzac"],
+    "yanlis_secenekler": [
+      "Emile Zola",
+      "Gustave Flaubert",
+      "Honore de Balzac"
+    ],
     "zorluk": 35,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Sefiller, 19. yüzyılın en büyük eserlerinden biri kabul edilir."
   },
   {
     "soru_metni": "Hangi oyun 'Blok kırma ve inşa etme' üzerine kurulu bir dünya sunar?",
     "dogru_cevap": "Minecraft",
-    "yanlis_secenekler": ["Roblox", "Terraria", "Fortnite"],
+    "yanlis_secenekler": [
+      "Roblox",
+      "Terraria",
+      "Fortnite"
+    ],
     "zorluk": 10,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Minecraft, tüm zamanların en çok satan video oyunudur."
   },
   {
     "soru_metni": "Hangi gezegen 'Güneş Sistemi'nin en büyük gezegenidir?",
     "dogru_cevap": "Jüpiter",
-    "yanlis_secenekler": ["Satürn", "Neptün", "Uranüs"],
+    "yanlis_secenekler": [
+      "Satürn",
+      "Neptün",
+      "Uranüs"
+    ],
     "zorluk": 15,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Jüpiter o kadar büyüktür ki, içine 1300 tane Dünya sığabilir."
   },
   {
     "soru_metni": "Hangi müzik enstrümanı 'Üflemeli Çalgılar' grubundadır?",
     "dogru_cevap": "Flüt",
-    "yanlis_secenekler": ["Arp", "Saz", "Çello"],
+    "yanlis_secenekler": [
+      "Arp",
+      "Saz",
+      "Çello"
+    ],
     "zorluk": 10,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Flüt, tarih öncesi çağlardan beri kullanılan bir enstrümandır."
   },
   {
     "soru_metni": "Hangi ülke 'Kangurular' ile ünlüdür?",
     "dogru_cevap": "Avustralya",
-    "yanlis_secenekler": ["Afrika", "Güney Amerika", "Yeni Zelanda"],
+    "yanlis_secenekler": [
+      "Afrika",
+      "Güney Amerika",
+      "Yeni Zelanda"
+    ],
     "zorluk": 5,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Kangurular geri geri yürüyemezler."
   },
   {
     "soru_metni": "Hangi sporcu 'I can't breathe' hareketiyle de anılan ünlü boksördür?",
     "dogru_cevap": "Muhammed Ali",
-    "yanlis_secenekler": ["Mike Tyson", "Floyd Mayweather", "Rocky Balboa"],
+    "yanlis_secenekler": [
+      "Mike Tyson",
+      "Floyd Mayweather",
+      "Rocky Balboa"
+    ],
     "zorluk": 25,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Muhammed Ali, ağır sıklet boks şampiyonluğunu üç kez kazanan ilk boksördür."
   },
   {
     "soru_metni": "Hangi ünlü dahi 'Facebook'un kurucusudur?",
     "dogru_cevap": "Mark Zuckerberg",
-    "yanlis_secenekler": ["Jeff Bezos", "Larry Page", "Sergey Brin"],
+    "yanlis_secenekler": [
+      "Jeff Bezos",
+      "Larry Page",
+      "Sergey Brin"
+    ],
     "zorluk": 15,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Zuckerberg, Facebook'u Harvard Üniversitesi'ndeyken kurmuştur."
   },
   {
     "soru_metni": "Hangi şehir 'Kanallar Şehri' olarak bilinir?",
     "dogru_cevap": "Venedik",
-    "yanlis_secenekler": ["Amsterdam", "Hamburg", "Brugge"],
+    "yanlis_secenekler": [
+      "Amsterdam",
+      "Hamburg",
+      "Brugge"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Venedik'te gondollar ulaşım için ikonik araçlardır."
   },
   {
     "soru_metni": "Hangi yazar 'Suç ve Ceza' eserini yazmıştır?",
     "dogru_cevap": "Fyodor Dostoyevski",
-    "yanlis_secenekler": ["Leo Tolstoy", "Anton Çehov", "Ivan Turgenev"],
+    "yanlis_secenekler": [
+      "Leo Tolstoy",
+      "Anton Çehov",
+      "Ivan Turgenev"
+    ],
     "zorluk": 25,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Dostoyevski bu romanı kumar borçlarını ödemek için hızlıca yazmıştır."
   },
   {
     "soru_metni": "Hangi oyun 'Çevrimiçi çok oyunculu savaş arenası' (MOBA) türündedir?",
     "dogru_cevap": "League of Legends",
-    "yanlis_secenekler": ["Counter-Strike", "FIFA", "Call of Duty"],
+    "yanlis_secenekler": [
+      "Counter-Strike",
+      "FIFA",
+      "Call of Duty"
+    ],
     "zorluk": 20,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "League of Legends, her yıl devasa espor turnuvaları düzenler."
   },
   {
     "soru_metni": "Hangi ülke bayrağında 'Güneş' sembolü vardır?",
     "dogru_cevap": "Japonya",
-    "yanlis_secenekler": ["Türkiye", "ABD", "İngiltere"],
+    "yanlis_secenekler": [
+      "Türkiye",
+      "ABD",
+      "İngiltere"
+    ],
     "zorluk": 5,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Japon bayrağı 'Hinomaru' (güneş diski) olarak adlandırılır."
   },
   {
     "soru_metni": "Hangi sporcu 'Usain Bolt'un uzmanlık alanıdır?",
     "dogru_cevap": "Atletizm (Koşu)",
-    "yanlis_secenekler": ["Yüzme", "Bisiklet", "Jimnastik"],
+    "yanlis_secenekler": [
+      "Yüzme",
+      "Bisiklet",
+      "Jimnastik"
+    ],
     "zorluk": 10,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Usain Bolt, dünyanın en hızlı insanı unvanına sahiptir."
   },
   {
     "soru_metni": "Hangi gezegenin 'Fırtınalı Mavi' bir görünümü vardır?",
     "dogru_cevap": "Neptün",
-    "yanlis_secenekler": ["Uranüs", "Mars", "Merkür"],
+    "yanlis_secenekler": [
+      "Uranüs",
+      "Mars",
+      "Merkür"
+    ],
     "zorluk": 60,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Neptün, Güneş Sistemi'ndeki en hızlı rüzgarların estiği gezegendir."
   },
   {
     "soru_metni": "Hangi yazar 'Don Kişot' eserini yazmıştır?",
     "dogru_cevap": "Miguel de Cervantes",
-    "yanlis_secenekler": ["Lope de Vega", "Federico Garcia Lorca", "Gabriel Garcia Marquez"],
+    "yanlis_secenekler": [
+      "Lope de Vega",
+      "Federico Garcia Lorca",
+      "Gabriel Garcia Marquez"
+    ],
     "zorluk": 45,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Don Kişot, ilk modern roman kabul edilir."
   },
   {
     "soru_metni": "Hangi ülke 'Sushi'nin ana vatanıdır?",
     "dogru_cevap": "Japonya",
-    "yanlis_secenekler": ["Çin", "Vietnam", "Endonezya"],
+    "yanlis_secenekler": [
+      "Çin",
+      "Vietnam",
+      "Endonezya"
+    ],
     "zorluk": 5,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Sushi'nin temeli fermente edilmiş pirinçten gelir."
   },
   {
     "soru_metni": "Dünya üzerindeki en büyük çöl hangisidir?",
     "dogru_cevap": "Antarktika Çölü",
-    "yanlis_secenekler": ["Sahra Çölü", "Gobi Çölü", "Kalahari Çölü"],
+    "yanlis_secenekler": [
+      "Sahra Çölü",
+      "Gobi Çölü",
+      "Kalahari Çölü"
+    ],
     "zorluk": 65,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Bilinenin aksine çöl sadece kum değil, çok az yağış alan yer demektir; Antarktika bir soğuk çöldür."
   },
   {
     "soru_metni": "Hangi hayvanın beyni vücuduna oranla en büyüktür?",
     "dogru_cevap": "Karınca",
-    "yanlis_secenekler": ["Yunus", "İnsan", "Fil"],
+    "yanlis_secenekler": [
+      "Yunus",
+      "İnsan",
+      "Fil"
+    ],
     "zorluk": 85,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Karıncaların beyin kütlesi vücutlarının yaklaşık %6'sını oluşturur."
   },
   {
     "soru_metni": "Hangi ülke 'Brezilya' ile komşudur?",
     "dogru_cevap": "Arjantin",
-    "yanlis_secenekler": ["İspanya", "Portekiz", "İngiltere"],
+    "yanlis_secenekler": [
+      "İspanya",
+      "Portekiz",
+      "İngiltere"
+    ],
     "zorluk": 15,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Brezilya, Ekvador ve Şili hariç tüm Güney Amerika ülkeleriyle komşudur."
   },
   {
     "soru_metni": "Hangi yazar '1984' ve 'Hayvan Çiftliği' eserlerini yazmıştır?",
     "dogru_cevap": "George Orwell",
-    "yanlis_secenekler": ["Aldous Huxley", "Ray Bradbury", "H.G. Wells"],
+    "yanlis_secenekler": [
+      "Aldous Huxley",
+      "Ray Bradbury",
+      "H.G. Wells"
+    ],
     "zorluk": 25,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Orwell'in gerçek adı Eric Arthur Blair'dir."
   },
   {
     "soru_metni": "Hangi oyun 'Vahşi Batı'da geçen bir açık dünya sunar?",
     "dogru_cevap": "Red Dead Redemption 2",
-    "yanlis_secenekler": ["Grand Theft Auto V", "The Last of Us", "Cyberpunk 2077"],
+    "yanlis_secenekler": [
+      "Grand Theft Auto V",
+      "The Last of Us",
+      "Cyberpunk 2077"
+    ],
     "zorluk": 30,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "RDR2, oyun dünyasının en detaylı hikaye anlatımlarından birine sahiptir."
   },
   {
     "soru_metni": "Hangi gezegenin 'Halkaları' gökyüzünde bir teleskopla görülebilir?",
     "dogru_cevap": "Satürn",
-    "yanlis_secenekler": ["Merkür", "Mars", "Venüs"],
+    "yanlis_secenekler": [
+      "Merkür",
+      "Mars",
+      "Venüs"
+    ],
     "zorluk": 20,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Satürn'ün halkaları Galileo tarafından ilk keşfedildiğinde 'kulaklı gezegen' sanılmıştır."
   },
   {
     "soru_metni": "Hangi müzik türü Jamaika'da doğmuştur?",
     "dogru_cevap": "Reggae",
-    "yanlis_secenekler": ["Blues", "Salsa", "Hip Hop"],
+    "yanlis_secenekler": [
+      "Blues",
+      "Salsa",
+      "Hip Hop"
+    ],
     "zorluk": 35,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Reggae'nin en ünlü temsilcisi Bob Marley'dir."
   },
   {
     "soru_metni": "Hangi ülke bayrağında 'Hilal ve Yıldız' vardır?",
     "dogru_cevap": "Türkiye",
-    "yanlis_secenekler": ["Yunanistan", "Fransa", "Almanya"],
+    "yanlis_secenekler": [
+      "Yunanistan",
+      "Fransa",
+      "Almanya"
+    ],
     "zorluk": 5,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Türk bayrağı 'Al Sancak' olarak da anılır."
   },
   {
     "soru_metni": "Hangi sporcu 'Majesteleri' lakaplı basketbolcudur?",
     "dogru_cevap": "Michael Jordan",
-    "yanlis_secenekler": ["LeBron James", "Kobe Bryant", "Stephen Curry"],
+    "yanlis_secenekler": [
+      "LeBron James",
+      "Kobe Bryant",
+      "Stephen Curry"
+    ],
     "zorluk": 15,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Jordan, Chicago Bulls ile 6 kez NBA şampiyonu olmuştur."
   },
   {
     "soru_metni": "Hangi şehir 'Modanın Başkenti' olarak da anılır?",
     "dogru_cevap": "Milano",
-    "yanlis_secenekler": ["Paris", "Londra", "New York"],
+    "yanlis_secenekler": [
+      "Paris",
+      "Londra",
+      "New York"
+    ],
     "zorluk": 35,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Milano, İtalya'nın kuzeyinde yer alır ve lüks markalarıyla ünlüdür."
   },
   {
     "soru_metni": "Hangi yazar 'Uçurtma Avcısı' kitabını yazmıştır?",
     "dogru_cevap": "Khaled Hosseini",
-    "yanlis_secenekler": ["Elif Şafak", "Orhan Pamuk", "Zülfü Livaneli"],
+    "yanlis_secenekler": [
+      "Elif Şafak",
+      "Orhan Pamuk",
+      "Zülfü Livaneli"
+    ],
     "zorluk": 45,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Kitap, Afganistan'daki dostluk ve sadakat üzerine bir hikaye anlatır."
   },
   {
     "soru_metni": "Hangi oyun 'Sosyal çıkarım' türünde bir gemide geçen oyundur?",
     "dogru_cevap": "Among Us",
-    "yanlis_secenekler": ["Fall Guys", "Valorant", "Roblox"],
+    "yanlis_secenekler": [
+      "Fall Guys",
+      "Valorant",
+      "Roblox"
+    ],
     "zorluk": 15,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Among Us, 2020 pandemisi sırasında büyük bir popülerlik kazanmıştır."
   },
   {
     "soru_metni": "Hangi gezegenin 'Uydusu' olan Ay, Dünya'ya en yakındır?",
     "dogru_cevap": "Dünya",
-    "yanlis_secenekler": ["Mars", "Venüs", "Merkür"],
+    "yanlis_secenekler": [
+      "Mars",
+      "Venüs",
+      "Merkür"
+    ],
     "zorluk": 5,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Ay, Dünya'nın tek doğal uydusudur."
   },
   {
     "soru_metni": "Hangi müzik aleti 'Telli Çalgılar' grubundadır?",
     "dogru_cevap": "Keman",
-    "yanlis_secenekler": ["Davul", "Klarnet", "Trampet"],
+    "yanlis_secenekler": [
+      "Davul",
+      "Klarnet",
+      "Trampet"
+    ],
     "zorluk": 10,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Kemanın dört teli vardır."
   },
   {
     "soru_metni": "Hangi ülke 'Piramitler' ile ünlüdür?",
     "dogru_cevap": "Mısır",
-    "yanlis_secenekler": ["Meksika", "Hindistan", "Peru"],
+    "yanlis_secenekler": [
+      "Meksika",
+      "Hindistan",
+      "Peru"
+    ],
     "zorluk": 5,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Giza Piramitleri antik dünyanın yedi harikasından biridir."
   },
   {
     "soru_metni": "Hangi sporcu 'Yüzme' dalında en çok altın madalyaya sahiptir?",
     "dogru_cevap": "Michael Phelps",
-    "yanlis_secenekler": ["Ian Thorpe", "Ryan Lochte", "Caeleb Dressel"],
+    "yanlis_secenekler": [
+      "Ian Thorpe",
+      "Ryan Lochte",
+      "Caeleb Dressel"
+    ],
     "zorluk": 30,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Michael Phelps, Olimpiyat tarihinde toplam 23 altın madalya kazanmıştır."
   },
   {
     "soru_metni": "Hangi ünlü dahi 'Microsoft'un kurucusudur?",
     "dogru_cevap": "Bill Gates",
-    "yanlis_secenekler": ["Steve Jobs", "Mark Zuckerberg", "Jeff Bezos"],
+    "yanlis_secenekler": [
+      "Steve Jobs",
+      "Mark Zuckerberg",
+      "Jeff Bezos"
+    ],
     "zorluk": 10,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Bill Gates, dünyanın en zengin insanları listesinde uzun süre bir numara kalmıştır."
   },
   {
     "soru_metni": "Hangi şehir 'Sessiz Şehir' (Cittaslow) unvanını alan ilk Türk şehridir?",
     "dogru_cevap": "Seferihisar",
-    "yanlis_secenekler": ["Akyaka", "Gökçeada", "Taraklı"],
+    "yanlis_secenekler": [
+      "Akyaka",
+      "Gökçeada",
+      "Taraklı"
+    ],
     "zorluk": 70,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Seferihisar, İzmir'in bir ilçesidir."
   },
   {
     "soru_metni": "Hangi yazar 'Küçük Şeyler' adlı ilk modern hikaye kitabını yazmıştır?",
     "dogru_cevap": "Samipaşazade Sezai",
-    "yanlis_secenekler": ["Namık Kemal", "Ziya Paşa", "Şinasi"],
+    "yanlis_secenekler": [
+      "Namık Kemal",
+      "Ziya Paşa",
+      "Şinasi"
+    ],
     "zorluk": 85,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Küçük Şeyler, Tanzimat edebiyatının önemli eserlerindendir."
   },
   {
     "soru_metni": "Hangi oyun 'Blokların birleşmesi' ile satırları yok ettiğiniz oyundur?",
     "dogru_cevap": "Tetris",
-    "yanlis_secenekler": ["Pac-Man", "Snake", "Space Invaders"],
+    "yanlis_secenekler": [
+      "Pac-Man",
+      "Snake",
+      "Space Invaders"
+    ],
     "zorluk": 10,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Tetris, 1984 yılında Sovyet mühendis Alexey Pajitnov tarafından yaratılmıştır."
   },
   {
     "soru_metni": "Hangi gezegenin 'Fırtınaları' Dünya'daki fırtınalardan daha şiddetlidir?",
     "dogru_cevap": "Neptün",
-    "yanlis_secenekler": ["Mars", "Venüs", "Ay"],
+    "yanlis_secenekler": [
+      "Mars",
+      "Venüs",
+      "Ay"
+    ],
     "zorluk": 60,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Neptün'deki rüzgar hızı saatte 2000 kilometreye ulaşabilir."
   },
   {
     "soru_metni": "Hangi yazar 'Mai ve Siyah' romanını yazmıştır?",
     "dogru_cevap": "Halit Ziya Uşaklıgil",
-    "yanlis_secenekler": ["Mehmet Rauf", "Tevfik Fikret", "Cenap Şahabettin"],
+    "yanlis_secenekler": [
+      "Mehmet Rauf",
+      "Tevfik Fikret",
+      "Cenap Şahabettin"
+    ],
     "zorluk": 65,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Roman, Servet-i Fünun edebiyatının en önemli eserlerinden biridir."
   },
   {
     "soru_metni": "Hangi ülke 'Tango' dansının ana vatanıdır?",
     "dogru_cevap": "Arjantin",
-    "yanlis_secenekler": ["İspanya", "Meksika", "Küba"],
+    "yanlis_secenekler": [
+      "İspanya",
+      "Meksika",
+      "Küba"
+    ],
     "zorluk": 25,
-    "kategori": ["Genel Kültür"],
+    "kategori": [
+      "Genel Kültür"
+    ],
     "fun_fact": "Tango, Buenos Aires'in kenar mahallelerinde doğmuştur."
   },
   {
     "soru_metni": "Hangi hayvanın dişleri ömür boyu büyümeye devam eder?",
     "dogru_cevap": "Tavşan",
-    "yanlis_secenekler": ["Kedi", "Köpek", "Aslan"],
+    "yanlis_secenekler": [
+      "Kedi",
+      "Köpek",
+      "Aslan"
+    ],
     "zorluk": 50,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Tavşanlar dişlerini törpülemek için sürekli bir şeyler kemirmek zorundadır."
   },
   {
     "soru_metni": "Hangi ülke 'Kanada' ile güneyden komşudur?",
     "dogru_cevap": "ABD",
-    "yanlis_secenekler": ["Meksika", "Rusya", "Grönland"],
+    "yanlis_secenekler": [
+      "Meksika",
+      "Rusya",
+      "Grönland"
+    ],
     "zorluk": 10,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "ABD ve Kanada sınırı, dünyanın en uzun korunmayan sınırıdır."
   },
   {
     "soru_metni": "Hangi yazar 'Tutunamayanlar' eserini yazmıştır?",
     "dogru_cevap": "Oğuz Atay",
-    "yanlis_secenekler": ["Yusuf Atılgan", "Ahmet Hamdi Tanpınar", "Sabahattin Ali"],
+    "yanlis_secenekler": [
+      "Yusuf Atılgan",
+      "Ahmet Hamdi Tanpınar",
+      "Sabahattin Ali"
+    ],
     "zorluk": 45,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Tutunamayanlar, Türk edebiyatının en önemli modernist eserlerinden biridir."
   },
   {
     "soru_metni": "Hangi oyun 'Futbol ve arabaları' birleştiren bir oyundur?",
     "dogru_cevap": "Rocket League",
-    "yanlis_secenekler": ["Need for Speed", "Forza Horizon", "FIFA"],
+    "yanlis_secenekler": [
+      "Need for Speed",
+      "Forza Horizon",
+      "FIFA"
+    ],
     "zorluk": 25,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Rocket League, 2015 yılında çıkmıştır ve büyük bir espor kitlesine sahiptir."
   },
   {
     "soru_metni": "Hangi gezegenin 'Dönüşü' saat yönündedir? (Diğerlerinin aksine)",
     "dogru_cevap": "Venüs",
-    "yanlis_secenekler": ["Dünya", "Jüpiter", "Mars"],
+    "yanlis_secenekler": [
+      "Dünya",
+      "Jüpiter",
+      "Mars"
+    ],
     "zorluk": 75,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Venüs, Güneş Sistemi'nde geriye doğru dönen tek gezegendir."
   },
   {
     "soru_metni": "Hangi müzik türü ABD'nin güneyinde siyahiler tarafından doğurulmuştur?",
     "dogru_cevap": "Blues",
-    "yanlis_secenekler": ["Caz", "Rock", "Pop"],
+    "yanlis_secenekler": [
+      "Caz",
+      "Rock",
+      "Pop"
+    ],
     "zorluk": 40,
-    "kategori": ["Müzik"],
+    "kategori": [
+      "Müzik"
+    ],
     "fun_fact": "Blues, hüzünlü ve duygusal bir müzik türüdür."
   },
   {
     "soru_metni": "Hangi ülke bayrağında 'Güneş ve 24 ışını' olan bir tekerlek (Ashoka Chakra) vardır?",
     "dogru_cevap": "Hindistan",
-    "yanlis_secenekler": ["Pakistan", "Sri Lanka", "Bangladeş"],
+    "yanlis_secenekler": [
+      "Pakistan",
+      "Sri Lanka",
+      "Bangladeş"
+    ],
     "zorluk": 60,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Hindistan bayrağı safran, beyaz ve yeşil renklerden oluşur."
   },
   {
     "soru_metni": "Hangi sporcu 'Kara Panter' lakabıyla bilinen Portekizli futbolcudur?",
     "dogru_cevap": "Eusebio",
-    "yanlis_secenekler": ["Luis Figo", "Cristiano Ronaldo", "Pele"],
+    "yanlis_secenekler": [
+      "Luis Figo",
+      "Cristiano Ronaldo",
+      "Pele"
+    ],
     "zorluk": 75,
-    "kategori": ["Spor"],
+    "kategori": [
+      "Spor"
+    ],
     "fun_fact": "Eusebio, Benfica tarihinin en büyük efsanesidir."
   },
   {
     "soru_metni": "Hangi şehir 'Sular Şehri' olarak da anılır?",
     "dogru_cevap": "Amsterdam",
-    "yanlis_secenekler": ["Venedik", "Londra", "Paris"],
+    "yanlis_secenekler": [
+      "Venedik",
+      "Londra",
+      "Paris"
+    ],
     "zorluk": 45,
-    "kategori": ["Coğrafya"],
+    "kategori": [
+      "Coğrafya"
+    ],
     "fun_fact": "Amsterdam'da 160'tan fazla kanal ve 1200'den fazla köprü bulunur."
   },
   {
     "soru_metni": "Hangi yazar 'Kuyucaklı Yusuf' kitabını yazmıştır?",
     "dogru_cevap": "Sabahattin Ali",
-    "yanlis_secenekler": ["Sait Faik Abasıyanık", "Memduh Şevket Esendal", "Ömer Seyfettin"],
+    "yanlis_secenekler": [
+      "Sait Faik Abasıyanık",
+      "Memduh Şevket Esendal",
+      "Ömer Seyfettin"
+    ],
     "zorluk": 50,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Sabahattin Ali, Türk edebiyatının en önemli toplumcu gerçekçi yazarlarındandır."
   },
   {
     "soru_metni": "Hangi oyun 'Hayatta kalma ve zombilerle mücadele' üzerine kurulu popüler bir oyundur?",
     "dogru_cevap": "Left 4 Dead 2",
-    "yanlis_secenekler": ["The Walking Dead", "Resident Evil", "DayZ"],
+    "yanlis_secenekler": [
+      "The Walking Dead",
+      "Resident Evil",
+      "DayZ"
+    ],
     "zorluk": 40,
-    "kategori": ["Popüler Kültür"],
+    "kategori": [
+      "Popüler Kültür"
+    ],
     "fun_fact": "Left 4 Dead, ekip çalışmasına dayalı bir oyundur."
   },
   {
     "soru_metni": "Hangi gezegenin 'Fırtına bulutları' arasında dev bir altıgen (hexagon) vardır?",
     "dogru_cevap": "Satürn",
-    "yanlis_secenekler": ["Jüpiter", "Neptün", "Uranüs"],
+    "yanlis_secenekler": [
+      "Jüpiter",
+      "Neptün",
+      "Uranüs"
+    ],
     "zorluk": 85,
-    "kategori": ["Bilim ve Teknoloji"],
+    "kategori": [
+      "Bilim ve Teknoloji"
+    ],
     "fun_fact": "Bu gizemli altıgen yapı Satürn'ün kuzey kutbundadır."
   },
   {
     "soru_metni": "Hangi yazar 'Aşk-ı Memnu' romanını yazmıştır?",
     "dogru_cevap": "Halit Ziya Uşaklıgil",
-    "yanlis_secenekler": ["Mehmet Rauf", "Recaizade Mahmut Ekrem", "Abdülhak Hamit Tarhan"],
+    "yanlis_secenekler": [
+      "Mehmet Rauf",
+      "Recaizade Mahmut Ekrem",
+      "Abdülhak Hamit Tarhan"
+    ],
     "zorluk": 25,
-    "kategori": ["Sanat ve Edebiyat"],
+    "kategori": [
+      "Sanat ve Edebiyat"
+    ],
     "fun_fact": "Roman, televizyon dizisi uyarlamasıyla da büyük popülerlik kazanmıştır."
   }
 ]

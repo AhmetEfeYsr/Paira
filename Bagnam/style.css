@@ -38,7 +38,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 300px; /* Ensure space for list */
+    min-height: 300px;
     overflow: hidden;
 }
 
@@ -64,56 +64,128 @@
     gap: 8px;
 }
 
+/* --- History Item: Dynamic gradient styling --- */
 .history-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 14px 20px;
     border-radius: 10px;
-    background: var(--input-bg);
     color: var(--text-main);
     font-weight: 500;
     font-size: 1.05rem;
-    transition: background 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: slideInItem 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes slideInItem {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .history-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .history-item .word {
     text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .history-item .rank-score {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 6px;
 }
 
 .history-item .rank {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     font-weight: 800;
+    font-variant-numeric: tabular-nums;
 }
 
 .history-item .score {
     font-size: 0.8rem;
-    opacity: 0.8;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Color scaling classes */
-/* Target word - very bright green */
-.history-item.color-1 { background: rgba(46, 204, 113, 0.5); border: 1px solid rgba(46, 204, 113, 1); }
-/* Extremely close (Rank < 100) - green */
-.history-item.color-2 { background: rgba(39, 174, 96, 0.4); border: 1px solid rgba(39, 174, 96, 0.8); }
-/* Very close (Rank < 1000) - yellow-green */
-.history-item.color-3 { background: rgba(241, 196, 15, 0.4); border: 1px solid rgba(241, 196, 15, 0.8); }
-/* Moderate (Rank < 10000) - orange */
-.history-item.color-4 { background: rgba(230, 126, 34, 0.3); border: 1px solid rgba(230, 126, 34, 0.7); }
-/* Far (Rank >= 10000) - default dark background */
-.history-item.color-5 { background: var(--input-bg); border: 1px solid transparent; }
+/* --- Score Bar (Mini progress) --- */
+.score-bar-wrap {
+    display: inline-block;
+    width: 60px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    vertical-align: middle;
+}
 
+.score-bar {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.score-text {
+    font-variant-numeric: tabular-nums;
+    min-width: 42px;
+    text-align: right;
+}
+
+/* --- Hint Badge (💡) --- */
+.hint-badge {
+    font-size: 0.85rem;
+    cursor: help;
+    animation: hintGlow 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 3px rgba(243, 156, 18, 0.5));
+}
+
+@keyframes hintGlow {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(243, 156, 18, 0.5)); }
+    50% { filter: drop-shadow(0 0 8px rgba(243, 156, 18, 0.8)); }
+}
+
+/* --- Target Word (rank #1) shimmer --- */
+.history-item:first-child {
+    animation: slideInItem 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards,
+               goldShimmer 3s ease-in-out infinite;
+}
+
+@keyframes goldShimmer {
+    0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.15); }
+}
+
+/* --- Error Shake --- */
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+.error-shake {
+    animation: errorShake 0.4s ease;
+}
+
+/* --- Success Banner --- */
 .success-banner {
     background: var(--success-bg);
     border: 2px solid var(--success);
@@ -125,5 +197,31 @@
     color: var(--text-main);
 }
 
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+    .history-item {
+        padding: 10px 14px;
+        font-size: 0.95rem;
+    }
+
+    .history-item .rank {
+        font-size: 1.05rem;
+    }
+
+    .score-bar-wrap {
+        width: 40px;
+    }
+}
 
 /* Modal and toast styles exist in shared/portal style but if needed can override */
