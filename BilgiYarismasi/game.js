@@ -141,7 +141,9 @@ class BilgiYarismasiGameEngine {
             question_text: currentQData.soru_metni,
             shuffled_choices: shuffledTexts,
             correct_answer_index: correctIndex, 
-            reveal_answer: false 
+            reveal_answer: false,
+            gorsel_url: currentQData.gorsel_url || null,
+            ses_url: currentQData.ses_url || null
         };
 
         this.localTurnEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
@@ -338,6 +340,29 @@ class BilgiYarismasiView {
             qCard.classList.remove('hidden');
             qCategory.innerText = state.currentQuestion.category;
             qMain.innerText = state.currentQuestion.question_text;
+
+            const mediaContainer = document.getElementById('media-container');
+            if (mediaContainer) {
+                mediaContainer.innerHTML = '';
+                if (state.currentQuestion.gorsel_url) {
+                    const img = document.createElement('img');
+                    img.src = state.currentQuestion.gorsel_url;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '250px';
+                    img.style.borderRadius = '8px';
+                    img.style.marginTop = '15px';
+                    mediaContainer.appendChild(img);
+                }
+                if (state.currentQuestion.ses_url) {
+                    const audio = document.createElement('audio');
+                    audio.src = state.currentQuestion.ses_url;
+                    audio.controls = true;
+                    audio.style.width = '100%';
+                    audio.style.marginTop = '15px';
+                    audio.style.outline = 'none';
+                    mediaContainer.appendChild(audio);
+                }
+            }
 
             const myAnswer = state.answersInRound[this.myId];
 

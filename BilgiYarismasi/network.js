@@ -38,7 +38,9 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
                         category: state.currentQuestion.category,
                         question_text: state.currentQuestion.question_text,
                         shuffled_choices: state.currentQuestion.shuffled_choices,
-                        reveal_answer: state.currentQuestion.reveal_answer
+                        reveal_answer: state.currentQuestion.reveal_answer,
+                        gorsel_url: state.currentQuestion.gorsel_url,
+                        ses_url: state.currentQuestion.ses_url
                     };
                     if (state.currentQuestion.reveal_answer) {
                         stateCopy.currentQuestion.correct_answer_index = state.currentQuestion.correct_answer_index;
@@ -169,3 +171,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     network.autoInit().catch(err => console.error("Network init failed", err));
 });
+
