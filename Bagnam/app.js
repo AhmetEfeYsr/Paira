@@ -378,40 +378,26 @@ function renderHistory() {
 }
 
 /**
- * Similarity skora göre sıcak-soğuk renk üretir.
- * score: 0.0 (soğuk/uzak) - 1.0 (sıcak/yakın)
- * Renk skalası: Mavi(soğuk) → Cyan → Yeşil → Sarı → Turuncu → Kırmızı(sıcak) → Altın(hedef)
+ * Similarity skora göre renk üretir.
+ * score: 0.0 (en uzak) - 1.0 (en yakın)
+ * Renk skalası: Kırmızı (0.0) → Sarı (0.5) → Yeşil (1.0)
  */
 function getSimilarityColor(score, rank) {
     if (rank === 1) {
-        // Hedef kelime - özel altın parıltı
+        // Hedef kelime - özel yeşil parıltı (eski altın parıltı yerine)
         return {
-            bg: 'linear-gradient(135deg, rgba(255, 215, 0, 0.35), rgba(46, 204, 113, 0.4))',
-            border: '#ffd700',
-            borderSubtle: 'rgba(255, 215, 0, 0.5)',
-            text: '#ffd700'
+            bg: 'linear-gradient(135deg, rgba(46, 204, 113, 0.35), rgba(39, 174, 96, 0.4))',
+            border: '#2ecc71',
+            borderSubtle: 'rgba(46, 204, 113, 0.5)',
+            text: '#2ecc71'
         };
     }
 
-    // Similarity skoru 0-1 arasında, HSL hue eşleştirmesi:
-    // 0.0 → hue 240 (mavi/soğuk)
-    // 0.5 → hue 60  (sarı/ılık)  
-    // 1.0 → hue 0   (kırmızı/sıcak)
     // Nonlinear mapping for better visual distribution
     const t = Math.pow(score, 0.7); // Düşük skorlara daha fazla renk aralığı
     
-    // Hue: 240 (mavi) → 120 (yeşil) → 60 (sarı) → 0 (kırmızı)
-    let hue;
-    if (t < 0.33) {
-        // Mavi → Cyan → Yeşil
-        hue = 240 - (t / 0.33) * 120; // 240 → 120
-    } else if (t < 0.66) {
-        // Yeşil → Sarı
-        hue = 120 - ((t - 0.33) / 0.33) * 60; // 120 → 60
-    } else {
-        // Sarı → Turuncu → Kırmızı
-        hue = 60 - ((t - 0.66) / 0.34) * 60; // 60 → 0
-    }
+    // Hue: 0 (Kırmızı) → 60 (Sarı) → 120 (Yeşil)
+    let hue = t * 120;
 
     const saturation = 70 + score * 30; // 70-100%
     const lightness = 45 + (1 - score) * 15; // yakın: 45%, uzak: 60%
