@@ -9,6 +9,7 @@ let hintDataCache = null;
 let lastHintStage = null;
 let lastHintType = null;
 let revealedHintWords = new Set(); // İpucuyla açığa çıkan kelimeler
+let skippedHintStages = new Set(); // Kelimesi zaten bilindiği için atlanan aşamalar
 let hintHistory = []; // Alınan tüm ipuçları: { title: string, content: string }
 
 
@@ -58,6 +59,7 @@ function resetGameState() {
     lastHintStage = null;
     lastHintType = null;
     revealedHintWords = new Set();
+    skippedHintStages = new Set();
     hintHistory = [];
 
     const btnLastHint = document.getElementById('btn-last-hint');
@@ -490,7 +492,9 @@ async function handleHint() {
 
     // Bulunan kelimelerden herhangi birinin sırası (rank) aşama (N) değerinden küçük eşit mi?
     // Küçük veya eşit değilse, o aşama için ipucu vereceğiz.
+    // Ayrıca kelimesi zaten tahmin edilmiş aşamaları da atla.
     for (const n of stages) {
+        if (skippedHintStages.has(n)) continue;
         if (!guesses.some(g => g.rank <= n)) {
             targetN = n;
             break;
@@ -540,8 +544,17 @@ async function handleHint() {
             if (isDefinition) {
                 displayData = data;
             } else {
-                // Kelime ipucu - bu kelimeyi revealedHintWords'e ekle
+                // Kelime ipucu - önce zaten tahmin edilmiş mi kontrol et
                 const cleanWord = data.replace(/_\d+$/, '').toLocaleLowerCase('tr-TR');
+                
+                if (guesses.some(g => g.word === cleanWord)) {
+                    // Kelime zaten tahmin edilmiş, bu aşamayı atla ve sonraki ipucuna geç
+                    skippedHintStages.add(targetN);
+                    btnHint.disabled = false;
+                    handleHint(); // Otomatik olarak sonraki ipucunu dene
+                    return;
+                }
+                
                 revealedHintWords.add(cleanWord);
                 displayData = cleanWord.toLocaleUpperCase('tr-TR');
             }
