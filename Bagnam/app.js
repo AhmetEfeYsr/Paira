@@ -1,7 +1,9 @@
 // Bagnam Game Logic
 const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/BagnamMockData/main/daily_words.json"; // Placeholder for now
 
-let targetDate = ""; // Hedeflenen tarih (YYYY-MM-DD)
+let targetDate = ""; // Hedeflenen tarih (YYYY-MM-DD) veya sonsuz mod id
+let gameMode = "daily"; // "daily" veya "endless"
+let endlessGameData = null; // Sonsuz mod için R2'den çekilen toplu veri
 let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, score: number, hintAssisted: boolean }
 let hasWon = false;
 let hintsUsed = 0; // Kaç ipucu kullanıldı
@@ -34,9 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("Lütfen bir tarih seçin.", "warning");
                 return;
             }
-            initGame(datePicker.value);
+            initGame(datePicker.value, false);
         });
     }
+    const btnEndless = document.getElementById('btn-endless');
+    if(btnEndless) btnEndless.addEventListener('click', () => initGame(null, true));
     if(btnGuess) btnGuess.addEventListener('click', handleGuess);
     if(wordInput) {
         wordInput.addEventListener('keypress', (e) => {
@@ -93,19 +97,68 @@ function resetGameState() {
 }
 
 
-async function initGame(selectedDateStr = null) {
+async function initGame(selectedDateStr = null, isEndless = false) {
     const btnStart = document.getElementById('btn-start');
     const btnPlayPast = document.getElementById('btn-play-past');
+    const btnEndless = document.getElementById('btn-endless');
     const loading = document.getElementById('loading-indicator');
 
     if (btnStart) btnStart.classList.add('hidden');
     if (btnPlayPast) btnPlayPast.disabled = true;
+    if (btnEndless) btnEndless.classList.add('hidden');
     loading.classList.remove('hidden');
 
     resetGameState();
 
-    // Artık veri önden yüklenmiyor, sadece tarihi ayarlayıp UI'ı değiştiriyoruz
-    targetDate = selectedDateStr || window.getTodayDateTR();
+    if (isEndless) {
+        gameMode = "endless";
+        
+        let playedEndlessIds = [];
+        try {
+            const stored = localStorage.getItem("playedEndlessIds");
+            if (stored) playedEndlessIds = JSON.parse(stored);
+        } catch (e) {}
+
+        if (playedEndlessIds.length >= 99) {
+            playedEndlessIds = []; // Hepsi bitince başa sar
+        }
+
+        let randomId;
+        let attempts = 0;
+        do {
+            randomId = Math.floor(Math.random() * 99) + 1;
+            attempts++;
+            if (attempts > 500) break;
+        } while (playedEndlessIds.includes(randomId));
+
+        playedEndlessIds.push(randomId);
+        try {
+            localStorage.setItem("playedEndlessIds", JSON.stringify(playedEndlessIds));
+        } catch (e) {}
+
+        targetDate = randomId.toString();
+        showToast("Sonsuz Mod yükleniyor... Lütfen bekleyin.", "info");
+
+        try {
+            const res = await fetch(`https://db.pairaaa.com/Sonsuz%20Mod/${targetDate}.json`);
+            if (!res.ok) throw new Error("Ağ hatası");
+            endlessGameData = await res.json();
+            showToast("Sonsuz Mod başlatıldı! ID: " + randomId, "success");
+        } catch (e) {
+            console.error("Sonsuz mod verisi çekilemedi:", e);
+            showToast("Sonsuz mod verisi yüklenemedi. Lütfen tekrar deneyin.", "error");
+            loading.classList.add('hidden');
+            if (btnStart) btnStart.classList.remove('hidden');
+            if (btnPlayPast) btnPlayPast.disabled = false;
+            if (btnEndless) btnEndless.classList.remove('hidden');
+            return;
+        }
+
+    } else {
+        gameMode = "daily";
+        endlessGameData = null;
+        targetDate = selectedDateStr || window.getTodayDateTR();
+    }
 
     window.showScreen('game-screen');
     document.getElementById('word-input').focus();
@@ -134,8 +187,8 @@ async function handleGuess() {
     const inputEl = document.getElementById('word-input');
     const btnGuess = document.getElementById('btn-guess');
     let rawWord = inputEl.value;
-    let word = rawWord.toLowerCase().trim();
-    let normalizedWord = window.normalizeTurkishChars(word);
+    let word = rawWord.toLocaleLowerCase('tr-TR').trim();
+    let normalizedWord = window.normalizeTurkishChars ? window.normalizeTurkishChars(word) : word;
 
     if(!word) return;
 
@@ -191,22 +244,35 @@ async function handleGuess() {
             }
         }
 
-        const fetchPromises = wordsToCheck.map(w => 
-            fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${w}.json`)
-        );
-
-        const responses = await Promise.all(fetchPromises);
-        
         let foundData = [];
         
-        for (let i = 0; i < responses.length; i++) {
-            if (responses[i].ok) {
-                const data = await responses[i].json();
-                if (data !== null) {
+        if (gameMode === "endless") {
+            if (!endlessGameData) throw new Error("Sonsuz mod verisi eksik.");
+            for (let i = 0; i < wordsToCheck.length; i++) {
+                const w = wordsToCheck[i];
+                if (endlessGameData[w]) {
                     foundData.push({
-                        word: wordsToCheck[i],
-                        data: data
+                        word: w,
+                        data: endlessGameData[w]
                     });
+                }
+            }
+        } else {
+            const fetchPromises = wordsToCheck.map(w => 
+                fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${w}.json`)
+            );
+
+            const responses = await Promise.all(fetchPromises);
+            
+            for (let i = 0; i < responses.length; i++) {
+                if (responses[i].ok) {
+                    const data = await responses[i].json();
+                    if (data !== null) {
+                        foundData.push({
+                            word: wordsToCheck[i],
+                            data: data
+                        });
+                    }
                 }
             }
         }
@@ -448,14 +514,17 @@ async function handleGiveUp() {
     btnGiveup.disabled = true;
 
     try {
-        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/ana-kelime-pes.json`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        let targetWord;
+        if (gameMode === "endless") {
+            targetWord = endlessGameData["ana-kelime-pes"];
+        } else {
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/ana-kelime-pes.json`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            targetWord = await response.json();
         }
-
-        const targetWord = await response.json();
 
         if (targetWord && typeof targetWord === "string") {
             hasWon = true; // prevent further guesses
@@ -533,16 +602,38 @@ async function handleHint() {
     }
 
     try {
-        const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
-        const response = await fetch(url);
-        
-        if (!response.ok) throw new Error("Fetch error");
-        const data = await response.json();
+        let data;
+        let wordDataForDefinition = null;
+
+        if (gameMode === "endless") {
+            data = endlessGameData[hintKey];
+            if (isDefinition) {
+                wordDataForDefinition = endlessGameData[`hint-${targetN}-kelime`];
+            }
+        } else {
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Fetch error");
+            data = await response.json();
+
+            if (isDefinition) {
+                const wordUrl = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/hint-${targetN}-kelime.json`;
+                const wordResponse = await fetch(wordUrl);
+                if (wordResponse.ok) {
+                    wordDataForDefinition = await wordResponse.json();
+                }
+            }
+        }
 
         if (data) {
             let displayData;
             if (isDefinition) {
                 displayData = data;
+                // Tanım alınsa bile kelimeyi listeye ekle, böylece bilinirse ampul çıksın
+                if (wordDataForDefinition) {
+                    const cleanWordDef = wordDataForDefinition.replace(/_\d+$/, '').toLocaleLowerCase('tr-TR');
+                    revealedHintWords.add(cleanWordDef);
+                }
             } else {
                 // Kelime ipucu - önce zaten tahmin edilmiş mi kontrol et
                 const cleanWord = data.replace(/_\d+$/, '').toLocaleLowerCase('tr-TR');
