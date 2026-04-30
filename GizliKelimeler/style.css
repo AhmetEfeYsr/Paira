@@ -138,6 +138,3 @@
     .game-board { gap: 6px; }
     .board-container { align-items: stretch; }
 }
-
-.guesser-mode { border-color: var(--success); background: var(--success-bg); color: var(--success); }
-.opponent-mode { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }

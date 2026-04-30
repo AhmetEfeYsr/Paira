@@ -1,5 +1,1 @@
-    /* HizliIsimSehir specific styles */
-
-/* Spinner */
-.spinner { width: 40px; height: 40px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
+/* HizliIsimSehir specific styles */

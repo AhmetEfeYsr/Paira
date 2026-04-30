@@ -1,53 +1,7 @@
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-/* 1. KURAL: Tarayıcının ana çubuğunun (sağdaki ana scroll) çıkmasını kesinlikle engelliyoruz (SEO sonrası overflow serbest) */
-html, body { min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
-
-body {
-    font-family: 'Poppins', sans-serif;
-    background: radial-gradient(circle at top left, var(--bg-navy), var(--bg-deep) 80%);
-    color: var(--text-main);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: clamp(0.5rem, 2vw, 1rem);
-    padding-bottom: 0;
-}
+/* Tabu specific styles */
 
 
 
-
-.view-state { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.4s ease; min-height: 0; overflow: hidden; }
-.view-state:not(.active) { display: none; }
-
-#login-screen { justify-content: flex-start; align-items: center; overflow-y: auto; overflow-x: hidden; width: 100%; }
-
-/* SEO ve Kurallar Bolumu */
-.hero-content { text-align: center; max-width: 600px; margin-bottom: 2rem; }
-.seo-description { color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.1rem); line-height: 1.6; margin-top: -1rem; margin-bottom: 1rem; }
-
-.seo-rules-container { width: 100%; max-width: 800px; margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--btn-secondary-bg); text-align: center; overflow-y: visible; }
-.seo-rules-container h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); margin-bottom: 1.5rem; color: var(--text-main); }
-
-.rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; text-align: left; padding-bottom: 20px; }
-
-@media (max-width: 600px) {
-    .rules-grid { grid-template-columns: 1fr; }
-}
-
-h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); letter-spacing: 0.5px; }
-
-.gradient-text {
-    background: linear-gradient(45deg, var(--lilac), var(--neon-purple));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    font-size: clamp(2.2rem, 6vw, 3.5rem);
-    font-weight: 800; text-align: center; margin-bottom: clamp(1.2rem, 3vw, 2.5rem);
-}
-
-
-
-.score-board { display: flex; gap: clamp(0.8rem, 2.5vw, 2rem); font-weight: bold; font-size: clamp(1rem, 2vw, 1.2rem); align-items: center; }
-.team-a { color: var(--primary-purple); } .team-b { color: var(--danger); }
 
 
 .game-layout {
@@ -59,29 +13,20 @@ h1, h2, h3 { color: var(--lilac); margin-bottom: clamp(0.6rem, 1.5vw, 1rem); let
 
 
 
-.guesser-mode { border-color: var(--success); background: var(--success-bg); color: var(--success); }
-.opponent-mode { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
-.toggle-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; color: var(--text-muted); }
-.toggle-btn:hover { opacity: 1; color: var(--neon-purple); }
+
 
 
 @media (max-width: 900px) {
-    body { padding-bottom: env(safe-area-inset-bottom); }
-    .glass-panel { height: auto; min-height: 0; flex-grow: 1; max-height: none; border-radius: clamp(12px, 2vw, 20px); margin-bottom: clamp(0.5rem, 2vw, 1rem); }
-
     /* Mobilde yapısal olarak normal akışa izin verdik */
     .game-layout { grid-template-columns: 1fr; overflow-y: visible; display: flex; flex-direction: column; }
     .chat-panel { min-height: 250px; flex-shrink: 0; margin-top: 1rem; }
     .play-area { overflow: visible; flex-grow: 1; min-height: auto; }
-    .settings-grid { grid-template-columns: 1fr !important; gap: 0.8rem !important; }
 }
 
 @media (max-width: 480px) {
-    h1 { font-size: 2.2rem; }
     .btn { font-size: 0.9rem; padding: 10px 16px; }
     #word-card h2 { font-size: 2rem; word-wrap: break-word; }
     .narrator-actions { flex-direction: column; gap: 8px; }
     .narrator-actions .btn { width: 100%; flex: none; }
-    .lobby-header { flex-direction: column; align-items: stretch; }
 }
 
