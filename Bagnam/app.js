@@ -110,40 +110,53 @@ async function initGame(selectedDateStr = null, isEndless = false) {
 
     resetGameState();
 
+    gameMode = isEndless ? "endless" : "daily";
+    let intendedDate = isEndless ? null : (selectedDateStr || window.getTodayDateTR());
+    let savedState = tryLoadGameState(gameMode, intendedDate);
+
     if (isEndless) {
-        gameMode = "endless";
-        
-        let playedEndlessIds = [];
-        try {
-            const stored = localStorage.getItem("playedEndlessIds");
-            if (stored) playedEndlessIds = JSON.parse(stored);
-        } catch (e) {}
+        if (savedState) {
+            targetDate = savedState.targetDate;
+            showToast("Sonsuz Mod (Kaldığın Yerden) yükleniyor...", "info");
+        } else {
+            let playedEndlessIds = [];
+            try {
+                const stored = localStorage.getItem("playedEndlessIds");
+                if (stored) playedEndlessIds = JSON.parse(stored);
+            } catch (e) {}
 
-        if (playedEndlessIds.length >= 99) {
-            playedEndlessIds = []; // Hepsi bitince başa sar
+            if (playedEndlessIds.length >= 99) {
+                playedEndlessIds = []; // Hepsi bitince başa sar
+            }
+
+            let randomId;
+            let attempts = 0;
+            do {
+                randomId = Math.floor(Math.random() * 99) + 1;
+                attempts++;
+                if (attempts > 500) break;
+            } while (playedEndlessIds.includes(randomId));
+
+            playedEndlessIds.push(randomId);
+            try {
+                localStorage.setItem("playedEndlessIds", JSON.stringify(playedEndlessIds));
+            } catch (e) {}
+
+            targetDate = randomId.toString();
+            showToast("Sonsuz Mod yükleniyor... Lütfen bekleyin.", "info");
         }
-
-        let randomId;
-        let attempts = 0;
-        do {
-            randomId = Math.floor(Math.random() * 99) + 1;
-            attempts++;
-            if (attempts > 500) break;
-        } while (playedEndlessIds.includes(randomId));
-
-        playedEndlessIds.push(randomId);
-        try {
-            localStorage.setItem("playedEndlessIds", JSON.stringify(playedEndlessIds));
-        } catch (e) {}
-
-        targetDate = randomId.toString();
-        showToast("Sonsuz Mod yükleniyor... Lütfen bekleyin.", "info");
 
         try {
             const res = await fetch(`https://db.pairaaa.com/Sonsuz%20Mod/${targetDate}.json`);
             if (!res.ok) throw new Error("Ağ hatası");
             endlessGameData = await res.json();
-            showToast("Sonsuz Mod başlatıldı! ID: " + randomId, "success");
+            
+            if (savedState) {
+                restoreGameState(savedState);
+                showToast("Kaldığınız yerden devam ediyorsunuz!", "success");
+            } else {
+                showToast("Sonsuz Mod başlatıldı! ID: " + targetDate, "success");
+            }
         } catch (e) {
             console.error("Sonsuz mod verisi çekilemedi:", e);
             showToast("Sonsuz mod verisi yüklenemedi. Lütfen tekrar deneyin.", "error");
@@ -155,9 +168,13 @@ async function initGame(selectedDateStr = null, isEndless = false) {
         }
 
     } else {
-        gameMode = "daily";
         endlessGameData = null;
-        targetDate = selectedDateStr || window.getTodayDateTR();
+        targetDate = intendedDate;
+        
+        if (savedState) {
+            restoreGameState(savedState);
+            showToast("Kaldığınız yerden devam ediyorsunuz!", "success");
+        }
     }
 
     window.showScreen('game-screen');
@@ -345,6 +362,8 @@ async function handleGuess() {
 
             // Re-render history list
             renderHistory();
+
+            saveGameState(); // <-- Otomatik Kayıt
 
             // Check win condition UI update
             if(hasWon) {
@@ -536,6 +555,8 @@ async function handleGiveUp() {
             successMsg.style.borderColor = 'var(--danger)';
             successMsg.style.background = 'rgba(231, 76, 60, 0.1)';
 
+            saveGameState(); // <-- Otomatik Kayıt
+
             showToast("Pes ettiniz.", "warning");
         } else {
             throw new Error("Geçersiz veri formatı döndü.");
@@ -665,6 +686,8 @@ async function handleHint() {
             const btnLastHint = document.getElementById('btn-last-hint');
             if (btnLastHint) btnLastHint.classList.remove('hidden');
             
+            saveGameState(); // <-- Otomatik Kayıt
+
             alert(hintMessage);
         } else {
             showToast(`İpucu verisi bulunamadı (${hintKey}). Günün verisi henüz güncellenmemiş olabilir.`, "error");
@@ -686,3 +709,70 @@ function showLastHint() {
     alert(`Son İpucu (${last.title}):\n\n${last.content}`);
 }
 
+// ==========================================
+// AUTO-SAVE / RESUME LOGIC
+// ==========================================
+function saveGameState() {
+    if (!targetDate) return;
+    const state = {
+        targetDate: targetDate,
+        guesses: guesses,
+        hasWon: hasWon,
+        hintsUsed: hintsUsed,
+        lastHintStage: lastHintStage,
+        lastHintType: lastHintType,
+        revealedHintWords: Array.from(revealedHintWords),
+        skippedHintStages: Array.from(skippedHintStages),
+        hintHistory: hintHistory
+    };
+    const key = gameMode === "endless" ? "bagnam_state_endless" : "bagnam_state_daily";
+    localStorage.setItem(key, JSON.stringify(state));
+}
+
+function tryLoadGameState(mode, intendedDateStr) {
+    const key = mode === "endless" ? "bagnam_state_endless" : "bagnam_state_daily";
+    const savedStr = localStorage.getItem(key);
+    if (!savedStr) return null;
+
+    try {
+        const state = JSON.parse(savedStr);
+        if (state.hasWon) {
+            localStorage.removeItem(key);
+            return null;
+        }
+
+        if (mode === "daily" && state.targetDate !== intendedDateStr) {
+            return null;
+        }
+
+        return state;
+    } catch (e) {
+        return null;
+    }
+}
+
+function restoreGameState(state) {
+    targetDate = state.targetDate;
+    guesses = state.guesses || [];
+    hasWon = state.hasWon || false;
+    hintsUsed = state.hintsUsed || 0;
+    lastHintStage = state.lastHintStage || null;
+    lastHintType = state.lastHintType || null;
+    revealedHintWords = new Set(state.revealedHintWords || []);
+    skippedHintStages = new Set(state.skippedHintStages || []);
+    hintHistory = state.hintHistory || [];
+
+    document.getElementById('guess-count').textContent = guesses.length;
+    
+    const btnHint = document.getElementById('btn-hint');
+    if (btnHint && hintsUsed > 0) {
+        btnHint.innerHTML = `💡<span class="hint-count-badge">${hintsUsed}</span>`;
+    }
+    
+    const btnLastHint = document.getElementById('btn-last-hint');
+    if (btnLastHint && hintHistory.length > 0) {
+        btnLastHint.classList.remove('hidden');
+    }
+
+    renderHistory();
+}
