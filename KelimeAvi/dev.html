@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Kelime Avı Geliştirici Notları / Dev Notes | Paira Games</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <style>
+        .about-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 5vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .about-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            text-shadow: 0 0 10px var(--neon-glow-rgba);
+        }
+        .about-container h2 {
+            color: var(--lilac);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .about-container p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.98rem;
+        }
+        .about-container blockquote {
+            background: var(--input-bg);
+            border-left: 4px solid var(--neon-purple);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px 12px 12px 4px;
+            font-style: italic;
+            color: var(--lilac);
+        }
+        .about-container strong {
+            color: var(--text-main);
+        }
+        .about-container ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-muted);
+        }
+        .about-container ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .about-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-purple);
+            font-size: 0.95rem;
+        }
+        .about-container pre {
+            background: var(--input-bg);
+            border: var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+        }
+        .about-container pre code {
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .back-link:hover {
+            color: var(--lilac);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="about-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Geri Dön / Back to Lobby
+            </a>
+            
+            <h1>Geliştirici Notları: Kelime Avı</h1>
+            
+            <h2>Giriş ve Mimari Yaklaşım</h2>
+            <p><strong>Paira Kelime Avı</strong> (Kelime Kapanı), harf eşleştirme ve gizli ebeyi bulma mekaniklerine dayalı, tamamen tarayıcı tabanlı bir sosyal çıkarım ve kelime oyunudur. Oyun; merkezi bir veritabanı (Database) veya oyun sunucusu barındırmadan, doğrudan <strong>P2P (Peer-to-Peer)</strong> bağlantı mimarisi kullanılarak istemciler arasında koordine edilir. Paira Games platformunun diğer yapımlarında olduğu gibi, bu oyun da arkadaş gruplarının hiçbir kurulum veya üyelik gereksinimi duymadan anında oynayabilmesi için tasarlanmıştır.</p>
+            <p>Tüm oyun akışı, oda kurucusunun (Host) yerel tarayıcısındaki durum makinesi (state machine) ve WebRTC bağlantıları üzerinden gerçek zamanlı yönetilmektedir.</p>
+            
+            <h2>P2P Ağ Topolojisi ve Rol Dağılımı</h2>
+            <p>Kelime Avı'nda oyuncular arasındaki iletişim, WebRTC veri kanalları (<code>RTCDataChannel</code>) kullanılarak <strong>Host-Client (Yönetici-Katılımcı)</strong> topolojisiyle sağlanır:</p>
+            <ul>
+                <li><strong>Host (Kurucu Düğüm):</strong> Oyunu başlatan tarayıcı, sunucu yetkilerini devralır. Başlangıçta rollerin (Ebe ve Masumlar) atanması, gizli kelimenin (<code>targetWord</code>) belirlenmesi, tur süreleri ve puanlama kuralları Host tarafından yönetilir.</li>
+                <li><strong>Clients (Katılımcı Peer'lar):</strong> Oda koduyla bağlanan istemciler, doğrudan Host'a veri kanalları ile bağlanır. Oyuncular kelime tahminlerini ve ebe rollerindeki tahminleri Host'a gönderir; Host ise tüm bu verileri doğrulayarak senkronize durum paketi olarak tüm odaya geri yayınlar.</li>
+                <li><strong>Signaling (Sinyalleşme):</strong> Peer'ların birbirlerinin IP adreslerini ve portlarını keşfedebilmeleri (ICE Candidate ve SDP teklif/yanıt süreçleri) için PeerJS aracı sinyalleşme sunucusu kullanılır. Bağlantılar sağlandıktan sonra bu sunucu ile iletişim kesilir ve oyun tamamen P2P olarak devam eder.</li>
+            </ul>
+            
+            <h2>Gerçek Zamanlı Veri Senkronizasyonu ve Anti-Cheat Altyapısı</h2>
+            <p>Kelime Avı'nda oyun içi senkronizasyon ve veri paketleri aşağıdaki gibi yapılandırılmıştır:</p>
+            <ul>
+                <li><code>SYNC</code>: Host, oyun durumunu (oyuncu puanları, aktif tur, girilen kelimeler) istemcilere güncel olarak aktarır. <strong>Güvenlik ve hile engelleme (Anti-Cheat) amacıyla</strong>, Host bu paketi gönderirken alıcı istemcinin rolünü kontrol eder. Eğer alıcı oyuncu "Ebe" değilse, gizli kelimenin (<code>targetWord</code>) yalnızca o ana kadar açılmış harflerini (<code>targetWord.substring(0, revealedLetters)</code>) görebilir. Bu sayede masum oyuncuların tarayıcı kodunu manipüle ederek kelimeyi erkenden öğrenmesi engellenir.</li>
+                <li><code>SUBMIT_MASUM</code>: Masum oyuncuların girdikleri kelime ipuçları doğrudan Host'a iletilir. Host, girilen kelimelerin o ana kadar açılmış harf(ler) ile başlayıp başlamadığını doğrular.</li>
+                <li><code>SUBMIT_EBE</code>: Ebe rolündeki oyuncunun masumların eşleşmeye çalıştığı kelimeyi tahmin etmek için yaptığı en fazla 5 kelimelik tahmin listesini Host'a gönderir.</li>
+                <li><code>SYNC_TIME</code>: Host ve istemciler arasındaki süreyi milisaniye düzeyinde senkronize eder.</li>
+                <li><code>PLAY_SOUND</code>: Eş zamanlı olarak oyun içi bildirim ve uyarı seslerini (correct, taboo, pass, tick) tüm oyuncuların tarayıcılarında tetikler.</li>
+            </ul>
+            
+            <h2>Puanlama ve Doğrulama Protokolü</h2>
+            <p>Kelime Avı'nda tahmin çiftlerinin ve eşleşmelerin doğrulanması tamamen Host tarafındaki <code>KelimeAviGameEngine</code> üzerinde koordine edilir:</p>
+            <ul>
+                <li><strong>Kelime Eşleşmesi (Fuzzy Match):</strong> Masum oyuncular birbirleriyle aynı kelimede buluşmak için kelime girdiklerinde, Host bir <code>FuzzyMatcher</code> sınıfı kullanarak kelimelerin fonetik/karakter benzerliğini (0.5 eşik değeri) değerlendirir. En az 2 masum oyuncunun benzer bir kelimede eşleşip eşleşmediği doğrulanır.</li>
+                <li><strong>Jackpot Durumu:</strong> Masum oyuncular, ebe tarafından belirlenen ana hedef kelimeyi (<code>targetWord</code>) doğrudan tahmin edip girerlerse "Jackpot" tetiklenir. Bu durumda masumlar ekstra yüksek puan kazanarak turu anında bitirir.</li>
+                <li><strong>Ebe Kazancı:</strong> Eğer masumlar kendi aralarında eşleşirse fakat Ebe bu eşleşen kelimeyi tahmin ettiği 5 seçenekten biriyle bulursa, Ebe turu kazanır ve <code>ebeWinPts</code> puanı alır.</li>
+                <li><strong>Masum Kazancı:</strong> Masumlar kendi aralarında eşleşir ve Ebe bu kelimeyi bulamazsa, masumlar <code>masumWinPts</code> puanı alır ve bir sonraki harf açılır (<code>revealedLetters++</code>).</li>
+            </ul>
+            
+            <h2>Oda Mantığı ve Oturum Kesintileri</h2>
+            <p>Oyun, tarayıcının WebRTC soket adresi üzerinden ürettiği 6 karakterli benzersiz bir Peer ID oda koduna dayanır. Oyuncu katılımları ve olası kopmalar şu şekilde yönetilir:</p>
+            <ul>
+                <li><strong>Oyuncu Bağlantı Kopması:</strong> Oyun sırasında bir oyuncunun bağlantısı koptuğunda, Host <code>removePlayer</code> metoduyla bu oyuncuyu <code>disconnected = true</code> olarak işaretler.</li>
+                <li><strong>Oyun Güvenliği:</strong> Aktif oyuncu sayısı 3'ün altına düşerse, oyun otomatik olarak 5 saniye içinde lobiye geri döndürülür. Eğer kopan oyuncu aktif turdaki "Ebe" ise, tur iptal edilir ve yeni bir tur başlatılır.</li>
+            </ul>
+            
+            <h2>E-E-A-T & Güvenlik</h2>
+            <p>Paira Kelime Avı, veri gizliliğine maksimum önem verecek şekilde tasarlanmıştır. Kullanıcıların isimleri, oyun içi sohbet içerikleri veya girilen kelimeler hiçbir merkezi sunucuya veya log sistemine gönderilmez. Tüm iletişim kanalları WebRTC'nin doğası gereği <strong>uçtan uca şifrelenmiştir (DTLS/SRTP)</strong>. Sunucusuz altyapı sayesinde kullanıcıların verileri yalnızca kendi tarayıcılarında geçici olarak barındırılır.</p>
+            
+            <blockquote>
+                Bu teknik dokümantasyon, P2P tabanlı web oyunu mimarisini incelemek isteyen geliştiriciler ve Paira Games altyapısına ilgi duyanlar için Ahmet Efe Yaşar tarafından hazırlanmıştır.
+            </blockquote>
+        </div>
+    </main>
+</body>
+</html>

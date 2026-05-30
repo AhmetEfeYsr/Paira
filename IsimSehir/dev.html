@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>İsim Şehir Geliştirici Notları / Dev Notes | Paira Games</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <style>
+        .about-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 5vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .about-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            text-shadow: 0 0 10px var(--neon-glow-rgba);
+        }
+        .about-container h2 {
+            color: var(--lilac);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .about-container p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.98rem;
+        }
+        .about-container blockquote {
+            background: var(--input-bg);
+            border-left: 4px solid var(--neon-purple);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px 12px 12px 4px;
+            font-style: italic;
+            color: var(--lilac);
+        }
+        .about-container strong {
+            color: var(--text-main);
+        }
+        .about-container ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-muted);
+        }
+        .about-container ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .about-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-purple);
+            font-size: 0.95rem;
+        }
+        .about-container pre {
+            background: var(--input-bg);
+            border: var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+        }
+        .about-container pre code {
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .back-link:hover {
+            color: var(--lilac);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="about-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Geri Dön / Back to Lobby
+            </a>
+            
+            <h1>Geliştirici Notları: İsim Şehir</h1>
+            
+            <h2>Giriş ve Mimari Yaklaşım</h2>
+            <p><strong>Paira İsim Şehir</strong>, klasik harfe göre kelime bulma oyununu dijital ortama taşıyan, verileri depolamak için hiçbir merkezi veritabanı (Database) veya aracı oyun sunucusu barındırmayan, tamamen tarayıcı tabanlı çalışan bir <strong>P2P (Peer-to-Peer)</strong> kelime oyunudur. Oyun, sıfır sunucu maliyeti ve uçtan uca şifrelenmiş veri kanalları ile oyuncuların hızlıca lobilere katılıp yarışabilmesi üzerine tasarlanmıştır.</p>
+            <p>Geleneksel sunucu tabanlı çok oyunculu oyunların aksine, İsim Şehir'de tüm durum yönetimi, tur geçişleri, kelime doğrulama süreçleri ve puanlama sistemi, tarayıcılar üzerinde koordine edilen Host-Client yapısı vasıtasıyla işletilmektedir.</p>
+
+            <h2>P2P Ağ Topolojisi (Host-Client Yapısı)</h2>
+            <p>Paira İsim Şehir'in çok oyunculu yapısı, <strong>WebRTC (Web Real-Time Communication)</strong> tabanlı bir <strong>Host-Client (Kurucu-Katılımcı)</strong> mimarisi üzerine kuruludur:</p>
+            <ul>
+                <li><strong>Host (Kurucu Node):</strong> Odayı oluşturan oyuncu, oyunun koordinatörü ve hakemidir. Oyun odasının kurucusu, yerel tarayıcı hafızasında oyun ayarlarını (kategoriler, süre sınırlaması, oyun sonlanma koşulu), aktif tur verilerini tutar. Harf belirleme sürecini yönetir, süre bittiğinde tüm istemcilerden gelen cevapları toplar ve kelime doğrulama motorunu çalıştırarak puanlama matrisini istemcilere sunar.</li>
+                <li><strong>Clients (Katılımcı Peer'lar):</strong> Oda kodu ile bağlanan diğer istemciler, doğrudan Host ile peer-to-peer <code>RTCDataChannel</code> bağlantısı açarlar. Katılımcılar cevapları, oyları ve itirazları Host'a iletir; Host ise güncel oyun durumunu, oylama matrislerini ve skor tablosunu tüm istemcilere dağıtır (broadcast).</li>
+                <li><strong>Sinyalleşme (Signaling):</strong> WebRTC bağlantısının kurulabilmesi (IP, port ve SDP alışverişi) için aracı bir PeerJS sinyalleşme sunucusu kullanılır. Bağlantı bir kez sağlandıktan sonra, bu sunucu devre dışı kalır ve tüm veri akışı doğrudan cihazlar arasında gerçekleşir.</li>
+            </ul>
+
+            <h2>Gerçek Zamanlı Veri Senkronizasyonu ve Mesajlaşma Protokolü</h2>
+            <p>Oyun içerisindeki tur geçişleri, harf belirleme, girilen kelimeler, itirazlar ve puanlamalar <code>RTCDataChannel</code> üzerinden JSON formatında paketler halinde gönderilir. Bu iletişim protokolünde aşağıdaki mesaj tipleri kullanılır:</p>
+            <ul>
+                <li><code>CONFIG_UPDATE</code>: Host, lobi ayarlarını (kategoriler, tur süreleri, tur sonlanma kuralları) değiştirdiğinde bu güncellemeyi tüm istemcilere yayınlar.</li>
+                <li><code>START_ROUND</code> & <code>END_ROUND</code>: Host tarafından turun başlatıldığını veya sonlandırıldığını bildiren durum tetikleyicileridir.</li>
+                <li><code>CHANGE_LETTER</code>: Seçilen aktif tur harfini istemcilere deklare eder.</li>
+                <li><code>TIMER_SYNC</code>: Süre takibinin tüm istemcilerde milisaniye hassasiyetinde senkron kalmasını sağlar.</li>
+                <li><code>PLAYER_FINISHED</code>: Bir oyuncunun turu bitirdiğini (veya süresinin dolduğunu) ve cevaplarını Host'a göndermeye hazır olduğunu bildirir.</li>
+                <li><code>FINAL_ANSWERS</code>: İstemciler tarafından doldurulan tüm kategorilerin cevaplarını (kelimeleri) Host'a ulaştırır.</li>
+                <li><code>START_VOTING</code> & <code>SYNC_LIVE_VOTES</code>: Host'un cevap doğrulama sonuçlarını sunmasıyla oylama ekranını açar ve oyuncuların itiraz oylarını (<code>SINGLE_VOTE</code>) canlı olarak diğer oyuncularla senkronize eder.</li>
+                <li><code>SHOW_SCORES</code>: Oylama tamamlandığında hesaplanan resmi puanları ve güncel sıralamayı istemcilere iletir.</li>
+            </ul>
+
+            <h2>Otomatik Kelime Doğrulama ve Hibrit Değerlendirme Motoru</h2>
+            <p>İsim Şehir oyununda puanlama doğruluğunu artırmak ve yazım hatalarını önlemek için Host tarayıcısında çalışan çok katmanlı, hibrit bir doğrulama motoru geliştirilmiştir:</p>
+            <ol>
+                <li><strong>Yerel Sözlük Kontrolü (Offline Dictionary):</strong> İlk olarak, her kategori için hazırlanmış yerel sözlük verileri (<code>data/${catId}.json</code>) yüklenir. Girilen kelimenin sözlükte birebir bulunması durumunda kelime doğrudan geçerli kabul edilir.</li>
+                <li><strong>Üçüncü Parti API Sorgulamaları (Real-time APIs):</strong> Kelime sözlükte bulunamazsa, kategorisine özel harici API'ler sorgulanarak kelimenin gerçekliği denetlenir:
+                    <ul>
+                        <li><code>sehir</code>: OpenStreetMap (Nominatim API) ve Wikipedia araması ile coğrafi doğrulama yapılır.</li>
+                        <li><code>ulke</code>: RestCountries API ve Wikipedia araması ile ülke isimleri doğrulanır.</li>
+                        <li><code>film_dizi</code> & <code>muzik</code>: iTunes API ve Wikipedia arama entegrasyonu kullanılır.</li>
+                        <li><code>sarkici</code>: MusicBrainz ve Wikipedia API'leri aracılığıyla sanatçı/grup sorgulanır.</li>
+                        <li><code>yazar</code>: OpenLibrary API ve Wikipedia araması.</li>
+                        <li><code>hastalik</code> & <code>spor</code>: Wikipedia API üzerinden semantik kelime araması gerçekleştirilir.</li>
+                    </ul>
+                </li>
+                <li><strong>Yapay Zeka Destekli Hakem (LLM Validation):</strong> Geleneksel API'lerin ve sözlüklerin yetersiz kaldığı durumlarda (örneğin özel kategoriler veya yerel popüler kelimeler), Host tarayıcısı <code>/api/ai/generate</code> uç noktasını kullanarak <code>gemini-1.5-flash</code> modeline bir batch istek gönderir ve kelimenin kategoriye ve harfe uygunluğunu yapay zeka hakemliğiyle değerlendirir.</li>
+            </ol>
+
+            <h2>Puanlama Matrisi ve Canlı İtiraz Sistemi</h2>
+            <p>Doğrulama motorundan geçen kelimeler için ilk etapta şu puanlar önerilir:</p>
+            <ul>
+                <li><strong>10 Puan:</strong> Benzersiz kelimeler (Diğer hiçbir oyuncu tarafından yazılmamış ve geçerli kelimeler).</li>
+                <li><strong>5 Puan:</strong> Aynı kelimeler (Birden fazla oyuncu tarafından yazılmış geçerli kelimeler).</li>
+                <li><strong>0 Puan:</strong> Geçersiz, boş bırakılan veya yanlış harfle başlayan kelimeler.</li>
+            </ul>
+            <p>Sistem öneriyi sunduktan sonra <strong>Canlı İtiraz ve Oylama (Interactive Voting)</strong> süreci başlar. Tüm oyuncular, diğerlerinin yazdığı kelimelerin yanındaki 10, 5, 0 butonlarına basarak oylarını gerçek zamanlı olarak değiştirebilirler. Bu oylar <code>SINGLE_VOTE</code> paketiyle Host'a iletilir ve Host tarafından anlık olarak tüm ekranlara <code>SYNC_LIVE_VOTES</code> ile yansıtılır. Oylama bittiğinde Host, çoğunluk oyunu ve eşitlik durumunda adil ara puanı (5) baz alarak nihai puanları hesaplar.</p>
+
+            <h2>Oda Mantığı ve Güvenlik</h2>
+            <p>Her oyun odası, 6 karakterli benzersiz bir <strong>Oda Kodu</strong> üzerinden tanımlanır. Host, <code>isimsehir-host-${roomCode}</code> adresiyle sinyalleşme ağında beklerken; katılımcılar ise <code>isimsehir-client-${randomId}</code> biçiminde kimlik edinerek doğrudan Host'a bağlanır.</p>
+            <p>WebRTC mimarisi gereği oyun sırasında paylaşılan tüm veri paketleri <strong>DTLS/SRTP şifreleme katmanı</strong> ile korunmaktadır. Oyun verileri hiçbir uzak sunucuda tutulmadığı için yüksek güvenlik, veri gizliliği ve sıfır gecikmeli oyun deneyimi bir arada sunulmaktadır.</p>
+
+            <blockquote>
+                Bu teknik dokümantasyon, Paira platformunun tarayıcı tabanlı çok oyunculu kelime oyunu altyapısını ve P2P veri senkronizasyon modellerini merak eden geliştiriciler için Ahmet Efe Yaşar tarafından kaleme alınmıştır.
+            </blockquote>
+        </div>
+    </main>
+</body>
+</html>

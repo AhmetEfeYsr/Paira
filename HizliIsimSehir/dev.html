@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Hızlı İsim Şehir Geliştirici Notları / Dev Notes | Paira Games</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <style>
+        .about-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 5vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .about-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            text-shadow: 0 0 10px var(--neon-glow-rgba);
+        }
+        .about-container h2 {
+            color: var(--lilac);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .about-container p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.98rem;
+        }
+        .about-container blockquote {
+            background: var(--input-bg);
+            border-left: 4px solid var(--neon-purple);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px 12px 12px 4px;
+            font-style: italic;
+            color: var(--lilac);
+        }
+        .about-container strong {
+            color: var(--text-main);
+        }
+        .about-container ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-muted);
+        }
+        .about-container ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .about-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-purple);
+            font-size: 0.95rem;
+        }
+        .about-container pre {
+            background: var(--input-bg);
+            border: var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+        }
+        .about-container pre code {
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .back-link:hover {
+            color: var(--lilac);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="about-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Geri Dön / Back to Lobby
+            </a>
+            
+            <h1>Geliştirici Notları: Hızlı İsim Şehir</h1>
+            
+            <h2>Giriş ve Mimari Yaklaşım</h2>
+            <p><strong>Paira Hızlı İsim Şehir</strong>, geleneksel isim şehir oyununun temposunu ve heyecanını zirveye çıkaran, tamamen tarayıcı tabanlı çalışan bir <strong>P2P (Peer-to-Peer)</strong> kelime oyunudur. Klasik modun aksine, bu sürümde oyuncular her turda tek bir kategori ve harf için sıra tabanlı olarak yarışırlar. Veriler doğrudan oyuncuların cihazları arasında aktarılır; merkezi bir veritabanı veya aracı bir oyun sunucusu kullanılmaz.</p>
+            <p>Bütün durum yönetimi, tur geçişleri, otomatik API entegrasyonlu kelime doğrulamaları, oylama süreçleri ve süre takipleri, istemciler arasında senkronize bir şekilde Host-Client yapısı üzerinden koordine edilmektedir.</p>
+
+            <h2>P2P Ağ Topolojisi (Host-Client Mimarisi)</h2>
+            <p>Çok oyunculu altyapı, <strong>WebRTC (Web Real-Time Communication)</strong> tabanlı bir <strong>Host-Client (Kurucu-Katılımcı)</strong> modeli ile kurulmuştur:</p>
+            <ul>
+                <li><strong>Host (Kurucu Node):</strong> Odayı açan oyuncu, oyun motorunun lideri ve hakemidir. Oyun ayarlarını (kategori listesi, tur sayıları, cevaplama süreleri), aktif oyuncuların durumlarını ve tur sıralarını yerel tarayıcı belleğinde yönetir. Sırası gelen oyuncu için rastgele harf ve kategori atar. Oyuncu cevabını gönderdiğinde kelime doğrulama motorunu tetikler ve skoru diğer istemcilere dağıtır.</li>
+                <li><strong>Clients (Katılımcı Peer'lar):</strong> Odaya katılan diğer oyuncular, Host ile doğrudan <code>RTCDataChannel</code> üzerinden eşler arası bağlantı kurar. Katılımcılar verdikleri cevapları, itirazlarını ve oylarını Host'a iletir; Host ise güncel oyun durumunu, süreleri ve oylamaları katılımcılara yayınlar (broadcast).</li>
+                <li><strong>Sinyalleşme (Signaling):</strong> Eşlerin birbirlerini bulması ve SDP/IP el sıkışmalarını gerçekleştirmesi için aracı bir PeerJS sinyalleşme sunucusu kullanılır. Bağlantı sağlandıktan sonra bu sunucu aradan çekilir ve tüm iletişim doğrudan cihazlar arasında P2P olarak sürer.</li>
+            </ul>
+
+            <h2>Gerçek Zamanlı Veri Senkronizasyonu ve İletişim Protokolü</h2>
+            <p>Hızlı İsim Şehir oyununda tüm eylemler <code>RTCDataChannel</code> üzerinden JSON paketleri şeklinde aktarılır. Bu paketteki veri tipleri ve senkronizasyon modelleri şu şekildedir:</p>
+            <ul>
+                <li><code>CONFIG_UPDATE</code>: Lobi ayarları (seçilen kategoriler, tur süreleri) güncellendiğinde Host tarafından istemcilere senkronize edilir.</li>
+                <li><code>TIMER_SYNC</code>: Süre takibinin tüm istemcilerde milisaniye hassasiyetinde senkron kalmasını sağlar. Sırası gelen oyuncunun süresi başladığında kalan süre Host tarafından hesaplanarak tüm eşlere bildirilir.</li>
+                <li><code>SUBMIT_ANSWERS</code>: Oyuncu kelimesini girip butona bastığında veya süresi dolduğunda, cevabı Host'a ulaştırır.</li>
+                <li><code>TURN_RESULT</code>: Host, gönderilen kelimeyi doğrulama motorunda işledikten sonra sonucu (kelimenin doğruluğu, kazanılan puan, itiraz edip edemeyeceği) tüm oyunculara yayınlar.</li>
+                <li><code>APPEAL</code>: Sıradaki oyuncunun cevabı 0 puan aldığında, oyuncunun yerel ekranında 3 saniyelik bir itiraz butonu belirir. Oyuncu bu süre içinde butona basarsa Host'a itiraz sinyali gider.</li>
+                <li><code>START_VOTE</code>, <code>VOTE_UPDATE</code> ve <code>VOTE_RESULT</code>: İtiraz yapıldığında Host, 10 saniyelik zaman odaklı hızlı oylama sürecini başlatır. Oyuncuların evet/hayır oyları gerçek zamanlı olarak senkronize edilir ve çoğunluğun kararına göre kelime kabul edilir veya reddedilir.</li>
+                <li><code>SHOW_SCORES</code>: Tur sonlarında hesaplanan güncel skor tablosunu tüm istemcilerin ekranına yansıtır.</li>
+            </ul>
+
+            <h2>Hibrit Doğrulama ve Değerlendirme Motoru</h2>
+            <p>Oyuncunun gönderdiği kelime, Host üzerinde çalışan çok aşamalı bir hibrit değerlendirme motoru tarafından analiz edilir:</p>
+            <ol>
+                <li><strong>Yerel Kelime Sözlüğü (Offline Dictionary Check):</strong> İlk olarak, platform genelindeki statik kelime dosyaları (<code>../IsimSehir/data/${catId}.json</code>) yüklenir. Kelime sözlükte bulunursa ve istenen harfle başlıyorsa doğrudan geçerli kabul edilir.</li>
+                <li><strong>Üçüncü Parti API Sorgulamaları (Real-Time Web Services):</strong> Sözlükte bulunamayan kelimeler için kategorilerine uygun gerçek zamanlı API'ler sorgulanır. Örneğin:
+                    <ul>
+                        <li><code>sehir</code>: Nominatim (OpenStreetMap) ve Wikipedia coğrafi API'leri.</li>
+                        <li><code>ulke</code>: RestCountries API ve Wikipedia veri sorguları.</li>
+                        <li><code>film_dizi</code> ve <code>muzik</code>: iTunes API entegrasyonu.</li>
+                        <li><code>sarkici</code>: MusicBrainz ve Wikipedia aramaları.</li>
+                        <li><code>yazar</code>: OpenLibrary yazar dizini.</li>
+                    </ul>
+                </li>
+                <li><strong>Gemini Yapay Zeka Hakemi (LLM Validation Fallback):</strong> Kelimenin geçerliliği yukarıdaki yöntemlerle saptanamazsa, Host tarayıcısı <code>/api/ai/generate</code> uç noktası üzerinden <code>gemini-1.5-flash</code> modeline bir doğrulama talebi gönderir. Yapay zeka modeli, kelimenin kategoriye ve harfe uygunluğunu saniyeler içinde analiz ederek son kararı verir.</li>
+            </ol>
+
+            <h2>Hız ve Kelime Uzunluğu Puanlaması</h2>
+            <p>Klasik oyundan farklı olarak Hızlı İsim Şehir modunda kelime uzunluğuna dayalı dinamik bir puanlama ve hızlı karar mekanizması mevcuttur:</p>
+            <ul>
+                <li><strong>Uzunluk Odaklı Puanlama:</strong> Doğrulanan kelimenin harf sayısı (uzunluğu), oyuncunun o turda kazandığı net puanı belirler (Örn: "Zonguldak" kelimesi 9 puan kazandırır). Bu durum, oyuncuları daha uzun ve yaratıcı kelimeler bulmaya teşvik eder.</li>
+                <li><strong>Zaman Kısıtlı İtiraz Penceresi:</strong> Hızı ve tempoyu korumak amacıyla, yanlış kabul edilen kelimeler için itiraz penceresi sadece 3 saniye açık kalır. İtiraz durumunda açılan oylama ise 10 saniye ile sınırlandırılmıştır.</li>
+            </ul>
+
+            <h2>Oda Yönetimi ve Güvenlik Protokolü</h2>
+            <p>Oyun odaları, 6 karakterli benzersiz bir <strong>Oda Kodu</strong> ile kurulur. Host tarayıcısı sinyalleşme ağında <code>hizliisimsehir-host-${roomCode}</code> kimliğiyle yer alırken, katılımcı istemciler de kendi benzersiz ID'leri ile Host'a bağlanır.</p>
+            <p>WebRTC altyapısının sağladığı <strong>DTLS/SRTP şifrelemesi</strong> sayesinde, paylaşılan cevaplar, oylar ve oyuncu kimlikleri tamamen koruma altındadır. Sunucu tarafında hiçbir oyun verisi tutulmadığı için maksimum gizlilik ve sıfır gecikmeli oyun deneyimi sağlanmış olur.</p>
+
+            <blockquote>
+                Bu teknik dokümantasyon, Paira platformunun tarayıcı tabanlı çok oyunculu kelime oyunu altyapısını ve P2P veri senkronizasyon modellerini merak eden geliştiriciler için Ahmet Efe Yaşar tarafından hazırlanmıştır.
+            </blockquote>
+        </div>
+    </main>
+</body>
+</html>

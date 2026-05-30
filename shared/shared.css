@@ -1382,3 +1382,44 @@ body.fullscreen-active .leaderboard {
 .btn-fullscreen-toggle:hover {
     background: rgba(0, 0, 0, 0.8);
 }
+
+/* Dev Notes Button Styling */
+.dev-notes-btn {
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-purple);
+    border: 1.5px solid var(--btn-secondary-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px var(--neon-glow-rgba);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+}
+
+.dev-notes-btn:hover {
+    transform: scale(1.2) rotate(15deg);
+    background: var(--neon-purple);
+    border-color: var(--neon-purple);
+    color: var(--text-main);
+    box-shadow: 0 0 20px var(--neon-glow-rgba);
+}
+
+.dev-notes-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+}
+

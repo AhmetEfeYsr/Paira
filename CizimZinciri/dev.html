@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Çizim Zinciri Geliştirici Notları / Dev Notes | Paira Games</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <style>
+        .about-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 5vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .about-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            text-shadow: 0 0 10px var(--neon-glow-rgba);
+        }
+        .about-container h2 {
+            color: var(--lilac);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .about-container p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.98rem;
+        }
+        .about-container blockquote {
+            background: var(--input-bg);
+            border-left: 4px solid var(--neon-purple);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px 12px 12px 4px;
+            font-style: italic;
+            color: var(--lilac);
+        }
+        .about-container strong {
+            color: var(--text-main);
+        }
+        .about-container ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-muted);
+        }
+        .about-container ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .about-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-purple);
+            font-size: 0.95rem;
+        }
+        .about-container pre {
+            background: var(--input-bg);
+            border: var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+        }
+        .about-container pre code {
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .back-link:hover {
+            color: var(--lilac);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="about-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Geri Dön / Back to Lobby
+            </a>
+            
+            <h1>Geliştirici Notları: Çizim Zinciri</h1>
+            
+            <h2>Giriş ve Mimari Yaklaşım</h2>
+            <p><strong>Paira Çizim Zinciri</strong>, popüler "kulaktan kulağa çizim" (Gartic Phone benzeri) konseptini tamamen web tarayıcısı üzerine taşıyan, verileri depolamak için herhangi bir uzak veritabanı (Database) veya merkezi sunucu barındırmayan, <strong>P2P (Peer-to-Peer)</strong> bağlantı mimarisine dayalı çok oyunculu bir parti oyunudur. Platformun diğer oyunlarında olduğu gibi, bu oyun da öğrenci geliştirici Ahmet tarafından, topluluğun hızlı, kurulumsuz ve güvenli bir şekilde eğlenebilmesi amacıyla geliştirilmiştir.</p>
+            <p>Oyunda tüm durum (state) yönetimi ve senkronizasyon, sunucusuz mimarinin getirdiği sınırlamaları aşmak adına gelişmiş bir Host-Client yapısıyla tarayıcı düzeyinde koordine edilmektedir.</p>
+
+            <h2>P2P Ağ Topolojisi (Host-Client Modeli)</h2>
+            <p>Çizim Zinciri, sunucu yükünü ve gecikmesini ortadan kaldırmak için <strong>WebRTC (Web Real-Time Communication)</strong> protokolünü temel alan bir ağ mimarisi kullanır:</p>
+            <ul>
+                <li><strong>Host (Kurucu Node):</strong> Odayı ilk oluşturan oyuncudur. Sunucu rolünü üstlenerek tüm oyun mantığını (Game Loop), turları, süreleri ve "defter atamalarını" kendi yerel tarayıcı hafızasında çalıştırır. Her aşama sonunda oyuncu kitaplarını (stories) kaydırarak yeni eşleşmeleri yönetir ve oyun bittiğinde albümü derleyip tüm istemcilere sunar.</li>
+                <li><strong>Clients (Katılımcı Peer'lar):</strong> Oda kodunu girerek bağlanan diğer oyuncular, doğrudan Host ile peer-to-peer <code>RTCDataChannel</code> bağlantısı kurarlar. Katılımcılar doğrudan Host'a veri aktarır ve Host'tan gelen güncel oyun durumunu (SYNC) alırlar.</li>
+                <li><strong>Sinyalleşme (Signaling):</strong> Oyuncuların birbirlerini internet üzerinde bulup IP ve port bilgilerini (ICE Adayları) değiş tokuş edebilmesi için bir WebRTC aracı sinyalleşme sunucusu (PeerJS altyapısı) kullanılır. Bağlantı kurulduktan sonra bu aracı sunucu tamamen devre dışı kalır.</li>
+            </ul>
+
+            <h2>Gerçek Zamanlı Veri Senkronizasyonu ve Oyun Evreleri</h2>
+            <p>Oyun, birbirini takip eden <strong>Yazı Evreleri (WRITE)</strong> ve <strong>Çizim Evreleri (DRAW)</strong> üzerinden ilerler. Tüm bu süreçler <code>RTCDataChannel</code> paketleriyle anlık olarak yönetilir:</p>
+            <ul>
+                <li><code>WRITE</code>: Oyuncular oyuna bir başlangıç cümlesi yazarak başlar ya da kendilerine gelen çizimi tahmin etmeye çalışırlar. Yazılan cümleler <code>SUBMIT_TASK</code> paketiyle Host'a gönderilir.</li>
+                <li><code>DRAW</code>: Oyuncular kendilerine atanan cümleyi ekranlarındaki çizim tuvali (<code>AdvancedDrawingBoard</code>) üzerinde çizerler. Çizim tamamlandığında tuval, Base64 formatında PNG veri URL'si (<code>data:image/png;base64,...</code>) olarak dışa aktarılır ve <code>SUBMIT_TASK</code> paketiyle Host'a iletilir.</li>
+                <li><code>ALBUM</code> (Hikaye Zincirinin Sunumu): Tüm turlar tamamlandığında Host, her oyuncunun başlattığı hikaye zincirini (Yazı -> Çizim -> Tahmin -> Çizim...) birleştirir ve <code>ALBUM</code> durumuna geçerek tüm katılımcılara <code>ALBUM_INDEX_UPDATE</code> paketi eşliğinde senkronize bir slayt gösterisi olarak sunar.</li>
+            </ul>
+
+            <h2>Oda Mantığı ve Defter Kaydırma (Book Shifting)</h2>
+            <p>Her oyun odası, tarayıcının WebRTC soket adresi üzerinden aldığı 6 karakterli benzersiz bir <strong>Oda Kodu</strong> (Peer ID) ile temsil edilir. Oturum yönetimi şu şekilde işler:</p>
+            <ul>
+                <li><strong>Defter Kaydırma (Book Shifting):</strong> Her tur sonunda, her oyuncunun önündeki "defter" (kitap ataması - <code>assignments</code>) bir sonraki oyuncuya kaydırılır (shift edilir). Böylece oyuncular bir önceki turda başka bir oyuncunun yazdığı cümleyi çizer veya çizdiği resmi tahmin eder.</li>
+                <li><strong>Zaman Aşımı ve Otomatik Teslimat:</strong> Süre dolduğunda oyuncu teslimat yapmamışsa, sistem otomatik olarak yazılmayan alanlara yedek kelime/mesaj ekler veya çizim tuvalini boş bir base64 görseli ile otomatik olarak paketleyip Host'a gönderir (<code>submitDrawingFallback</code>/<code>submitPromptFallback</code>).</li>
+                <li><strong>Oturum Kesintileri:</strong> Bir oyuncu internet sorunları nedeniyle odadan düştüğünde, Host durum kontrolü yaparak aktif turdaki eksik görevlerin tamamlanmasını koordine eder ve oyun akışının tıkanmasını engellemek amacıyla turları güvenli bir şekilde devretme adımlarını çalıştırır.</li>
+            </ul>
+
+            <h2>E-E-A-T & Güvenlik</h2>
+            <p>Platform tamamen istemci tarafında (Client-Side) çalıştığı için kullanıcıların kişisel verileri, IP adresleri, çizdikleri görseller veya oyun içi yazışmaları herhangi bir uzak veritabanında depolanmaz. Tüm veri transferleri WebRTC'nin doğası gereği <strong>uçtan uca şifreli (End-to-End Encrypted - DTLS/SRTP)</strong> kanallar üzerinden gerçekleşir. Bu sayede hem maksimum hız ve minimum gecikme sağlanır hem de veri güvenliği en üst seviyede korunur.</p>
+
+            <blockquote>
+                Bu teknik dokümantasyon, tarayıcı tabanlı eş zamanlı oyun geliştirme meraklıları ve platformun altyapısını merak eden geliştiriciler için Ahmet Efe Yaşar tarafından hazırlanmıştır.
+            </blockquote>
+        </div>
+    </main>
+</body>
+</html>

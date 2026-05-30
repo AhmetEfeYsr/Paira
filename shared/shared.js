@@ -108,7 +108,9 @@ class PairaSharedUI {
         // Left Navigation (Back Home, on the left)
         const isLegalPage = window.location.href.includes('iletisim.html') || 
                             window.location.href.includes('gizlilik-politikasi.html') || 
-                            window.location.href.includes('kullanim-kosullari.html');
+                            window.location.href.includes('kullanim-kosullari.html') ||
+                            window.location.href.includes('hakkimizda.html') ||
+                            window.location.href.includes('dev.html');
         
         let leftNavHTML = '';
         if (basePath === '../' || isLegalPage) {
@@ -181,6 +183,8 @@ class PairaSharedUI {
         const seoFooterHTML = `
         <footer id="seo-footer" style="width: 100%; text-align: center; padding: 1rem; margin-top: 1rem; background: var(--footer-bg); font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--btn-secondary-bg);">
             <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <a href="${basePath}hakkimizda.html" style="color: var(--neon-purple); text-decoration: none;">Hakkımızda</a>
+                <span style="color: var(--text-muted);">|</span>
                 <a href="${basePath}gizlilik-politikasi.html" style="color: var(--neon-purple); text-decoration: none;">Gizlilik Politikası</a>
                 <span style="color: var(--text-muted);">|</span>
                 <a href="${basePath}kullanim-kosullari.html" style="color: var(--neon-purple); text-decoration: none;">Kullanım Koşulları</a>

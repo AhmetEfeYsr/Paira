@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Vampir Köylü Geliştirici Notları / Dev Notes | Paira Games</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css">
+    
+    <style>
+        .about-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 5vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .about-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            text-shadow: 0 0 10px var(--neon-glow-rgba);
+        }
+        .about-container h2 {
+            color: var(--lilac);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .about-container p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.98rem;
+        }
+        .about-container blockquote {
+            background: var(--input-bg);
+            border-left: 4px solid var(--neon-purple);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px 12px 12px 4px;
+            font-style: italic;
+            color: var(--lilac);
+        }
+        .about-container strong {
+            color: var(--text-main);
+        }
+        .about-container ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-muted);
+        }
+        .about-container ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .about-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-purple);
+            font-size: 0.95rem;
+        }
+        .about-container pre {
+            background: var(--input-bg);
+            border: var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+        }
+        .about-container pre code {
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .back-link:hover {
+            color: var(--lilac);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="about-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Geri Dön / Back to Lobby
+            </a>
+            
+            <h1>Geliştirici Notları: Vampir Köylü</h1>
+            
+            <h2>Giriş ve Mimari Yaklaşım</h2>
+            <p><strong>Paira Vampir Köylü</strong>, tarayıcı üzerinden sıfır kurulum ile çok oyunculu olarak oynanabilen, 3D görselleştirme katmanına sahip bir sosyal çıkarım (social deduction) oyunudur. Oyun, herhangi bir merkezi veritabanı (database) veya oyun durumunu yöneten kalıcı bir sunucu barındırmaz. Bunun yerine tamamen tarayıcı tabanlı <strong>WebRTC (Peer-to-Peer)</strong> teknolojisini kullanarak istemciler arası doğrudan veri transferi gerçekleştirir.</p>
+            <p>State (durum) yönetimi ve yetkilendirme, sunucusuz (serverless) mimarinin doğurduğu güvenlik ve senkronizasyon gereksinimlerini karşılamak amacıyla özel bir <strong>Host-Client</strong> koordinasyonu üzerinden yürütülür. Bu altyapı, arkadaş grupları ve Kick yayını izleyicileri için yüksek performanslı ve akıcı bir oyun deneyimi sunar.</p>
+
+            <h2>P2P Ağ Topolojisi (Host-Client Mimarisi)</h2>
+            <p>Oyun, katılımcılar arasında veri iletimini sağlamak üzere WebRTC protokolü üzerinde çalışan bir Host-Client ağ topolojisini benimser:</p>
+            <ul>
+                <li><strong>Host (Oyun Kurucusu):</strong> Odayı ilk oluşturan oyuncu, oyunun mantıksal motorunu (Game Engine) kendi yerel tarayıcısında barındıran merkezi otorite (Host) haline gelir. Rol dağıtımı, gece/gündüz evrelerinin sürelerinin takibi, oyların sayılması ve elenme senaryolarının karara bağlanması Host'un sorumluluğundadır.</li>
+                <li><strong>Clients (Katılımcı Oyuncular):</strong> Odaya bağlanan diğer tüm eşler (peers), doğrudan Host ile birer <code>RTCDataChannel</code> bağlantısı kurarlar. Katılımcıların kendi aralarında doğrudan veri kanalları açması gerekmez; tüm bilgi dağıtımı Host üzerinden "Star" (yıldız) topolojisine benzer şekilde gerçekleştirilir.</li>
+                <li><strong>Sinyalleşme (Signaling):</strong> Oyuncuların birbirlerini internet üzerinde bulup IP ve port bilgilerini (ICE Adayları) değiş tokuş edebilmesi için bir WebRTC aracı sinyalleşme sunucusu (PeerJS altyapısı) kullanılır. Bağlantı kurulduktan sonra bu aracı sunucu veri aktarımında rol oynamaz.</li>
+            </ul>
+
+            <h2>Gerçek Zamanlı Veri Senkronizasyonu (Real-Time Data Sync)</h2>
+            <p>Oyun içindeki rol dağıtımı, evre geçişleri, chat mesajları ve gizli oylamalar gibi tüm dinamik aksiyonlar, <code>RTCDataChannel</code> aracılığıyla gönderilen yapılandırılmış JSON paketleri ile senkronize edilir. Başlıca paket türleri şunlardır:</p>
+            <ul>
+                <li><code>GAME_STATE</code>: Host, oyun durumunu (hayatta olan oyuncular, aktif evre, oylama durumları) güncellediğinde bu paketi tüm istemcilere broadcast (yayın) eder.</li>
+                <li><code>ACTION</code>: Oyuncuların yaptığı eylemlerdir. Gündüz yapılan oylama seçimi ya da gece Doktor'un iyileştirme hedefi, Vampir'in saldırı seçimi veya Gözcü'nün rol bakma isteği bu paketle doğrudan Host'a gönderilir.</li>
+                <li><code>PRIVATE_LOG</code>: Sadece belirli bir oyuncuya gösterilmesi gereken özel bilgileri (örneğin Gözcü'nün sorguladığı kişinin rol sonucu veya Doktor'un kurtarma başarısı) iletmek için Host tarafından ilgili client'a özel olarak gönderilir.</li>
+                <li><code>PLAY_ANIMATIONS</code> &amp; <code>HANG_ANIMATION</code>: Üç boyutlu sahnede (Three.js/Scene) karakterlerin hareketlerini, saldırılarını ve infaz sahnelerini (yürüme, öldürme vb.) senkronize şekilde oynatmak amacıyla tetikleyici animasyon dizilerini iletir.</li>
+                <li><code>CHAT_MESSAGE</code> &amp; <code>UPDATE_WILL</code>: Sohbet mesajlarını ve elenen oyuncuların arkalarında bırakacakları son vasiyetnameleri (will) senkronize eder. Vampirler gece evresinde kendi aralarında özel chat paketleri ile iletişim kurarlar.</li>
+            </ul>
+
+            <h2>Oda Mantığı ve Oturum Yönetimi</h2>
+            <p>Her oyun lobisi, PeerJS ağı üzerinden üretilen 6 karakterli benzersiz bir <strong>Oda Kodu</strong> ile temsil edilir. Oturum süreçleri şu adımları içerir:</p>
+            <ul>
+                <li><strong>Oda Keşfi ve El Sıkışma:</strong> İstemciler oda kodunu girerek PeerJS üzerinden Host'a bağlantı teklifi (SDP Offer) gönderirler. ICE Candidate alışverişi tamamlandıktan sonra veri kanalı üzerinden veri transferi başlar.</li>
+                <li><strong>Güvenli Rol Dağıtımı (Roles Management):</strong> Oyun başladığında roller (Vampir, Köylü, Doktor, Gözcü, Zehirci, vb.) Host üzerinde karıştırılır ve her oyuncuya sadece kendi rolünü içeren hedeflenmiş veri paketi gönderilir. Böylece hiçbir oyuncu tarayıcısının hafızasını (memory) inceleyerek diğer oyuncuların rollerini önceden göremez.</li>
+                <li><strong>Bağlantı Kayıplarının Yönetimi:</strong> Bir oyuncu oyundan düştüğünde, <code>handlePlayerLeave</code> tetiklenir. Host, oyun akışının tıkanmasını önlemek amacıyla ilgili oyuncuyu pasif/ölü durumuna çekebilir veya aktif bir eylem yapması bekleniyorsa tur süresini otomatik olarak sonlandırarak oyunu bir sonraki aşamaya taşır.</li>
+            </ul>
+
+            <h2>E-E-A-T ve Güvenlik Standartları</h2>
+            <p>Paira Vampir Köylü, kullanıcı gizliliği ve veri güvenliğini ön planda tutan bir tasarım felsefesine sahiptir:</p>
+            <ul>
+                <li><strong>Uçtan Uca Şifreleme (E2EE):</strong> WebRTC veri kanalları, endüstri standardı olan DTLS (Datagram Transport Layer Security) ile şifrelenir. Oyun içi yazışmalar ve ham oyun verileri aracı hiçbir sunucu tarafından okunamaz veya kaydedilemez.</li>
+                <li><strong>Host Yetki Kontrolü (Serverless Authority):</strong> İstemcilerin hile yapmasını veya geçersiz eylemler göndermesini engellemek için tüm aksiyon paketleri Host tarafında doğrulama süzgecinden geçirilir. Örneğin, bir köylü vampir eylemi gönderirse veya ölü bir oyuncu oy vermeye çalışırsa Host bu eylemi geçersiz sayarak reddeder.</li>
+            </ul>
+
+            <blockquote>
+                Bu teknik dokümantasyon, P2P tabanlı web oyunu mimarileri ile ilgilenen geliştiriciler ve Paira topluluğu üyeleri için Ahmet Efe Yaşar tarafından hazırlanmıştır.
+            </blockquote>
+        </div>
+    </main>
+</body>
+</html>
