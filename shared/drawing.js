@@ -96,25 +96,41 @@ class AdvancedDrawingBoard {
             finalWidth = finalHeight * targetRatio;
         }
 
+        const oldHistory = [...this.history];
+        const oldHistoryStep = this.historyStep;
+
         this.canvas.width = finalWidth;
         this.canvas.height = finalHeight;
 
         this.ctx.fillStyle = "#ffffff";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        if (oldImg) {
+        if (oldHistory.length > 0 && oldWidth > 0 && oldHeight > 0) {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = oldWidth;
             tempCanvas.height = oldHeight;
-            tempCanvas.getContext('2d').putImageData(oldImg, 0, 0);
-            
-            this.ctx.drawImage(tempCanvas, 0, 0, finalWidth, finalHeight);
-        }
+            const tempCtx = tempCanvas.getContext('2d');
 
-        // FIX: Reset history after resize since old ImageData dimensions are now invalid
-        this.history = [];
-        this.historyStep = -1;
-        this.saveState();
+            this.history = oldHistory.map(imgData => {
+                tempCtx.putImageData(imgData, 0, 0);
+                
+                // Clear canvas and draw scaled image
+                this.ctx.fillStyle = "#ffffff";
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(tempCanvas, 0, 0, this.canvas.width, this.canvas.height);
+                return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            });
+            this.historyStep = oldHistoryStep;
+
+            // Restore the current active history step on canvas
+            if (this.historyStep >= 0 && this.history[this.historyStep]) {
+                this.ctx.putImageData(this.history[this.historyStep], 0, 0);
+            }
+        } else {
+            this.history = [];
+            this.historyStep = -1;
+            this.saveState();
+        }
     }
 
     /** @param {string} color Hex color string. */

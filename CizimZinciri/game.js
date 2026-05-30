@@ -182,6 +182,8 @@ function submitPrompt(networkState, myId) {
     document.getElementById('prompt-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
 
+    if (window.PairaAudio) window.PairaAudio.play('pass');
+
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text, round: networkState.roundCount });
 }
 
@@ -190,6 +192,8 @@ function submitDrawing(networkState, myId) {
 
     document.getElementById('draw-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
+
+    if (window.PairaAudio) window.PairaAudio.play('pass');
 
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
@@ -205,10 +209,14 @@ export function startTimer(duration, networkState, myId) {
         timeLeft--;
         if(timeLeft >= 0) {
             display.textContent = timeLeft;
-            if (timeLeft <= 10) display.style.color = "var(--danger)";
+            if (timeLeft <= 10) {
+                display.style.color = "var(--danger)";
+                if (window.PairaAudio) window.PairaAudio.play('tick');
+            }
             else display.style.color = "var(--warning)";
         } else {
             clearInterval(timerInterval);
+            if (window.PairaAudio) window.PairaAudio.play('end');
             // Time is up, auto submit
             if (!networkState.completedTasks[myId]) {
                 if (networkState.state === 'WRITE') submitPromptFallback(networkState, myId);

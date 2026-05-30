@@ -78,7 +78,13 @@ class KatiplikGame {
         });
 
         document.getElementById('btn-cancel-wait')?.addEventListener('click', () => {
-            window.location.href = 'index.html';
+            if (this.network) this.network.leaveRoom();
+            else window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-leave')?.addEventListener('click', () => {
+            if (this.network) this.network.leaveRoom();
+            else window.location.href = 'index.html';
         });
     }
 
@@ -235,7 +241,7 @@ class KatiplikGame {
         textInput.value = '';
         textInput.focus();
         
-        this.startTime = Date.now();
+        this.startTime = window.PairaTime.now();
         this.startTimer();
     }
 
@@ -249,7 +255,17 @@ class KatiplikGame {
         }
         
         if (this.kbMode === 'en') {
-            result = window.normalizeTurkishChars(result);
+            const charMap = {
+                'ı': 'i', 'ı': 'i', 'İ': 'I',
+                'â': 'a', 'î': 'i', 'û': 'u',
+                'Â': 'A', 'Î': 'I', 'Û': 'U',
+                'ç': 'c', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
+                'Ç': 'C', 'Ğ': 'G', 'Ö': 'O', 'Ş': 'S', 'Ü': 'U'
+            };
+            result = result.replace(/[ıİâîûÂÎÛçğöşüÇĞÖŞÜ]/g, char => charMap[char] || char);
+            
+            // If imlasiz was applied, lower case is already handled.
+            // If imlali with 'en' keyboard, we also handle case check correctly
         }
         
         return result;
@@ -347,11 +363,27 @@ class KatiplikGame {
             return parseInt(currentWpmText) || 0;
         }
         
-        const timeElapsed = (Date.now() - this.startTime) / 60000; // minutes
+        const timeElapsed = (window.PairaTime.now() - this.startTime) / 60000; // minutes
         
         if (timeElapsed < 0.05) return 0;
         
-        const wpm = Math.round((this.correctKeystrokes / 5) / timeElapsed);
+        // Calculate correct characters in progress for current word to prevent WPM dropping mid-word
+        let currentWordCorrectChars = 0;
+        const textInput = document.getElementById('text-input');
+        if (textInput && !this.isFinished) {
+            const inputVal = textInput.value.trim();
+            const currentWord = this.words[this.currentWordIndex];
+            if (inputVal && currentWord) {
+                const normInput = this.normalizeWord(inputVal);
+                const normExpected = this.normalizeWord(currentWord);
+                if (normExpected.startsWith(normInput)) {
+                    currentWordCorrectChars = inputVal.length;
+                }
+            }
+        }
+        
+        const totalCorrect = this.correctKeystrokes + currentWordCorrectChars;
+        const wpm = Math.round((totalCorrect / 5) / timeElapsed);
         const finalWpm = isNaN(wpm) || wpm < 0 || !isFinite(wpm) ? 0 : wpm;
         
         document.getElementById('p1-wpm').textContent = `${finalWpm} WPM`;
@@ -381,7 +413,7 @@ class KatiplikGame {
         const timerElement = document.getElementById('game-timer');
         
         this.timerInterval = setInterval(() => {
-            const timeElapsed = Math.floor((Date.now() - this.startTime) / 1000);
+            const timeElapsed = Math.floor((window.PairaTime.now() - this.startTime) / 1000);
             const minutes = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
             const seconds = (timeElapsed % 60).toString().padStart(2, '0');
             timerElement.textContent = `${minutes}:${seconds}`;
@@ -396,7 +428,7 @@ class KatiplikGame {
         const textInput = document.getElementById('text-input');
         textInput.disabled = true;
         
-        const finalTime = Math.max(1, Math.floor((Date.now() - this.startTime) / 1000));
+        const finalTime = Math.max(1, Math.floor((window.PairaTime.now() - this.startTime) / 1000));
         
         this.isFinished = false; 
         const finalWpm = this.calculateWPM();

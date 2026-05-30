@@ -340,7 +340,6 @@ class TabuView {
 
     bindEvents() {
         document.getElementById('btn-switch-team')?.addEventListener('click', () => this.callbacks.onSwitchTeam());
-        document.getElementById('btn-start-game')?.addEventListener('click', () => this.callbacks.onStartGame());
         document.getElementById('btn-start-narrating')?.addEventListener('click', () => this.callbacks.onNarratorReady());
         document.getElementById('btn-pause')?.addEventListener('click', () => this.callbacks.onTogglePause());
         document.getElementById('btn-correct')?.addEventListener('click', () => this.callbacks.onAction('CORRECT'));
@@ -372,7 +371,7 @@ class TabuView {
             this.updateGameUI(state);
         } else if (state.status === 'ended') {
             window.showScreen('winner-screen');
-            this.updateWinnerUI(state);
+            this.updateWinnerUI(state, isHost);
         }
     }
 
@@ -470,13 +469,36 @@ class TabuView {
         }
     }
 
-    updateWinnerUI(state) {
+    updateWinnerUI(state, isHost) {
         let msg = "Berabere!";
         if (state.scoreA > state.scoreB) msg = "Takım A Kazandı!";
         else if (state.scoreB > state.scoreA) msg = "Takım B Kazandı!";
         document.getElementById('winner-team-name').innerText = msg;
         document.getElementById('final-score-a').innerText = state.scoreA;
         document.getElementById('final-score-b').innerText = state.scoreB;
+
+        const btnBack = document.getElementById('btn-back-to-lobby');
+        if (btnBack) {
+            if (isHost) {
+                btnBack.classList.remove('hidden');
+                const waitMsg = document.getElementById('client-wait-lobby-msg');
+                if (waitMsg) waitMsg.classList.add('hidden');
+            } else {
+                btnBack.classList.add('hidden');
+                let waitMsg = document.getElementById('client-wait-lobby-msg');
+                if (!waitMsg) {
+                    waitMsg = document.createElement('div');
+                    waitMsg.id = 'client-wait-lobby-msg';
+                    waitMsg.style.marginTop = '1.5rem';
+                    waitMsg.style.color = 'var(--text-muted)';
+                    waitMsg.style.fontSize = '1.1rem';
+                    waitMsg.style.fontWeight = '500';
+                    btnBack.parentNode.appendChild(waitMsg);
+                }
+                waitMsg.innerText = "Kurucunun lobiye dönmesi bekleniyor...";
+                waitMsg.classList.remove('hidden');
+            }
+        }
     }
 
     displayChat(sender, msg, isSelf = false) {

@@ -166,7 +166,8 @@ class TabuNetworkManager extends BaseGameNetwork {
         }
         else if (actionType === 'ACTION') {
             const aType = payload.actionType;
-            if (this.engine.state.turnId === senderId || aType === 'TOGGLE_PAUSE' || aType === 'NARRATOR_READY') {
+            const isAuthorized = (senderId === this.engine.state.turnId) || (senderId === this.myId);
+            if (isAuthorized) {
                 if (aType === 'NARRATOR_READY') this.engine.beginTimer();
                 else if (aType === 'TOGGLE_PAUSE') this.engine.togglePause();
                 else this.engine.processAction(aType);

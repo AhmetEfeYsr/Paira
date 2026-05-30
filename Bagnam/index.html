@@ -51,10 +51,10 @@
 <body>
     <div id="toast-container" class="toast-container"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+    <main id="app-container" class="glass-panel custom-scrollbar">
 
         <!-- LOGIN / LANDING SCREEN -->
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; min-height: 100%;">
             <div class="hero-content">
                 <div class="game-logo-container" ><img src="../logolar/bagnam.avif" alt="Bagnam Logo" ></div>
                 <h1 class="gradient-text">Bağnam</h1>
@@ -107,7 +107,10 @@
         <section id="game-screen" class="view-state" style="padding: 0;">
             <div class="game-topbar">
                 <div class="score-board" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 600px; margin: 0 auto;">
-                    <span>Tahmin Sayısı: <span id="guess-count" class="timer">0</span></span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button id="btn-back" class="topbar-btn back-btn" title="Geri Dön">🏠</button>
+                        <span>Tahmin Sayısı: <span id="guess-count" class="timer">0</span></span>
+                    </div>
                     <div class="topbar-actions">
                         <button id="btn-hint" class="topbar-btn hint-btn" title="İpucu Al">💡</button>
                         <button id="btn-last-hint" class="topbar-btn last-hint-btn hidden" title="Son ipucunu tekrar göster">👁</button>

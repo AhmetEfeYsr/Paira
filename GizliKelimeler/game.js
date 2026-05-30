@@ -38,6 +38,31 @@ class GizliKelimelerEngine {
 
     removePlayer(id) {
         delete this.state.players[id];
+        
+        if (this.state.status === 'playing') {
+            const players = Object.values(this.state.players);
+            const teamA = players.filter(p => p.team === 'A');
+            const teamB = players.filter(p => p.team === 'B');
+            
+            if (teamA.length === 0 || teamB.length === 0) {
+                this.endGame(teamA.length === 0 ? 'B' : 'A');
+                return;
+            }
+            
+            const turnTeamPlayers = players.filter(p => p.team === this.state.turnTeam);
+            if (this.state.phase === 'CLUE') {
+                const hasSpymaster = turnTeamPlayers.some(p => p.role === 'SPYMASTER');
+                if (!hasSpymaster) {
+                    this.switchTurn();
+                }
+            } else if (this.state.phase === 'GUESS') {
+                const hasGuesser = turnTeamPlayers.some(p => p.role === 'GUESSER');
+                if (!hasGuesser) {
+                    this.switchTurn();
+                }
+            }
+        }
+        
         this.setState({ players: this.state.players });
     }
 
@@ -57,7 +82,7 @@ class GizliKelimelerEngine {
 
     setWords(words) {
         if (words && words.length >= 36) {
-            this.allWords = words.map(w => w.ana_kelime.toUpperCase());
+            this.allWords = words.map(w => w.ana_kelime.toLocaleUpperCase('tr-TR'));
         } else {
             this.allWords = this.fallbackWords;
         }
@@ -185,7 +210,7 @@ class GizliKelimelerEngine {
             if (!payload.word || isNaN(count) || count < 1) return;
 
             this.state.currentClue = {
-                word: payload.word.toUpperCase(),
+                word: payload.word.toLocaleUpperCase('tr-TR'),
                 count: count,
                 remaining: count + 1
             };
@@ -261,7 +286,7 @@ class GizliKelimelerEngine {
     endGame(winnerTeam) {
         this.state.status = 'ended';
         this.state.winnerTeam = winnerTeam;
-        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.renderFrame) clearTimeout(this.renderFrame);
     }
 }
 

@@ -15,8 +15,8 @@
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
 
-    <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
-    <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
+    <meta property="og:image" content="https://pairaaa.com/main_logo.avif">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
@@ -26,10 +26,15 @@
         <!-- LOBI EKRANI -->
         <section id="lobby-screen" class="view-state active">
             <script>
-                if (sessionStorage.getItem('isSolo') === 'true') {
-                    document.getElementById('lobby-screen').classList.remove('active');
-                    document.getElementById('lobby-screen').classList.add('hidden');
-                }
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (sessionStorage.getItem('isSolo') === 'true') {
+                        const lobby = document.getElementById('lobby-screen');
+                        if (lobby) {
+                            lobby.classList.remove('active');
+                            lobby.classList.add('hidden');
+                        }
+                    }
+                });
             </script>
             <header class="lobby-header" style="justify-content: space-between; align-items: center; display: flex;">
                 <button id="btn-leave-lobby" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
@@ -140,6 +145,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="../shared/shared.js"></script>
     <script src="../shared/peer_manager.js"></script>
+    <script src="../shared/lobby_manager.js"></script>
+    <script src="../shared/base_network.js"></script>
     <script src="game.js"></script>
     <script src="network.js"></script>
 

@@ -45,6 +45,7 @@ class PairaSharedUI {
     }
 
     updateLogos(themeName) {
+        const basePath = this.getBasePath();
         const logos = document.querySelectorAll('.game-icon img, .game-logo-container img');
         logos.forEach(img => {
             const src = img.getAttribute('src');
@@ -59,10 +60,14 @@ class PairaSharedUI {
                 const newSrc = `${replaceStr}/generated_logos/${base}_${themeName}.avif`;
                 img.setAttribute('src', newSrc);
                 
-                // Fallback to base AVIF if themed AVIF doesn't exist (optional, but good for robustness)
+                // Fallback to base AVIF if themed AVIF doesn't exist, and to main_logo if base doesn't exist either
                 img.onerror = () => {
-                    if (!img.src.endsWith(`${base}.avif`)) {
-                        img.src = `${replaceStr}/${base}.avif`;
+                    const themedSuffix = `${base}_${themeName}.avif`;
+                    const baseSuffix = `${base}.avif`;
+                    if (img.src.endsWith(themedSuffix)) {
+                        img.src = `${replaceStr}/${baseSuffix}`;
+                    } else if (img.src.endsWith(baseSuffix) && !img.src.endsWith('main_logo.avif')) {
+                        img.src = `${basePath}main_logo.avif`;
                     }
                 };
             }
@@ -75,15 +80,18 @@ class PairaSharedUI {
 
         // Oyun sayfasına doğrudan girişi engelle (Eğer gerekli bilgiler sessionStorage'da yoksa)
         if (isGamePage) {
-            const hasUsername = sessionStorage.getItem('username') || sessionStorage.getItem('playerName');
-            const isSolo = sessionStorage.getItem('isSolo') === 'true';
-            const hasRoomCode = sessionStorage.getItem('roomCode');
-            const isHost = sessionStorage.getItem('isHost') === 'true';
+            const isChatGame = sessionStorage.getItem('cizbil_channel') || sessionStorage.getItem('chattabu_channel');
+            if (!isChatGame) {
+                const hasUsername = sessionStorage.getItem('username') || sessionStorage.getItem('playerName');
+                const isSolo = sessionStorage.getItem('isSolo') === 'true';
+                const hasRoomCode = sessionStorage.getItem('roomCode');
+                const isHost = sessionStorage.getItem('isHost') === 'true';
 
-            // Tek kişilik oyun değilse ve oda kodu yoksa (veya host değilse) ya da kullanıcı adı yoksa
-            if (!hasUsername || (!isSolo && !hasRoomCode && !isHost)) {
-                window.location.href = 'index.html';
-                return;
+                // Tek kişilik oyun değilse ve oda kodu yoksa (veya host değilse) ya da kullanıcı adı yoksa
+                if (!hasUsername || (!isSolo && !hasRoomCode && !isHost)) {
+                    window.location.href = 'index.html';
+                    return;
+                }
             }
         }
 
@@ -277,7 +285,8 @@ window.showToast = function(msg, type = "info") {
 };
 
 window.PairaTime = {
-    offset: 0,
+    syncServerTime: Date.now(),
+    syncPerformanceTime: performance.now(),
     async sync() {
         const apis = [
             'https://worldtimeapi.org/api/timezone/Etc/UTC',
@@ -300,18 +309,19 @@ window.PairaTime = {
                 }
                 
                 if (serverTime) {
-                    this.offset = serverTime - Date.now();
-                    console.log(`Time synchronized via ${api}. Offset:`, this.offset);
+                    this.syncServerTime = serverTime;
+                    this.syncPerformanceTime = performance.now();
+                    console.log(`Time synchronized via ${api}. Offset from local:`, this.syncServerTime - Date.now());
                     return;
                 }
             } catch (e) {
                 // Silently fail individual APIs as we have fallbacks
             }
         }
-        console.warn("All Time API syncs failed, using local time.");
+        console.warn("All Time API syncs failed, using local time base.");
     },
     now() {
-        return Date.now() + this.offset;
+        return this.syncServerTime + (performance.now() - this.syncPerformanceTime);
     }
 };
 window.PairaTime.sync();
@@ -418,7 +428,7 @@ window.normalizeTurkishChars = function(str) {
 };
 
 window.getTodayDateTR = function() {
-    const today = new Date();
+    const today = new Date(window.PairaTime ? window.PairaTime.now() : Date.now());
     const utc = today.getTime() + (today.getTimezoneOffset() * 60000);
     const trDate = new Date(utc + (3600000 * 3)); // UTC + 3 saat
 

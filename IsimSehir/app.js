@@ -3,6 +3,7 @@
  * Integrates Network, UI, and Game State.
  */
 document.addEventListener('DOMContentLoaded', () => {
+    const normalizeForSearch = window.normalizeTurkishChars || (str => str.toLowerCase());
     // --- Session Setup ---
     const isHost = sessionStorage.getItem('isHost') === 'true';
     const roomCode = sessionStorage.getItem('roomCode');
@@ -743,6 +744,47 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         } catch (e) {
             console.error("LLM Validation Error:", e);
             return { valid: false, reason: "Yapay zeka doğrulaması başarısız oldu." };
+    }
+
+    async function validateViaLlmBatch(candidates) {
+        if (candidates.length === 0) return {};
+        try {
+            const listStr = candidates.map((c, i) => `${i + 1}. Kategori: "${c.catName}", Harf: "${c.requiredLetter}", Kelime: "${c.word}"`).join('\n');
+            const prompt = `Sen bir İsim Şehir oyunu hakemisin. Aşağıdaki kelimelerin belirtilen kategoriye uygun olup olmadığını ve belirtilen harfle başlayıp başlamadığını denetle.
+Kelimeler:
+${listStr}
+
+Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("valid": true/false) ve nedenini ("reason": "...") içeren bir JSON dizisi (array) formatında ver. Örn: [{"valid": true, "reason": "..."}, ...]`;
+
+            const response = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'gemini-1.5-flash',
+                    prompt: prompt,
+                    temperature: 0.3
+                })
+            });
+            const data = await response.json();
+            let text = data.text;
+            text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+            const results = JSON.parse(text);
+            
+            const resultMap = {};
+            candidates.forEach((c, i) => {
+                const res = results[i] || { valid: false, reason: "Değerlendirilmedi" };
+                const key = `${c.catId}_${c.word}`;
+                resultMap[key] = { valid: !!res.valid, reason: res.reason || "" };
+            });
+            return resultMap;
+        } catch (e) {
+            console.error("LLM Batch Validation Error:", e);
+            const resultMap = {};
+            candidates.forEach(c => {
+                const key = `${c.catId}_${c.word}`;
+                resultMap[key] = { valid: false, reason: "Hata" };
+            });
+            return resultMap;
         }
     }
 
@@ -929,14 +971,72 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (ui.finishStatusText) ui.finishStatusText.textContent = 'Cevaplar kontrol ediliyor...';
 
         const results = {}; // categoryId -> [ {playerId, word, suggestedScore} ]
+        const llmCandidates = [];
+        const checkedList = {};
 
+        // First pass: load dictionaries and check offline/API validation first
         for (const cat of gameConfig.categories) {
             results[cat.id] = [];
-
             const dictObj = await loadDictionary(cat.id);
+            const letterLower = gameState.letter.toLocaleLowerCase('tr-TR');
+            const normLetter = normalizeForSearch(gameState.letter);
+
+            for (const [playerId, answers] of Object.entries(gameState.playerAnswers)) {
+                let word = answers[cat.id] || "";
+                word = word.trim().toLocaleLowerCase('tr-TR');
+                const normWord = normalizeForSearch(word);
+
+                if (word.length > 0 && normWord.startsWith(normLetter)) {
+                    const isCustomCat = cat.id.startsWith('custom_');
+                    if (!isCustomCat) {
+                        let inDict = false;
+                        if (dictObj) {
+                            if (dictObj.dict.has(word) && word.startsWith(letterLower)) {
+                                inDict = true;
+                            } else if (dictObj.normDict.has(normWord)) {
+                                const originals = dictObj.normDict.get(normWord);
+                                for (const ow of originals) {
+                                    if (ow.startsWith(letterLower)) {
+                                        inDict = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!inDict) {
+                            let apiValid = false;
+                            if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
+                                apiValid = await validateViaApi(cat.id, word, letterLower);
+                            }
+
+                            if (!apiValid) {
+                                const candidateKey = `${cat.id}_${word}`;
+                                if (!checkedList[candidateKey]) {
+                                    checkedList[candidateKey] = true;
+                                    llmCandidates.push({
+                                        catId: cat.id,
+                                        catName: cat.name,
+                                        word: word,
+                                        requiredLetter: gameState.letter,
+                                        letterLower: letterLower
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Batch LLM validation for any still unvalidated words
+        const batchResults = await validateViaLlmBatch(llmCandidates);
+
+        // Second pass: Calculate score frequency and assign scores
+        for (const cat of gameConfig.categories) {
+            const dictObj = validationCache[cat.id];
             const wordFrequency = {}; // normWord -> count
 
-            // First pass: collect words and frequency
             for (const [playerId, answers] of Object.entries(gameState.playerAnswers)) {
                 let word = answers[cat.id] || "";
                 word = word.trim().toLocaleLowerCase('tr-TR');
@@ -948,7 +1048,6 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                 }
             }
 
-            // Second pass: assign scores
             for (const [playerId, answers] of Object.entries(gameState.playerAnswers)) {
                 let word = answers[cat.id] || "";
                 word = word.trim().toLocaleLowerCase('tr-TR');
@@ -981,13 +1080,15 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                             }
                         }
                         
-                        if (!isValid && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
-                            isValid = await validateViaApi(cat.id, word, letterLower);
+                        const apiCacheKey = `${cat.id}_${word}_${letterLower}`;
+                        if (!isValid && apiCache[apiCacheKey]) {
+                            isValid = true;
                         }
 
                         if (!isValid) {
-                            const llmRes = await validateViaLlm(cat.name, word, gameState.letter);
-                            if (llmRes.valid) {
+                            const candidateKey = `${cat.id}_${word}`;
+                            const llmRes = batchResults[candidateKey];
+                            if (llmRes && llmRes.valid) {
                                 isValid = true;
                                 llmReason = llmRes.reason;
                             }

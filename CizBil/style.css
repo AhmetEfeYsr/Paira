@@ -22,3 +22,9 @@
     background: var(--success-bg);
     border: 1px solid var(--success);
 }
+
+@media (max-width: 899px) {
+    .chat-panel {
+        height: 200px !important;
+    }
+}

@@ -182,13 +182,13 @@
         font-size: 1.1rem;
         padding: 1rem;
         line-height: 1.8;
-        min-height: 120px;
+        min-height: 100px;
     }
     
     .text-input {
         font-size: 1.2rem;
         padding: 0.8rem;
-        min-height: 80px !important;
+        min-height: 60px !important;
     }
     
     .player-info {
@@ -224,11 +224,12 @@
         font-size: 1rem;
         padding: 0.8rem;
         line-height: 1.7;
+        min-height: 80px;
     }
     
     .text-input {
         font-size: 1rem;
-        min-height: 60px !important;
+        min-height: 50px !important;
     }
     
     .player-name {

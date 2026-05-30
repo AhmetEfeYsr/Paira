@@ -76,9 +76,9 @@
 
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
-            <header class="game-topbar card">
+            <header class="game-topbar card" style="flex-direction: row; justify-content: space-between; align-items: center;">
                 <div class="round-indicator" id="round-indicator">Soru 1 / 10</div>
-                <div class="score-board" id="in-game-scoreboard" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                <div class="score-board custom-scrollbar" id="in-game-scoreboard" style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 15px; max-width: 50%; padding-bottom: 4px;">
                     <!-- Player scores injected here -->
                 </div>
 
@@ -90,7 +90,7 @@
             <div class="game-layout" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 0; overflow: hidden; width: 100%;">
                 <div id="game-status-message" class="status-badge" style="width: 100%; max-width: 600px; margin-bottom: 1rem;">Hazırlanıyor...</div>
 
-                <div id="question-card" class="taboo-card hidden" style="width: 100%; max-width: 800px; padding: 1.5rem; text-align: center;">
+                <div id="question-card" class="question-card hidden" style="width: 100%; max-width: 800px; padding: 1.5rem; text-align: center;">
                     <header class="card-header" style="background: transparent; border: none; padding-bottom: 1rem;">
                         <span id="question-category" style="font-size: 0.9rem; color: var(--lilac); text-transform: uppercase; letter-spacing: 1px;">Kategori</span>
                         <h2 id="main-question" style="font-size: clamp(1.2rem, 3vw, 1.6rem); margin-top: 0.5rem; line-height: 1.4;">...</h2>

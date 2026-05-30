@@ -160,12 +160,18 @@ class BilgiYarismasiGameEngine {
         }, 1000);
     }
 
-    handleAnswer(playerId, choiceIndex) {
+    handleAnswer(playerId, choiceIndex, clientTimeRemaining) {
         if (!this.isHost || this.state.status !== 'playing' || this.isRoundEnding) return;
         if (!this.state.players[playerId]) return;
         if (this.state.answersInRound[playerId]) return; 
 
-        const timeRemaining = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
+        let timeRemaining = clientTimeRemaining !== undefined ? clientTimeRemaining : (this.localTurnEndTime - window.PairaTime.now());
+        const hostTimeRemaining = this.localTurnEndTime - window.PairaTime.now();
+        // Validation to prevent cheating: client timeRemaining cannot exceed host-calculated remaining time + 2000ms
+        if (timeRemaining > hostTimeRemaining + 2000) {
+            timeRemaining = hostTimeRemaining;
+        }
+        timeRemaining = Math.max(0, Math.min(this.state.turnDuration * 1000, timeRemaining));
         const secondsLeft = Math.ceil(timeRemaining / 1000);
 
         const isCorrect = choiceIndex === this.state.currentQuestion.correct_answer_index;
@@ -234,10 +240,16 @@ class BilgiYarismasiGameEngine {
     }
 
     startRenderTimer() {
-        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.renderFrame) {
+            cancelAnimationFrame(this.renderFrame);
+            this.renderFrame = null;
+        }
 
         const tick = () => {
-            if (this.state.status !== 'playing') return;
+            if (this.state.status !== 'playing' || this.isRoundEnding) {
+                this.renderFrame = null;
+                return;
+            }
 
             const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
             const secs = Math.ceil(left / 1000);

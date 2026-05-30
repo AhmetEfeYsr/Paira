@@ -19,6 +19,10 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
             this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
         };
 
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
+        });
+
         this.lobbyUI = new SharedLobbyUI({
             roomCode: '',
             isHost: this.isHostNode,
@@ -92,7 +96,7 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
 
     handleAction(action, payload, senderId) {
         if (action === 'ANSWER' && this.isHostNode) {
-            this.engine.handleAnswer(senderId, payload.choiceIndex);
+            this.engine.handleAnswer(senderId, payload.choiceIndex, payload.timeRemaining);
         }
     }
 
@@ -134,7 +138,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
         onAnswer: (choiceIndex) => {
-            network.sendGameAction('ANSWER', { choiceIndex });
+            const timeRemaining = Math.max(0, engine.localTurnEndTime - window.PairaTime.now());
+            network.sendGameAction('ANSWER', { choiceIndex, timeRemaining });
             window.PairaAudio && window.PairaAudio.play('pass');
         },
         onBackToLobby: () => {
@@ -146,6 +151,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!isHost) {
         engine.onTimerTick = (secs) => view.updateTimer(secs);
+        engine.onSound = (sound) => {
+            if (sound === 'tick') {
+                window.PairaAudio && window.PairaAudio.play(sound);
+            }
+        };
     }
 
     const hostSettings = document.getElementById('host-settings');

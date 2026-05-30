@@ -134,7 +134,7 @@
 /* Mobile adjustments */
 @media (max-width: 768px) {
     #clue-input-section { flex-wrap: wrap; justify-content: center; }
-    .board-card { padding: 0.4rem 0.2rem; min-height: 45px; font-size: clamp(0.6rem, 2.5vw, 0.85rem); line-height: 1.2; aspect-ratio: auto; }
+    .board-card { padding: 0.4rem 0.2rem; min-height: 45px; font-size: clamp(0.6rem, 2.5vw, 0.85rem); line-height: 1.2; aspect-ratio: 2 / 1; }
     .game-board { gap: 6px; }
     .board-container { align-items: stretch; }
 }

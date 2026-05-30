@@ -47,7 +47,7 @@ class GameManager {
 
         // Host ise herkese güncel progressi yolla
         if (NetworkManager.isHost()) {
-            window.networkManager.broadcast({
+            window.NetworkManager.broadcast({
                 type: 'PROGRESS_SYNC',
                 progress: this.levelProgress
             });

@@ -9,51 +9,49 @@ class KatiplikNetwork extends BaseGameNetwork {
         });
         this.game = game;
 
-        // Custom lobby UI initialization
         this.lobbyUI = new SharedLobbyUI({
             roomCode: this.roomCode || this.myId,
             isHost: this.isHostNode
         });
+
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
+        });
     }
 
     initialize(isHost, roomCode) {
-        // Katiplik used a specific host ID structure, so we simulate it here or just use base init
-        const myId = isHost ? `katiplik-host-${roomCode}` : null;
-        
-        // We override roomCode locally for custom join logic
-        if (isHost) {
-            this.init(myId).then((id) => {
-                this.lobbyUI.setRoomCode(roomCode);
-                this.myId = id;
-            }).catch(err => {
-                window.showToast("Bağlantı kurulamadı", "error");
-            });
-        } else {
-            this.init().then(() => {
-                this.connectToHost(`katiplik-host-${roomCode}`).then(() => {
-                    this.onConnectionEstablished();
-                }).catch(err => {
-                    window.showToast("Odaya bağlanılamadı", "error");
-                });
-            }).catch(err => {
-                window.showToast("Bağlantı kurulamadı", "error");
-            });
-        }
+        this.isHostNode = isHost;
+        this.roomCode = roomCode;
+        this.lobbyUI.setRoomCode(roomCode);
+
+        this.autoInit().then(() => {
+            this.myId = this.myId; // this.myId is set inside base autoInit
+            if (isHost) {
+                this.updateLobbyPlayers();
+            } else {
+                this.onConnectionEstablished();
+            }
+        }).catch(err => {
+            console.error("AutoInit error:", err);
+            window.showToast("Bağlantı kurulamadı", "error");
+        });
     }
 
-    // Capture standard join to establish connection
     onPlayerJoin(peerId, payload) {
         if (this.isHostNode && peerId !== this.myId) {
+            this.updateLobbyPlayers();
             this.onConnectionEstablished();
         }
     }
 
-    _handleDataReceived(action, payload, senderId) {
-        // Fallback for custom join logic
-        if (action === 'JOIN' && this.isHostNode) {
-            this.onConnectionEstablished();
-        }
-        super._handleDataReceived(action, payload, senderId);
+    updateLobbyPlayers() {
+        const players = {};
+        players[this.myId] = { name: this.myName, isHost: true };
+        
+        Object.keys(this.connections).forEach(peerId => {
+            players[peerId] = { name: this.game.opponentName || 'Rakip', isHost: false };
+        });
+        this.lobbyUI.renderPlayers(players, this.myId);
     }
 
     sendMessage(data) {
@@ -63,6 +61,7 @@ class KatiplikNetwork extends BaseGameNetwork {
 
     onConnectionEstablished() {
         window.showScreen('game-screen');
+        this.updateLobbyPlayers();
 
         if (this.game.isHost) {
             this.game.opponentName = 'Rakip';
@@ -85,6 +84,7 @@ class KatiplikNetwork extends BaseGameNetwork {
             case 'player_info':
                 this.game.opponentName = data.name;
                 document.getElementById('p2-name').textContent = data.name;
+                this.updateLobbyPlayers();
                 
                 if (!this.game.isHost && this.game.opponentName) {
                     this.sendMessage({

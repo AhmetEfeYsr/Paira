@@ -135,12 +135,14 @@ class KronoGame {
 
         this.players.forEach(p => {
             const li = document.createElement('li');
+            const safeName = p.name ? p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+            const initial = safeName.charAt(0).toUpperCase();
             li.innerHTML = `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <div style="width:30px;height:30px;border-radius:50%;background:var(--primary-purple);color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;">
-                        ${p.name.charAt(0).toUpperCase()}
+                        ${initial}
                     </div>
-                    <span>${p.name} ${p.id === this.myId ? '(Sen)' : ''}</span>
+                    <span>${safeName} ${p.id === this.myId ? '(Sen)' : ''}</span>
                 </div>
                 ${p.isHost ? '<span style="font-size:0.8rem;background:var(--warning);color:var(--bg-navy);padding:2px 8px;border-radius:10px;font-weight:bold;">Kurucu</span>' : ''}
             `;
@@ -189,6 +191,9 @@ class KronoGame {
         this.hintsRemaining = 2;
         this.finishedPlayers = 0;
         this.roundResults = {};
+
+        // Audio trigger for round start
+        window.PairaAudio && window.PairaAudio.play('correct');
 
         // Update UI
         document.getElementById('round-indicator').textContent = `Tur ${this.currentRound} / ${this.settings.roundCount}`;
@@ -255,20 +260,35 @@ class KronoGame {
         const container = document.getElementById('events-container');
         if (!container) return;
         const cards = Array.from(container.children);
-        const lockedCards = cards.filter(c => c.classList.contains('locked'));
         
-        lockedCards.forEach(lockedCard => {
-            const id = parseInt(lockedCard.dataset.id);
-            const correctIndex = this.correctOrder.indexOf(id);
-            const currentIndex = Array.from(container.children).indexOf(lockedCard);
-            
-            if (currentIndex !== correctIndex && correctIndex !== -1) {
-                container.removeChild(lockedCard);
-                if (correctIndex >= container.children.length) {
-                    container.appendChild(lockedCard);
-                } else {
-                    container.insertBefore(lockedCard, container.children[correctIndex]);
+        const sortedCards = new Array(cards.length).fill(null);
+        
+        cards.forEach(card => {
+            if (card.classList.contains('locked')) {
+                const id = parseInt(card.dataset.id);
+                const correctIndex = this.correctOrder.indexOf(id);
+                if (correctIndex !== -1 && correctIndex < sortedCards.length) {
+                    sortedCards[correctIndex] = card;
                 }
+            }
+        });
+        
+        let unlockedPtr = 0;
+        cards.forEach(card => {
+            if (!card.classList.contains('locked')) {
+                while (unlockedPtr < sortedCards.length && sortedCards[unlockedPtr] !== null) {
+                    unlockedPtr++;
+                }
+                if (unlockedPtr < sortedCards.length) {
+                    sortedCards[unlockedPtr] = card;
+                }
+            }
+        });
+        
+        container.innerHTML = '';
+        sortedCards.forEach(card => {
+            if (card) {
+                container.appendChild(card);
             }
         });
         
@@ -328,6 +348,9 @@ class KronoGame {
 
         const cards = Array.from(document.querySelectorAll('.event-card'));
         
+        // Play pass sound on hint
+        window.PairaAudio && window.PairaAudio.play('pass');
+
         if (this.hintsRemaining === 2) {
             // Hint 1: Reveal a random date that is not yet revealed
             const unrevealed = cards.filter(c => !c.querySelector('.event-date').classList.contains('visible'));
@@ -340,23 +363,9 @@ class KronoGame {
             const unlockedCards = cards.filter(c => !c.classList.contains('locked'));
             if (unlockedCards.length > 0) {
                 const randomCard = unlockedCards[Math.floor(Math.random() * unlockedCards.length)];
-                const id = parseInt(randomCard.dataset.id);
-                const correctIndex = this.correctOrder.indexOf(id);
-                
-                // Move DOM element to correct index
-                const container = document.getElementById('events-container');
-                // Remove it first to avoid index shifting issues
-                container.removeChild(randomCard);
-                
-                if (correctIndex >= container.children.length) {
-                    container.appendChild(randomCard);
-                } else {
-                    container.insertBefore(randomCard, container.children[correctIndex]);
-                }
-                
                 randomCard.classList.add('locked');
                 randomCard.querySelector('.event-date').classList.add('visible');
-                this.updateOrderNumbers();
+                this.forceLockedCardsToCorrectPosition();
             }
         }
 
@@ -373,15 +382,25 @@ class KronoGame {
         this.timeLeft = this.settings.turnDuration;
         this.updateTimerDisplay();
 
+        const endTime = window.PairaTime.now() + (this.timeLeft * 1000);
+        let lastTickSec = -1;
+
         this.timer = setInterval(() => {
-            this.timeLeft--;
+            const left = Math.max(0, endTime - window.PairaTime.now());
+            this.timeLeft = Math.ceil(left / 1000);
             this.updateTimerDisplay();
 
-            if (this.timeLeft <= 0) {
+            if (this.timeLeft <= 10 && this.timeLeft > 0 && lastTickSec !== this.timeLeft) {
+                window.PairaAudio && window.PairaAudio.play('tick');
+                lastTickSec = this.timeLeft;
+            }
+
+            if (left <= 0) {
                 clearInterval(this.timer);
+                window.PairaAudio && window.PairaAudio.play('end');
                 this.checkAnswers(false);
             }
-        }, 1000);
+        }, 100);
     }
 
     updateTimerDisplay() {
@@ -431,6 +450,13 @@ class KronoGame {
             // Disable drag
             card.style.pointerEvents = 'none';
         });
+
+        // Play feedback sound
+        if (correctCount === 5) {
+            window.PairaAudio && window.PairaAudio.play('correct');
+        } else {
+            window.PairaAudio && window.PairaAudio.play('wrong');
+        }
 
         // Calculate score
         const timeSpent = this.settings.turnDuration - this.timeLeft;
@@ -516,6 +542,8 @@ class KronoGame {
     endRound(scores) {
         this.gameState = 'GAMEOVER';
         this.switchView('winner-screen');
+        
+        window.PairaAudio && window.PairaAudio.play('end');
         
         // Update scores array from server if needed
         scores.forEach(s => {

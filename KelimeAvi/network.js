@@ -34,6 +34,21 @@ class KelimeAviNetwork extends BaseGameNetwork {
 
                 this.view.updateUI(hostState, this.isHostNode);
                 this.lobbyUI.renderPlayers(hostState.players, this.myId);
+
+                // Enforce min 3 players requirement on start game button
+                const btnStart = document.getElementById('btn-start-game');
+                if (btnStart) {
+                    const count = Object.keys(hostState.players).length;
+                    if (count < 3) {
+                        btnStart.classList.add('disabled');
+                        btnStart.setAttribute('disabled', 'true');
+                        btnStart.textContent = 'Oyunu Başlat (Min 3 Kişi)';
+                    } else {
+                        btnStart.classList.remove('disabled');
+                        btnStart.removeAttribute('disabled');
+                        btnStart.textContent = 'Oyunu Başlat';
+                    }
+                }
                 
                 this.broadcastCensoredState();
             };
@@ -56,6 +71,10 @@ class KelimeAviNetwork extends BaseGameNetwork {
                 this.broadcast('SHOW_RESULT', { msg });
             };
         }
+
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
+        });
     }
 
     broadcastCensoredState() {

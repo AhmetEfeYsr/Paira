@@ -26,6 +26,10 @@ class CizBilNetwork extends BaseGameNetwork {
             onKickPlayer: (id) => this.kickPlayer(id)
         });
 
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
+        });
+
         if (this.isHostNode) {
             this.engine.onStateChange = (state) => {
                 if (state.choices && !this.wasChoosing) {
@@ -256,6 +260,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         hostSettings?.classList.add('hidden');
         hostSettings.style.display = 'none';
         clientWaiting?.classList.remove('hidden');
+    }
+
+    const btnLeave = document.getElementById('btn-leave');
+    if (btnLeave) {
+        btnLeave.addEventListener('click', () => {
+            if (confirm("Oyundan ayrılmak istediğinize emin misiniz?")) {
+                network.leaveRoom();
+            }
+        });
     }
     
     network.autoInit().catch(err => console.error("Network init failed", err));

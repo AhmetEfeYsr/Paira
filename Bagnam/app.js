@@ -52,6 +52,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnLastHint = document.getElementById('btn-last-hint');
     if(btnLastHint) btnLastHint.addEventListener('click', showLastHint);
+
+    const btnBack = document.getElementById('btn-back');
+    if(btnBack) {
+        btnBack.addEventListener('click', () => {
+            if (hasWon || confirm("Oyundan çıkmak istediğinize emin misiniz? İlerlemeniz kaydedilecek.")) {
+                window.showScreen('login-screen');
+                const btnStart = document.getElementById('btn-start');
+                const btnPlayPast = document.getElementById('btn-play-past');
+                const btnEndless = document.getElementById('btn-endless');
+                if (btnStart) btnStart.classList.remove('hidden');
+                if (btnPlayPast) btnPlayPast.disabled = false;
+                if (btnEndless) btnEndless.classList.remove('hidden');
+            }
+        });
+    }
 });
 
 function resetGameState() {
@@ -98,6 +113,10 @@ function resetGameState() {
 
 
 async function initGame(selectedDateStr = null, isEndless = false) {
+    if (window.PairaAudio) {
+        window.PairaAudio.init();
+    }
+
     const btnStart = document.getElementById('btn-start');
     const btnPlayPast = document.getElementById('btn-play-past');
     const btnEndless = document.getElementById('btn-endless');
@@ -222,12 +241,19 @@ async function handleGuess() {
         inputEl.value = "";
         renderHistory();
         showToast("canım ablam 💜", "success");
+        if (window.PairaAudio) {
+            window.PairaAudio.play('correct');
+        }
         inputEl.focus();
         return;
     }
 
-    // Check if already guessed
-    if(guesses.some(g => g.word === word.replace(/_\d+$/, ''))) {
+    // Check if already guessed (normalized check)
+    const normalizedWordBase = normalizedWord.replace(/_\d+$/, '');
+    if (guesses.some(g => {
+        const gNorm = window.normalizeTurkishChars ? window.normalizeTurkishChars(g.word) : g.word;
+        return gNorm === normalizedWordBase;
+    })) {
         showToast("Bu kelimeyi zaten tahmin ettiniz!", "warning");
         inputEl.value = "";
         inputEl.focus();
@@ -275,28 +301,31 @@ async function handleGuess() {
                 }
             }
         } else {
-            const fetchPromises = wordsToCheck.map(w => 
-                fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${w}.json`)
-            );
-
-            const responses = await Promise.all(fetchPromises);
-            
-            for (let i = 0; i < responses.length; i++) {
-                if (responses[i].ok) {
-                    const data = await responses[i].json();
-                    if (data !== null) {
-                        foundData.push({
-                            word: wordsToCheck[i],
-                            data: data
+            // Fetch all homonyms in a single query per base word using startAt/endAt to limit Firebase network traffic
+            const fetchPromises = basesToCheck.map(async (base) => {
+                const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}.json?orderBy="$key"&startAt="${encodeURIComponent(base)}_"&endAt="${encodeURIComponent(base)}_\uf8ff"`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const resJson = await response.json();
+                    if (resJson) {
+                        Object.keys(resJson).forEach(key => {
+                            foundData.push({
+                                word: key,
+                                data: resJson[key]
+                            });
                         });
                     }
                 }
-            }
+            });
+            await Promise.all(fetchPromises);
         }
 
         if (foundData.length === 0) {
             // Word not found in the dataset
             showToast(`"${rawWord}" kelimesi sözlükte bulunamadı.`, "warning");
+            if (window.PairaAudio) {
+                window.PairaAudio.play('wrong');
+            }
             inputEl.value = "";
             inputEl.focus();
             // Visual shake feedback
@@ -515,6 +544,10 @@ function handleWin() {
     document.getElementById('final-guess-count').textContent = guesses.length;
     successMsg.classList.remove('hidden');
 
+    if (window.PairaAudio) {
+        window.PairaAudio.play('correct');
+    }
+
     showToast("Tebrikler! Günün kelimesini buldunuz.", "success");
 }
 
@@ -556,6 +589,10 @@ async function handleGiveUp() {
             successMsg.style.background = 'rgba(231, 76, 60, 0.1)';
 
             saveGameState(); // <-- Otomatik Kayıt
+
+            if (window.PairaAudio) {
+                window.PairaAudio.play('wrong');
+            }
 
             showToast("Pes ettiniz.", "warning");
         } else {
@@ -736,11 +773,6 @@ function tryLoadGameState(mode, intendedDateStr) {
 
     try {
         const state = JSON.parse(savedStr);
-        if (state.hasWon) {
-            localStorage.removeItem(key);
-            return null;
-        }
-
         if (mode === "daily" && state.targetDate !== intendedDateStr) {
             return null;
         }

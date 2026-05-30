@@ -1,21 +1,48 @@
 /**
- * PeerJS Network Manager for Vampir Köylü
- * Handles P2P connections without a centralized backend.
+ * Network Manager for Vampir Köylü
+ * Inherits from BaseGameNetwork to leverage shared code while preserving local custom API for app.js
  */
-class NetworkManager {
+class NetworkManager extends BaseGameNetwork {
     constructor(onStateUpdate, onPlayerJoin, onPlayerLeave, onError) {
-        this.peer = null;
-        this.connections = {}; // id -> DataConnection
-        this.isHost = false;
-        this.myId = null;
-        this.roomCode = null;
-        this.username = null;
-        this.players = {}; // id -> { id, name, isHost, isAlive, role... }
+        // BaseGameNetwork expects config options
+        super({
+            onAction: (action, payload, senderId) => {
+                // Map BaseGameNetwork action handler to the custom ones expected by app.js
+                this.onStateUpdate(senderId, { type: action, ...payload });
+            },
+            onPlayerJoin: (id, payload) => {
+                if (this.isHostNode) {
+                    if (!this.players[id]) {
+                        this.players[id] = {
+                            id: id,
+                            name: payload.name,
+                            isHost: payload.isHost || false,
+                            isAlive: true,
+                            role: null,
+                            score: 0
+                        };
+                    }
+                    this.onPlayerJoinCallback(this.players[id]);
+                    this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+                }
+            },
+            onPlayerLeave: (id) => {
+                if (this.isHostNode) {
+                    if (this.players[id]) {
+                        const player = this.players[id];
+                        delete this.players[id];
+                        this.onPlayerLeaveCallback(player);
+                        this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+                    }
+                }
+            }
+        });
 
+        this.players = {}; // id -> { id, name, isHost, isAlive, role... }
         this.onStateUpdate = onStateUpdate;
-        this.onPlayerJoin = onPlayerJoin;
-        this.onPlayerLeave = onPlayerLeave;
-        this.onError = onError;
+        this.onPlayerJoinCallback = onPlayerJoin;
+        this.onPlayerLeaveCallback = onPlayerLeave;
+        this.onErrorCallback = onError;
     }
 
     generateClientId() {
@@ -30,57 +57,46 @@ class NetworkManager {
     }
 
     init(isHost, roomCode, username, existingId = null) {
-        this.isHost = isHost === 'true' || isHost === true;
+        this.isHostNode = isHost === 'true' || isHost === true;
         this.roomCode = roomCode;
-        this.username = username;
+        this.myName = username;
         
-        if (existingId && !this.isHost) {
+        if (existingId && !this.isHostNode) {
             this.myId = existingId;
         } else {
-            this.myId = this.isHost ? `vk-host-${this.roomCode}` : `vk-client-${this.generateClientId()}`;
+            this.myId = this.isHostNode ? `vk-host-${this.roomCode}` : `vk-client-${this.generateClientId()}`;
         }
 
-        this.peer = new Peer(this.myId, {
-            debug: 2
-        });
-
-        this.peer.on('open', (id) => {
-            console.log('Peer connected with ID:', id);
-
+        // We skip standard autoInit and perform custom init sequence
+        return this.initPeer(this.myId).then(() => {
             this.players[this.myId] = {
                 id: this.myId,
-                name: this.username,
-                isHost: this.isHost,
+                name: this.myName,
+                isHost: this.isHostNode,
                 isAlive: true,
                 role: null,
                 score: 0
             };
-            this.onPlayerJoin(this.players[this.myId]);
+            this.onPlayerJoinCallback(this.players[this.myId]);
 
-            if (!this.isHost) {
-                this.connectToHost();
+            if (!this.isHostNode) {
+                return this.connectToHost(this.roomCode).then(() => {
+                    this.sendToPeer(`vk-host-${this.roomCode}`, 'JOIN', { name: this.myName });
+                }).catch(err => {
+                    console.error('Connection to host failed', err);
+                    this.onErrorCallback('host_disconnected');
+                });
             }
-        });
-
-        this.peer.on('connection', (conn) => {
-            if (!this.isHost) {
-                // Clients shouldn't receive direct connections in a star topology
-                conn.close();
-                return;
-            }
-            this.setupConnection(conn);
-        });
-
-        this.peer.on('error', (err) => {
-            console.error('Peer error:', err);
-            this.onError(err.type || 'network_error');
+        }).catch(err => {
+            console.error('Peer initialization failed', err);
+            this.onErrorCallback('network_error');
         });
     }
 
-    connectToHost() {
-        const hostId = `vk-host-${this.roomCode}`;
+    connectToHost(roomCode) {
+        const hostId = `vk-host-${roomCode}`;
         const conn = this.peer.connect(hostId, {
-            metadata: { username: this.username }
+            metadata: { username: this.myName }
         });
         
         conn.on('open', () => {
@@ -89,115 +105,84 @@ class NetworkManager {
         });
 
         this.setupConnection(conn);
+        return Promise.resolve();
     }
 
-    setupConnection(conn) {
-        conn.on('open', () => {
-            console.log('Connection open with:', conn.peer);
-            this.connections[conn.peer] = conn;
-
-            if (this.isHost) {
-                // Add client to players list if not exists
-                if (!this.players[conn.peer]) {
-                    this.players[conn.peer] = {
-                        id: conn.peer,
-                        name: conn.metadata.username,
-                        isHost: false,
-                        isAlive: true,
-                        role: null,
-                        score: 0
-                    };
-                }
-                this.onPlayerJoin(this.players[conn.peer]);
-
-                // Broadcast new player list to everyone
-                this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+    _handleDataReceived(action, payload, senderId) {
+        if (action === 'SYNC_PLAYERS') {
+            this.players = payload.players;
+            if (this.onPlayerJoinCallback && Object.keys(this.players).length > 0) {
+                const lastPlayer = Object.values(this.players).pop();
+                this.onPlayerJoinCallback(lastPlayer);
             }
-        });
-
-        conn.on('data', (data) => {
-            this.handleData(conn.peer, data);
-        });
-
-        conn.on('close', () => {
-            this.handleDisconnect(conn.peer);
-        });
-
-        conn.on('error', (err) => {
-            console.error('Connection error:', err);
-            this.handleDisconnect(conn.peer);
-        });
-    }
-
-    handleDisconnect(peerId) {
-        console.log('Disconnected from:', peerId);
-        if (this.connections[peerId]) {
-            delete this.connections[peerId];
+            return;
         }
 
-        if (this.isHost) {
+        if (action === 'HOST_LEAVE') {
+            this.onErrorCallback('host_disconnected');
+            return;
+        }
+
+        // Pass to standard logic
+        if (action === 'GAME_STATE') {
+            this.onStateUpdate(senderId, { type: 'GAME_STATE', state: payload.state });
+        } else {
+            this.onStateUpdate(senderId, { type: action, ...payload });
+        }
+    }
+
+    _handleDisconnection(peerId) {
+        super._handleDisconnection(peerId);
+        if (this.isHostNode) {
             if (this.players[peerId]) {
                 const player = this.players[peerId];
                 delete this.players[peerId];
-                this.onPlayerLeave(player);
+                this.onPlayerLeaveCallback(player);
                 this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
             }
-        } else {
-            // If client loses connection to host
-            if (peerId.includes('host')) {
-                this.onError('host_disconnected');
-            }
+        } else if (peerId.includes('host') || peerId === `vk-host-${this.roomCode}`) {
+            this.onErrorCallback('host_disconnected');
         }
-    }
-
-    handleData(senderId, data) {
-        if (data.type === 'SYNC_PLAYERS') {
-            this.players = data.players;
-            // Tek seferde lobideki listeyi güncelle
-            if (this.onPlayerJoin && Object.keys(this.players).length > 0) {
-                // Sadece trigger amaçlı son player ile çağır
-                const lastPlayer = Object.values(this.players).pop();
-                this.onPlayerJoin(lastPlayer);
-            }
-        }
-
-        // Pass payload to game logic
-        this.onStateUpdate(senderId, data);
     }
 
     sendToHost(data) {
-        if (this.isHost) {
-            // Local loopback
-            this.handleData(this.myId, data);
+        const { type, ...payload } = data;
+        if (this.isHostNode) {
+            this._handleDataReceived(type, payload, this.myId);
         } else {
             const hostId = `vk-host-${this.roomCode}`;
-            if (this.connections[hostId] && this.connections[hostId].open) {
-                this.connections[hostId].send(data);
-            }
+            this.sendToPeer(hostId, type, payload);
         }
     }
 
     broadcast(data) {
-        if (!this.isHost) return;
-        Object.values(this.connections).forEach(conn => {
-            if (conn.open) {
-                conn.send(data);
-            }
+        if (!this.isHostNode) return;
+        const { type, ...payload } = data;
+        Object.keys(this.connections).forEach(peerId => {
+            this.sendToPeer(peerId, type, payload);
         });
     }
 
     sendTo(peerId, data) {
-        if (this.connections[peerId] && this.connections[peerId].open) {
-            this.connections[peerId].send(data);
-        } else if (peerId === this.myId) {
-            // Local loopback if sending to self
-            this.handleData(this.myId, data);
+        const { type, ...payload } = data;
+        if (peerId === this.myId) {
+            this._handleDataReceived(type, payload, this.myId);
+        } else {
+            this.sendToPeer(peerId, type, payload);
         }
     }
 
     disconnect() {
-        if (this.peer) {
-            this.peer.destroy();
+        this.destroy();
+    }
+
+    leaveRoom() {
+        if (this.isHostNode) {
+            this.broadcast({ type: 'HOST_LEAVE' });
+        } else {
+            this.sendToHost({ type: 'LEAVE' });
         }
+        this.disconnect();
+        window.location.href = 'index.html';
     }
 }

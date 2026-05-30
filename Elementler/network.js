@@ -219,6 +219,12 @@ function handleData(data, peerId) {
 
         if(typeof updateUI === 'function') updateUI();
     }
+    else if (data.type === 'PROGRESS_SYNC') {
+        if (window.gameApp) {
+            window.gameApp.levelProgress = data.progress;
+            if (typeof updateUI === 'function') updateUI();
+        }
+    }
     else if (data.type === 'PHYSICS_UPDATE' && isHost) {
         // İstemciden gelen fiziği al ve diğer herkese yansıt
         window.gameApp.updateRemotePhysics(data.peerId, data.data);
@@ -246,6 +252,21 @@ function handleData(data, peerId) {
 
 function handleDisconnect(peerId) {
     if (connections[peerId]) delete connections[peerId];
+
+    // Client-side host disconnect check
+    if (!isHost && peerId === hostId) {
+        if (typeof showToast === 'function') showToast("Kurucu bağlantısı koptu! Ana sayfaya yönlendiriliyorsunuz.", "error");
+        if (window.gameApp) {
+            if (window.gameApp.engine) {
+                window.gameApp.engine.stop();
+                window.gameApp.engine = null;
+            }
+            window.gameApp.state.status = 'lobby';
+        }
+        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        return;
+    }
+
     if (!window.gameApp || !window.gameApp.state.players[peerId]) return;
 
     const lostPlayer = window.gameApp.state.players[peerId];

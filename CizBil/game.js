@@ -25,6 +25,7 @@ class CizBilGameEngine {
         this.localTurnEndTime = 0;
         this.renderFrame = null;
         this.lastTickSec = -1;
+        this.fuzzyMatcher = new window.FuzzyMatcher();
     }
 
     setState(newState) {
@@ -122,39 +123,16 @@ class CizBilGameEngine {
         }, this.state.turnDuration * 1000);
     }
 
-    levenshtein(a, b) {
-        if (a.length === 0) return b.length;
-        if (b.length === 0) return a.length;
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
-        for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                if (b.charAt(i - 1) == a.charAt(j - 1)) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j] + 1
-                    );
-                }
-            }
-        }
-        return matrix[b.length][a.length];
-    }
-
     isMatch(guess, target) {
-        if (!target) return false;
-        const nGuess = window.normalizeTurkishChars(guess).toUpperCase().trim();
-        const nTarget = window.normalizeTurkishChars(target).toUpperCase().trim();
+        if (!guess || !target) return false;
+        const cleanGuess = guess.toLocaleLowerCase('tr-TR').trim();
+        const cleanTarget = target.toLocaleLowerCase('tr-TR').trim();
+        if (cleanGuess === cleanTarget) return true;
 
-        if (nGuess === nTarget) return true;
-        if (nTarget.length > 4) {
-            const distance = this.levenshtein(nGuess, nTarget);
-            if (distance <= 1) return true;
+        if (this.fuzzyMatcher) {
+            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, 1.2); // Standard drawing match tolerance
         }
-        return false;
+        return cleanGuess === cleanTarget;
     }
 
     handleGuess(senderId, text) {

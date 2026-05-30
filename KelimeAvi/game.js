@@ -54,6 +54,16 @@ class KelimeAviGameEngine {
     removePlayer(id) {
         if (this.state.status === 'playing') {
             this.state.players[id].disconnected = true;
+            
+            const activeCount = Object.keys(this.state.players).filter(pid => !this.state.players[pid].disconnected).length;
+            if (activeCount < 3) {
+                this.endRoundPrematurely("Oyuncu sayısı 3'ün altına düştüğü için oyun lobiye döndürüldü.");
+                setTimeout(() => {
+                    this.backToLobby();
+                }, 5000);
+                return;
+            }
+
             if (this.state.currentEbe === id) {
                 this.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.");
             } else {
@@ -108,7 +118,13 @@ class KelimeAviGameEngine {
     handleMasumSubmission(peerId, word) {
         if (!this.isHost || this.state.status !== 'playing') return;
         if (peerId === this.state.currentEbe) return;
-        this.state.submittedWords[peerId] = window.normalizeTurkishChars(word).trim().toUpperCase();
+
+        const normWord = window.normalizeTurkishChars(word).trim().toUpperCase();
+        const revealedPart = window.normalizeTurkishChars(this.state.targetWord.substring(0, this.state.revealedLetters)).toUpperCase();
+
+        if (!normWord.startsWith(revealedPart)) return;
+
+        this.state.submittedWords[peerId] = normWord;
         this.setState(this.state);
         this.checkAllSubmissions();
     }
@@ -145,9 +161,11 @@ class KelimeAviGameEngine {
         let isMasumWin = false;
         let isEbeWin = false;
 
+        let normalizedTarget = window.normalizeTurkishChars(targetWord).trim().toUpperCase();
+
         let jackpotWinners = [];
         for (let [peerId, word] of Object.entries(this.state.submittedWords)) {
-            if (this.matcher.isMatch(word, targetWord, 0.5)) {
+            if (this.matcher.isMatch(word, normalizedTarget, 0.5)) {
                 jackpotWinners.push(peerId);
                 isJackpot = true;
             }
@@ -325,6 +343,16 @@ class KelimeAviView {
                 if(btnSubmitMasum.disabled) return;
                 const word = masumInput.value.trim();
                 if(word.length === 0) return;
+
+                if (window._gameState && window._gameState.targetWord) {
+                    const revealedPart = window.normalizeTurkishChars(window._gameState.targetWord.substring(0, window._gameState.revealedLetters)).toUpperCase();
+                    const normWord = window.normalizeTurkishChars(word).toUpperCase();
+                    if (!normWord.startsWith(revealedPart)) {
+                        if (window.showToast) window.showToast(`Kelime "${revealedPart}" harfi/harfleri ile başlamalıdır!`, "warning");
+                        return;
+                    }
+                }
+
                 btnSubmitMasum.disabled = true;
                 if(window.showToast) window.showToast("Kelime gönderildi, diğerleri bekleniyor...", "info");
                 this.callbacks.onSubmitMasum(word);
@@ -369,6 +397,7 @@ class KelimeAviView {
     }
 
     updateUI(state, isHost) {
+        window._gameState = state;
         if (state.status === 'lobby') {
             window.showScreen('lobby-screen');
         } else if (state.status === 'playing' || state.status === 'evaluating') {
@@ -443,6 +472,28 @@ class KelimeAviView {
             sorted.forEach((p, index) => {
                 scoresDiv.innerHTML += `<div style="font-size: 1.2rem; margin: 10px 0;">${index+1}. ${window.escapeHtml(p.name)} - <strong>${p.score} Puan</strong></div>`;
             });
+        }
+
+        const btnBack = document.getElementById('btn-back-to-lobby');
+        if (btnBack) {
+            const isLocalHost = sessionStorage.getItem('isHost') === 'true';
+            if (isLocalHost) {
+                btnBack.style.display = 'inline-block';
+                const waitText = document.getElementById('waiting-rematch-text-kelimeavi');
+                if (waitText) waitText.remove();
+            } else {
+                btnBack.style.display = 'none';
+                let waitText = document.getElementById('waiting-rematch-text-kelimeavi');
+                if (!waitText) {
+                    waitText = document.createElement('div');
+                    waitText.id = 'waiting-rematch-text-kelimeavi';
+                    waitText.style.color = 'var(--text-muted)';
+                    waitText.style.marginTop = '1rem';
+                    waitText.style.fontSize = '1.1rem';
+                    waitText.textContent = 'Kurucunun lobiye dönmesi bekleniyor...';
+                    btnBack.parentNode.appendChild(waitText);
+                }
+            }
         }
     }
 

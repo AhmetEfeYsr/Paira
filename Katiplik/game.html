@@ -34,6 +34,12 @@
                 
                 <div class="code-container" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--code-bg); padding: 10px 20px; border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed var(--btn-secondary-bg);">
                     <span id="display-room-code" style="font-family: monospace; font-size: 2rem; letter-spacing: 4px; color: var(--neon-purple); font-weight: bold; cursor: pointer;" title="Kopyalamak için tıkla">----</span>
+                    <button id="btn-copy-room" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 8px;">Kopyala</button>
+                </div>
+                
+                <div id="lobby-players" style="margin-top: 1rem; border-top: 1px solid var(--btn-secondary-border); padding-top: 1rem; text-align: left; width: 100%;">
+                    <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem;">Oyuncular (<span id="player-count">0</span>)</h3>
+                    <ul id="players-list" class="custom-scrollbar" style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></ul>
                 </div>
                 
                 <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">

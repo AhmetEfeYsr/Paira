@@ -40,6 +40,7 @@ class ChatTabuGameEngine {
         this.onTimeUp = null;
 
         this.timerRaf = null;
+        this.fuzzyMatcher = new window.FuzzyMatcher();
     }
 
     setState(newState) {
@@ -61,38 +62,16 @@ class ChatTabuGameEngine {
         this.wordDatabase.sort(() => (Math.random() - 0.5));
     }
 
-    levenshtein(a, b) {
-        if (a.length === 0) return b.length;
-        if (b.length === 0) return a.length;
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
-        for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                if (b.charAt(i - 1) == a.charAt(j - 1)) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j] + 1
-                    );
-                }
-            }
-        }
-        return matrix[b.length][a.length];
-    }
-
     isMatch(guess, target) {
-        const nGuess = window.normalizeTurkishChars(guess).toUpperCase().trim();
-        const nTarget = window.normalizeTurkishChars(target).toUpperCase().trim();
+        if (!guess || !target) return false;
+        const cleanGuess = guess.toLocaleLowerCase('tr-TR').trim();
+        const cleanTarget = target.toLocaleLowerCase('tr-TR').trim();
+        if (cleanGuess === cleanTarget) return true;
 
-        if (nGuess === nTarget) return true;
-        if (nTarget.length > 4) {
-            const distance = this.levenshtein(nGuess, nTarget);
-            if (distance <= 1) return true;
+        if (this.fuzzyMatcher) {
+            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, 1.0); // Strict taboo tolerance
         }
-        return false;
+        return cleanGuess === cleanTarget;
     }
 
     startGameSolo() {
@@ -517,6 +496,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!document.getElementById('main-word')) return;
 
     window.PairaTime = window.PairaTime || { now: () => Date.now() };
+    if (window.PairaAudio) window.PairaAudio.init();
 
     const engine = new ChatTabuGameEngine();
     await engine.loadWords();
@@ -529,7 +509,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         onStartGame: () => {
             if (!engine.state.clientName) {
-                alert("Oyunu başlatmak için bir rakibin katılması gerekiyor!");
+                if (window.showToast) window.showToast("Oyuna başlamak için bir rakibin katılması gerekiyor!", "warning");
+                else alert("Oyunu başlatmak için bir rakibin katılması gerekiyor!");
                 return;
             }
             engine.startMultiplayer(window.Network.getMyId());
@@ -572,6 +553,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     engine.onStateChange = (state) => {
         if (window.Network) {
             view.updateGameUI(state, window.Network.getMyId());
+            if (window.Network.isHost()) {
+                window.Network.broadcastToClients({ type: 'SYNC_STATE', state, hostNow: window.PairaTime.now() });
+            }
         } else {
             view.updateGameUI(state, null);
         }
@@ -587,11 +571,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             engine.handleTimeUp(window.Network.getMyId(), true);
             window.Network.broadcastToClients({ type: 'TURN_END', nextTurnId: engine.state.turnId });
             window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state });
+            if (window.PairaAudio) window.PairaAudio.play('end');
         }
     };
 
     engine.onWordMatch = (username, word) => {
         view.triggerCorrectGuess(username);
+        if (window.PairaAudio) window.PairaAudio.play('correct');
         if (engine.state.mode !== 'solo' && window.Network && window.Network.isHost()) {
             window.Network.broadcastToClients({
                 type: 'GUESSED_CORRECTLY',
@@ -681,7 +667,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             view.updateLobbyPlayers(engine.state.hostName, engine.state.clientName);
         }
     } catch (e) {
-        alert(e.message || "Bağlantı hatası");
+        if (window.showToast) window.showToast(e.message || "Bağlantı hatası", "error");
+        else alert(e.message || "Bağlantı hatası");
         window.location.href = 'index.html';
     }
 
@@ -698,7 +685,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('lobby-status').textContent = 'Rakip ayrıldı. Yeni rakip bekleniyor...';
         
         if (engine.state.isGameStarted && !engine.state.isGameOver) {
-            alert("Rakip oyundan ayrıldı. Oyun sona erdi.");
+            if (window.showToast) window.showToast("Rakip oyundan ayrıldı. Oyun sona erdi.", "error");
+            else alert("Rakip oyundan ayrıldı. Oyun sona erdi.");
             engine.state.isGameOver = true;
             engine.setState(engine.state);
         }
@@ -748,6 +736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             engine.state.clientScore = data.clientScore;
             view.triggerCorrectGuess(data.username);
             engine.setState(engine.state);
+            if (window.PairaAudio) window.PairaAudio.play('correct');
         }
         else if (data.type === 'SKIP_WORD') {
             if (window.Network.isHost() && engine.state.turnId !== window.Network.getMyId()) {
@@ -788,6 +777,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             engine.state.turnId = data.nextTurnId;
             engine.state.turnEndTime = window.PairaTime.now() + 60000;
             engine.setState(engine.state);
+            if (window.PairaAudio) window.PairaAudio.play('end');
         }
     };
 });

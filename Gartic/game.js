@@ -18,39 +18,12 @@ let state = {
 let drawingBoard;
 
 // Fuzzy Matcher implementation
-const levenshtein = (a, b) => {
-    if (a.length === 0) return b.length;
-    if (b.length === 0) return a.length;
-    const matrix = [];
-    for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
-    for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
-    for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-            if (b.charAt(i - 1) == a.charAt(j - 1)) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1, // substitution
-                    matrix[i][j - 1] + 1,     // insertion
-                    matrix[i - 1][j] + 1      // deletion
-                );
-            }
-        }
-    }
-    return matrix[b.length][a.length];
-};
+const fuzzyMatcher = new window.FuzzyMatcher();
 
 const isMatch = (guess, target) => {
-    const nGuess = window.normalizeTurkishChars(guess).toUpperCase().trim();
-    const nTarget = window.normalizeTurkishChars(target).toUpperCase().trim();
-
-    if (nGuess === nTarget) return true;
-
-    if (nTarget.length > 4) {
-        const distance = levenshtein(nGuess, nTarget);
-        if (distance <= 1) return true;
-    }
-    return false;
+    const nGuess = window.normalizeTurkishChars(guess);
+    const nTarget = window.normalizeTurkishChars(target);
+    return fuzzyMatcher.isMatch(nGuess, nTarget, 1.2);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -187,9 +160,7 @@ async function initGame() {
 
     document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
 
-    if (window.loadGarticWords) {
-        await window.loadGarticWords();
-    }
+    await loadGarticWordsLocal();
 
     // Update word database after loading
     wordDatabase = [...window.cizbilWords];
@@ -238,15 +209,15 @@ async function initGame() {
 
     chatListener.start();
 
-    // Fallback: If no event fires within 5 seconds, assume connected
-    // (some ChatListener implementations may not fire onOpen)
+    // Fallback: If no event fires within 7 seconds, warn user but allow play
     setTimeout(() => {
         if (statusBadge.textContent === 'Bağlanıyor...') {
-            statusBadge.textContent = 'Bağlandı';
-            statusBadge.style.color = 'var(--success)';
-            statusBadge.style.borderColor = 'var(--success)';
+            statusBadge.textContent = 'Bağlantı Yanıt Vermedi';
+            statusBadge.style.color = 'var(--warning)';
+            statusBadge.style.borderColor = 'var(--warning)';
+            if (window.showToast) window.showToast('Chat bağlantısı yanıt vermedi. Yayınınız açık mı?', 'warning');
         }
-    }, 5000);
+    }, 7000);
 
     // Controls
     document.getElementById('btn-skip').addEventListener('click', () => {
@@ -386,4 +357,41 @@ function updateLeaderboard() {
         item.appendChild(scoreSpan);
         list.appendChild(item);
     });
+}
+
+async function loadGarticWordsLocal() {
+    try {
+        const response = await fetch('gartic.json');
+        if (!response.ok) throw new Error('Failed to fetch gartic.json');
+
+        const textData = await response.text();
+        let parsed = [];
+
+        try {
+            const jsonData = JSON.parse(textData);
+            if (Array.isArray(jsonData)) {
+                parsed = jsonData.map(x => String(x).trim()).filter(x => x.length > 0);
+            }
+        } catch (jsonErr) {
+            const cleanedText = textData.trim().replace(/^\[/, '').replace(/\]$/, '');
+            parsed = cleanedText.split(',')
+                .map(x => x.trim().replace(/\n/g, '').replace(/^["']|["']$/g, ''))
+                .filter(x => x.length > 0);
+        }
+
+        if (parsed.length > 0) {
+            window.cizbilWords = parsed;
+        }
+    } catch (e) {
+        console.error("Gartic kelimeleri yuklenemedi:", e);
+        // Fallback words
+        window.cizbilWords = [
+            "AĞAÇ", "GÜNEŞ", "ARABA", "KEDİ", "KÖPEK",
+            "EV", "TELEFON", "BİLGİSAYAR", "KİTAP", "GÖZLÜK",
+            "SAAT", "MASA", "SANDALYE", "ELMA", "DENİZ",
+            "BALIK", "KUŞ", "UÇAK", "BİSİKLET", "AYAKKABI",
+            "ŞAPKA", "PANTOLON", "GÖMLEK", "KAPI", "TELEVİZYON",
+            "KOLTUK", "YATAK", "YILDIZ", "AY", "ÇİÇEK"
+        ];
+    }
 }

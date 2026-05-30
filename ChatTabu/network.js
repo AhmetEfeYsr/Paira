@@ -118,7 +118,8 @@ const setupClientConnection = (conn) => {
 
         conn.on('data', (data) => {
             if (data.type === 'ERROR') {
-                alert(data.message);
+                if (window.showToast) window.showToast(data.message, 'error');
+                else alert(data.message);
                 window.location.href = 'index.html';
                 return;
             }
@@ -129,7 +130,8 @@ const setupClientConnection = (conn) => {
 
         conn.on('close', () => {
             console.log("Host disconnected");
-            alert("Kurucu odadan ayrıldı.");
+            if (window.showToast) window.showToast("Kurucu odadan ayrıldı.", 'error');
+            else alert("Kurucu odadan ayrıldı.");
             sessionStorage.removeItem('chattabu_room');
             sessionStorage.removeItem('chattabu_isHost');
             window.location.href = 'index.html';
@@ -187,3 +189,7 @@ window.Network = {
     getMyId: () => myId,
     getRoomCode: () => roomCode
 };
+
+window.addEventListener('beforeunload', () => {
+    disconnectPeer();
+});

@@ -48,12 +48,12 @@
                 <!-- Sağ Panel: Kurucu Ayarları -->
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="display: none; overflow-y: auto;">
                     <h3 style="border-bottom: 1px solid var(--btn-secondary-bg); padding-bottom: 12px;">Oyun Ayarları</h3>
-                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
+                    <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="60" min="30" max="180"></div>
                         <div class="form-group" style="margin-bottom: 0;"><label>Hedef Puan</label><input type="number" id="target-score" value="50" min="10" max="200"></div>
                     </div>
 
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Oyunu Başlat (Min 2 Kişi)</button>
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;" disabled>Oyunu Başlat (Min 2 Kişi)</button>
                 </section>
 
                 <!-- Katılımcı Bekleme Paneli -->

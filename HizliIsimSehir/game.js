@@ -31,6 +31,7 @@ class HizliIsimSehirGameEngine {
         this.onScoreUpdate = null;
         this.onVoteStart = null;
         this.onVoteResult = null;
+        this.turnTransitionTimeout = null;
     }
 
     setState(newState) {
@@ -48,6 +49,15 @@ class HizliIsimSehirGameEngine {
         const index = playersArr.findIndex(p => p.id === id);
         
         delete this.state.players[id];
+        
+        if (this.turnTransitionTimeout) {
+            clearTimeout(this.turnTransitionTimeout);
+            this.turnTransitionTimeout = null;
+        }
+        if (this.state.appealTimeout) {
+            clearTimeout(this.state.appealTimeout);
+            this.state.appealTimeout = null;
+        }
         
         if (index !== -1 && index < this.state.currentPlayerIndex) {
             this.state.currentPlayerIndex--;
@@ -89,6 +99,10 @@ class HizliIsimSehirGameEngine {
 
     startNextTurn(round, playerIndex) {
         if (!this.isHost) return;
+        if (this.turnTransitionTimeout) {
+            clearTimeout(this.turnTransitionTimeout);
+            this.turnTransitionTimeout = null;
+        }
         
         const letter = this.getRandomLetter();
         const category = this.config.categories[Math.floor(Math.random() * this.config.categories.length)];
@@ -122,9 +136,8 @@ class HizliIsimSehirGameEngine {
                     const normTitle = window.normalizeTurkishChars(title).trim();
                     const normSnippet = window.normalizeTurkishChars(snippet).trim();
                     
-                    if (title === lowerWord || normTitle === normWord) return true;
-                    
-                    if (title.includes(lowerWord) || snippet.includes(lowerWord) || normTitle.includes(normWord) || normSnippet.includes(normWord)) {
+                    const titleWords = normTitle.split(/[\s,()\-.:]+/);
+                    if (title === lowerWord || normTitle === normWord || titleWords.includes(normWord)) {
                         if (keywords.length === 0 || keywords.some(kw => {
                             const normKw = window.normalizeTurkishChars(kw).trim();
                             return snippet.includes(kw) || title.includes(kw) || normSnippet.includes(normKw) || normTitle.includes(normKw);
@@ -375,13 +388,16 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (canAppeal) {
             this.state.status = 'WAITING_APPEAL';
             this.state.pendingNextTurn = { playerId, word, score, category: this.state.currentCategory };
+            this.setState(this.state);
+            if (this.state.appealTimeout) clearTimeout(this.state.appealTimeout);
             this.state.appealTimeout = setTimeout(() => {
                 if (this.state.status === 'WAITING_APPEAL') {
                     this.advanceTurn();
                 }
             }, 3000);
         } else {
-            setTimeout(() => {
+            if (this.turnTransitionTimeout) clearTimeout(this.turnTransitionTimeout);
+            this.turnTransitionTimeout = setTimeout(() => {
                 this.advanceTurn();
             }, 3000);
         }
@@ -391,8 +407,10 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (!this.isHost || this.state.status !== 'WAITING_APPEAL') return;
         if (this.state.pendingNextTurn && this.state.pendingNextTurn.playerId === playerId) {
             clearTimeout(this.state.appealTimeout);
+            this.state.appealTimeout = null;
             this.state.status = 'VOTING';
             this.state.votes = { yes: 0, no: 0, votedPlayers: new Set() };
+            this.setState(this.state);
             if (this.onVoteStart) this.onVoteStart(this.state.pendingNextTurn.word, this.state.pendingNextTurn.category.name);
         }
     }
@@ -413,6 +431,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
     endVote() {
         if (!this.isHost || this.state.status !== 'VOTING') return;
         this.state.status = 'PLAYING';
+        this.setState(this.state);
         
         const { yes, no } = this.state.votes;
         const totalVotes = yes + no;
@@ -428,7 +447,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         
         if (this.onVoteResult) this.onVoteResult({ isAccepted, word, score, playerId });
         
-        setTimeout(() => {
+        if (this.turnTransitionTimeout) clearTimeout(this.turnTransitionTimeout);
+        this.turnTransitionTimeout = setTimeout(() => {
             this.advanceTurn();
         }, 2000);
     }
@@ -648,7 +668,8 @@ class HizliIsimSehirView {
     updateClientConfig(config) {
         const preview = document.getElementById('client-cats-preview');
         if (!preview) return;
-        preview.innerHTML = `<strong>Kategoriler (${config.categories.length}):</strong><br> ${config.categories.map(c=>c.name).join(', ')}`;
+        const safeNames = config.categories.map(c => window.escapeHtml(c.name)).join(', ');
+        preview.innerHTML = `<strong>Kategoriler (${config.categories.length}):</strong><br> ${safeNames}`;
     }
 
     renderPlayersCircle(players, currentPlayerIndex) {

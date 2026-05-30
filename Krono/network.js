@@ -1,18 +1,18 @@
-class KronoNetwork {
+/**
+ * KronoNetwork - Network layer extending BaseGameNetwork
+ */
+class KronoNetwork extends BaseGameNetwork {
     constructor(game) {
-        this.game = game;
-        this.isHost = sessionStorage.getItem('isHost') === 'true';
-        this.isSolo = sessionStorage.getItem('isSolo') === 'true';
-        this.roomCode = sessionStorage.getItem('roomCode');
-        this.playerName = sessionStorage.getItem('playerName') || 'Oyuncu';
+        super({
+            onStateSync: (data) => this.handleStateSync(data),
+            onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
+            onPlayerLeave: (id) => this.handlePlayerLeave(id),
+            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId)
+        });
 
-        if (this.isHost && !this.isSolo && !this.roomCode) {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-            this.roomCode = result;
-            sessionStorage.setItem('roomCode', this.roomCode);
-        }
+        this.game = game;
+        this.isSolo = sessionStorage.getItem('isSolo') === 'true';
+        this.isHost = this.isHostNode;
 
         if (this.isSolo) {
             this.setupSoloMode();
@@ -22,10 +22,10 @@ class KronoNetwork {
     }
 
     setupSoloMode() {
-        // Mock PeerManager for solo mode
+        // Mock Player for solo mode
         this.game.players = [{
             id: 'solo-player',
-            name: this.playerName,
+            name: this.myName,
             score: 0,
             isHost: true,
             status: 'ready'
@@ -33,7 +33,8 @@ class KronoNetwork {
         this.game.myId = 'solo-player';
         
         // Hide room code UI
-        document.getElementById('room-code-container').style.display = 'none';
+        const roomContainer = document.getElementById('room-code-container');
+        if (roomContainer) roomContainer.style.display = 'none';
         
         // Start lobby update
         this.game.updateLobbyUI();
@@ -46,133 +47,105 @@ class KronoNetwork {
     }
 
     setupMultiplayerMode() {
-        this.peerManager = new PeerNetworkManager({
-            isHost: this.isHost,
-            onPeerReady: (id) => {
-                this.onConnected(id);
-                if (this.isHost) {
-                    this.onRoomCode(this.roomCode);
-                }
-            },
-            onConnection: (peerId, conn) => {
-                if (this.isHost) {
-                    // Send room details to the connecting client
-                    this.peerManager.sendToPeer(peerId, 'ROOM_DETAILS', {
-                        roomCode: this.roomCode
-                    });
-                }
-            },
-            onDataReceived: (action, payload, senderId) => {
-                if (action === 'PLAYER_JOIN') {
-                    this.onPlayerJoined({ id: senderId, name: payload.name, score: payload.score || 0, isHost: payload.isHost || false });
-                    if (this.isHost) {
-                        // Tell them we also joined
-                        this.peerManager.sendToPeer(senderId, 'PLAYER_JOIN', { name: this.playerName, score: 0, isHost: true });
-                    }
-                } else if (action === 'ROOM_DETAILS') {
-                    this.onRoomCode(payload.roomCode);
-                } else {
-                    this.onData({ type: action, ...payload }, senderId);
-                }
-            },
-            onDisconnection: (peerId) => this.onPlayerLeft(peerId),
-            onError: (err) => this.onError(err)
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            this.game.myId = id;
+            
+            if (this.isHostNode) {
+                this.game.players = [{
+                    id: id,
+                    name: this.myName,
+                    score: 0,
+                    isHost: true,
+                    status: 'ready'
+                }];
+                this.game.updateLobbyUI();
+            } else {
+                this.game.players = [{
+                    id: id,
+                    name: this.myName,
+                    score: 0,
+                    isHost: false,
+                    status: 'ready'
+                }];
+                this.game.updateLobbyUI();
+            }
+
+            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
+        };
+
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
         });
 
-        // Initialize and Connect
-        const myId = this.isHost ? `krono-host-${this.roomCode}` : null;
-        this.peerManager.init(myId).then(id => {
-            if (!this.isHost) {
-                this.peerManager.connectToHost(`krono-host-${this.roomCode}`).then(() => {
-                    this.peerManager.sendToPeer(`krono-host-${this.roomCode}`, 'PLAYER_JOIN', { name: this.playerName, score: 0, isHost: false });
-                }).catch(err => {
-                    this.onError("Odaya bağlanılamadı.");
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: '',
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id),
+            onRoomStart: () => {
+                this.startGame();
+            }
+        });
+
+        // Hide settings if not host
+        const hostSettings = document.getElementById('host-settings');
+        const clientWaiting = document.getElementById('client-waiting');
+        if (!this.isHostNode) {
+            hostSettings?.classList.add('hidden');
+            clientWaiting?.classList.remove('hidden');
+        } else {
+            hostSettings?.classList.remove('hidden');
+            clientWaiting?.classList.add('hidden');
+        }
+
+        this.autoInit().catch(err => console.error("Krono network init failed", err));
+    }
+
+    startGame() {
+        if (this.isHostNode) {
+            this.game.settings.turnDuration = parseInt(document.getElementById('turn-duration').value) || 60;
+            this.game.settings.roundCount = parseInt(document.getElementById('round-count').value) || 3;
+            
+            this.sendGameAction('SYNC_SETTINGS', {
+                settings: this.game.settings
+            });
+
+            this.game.startNewRound();
+        }
+    }
+
+    handleStateSync(data) {
+        // Handled via custom action
+    }
+
+    handlePlayerJoin(id, player) {
+        if (this.isHostNode) {
+            const existing = this.game.players.find(p => p.id === id);
+            if (!existing) {
+                this.game.players.push({
+                    id: id,
+                    name: player.name,
+                    score: 0,
+                    isHost: false,
+                    status: 'ready'
                 });
             }
-        }).catch(err => {
-            this.onError("Bağlantı kurulamadı.");
-        });
-    }
-
-    onConnected(id) {
-        this.game.myId = id;
-        if (this.isHost) {
-            this.game.players = [{
-                id: id,
-                name: this.playerName,
-                score: 0,
-                isHost: true,
-                status: 'ready'
-            }];
             this.game.updateLobbyUI();
-        } else {
-            this.game.players = [{
-                id: id,
-                name: this.playerName,
-                score: 0,
-                isHost: false,
-                status: 'ready'
-            }];
-            this.game.updateLobbyUI();
-        }
-    }
 
-    onRoomCode(code) {
-        const display = document.getElementById('display-room-code');
-        if (display) {
-            display.textContent = code;
-            display.dataset.code = code;
-            
-            const eyeOpen = document.getElementById('icon-eye-open');
-            const eyeClosed = document.getElementById('icon-eye-closed');
-            if (eyeOpen && eyeClosed) {
-                eyeOpen.classList.remove('hidden');
-                eyeClosed.classList.add('hidden');
-            }
-        }
-        
-        // Hide settings if not host
-        if (!this.isHost) {
-            document.getElementById('host-settings').classList.add('hidden');
-            document.getElementById('client-waiting').classList.remove('hidden');
-        }
-    }
-
-    onPlayerJoined(player) {
-        // Enforce max 2 players
-        if (this.isHost && Object.keys(this.peerManager.connections).length > 1) {
-            // Can't easily reject via peerManager without custom logic, 
-            // but we can just ignore or disconnect them. 
-            // PeerManager handles basic connection.
-        }
-
-        const existing = this.game.players.find(p => p.id === player.id);
-        if (!existing) {
-            this.game.players.push({
-                id: player.id,
-                name: player.name,
-                score: player.score || 0,
-                isHost: player.isHost,
-                status: 'ready'
-            });
-        }
-        this.game.updateLobbyUI();
-        
-        if (this.isHost) {
             // Enable start button if there's an opponent
             if (this.game.players.length > 1) {
-                document.getElementById('btn-start-game').classList.remove('disabled');
+                document.getElementById('btn-start-game')?.classList.remove('disabled');
             }
-            
-            // Sync settings to new player
-            this.send({
-                type: 'SYNC_SETTINGS',
+
+            // Sync settings and current player list to the new player
+            this.broadcast('SYNC_LOBBY', {
+                players: this.game.players,
                 settings: this.game.settings
             });
         }
     }
 
-    onPlayerLeft(id) {
+    handlePlayerLeave(id) {
         this.game.players = this.game.players.filter(p => p.id !== id);
         this.game.updateLobbyUI();
         
@@ -181,35 +154,44 @@ class KronoNetwork {
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 3000);
-        } else if (this.isHost && this.game.players.length < 2 && !this.isSolo) {
-            document.getElementById('btn-start-game').classList.add('disabled');
+        } else if (this.isHostNode && this.game.players.length < 2 && !this.isSolo) {
+            document.getElementById('btn-start-game')?.classList.add('disabled');
         }
     }
 
-    onData(data, peerId) {
-        if (!data || !data.type) return;
-
-        switch (data.type) {
+    handleAction(action, payload, senderId) {
+        switch (action) {
+            case 'SYNC_LOBBY':
+                if (!this.isHostNode) {
+                    this.game.players = payload.players;
+                    this.game.settings = payload.settings;
+                    this.game.updateLobbyUI();
+                }
+                break;
             case 'SYNC_SETTINGS':
-                if (!this.isHost) {
-                    this.game.settings = data.settings;
+                if (!this.isHostNode) {
+                    this.game.settings = payload.settings;
+                    const durationEl = document.getElementById('turn-duration');
+                    const roundEl = document.getElementById('round-count');
+                    if (durationEl) durationEl.value = payload.settings.turnDuration;
+                    if (roundEl) roundEl.value = payload.settings.roundCount;
                 }
                 break;
             case 'GAME_START':
-                this.game.startRound(data.gameData);
+                this.game.startRound(payload.gameData);
                 break;
             case 'SCORE_UPDATE':
-                const p = this.game.players.find(p => p.id === data.playerId);
+                const p = this.game.players.find(pl => pl.id === payload.playerId);
                 if (p) {
-                    p.score = data.score;
+                    p.score = payload.score;
                     this.game.updateScoreBoard();
                 }
                 break;
             case 'OPPONENT_FINISHED':
-                this.game.onOpponentFinished(data.playerId, data.timeSpent, data.correctCount);
+                this.game.onOpponentFinished(payload.playerId, payload.timeSpent, payload.correctCount);
                 break;
             case 'ROUND_OVER':
-                this.game.endRound(data.scores);
+                this.game.endRound(payload.scores);
                 break;
             case 'RETURN_LOBBY':
                 this.game.returnToLobby();
@@ -217,17 +199,21 @@ class KronoNetwork {
         }
     }
 
-    onError(err) {
-        console.error("Network Error:", err);
-        this.game.showToast("Bağlantı hatası: " + err, "error");
-        if (!this.peerManager.peer || this.peerManager.peer.disconnected) {
-            setTimeout(() => window.location.href = 'index.html', 3000);
+    kickPlayer(id) {
+        if (this.isHostNode) {
+            this.sendToPeer(id, 'KICKED');
+            setTimeout(() => {
+                if (this.connections[id]) {
+                    this.connections[id].close();
+                    this._handleDisconnection(id);
+                }
+            }, 500);
         }
     }
 
     send(data) {
         if (this.isSolo) return;
         const { type, ...payload } = data;
-        this.peerManager.broadcast(type, payload);
+        this.sendGameAction(type, payload);
     }
 }

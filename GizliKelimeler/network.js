@@ -1,30 +1,45 @@
-class GizliKelimelerNetworkManager {
+/**
+ * GizliKelimelerNetwork - Network layer extending BaseGameNetwork
+ */
+class GizliKelimelerNetwork extends BaseGameNetwork {
     constructor(engine, view) {
+        super({
+            onStateSync: (data) => this.handleStateSync(data),
+            onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
+            onPlayerLeave: (id) => this.handlePlayerLeave(id),
+            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId)
+        });
+
         this.engine = engine;
         this.view = view;
 
-        this.myName = sessionStorage.getItem('playerName') || 'Oyuncu';
-        this.isHost = sessionStorage.getItem('isHost') === 'true';
-        this.hostId = sessionStorage.getItem('roomCode');
-        this.myId = null;
+        this.engine.isHostNode = this.isHostNode;
 
-        this.engine.isHostNode = this.isHost;
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            this.view.setMyId(id);
+            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
+        };
 
-        this.net = new PeerNetworkManager({
-            isHost: this.isHost,
-            onPeerReady: (id) => this.onPeerReady(id),
-            onConnection: (peerId) => this.onConnection(peerId),
-            onDataReceived: (action, payload, senderId) => this.onDataReceived(action, payload, senderId),
-            onDisconnection: (peerId) => this.onDisconnection(peerId),
-            onError: (err) => this.onError(err)
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
+        });
+
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: '',
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id),
+            onRoomStart: () => this.startGame()
         });
 
         // Link Engine events to Network Broadcasts (Host only)
-        if (this.isHost) {
-            this.engine.onStateChange = (state) => this.broadcastState();
+        if (this.isHostNode) {
+            this.engine.onStateChange = (state) => {
+                this.broadcastState(state);
+            };
             this.engine.onSound = (sound) => {
                 this.playSound(sound);
-                this.net.broadcast('PLAY_SOUND', { sound });
+                this.sendGameAction('PLAY_SOUND', { sound });
             };
         } else {
             this.engine.onSound = (sound) => this.playSound(sound);
@@ -34,65 +49,33 @@ class GizliKelimelerNetworkManager {
         this.view.callbacks = {
             onSwitchTeam: () => {
                 if (this.engine.state.status !== 'lobby') return;
-                if (this.isHost) this.engine.switchTeam(this.myId);
-                else this.net.sendToPeer(this.hostId, 'SWITCH_TEAM');
+                this.sendGameAction('SWITCH_TEAM');
             },
             onSwitchRole: () => {
                 if (this.engine.state.status !== 'lobby') return;
-                if (this.isHost) this.engine.switchRole(this.myId);
-                else this.net.sendToPeer(this.hostId, 'SWITCH_ROLE');
+                this.sendGameAction('SWITCH_ROLE');
             },
             onStartGame: () => {
-                if (this.isHost) {
-                    const players = Object.values(this.engine.state.players);
-                    const teamA = players.filter(p => p.team === 'A');
-                    const teamB = players.filter(p => p.team === 'B');
-                    if (teamA.length === 0 || teamB.length === 0) {
-                        this.view.showToast("Her takımda en az 1 oyuncu olmalı!", "error");
-                        return;
-                    }
-                    if (!teamA.some(p => p.role === 'SPYMASTER') || !teamB.some(p => p.role === 'SPYMASTER')) {
-                        this.view.showToast("Her takımda en az 1 Ajan olmalı!", "error");
-                        return;
-                    }
-                    if (!teamA.some(p => p.role === 'GUESSER') || !teamB.some(p => p.role === 'GUESSER')) {
-                        this.view.showToast("Her takımda en az 1 Tahminci olmalı!", "error");
-                        return;
-                    }
-                    const boardSize = document.getElementById('board-size')?.value || 25;
-                    const turnDuration = document.getElementById('turn-duration')?.value || 90;
-                    this.engine.startGame({ boardSize, turnDuration });
-                }
+                this.startGame();
             },
             onSubmitClue: (word, count) => {
-                if (this.isHost) this.engine.processAction('SUBMIT_CLUE', { word, count }, this.myId);
-                else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'SUBMIT_CLUE', payload: { word, count } });
+                this.sendGameAction('SUBMIT_CLUE', { word, count });
             },
             onMarkWord: (index) => {
-                if (this.isHost) this.engine.processAction('MARK_WORD', { index }, this.myId);
-                else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'MARK_WORD', payload: { index } });
+                this.sendGameAction('MARK_WORD', { index });
             },
             onGuessWord: (index) => {
-                if (this.isHost) this.engine.processAction('GUESS_WORD', { index }, this.myId);
-                else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'GUESS_WORD', payload: { index } });
+                this.sendGameAction('GUESS_WORD', { index });
             },
             onEndTurn: () => {
-                if (this.isHost) this.engine.processAction('END_TURN', {}, this.myId);
-                else this.net.sendToPeer(this.hostId, 'ACTION', { actionType: 'END_TURN', payload: {} });
+                this.sendGameAction('END_TURN');
             },
             onKickPlayer: (id) => {
-                if (this.isHost && id !== this.myId) {
-                    this.net.sendToPeer(id, 'KICKED');
-                    setTimeout(() => {
-                        this.net._handleDisconnection(id); // Force drop
-                        this.engine.removePlayer(id);
-                        this.view.showToast("Oyuncu atıldı.", "info");
-                    }, 500);
-                }
+                this.kickPlayer(id);
             },
             onBackToLobby: () => {
-                if (this.isHost) {
-                    if (this.engine.renderFrame) cancelAnimationFrame(this.engine.renderFrame);
+                if (this.isHostNode) {
+                    if (this.engine.renderFrame) clearTimeout(this.engine.renderFrame);
                     this.engine.setState({
                         status: 'lobby',
                         board: [],
@@ -117,7 +100,6 @@ class GizliKelimelerNetworkManager {
         this.initAudio();
 
         try {
-            // Load word list using same structure as Tabu or from root tr.json
             const resp = await fetch('../Tabu/tr.json');
             const data = await resp.json();
             this.engine.setWords(data);
@@ -126,222 +108,225 @@ class GizliKelimelerNetworkManager {
             this.engine.setWords(null);
         }
 
-        if (!sessionStorage.getItem('playerName')) {
-            window.location.href = 'index.html';
-            return;
+        const hostSettings = document.getElementById('host-settings');
+        const clientWaiting = document.getElementById('client-waiting');
+        if (this.isHostNode) {
+            hostSettings?.classList.remove('hidden');
+            clientWaiting?.classList.add('hidden');
+        } else {
+            hostSettings?.classList.add('hidden');
+            clientWaiting?.classList.remove('hidden');
         }
 
-        if (this.isHost) {
-            document.getElementById('host-settings')?.classList.remove('hidden');
-            document.getElementById('client-waiting')?.classList.add('hidden');
-            const customId = sessionStorage.getItem('myId') || (window.generateRoomCode ? window.generateRoomCode() : "ROOM");
-            this.net.init(customId);
-        } else {
-            document.getElementById('host-settings')?.classList.add('hidden');
-            document.getElementById('client-waiting')?.classList.remove('hidden');
-            if (!this.hostId) {
-                window.location.href = 'index.html';
+        this.autoInit().catch(err => console.error("Network init failed", err));
+    }
+
+    startGame() {
+        if (this.isHostNode) {
+            const players = Object.values(this.engine.state.players);
+            const teamA = players.filter(p => p.team === 'A');
+            const teamB = players.filter(p => p.team === 'B');
+            if (teamA.length === 0 || teamB.length === 0) {
+                this.view.showToast("Her takımda en az 1 oyuncu olmalı!", "error");
                 return;
             }
-            this.net.init();
+            if (!teamA.some(p => p.role === 'SPYMASTER') || !teamB.some(p => p.role === 'SPYMASTER')) {
+                this.view.showToast("Her takımda en az 1 Ajan olmalı!", "error");
+                return;
+            }
+            if (!teamA.some(p => p.role === 'GUESSER') || !teamB.some(p => p.role === 'GUESSER')) {
+                this.view.showToast("Her takımda en az 1 Tahminci olmalı!", "error");
+                return;
+            }
+            const boardSize = document.getElementById('board-size')?.value || 25;
+            const turnDuration = document.getElementById('turn-duration')?.value || 90;
+            this.engine.startGame({ boardSize, turnDuration });
         }
     }
 
-    onPeerReady(id) {
-        this.myId = id;
-        this.view.setMyId(id);
-
-        if (this.isHost) {
-            this.hostId = id;
-            if (!this.engine.state.players[id]) {
-                this.engine.addPlayer(id, this.myName, true, 'A', 'SPYMASTER');
-            } else {
-                this.engine.state.players[id].name = this.myName;
-                this.engine.setState(this.engine.state);
-            }
-
-            const codeDisplay = document.getElementById('display-room-code');
-            if (codeDisplay) {
-                codeDisplay.dataset.code = id;
-                codeDisplay.innerText = window.isCodeVisible ? id : '••••••••';
-            }
-
-            this.view.updateUI(this.engine.state, this.isHost);
-        } else {
-            this.net.connectToHost(this.hostId).then(() => {
-                this.net.sendToPeer(this.hostId, 'JOIN', { name: this.myName });
-            }).catch(err => {
-                this.view.showToast("Kurucuya bağlanılamadı.", "error");
-            });
+    handleStateSync(payload) {
+        if (!payload || !payload.state) return;
+        this.engine.setState(payload.state);
+        
+        if (payload.durationLeft !== undefined) {
+            this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
+            this.engine.startRenderTimer();
         }
-    }
 
-    onConnection(peerId) {}
-
-    onDataReceived(action, payload, senderId) {
-        if (action === 'JOIN' && this.isHost) {
-            const state = this.engine.state;
-            if (state.players[senderId]) {
-                state.players[senderId].name = payload.name;
-            } else {
-                const countA = Object.values(state.players).filter(p => p.team === 'A').length;
-                const countB = Object.values(state.players).filter(p => p.team === 'B').length;
-                this.engine.addPlayer(senderId, payload.name, false, countA <= countB ? 'A' : 'B', 'GUESSER');
-            }
-            this.broadcastState();
-        }
-        else if (action === 'SWITCH_TEAM' && this.isHost) {
-            if (this.engine.state.status !== 'lobby') return;
-            this.engine.switchTeam(senderId);
-        }
-        else if (action === 'SWITCH_ROLE' && this.isHost) {
-            if (this.engine.state.status !== 'lobby') return;
-            this.engine.switchRole(senderId);
-        }
-        else if (action === 'SYNC' && !this.isHost) {
-            this.engine.setState(payload.state);
-            this.hostId = payload.hostId;
-            if (payload.localTurnEndTime !== undefined) {
-                this.engine.localTurnEndTime = payload.localTurnEndTime;
-                this.engine.startRenderTimer();
-            } else if (payload.durationLeft !== undefined) {
-                this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
-                this.engine.startRenderTimer();
-            }
-            this.view.updateUI(this.engine.state, this.isHost);
-        }
-        else if (action === 'ACTION' && this.isHost) {
-            this.engine.processAction(payload.actionType, payload.payload, senderId);
-        }
-        else if (action === 'PLAY_SOUND') {
-            this.playSound(payload.sound);
-        }
-        else if (action === 'KICKED' && !this.isHost) {
-            this.view.showToast("Odadan atıldınız.", "error");
-            setTimeout(() => this.leaveRoom(), 2000);
-        }
-        else if (action === 'HOST_LEAVE' && !this.isHost) {
-            this.view.showToast("Kurucu odadan ayrıldı.", "warning");
-            setTimeout(() => this.leaveRoom(), 2000);
-        }
-        else if (action === 'LEAVE' && this.isHost) {
-            const p = this.engine.state.players[senderId];
-            if (p) {
-                this.view.showToast(`${p.name} ayrıldı.`, "info");
-                this.engine.removePlayer(senderId);
-            }
-        }
-    }
-
-    onDisconnection(peerId) {
-        if (this.isHost) {
-            const p = this.engine.state.players[peerId];
-            if (p) {
-                this.view.showToast(`${p.name} bağlantısı koptu.`, "warning");
-                this.engine.removePlayer(peerId);
-            }
-        } else if (peerId === this.hostId) {
-            this.view.showToast("Kurucu ile bağlantı koptu, lobiye dönülüyor...", "error");
-            setTimeout(() => this.leaveRoom(), 2000);
-        }
-    }
-
-    onError(err) {
-        if (err.type === 'peer-unavailable') {
-            this.view.showToast("Oda bulunamadı veya kapandı.", "error");
-            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-        } else {
-            console.error("Network Error:", err);
-        }
-    }
-
-    broadcastState() {
-        if (!this.isHost) return;
-
-        const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
-
-        // We must mask the board for Guessers before sending.
-        // We broadcast customized syncs per client depending on their role.
-        Object.keys(this.net.connections).forEach(peerId => {
-            const player = this.engine.state.players[peerId];
-            if(!player) return;
-
-            const stateCopy = JSON.parse(JSON.stringify(this.engine.state));
-
-            // If the player is a GUESSER, mask unrevealed teams
-            if (player.role === 'GUESSER') {
-                stateCopy.board.forEach(cell => {
-                    if (!cell.revealed) cell.team = 'HIDDEN';
-                });
-            }
-
-            this.net.sendToPeer(peerId, 'SYNC', {
-                state: stateCopy,
-                hostId: this.hostId,
-                durationLeft: durationLeft,
-                localTurnEndTime: this.engine.localTurnEndTime
-            });
-        });
-
-        // Host GUESSER ise tahta bilgisini maskele
         const hostPlayer = this.engine.state.players[this.myId];
         if (hostPlayer && hostPlayer.role === 'GUESSER') {
             const maskedState = JSON.parse(JSON.stringify(this.engine.state));
             maskedState.board.forEach(cell => {
                 if (!cell.revealed) cell.team = 'HIDDEN';
             });
-            this.view.updateUI(maskedState, this.isHost);
+            this.view.updateUI(maskedState, this.isHostNode);
         } else {
-            this.view.updateUI(this.engine.state, this.isHost);
+            this.view.updateUI(this.engine.state, this.isHostNode);
+        }
+
+        this.renderLobbyPlayers();
+    }
+
+    handlePlayerJoin(id, player) {
+        if (this.isHostNode) {
+            const state = this.engine.state;
+            if (state.players[id]) {
+                state.players[id].name = player.name;
+            } else {
+                const countA = Object.values(state.players).filter(p => p.team === 'A').length;
+                const countB = Object.values(state.players).filter(p => p.team === 'B').length;
+                this.engine.addPlayer(id, player.name, id === this.myId, countA <= countB ? 'A' : 'B', 'GUESSER');
+            }
+            this.broadcastState(this.engine.state);
         }
     }
 
-    leaveRoom() {
-        if (this.isHost) this.net.broadcast('HOST_LEAVE');
-        else if (this.hostId) this.net.sendToPeer(this.hostId, 'LEAVE');
-
-        this.net.destroy();
-        sessionStorage.removeItem('myId');
-        sessionStorage.removeItem('roomCode');
-        window.location.href = 'index.html';
+    handlePlayerLeave(id) {
+        if (this.isHostNode) {
+            const p = this.engine.state.players[id];
+            if (p) {
+                this.view.showToast(`${p.name} ayrıldı.`, "info");
+                this.engine.removePlayer(id);
+            }
+        }
     }
 
+    handleAction(action, payload, senderId) {
+        if (action === 'SWITCH_TEAM' && this.isHostNode) {
+            this.engine.switchTeam(senderId);
+        }
+        else if (action === 'SWITCH_ROLE' && this.isHostNode) {
+            this.engine.switchRole(senderId);
+        }
+        else if (action === 'SUBMIT_CLUE' && this.isHostNode) {
+            this.engine.processAction('SUBMIT_CLUE', payload, senderId);
+        }
+        else if (action === 'MARK_WORD' && this.isHostNode) {
+            this.engine.processAction('MARK_WORD', payload, senderId);
+        }
+        else if (action === 'GUESS_WORD' && this.isHostNode) {
+            this.engine.processAction('GUESS_WORD', payload, senderId);
+        }
+        else if (action === 'END_TURN' && this.isHostNode) {
+            this.engine.processAction('END_TURN', payload, senderId);
+        }
+    }
+
+    _handleDataReceived(action, payload, senderId) {
+        super._handleDataReceived(action, payload, senderId);
+        if (action === 'PLAY_SOUND') {
+            this.playSound(payload.sound);
+        }
+    }
+
+    broadcastState(state) {
+        if (!this.isHostNode) return;
+
+        const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
+
+        Object.keys(this.connections).forEach(peerId => {
+            const player = this.engine.state.players[peerId];
+            if (!player) return;
+
+            const stateCopy = JSON.parse(JSON.stringify(state));
+
+            if (player.role === 'GUESSER') {
+                stateCopy.board.forEach(cell => {
+                    if (!cell.revealed) cell.team = 'HIDDEN';
+                });
+            }
+
+            this.sendToPeer(peerId, 'SYNC', {
+                state: stateCopy,
+                hostId: this.myId,
+                durationLeft: durationLeft
+            });
+        });
+
+        const hostPlayer = this.engine.state.players[this.myId];
+        if (hostPlayer && hostPlayer.role === 'GUESSER') {
+            const maskedState = JSON.parse(JSON.stringify(state));
+            maskedState.board.forEach(cell => {
+                if (!cell.revealed) cell.team = 'HIDDEN';
+            });
+            this.view.updateUI(maskedState, this.isHostNode);
+        } else {
+            this.view.updateUI(state, this.isHostNode);
+        }
+
+        this.renderLobbyPlayers();
+    }
+
+    renderLobbyPlayers() {
+        const state = this.engine.state;
+        this.lobbyUI.renderPlayers(state.players, this.myId, (p, isMe) => {
+            const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const roleStr = p.role === 'SPYMASTER' ? 'Ajan' : 'Tahminci';
+            const teamColorVar = p.team === 'A' ? 'var(--team-a-color)' : 'var(--team-b-color)';
+            const teamBgVar = p.team === 'A' ? 'var(--team-a-bg)' : 'var(--team-b-bg)';
+            const roleColor = p.role === 'SPYMASTER' ? 'var(--warning)' : 'var(--success)';
+            const roleBg = p.role === 'SPYMASTER' ? 'var(--warning-bg)' : 'var(--success-bg)';
+
+            return `
+                <div style="display:flex; flex-direction:column; gap:4px; flex-grow:1;">
+                    <span style="font-weight:500; font-size:1rem; display:flex; align-items:center; gap:4px;">
+                        ${p.isHost ? '<span title="Kurucu">👑</span>' : ''}
+                        ${safeName} 
+                        ${isMe ? '<span style="opacity:0.6; font-size:0.8em;">(Sen)</span>' : ''}
+                    </span>
+                    <div style="display:flex; gap:6px;">
+                        <span style="background:${teamBgVar}; color:${teamColorVar}; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; border: 1px solid ${teamColorVar};">Takım ${p.team}</span>
+                        <span style="background:${roleBg}; color:${roleColor}; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; border: 1px solid ${roleColor};">${roleStr}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Enforce the lobby start button constraint
+        const players = Object.values(state.players);
+        const teamA = players.filter(p => p.team === 'A');
+        const teamB = players.filter(p => p.team === 'B');
+        const meetsCriteria = teamA.some(p => p.role === 'SPYMASTER') && teamA.some(p => p.role === 'GUESSER') &&
+                              teamB.some(p => p.role === 'SPYMASTER') && teamB.some(p => p.role === 'GUESSER');
+
+        const btnStart = document.getElementById('btn-start-game');
+        if (btnStart) {
+            if (meetsCriteria) btnStart.classList.remove('disabled');
+            else btnStart.classList.add('disabled');
+        }
+    }
+
+    kickPlayer(id) {
+        if (this.isHostNode) {
+            this.sendToPeer(id, 'KICKED');
+            setTimeout(() => {
+                if (this.connections[id]) {
+                    this.connections[id].close();
+                    this._handleDisconnection(id);
+                }
+                this.engine.removePlayer(id);
+            }, 500);
+        }
+    }
 
     initAudio() {
-        if(window.PairaAudio) window.PairaAudio.init();
+        if (window.PairaAudio) window.PairaAudio.init();
     }
 
     playSound(type) {
-        if(!window.PairaAudio) return;
+        if (!window.PairaAudio) return;
         const mapped = type === 'timeup' ? 'end' : (type === 'start' ? 'correct' : type);
         window.PairaAudio.play(mapped);
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.isCodeVisible = false;
-    document.getElementById('toggle-code-visibility')?.addEventListener('click', () => {
-        window.isCodeVisible = !window.isCodeVisible;
-        const disp = document.getElementById('display-room-code');
-        if (disp) disp.innerText = window.isCodeVisible ? (disp.dataset.code || '••••••••') : '••••••••';
-    });
-
-    document.getElementById('display-room-code')?.addEventListener('click', () => {
-        const disp = document.getElementById('display-room-code');
-        const code = disp?.dataset?.code;
-        if (code) {
-            navigator.clipboard.writeText(code).then(() => {
-                if(window.gameNet) window.gameNet.view.showToast("Oda kodu kopyalandı!", "success");
-            });
-        }
-    });
-
     if (document.getElementById('game-screen')) {
         const engine = new GizliKelimelerEngine();
         const view = new GizliKelimelerView({});
 
         engine.onTimerTick = (secs, status) => view.updateTimer(secs, status);
 
-        window.gameNet = new GizliKelimelerNetworkManager(engine, view);
+        window.gameNet = new GizliKelimelerNetwork(engine, view);
     }
 });
