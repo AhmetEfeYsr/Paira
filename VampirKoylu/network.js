@@ -68,8 +68,11 @@ class NetworkManager extends BaseGameNetwork {
         }
 
         // We skip standard autoInit and perform custom init sequence
-        return this.initPeer(this.myId).then(() => {
+        // NOTE: call the base class init (PeerNetworkManager.init) explicitly via super
+        // to avoid recursively calling this overridden init method.
+        return super.init(this.myId).then(() => {
             this.players[this.myId] = {
+
                 id: this.myId,
                 name: this.myName,
                 isHost: this.isHostNode,
@@ -104,8 +107,9 @@ class NetworkManager extends BaseGameNetwork {
             this.connections[hostId] = conn;
         });
 
-        this.setupConnection(conn);
+        this._setupConnection(conn);
         return Promise.resolve();
+
     }
 
     _handleDataReceived(action, payload, senderId) {

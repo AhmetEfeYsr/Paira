@@ -117,7 +117,8 @@ class SharedLobbyUI {
             li.style.justifyContent = 'space-between';
             li.style.alignItems = 'center';
 
-            const safeName = p.name ? p.name.replace(/</g, "<").replace(/>/g, ">") : 'Bilinmeyen';
+            const safeName = p.name ? (window.escapeHtml ? window.escapeHtml(p.name) : p.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")) : 'Bilinmeyen';
+
             
             const infoSpan = document.createElement('span');
             if (customFormatter) {

@@ -155,12 +155,13 @@ class TabuNetworkManager extends BaseGameNetwork {
         // Render player list for clients too
         const myId = this.myId;
         this.lobbyUI.renderPlayers(this.engine.state.players, myId, (p, isMe) => {
-            const safeName = p.name.replace(/</g, "<").replace(/>/g, ">");
+            const safeName = (window.escapeHtml ? window.escapeHtml(p.name) : String(p.name).replace(/</g, "&lt;").replace(/>/g, "&gt;"));
             return `<span>${p.isHost ? '👑 ' : ''}${safeName} ${isMe ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
         });
     }
 
     onActionReceived(actionType, payload, senderId) {
+
         if (actionType === 'SWITCH_TEAM') {
             this.engine.switchTeam(senderId);
         }
@@ -203,12 +204,13 @@ class TabuNetworkManager extends BaseGameNetwork {
         
         const myId = this.myId;
         this.lobbyUI.renderPlayers(this.engine.state.players, myId, (p, isMe) => {
-            const safeName = p.name.replace(/</g, "<").replace(/>/g, ">");
+            const safeName = (window.escapeHtml ? window.escapeHtml(p.name) : String(p.name).replace(/</g, "&lt;").replace(/>/g, "&gt;"));
             return `<span>${p.isHost ? '👑 ' : ''}${safeName} ${isMe ? '(Sen)' : ''}</span> <strong>T-${p.team}</strong>`;
         });
     }
 
     sendAction(actionType) {
+
         if (this.engine.state.turnId !== this.myId && actionType !== 'TOGGLE_PAUSE' && actionType !== 'NARRATOR_READY') return;
         this.sendGameAction('ACTION', { actionType });
     }
