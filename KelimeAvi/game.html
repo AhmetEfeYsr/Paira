@@ -7,6 +7,7 @@
     <title>Kelime Kapanı | Oyun Odası</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=Pacifico&display=swap" rel="stylesheet">
+    <script src="../shared/shared.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="../shared/shared.css">
@@ -90,14 +91,24 @@
                     <h2 id="current-letters" style="font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 5px; color: var(--text-main); background: var(--code-bg); padding: 15px 40px; border-radius: 15px; border: 2px solid var(--neon-purple);">...</h2>
                 </div>
 
+                <!-- EBE KELİME SEÇİM ALANI -->
+                <div id="ebe-target-select-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--danger); box-shadow: 0 5px 20px var(--danger-bg);">
+                    <h3 style="color: var(--danger); margin-bottom: 0.5rem; font-size: 1.4rem;">Sen Ebesin! Kelimeni Belirle!</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Tuttuğun gizli kelimeyi gir. Masumlar sadece 1. harfi görecek!</p>
+                    <div class="form-group">
+                        <input type="text" id="ebe-target-input" placeholder="Tuttuğunuz kelime..." autocomplete="off" maxlength="30" style="text-align: center; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">
+                    </div>
+                    <button id="btn-submit-ebe-target" class="btn btn-danger btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Kelimeyi Onayla ve Başlat</button>
+                </div>
+
                 <!-- MASUM ALANI -->
                 <div id="masum-area" class="card action-area hidden" style="width: 100%; max-width: 500px; margin-top: 2rem; text-align: center; border-color: var(--success); box-shadow: 0 5px 20px var(--success-bg);">
                     <h3 style="color: var(--success); margin-bottom: 0.5rem; font-size: 1.4rem;">Bir Kelimede Anlaşın!</h3>
-                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Ekranda yazan harf ile başlayan bir kelimede <strong>çaktırmadan</strong> eşleşin. Ebe aranızda ve sizi dinliyor!</p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">Açık harflerle başlayan bir kelimede <strong>çaktırmadan</strong> eşleşin. Ebe sizi dinliyor!</p>
                     <div class="form-group">
                         <input type="text" id="masum-word-input" placeholder="Kelimenizi buraya yazın..." autocomplete="off" maxlength="30" style="text-align: center; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">
                     </div>
-                    <button id="btn-submit-masum" class="btn btn-success btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Gönder & Eşleşmeyi Bekle</button>
+                    <button id="btn-trigger-match" class="btn btn-success btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px; font-weight: bold;">⚡ Eşleşmeyi Kontrol Et (3-2-1)</button>
                 </div>
 
                 <!-- EBE ALANI -->
@@ -110,14 +121,22 @@
                         <input type="text" id="ebe-guess-2" placeholder="2. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
                         <input type="text" id="ebe-guess-3" placeholder="3. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
                         <input type="text" id="ebe-guess-4" placeholder="4. Tahmin" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500;">
-                        <input type="text" id="ebe-guess-5" placeholder="5. Tahmin (Zorunlu değil)" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500; grid-column: 1 / -1;">
+                        <input type="text" id="ebe-guess-5" placeholder="5. Tahmin (Opsiyonel)" autocomplete="off" maxlength="30" style="text-align: center; font-weight: 500; grid-column: 1 / -1;">
                     </div>
 
-                    <button id="btn-submit-ebe" class="btn btn-danger btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Tahminleri Kilitle</button>
+                    <button id="btn-submit-ebe" class="btn btn-danger btn-block" style="padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">Tahminleri Kaydet</button>
                 </div>
 
             </div>
         </section>
+
+        <!-- 3-SANİYE GERİ SAYIM OVERLAY -->
+        <div id="countdown-overlay" class="countdown-overlay hidden">
+            <div class="countdown-content">
+                <div class="countdown-title">EŞLEŞME KONTROL EDİLİYOR</div>
+                <div id="countdown-number" class="countdown-number">3</div>
+            </div>
+        </div>
 
         <!-- BİTİŞ EKRANI -->
         <section id="winner-screen" class="view-state hidden">
@@ -143,7 +162,6 @@
         <p>Kelime Kapanı, sadece bir kelime oyunu değil, aynı zamanda bir psikolojik savaş ve çıkarım sanatıdır. Farklı zorluk seviyeleri ve özelleştirilebilir oda ayarları ile her seferinde benzersiz bir deneyim sunar. SEO uyumlu altyapısı ve akıcı arayüzü sayesinde tarayıcınız üzerinden anında oynamaya başlayabilirsiniz. Kelime dağarcığınızı test ederken aynı zamanda arkadaşlarınızın düşünce yapısını çözmeye çalışacağınız bu oyun, sosyal toplantılarınızın vazgeçilmezi olacaktır. Hemen bir oda kurun, stratejinizi belirleyin ve Kelime Kapanı dünyasında kimin daha zeki olduğunu kanıtlayın!</p>
     </div>
 
-    <script src="../shared/shared.js"></script>
     <script src="../shared/peer_manager.js"></script>
     <script src="../shared/base_network.js"></script>
     <script src="../shared/state_proxy.js"></script>

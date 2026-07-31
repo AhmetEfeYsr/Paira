@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
@@ -145,12 +146,12 @@
                 return;
             }
 
+            sessionStorage.setItem('username', name);
             sessionStorage.setItem('playerName', name);
             sessionStorage.setItem('roomCode', code);
             sessionStorage.setItem('isHost', 'false');
             window.location.href = 'game.html';
         });
     </script>
-    <script src="../shared/shared.js"></script>
 </body>
 </html>

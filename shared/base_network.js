@@ -23,7 +23,7 @@ class BaseGameNetwork extends window.PeerNetworkManager {
             onError: (err) => this._handleError(err)
         });
 
-        this.myName = sessionStorage.getItem('playerName') || 'Oyuncu';
+        this.myName = sessionStorage.getItem('username') || sessionStorage.getItem('playerName') || 'Oyuncu';
         this.roomCode = sessionStorage.getItem('roomCode');
         this.isHostNode = isHost;
         this.myId = null;

@@ -67,7 +67,10 @@ class PairaSharedUI {
                     if (img.src.endsWith(themedSuffix)) {
                         img.src = `${replaceStr}/${baseSuffix}`;
                     } else if (img.src.endsWith(baseSuffix) && !img.src.endsWith('main_logo.avif')) {
+                        img.onerror = null;
                         img.src = `${basePath}main_logo.avif`;
+                    } else {
+                        img.onerror = null;
                     }
                 };
             }

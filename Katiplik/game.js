@@ -47,6 +47,13 @@ class KatiplikGame {
             }
         });
         
+        textInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            if (window.showToast) {
+                window.showToast("Yapıştırmak yasaktır! Lütfen elinizle yazın.", "warning");
+            }
+        });
+
         textInput.addEventListener('input', (e) => {
             if (this.isFinished) return;
             const val = e.target.value;

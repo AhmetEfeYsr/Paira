@@ -4,19 +4,12 @@
 class KelimeAviGameEngine {
     constructor(isHost = true) {
         this.isHost = isHost;
-        this.matcher = new window.FuzzyMatcher();
         
-        this.wordList = [
-            "AKINTI", "BARDAK", "CÜZDAN", "DEFTER", "ELMA", "FINDIK", "GÜNEŞ", "HAYVAN", "IRMAK", "KİTAP", "MASA", "NOKTA", "OTOBÜS", "PENCERE", "RADYO", "SAAT", "TELEFON", "UÇAK", "VAGON", "YILDIZ", "ZAMAN",
-            "BİLGİSAYAR", "TELEVİZYON", "KAHVE", "ÇAY", "MÜZİK", "SİNEMA", "TİYATRO", "OYUN", "ARABA", "BİSİKLET", "DENİZ", "KUMSAL", "ORMAN", "DAĞ", "KAMP", "TATİL", "FOTOĞRAF", "KAMERA", "TABLET", "KLAVYE", "FARE", "KABLO", "ŞARJ",
-            "ELEKTRİK", "IŞIK", "LAMBA", "GÖZLÜK", "YÜZÜK", "KOLYE", "KÜPE", "ŞAPKA", "ATKI", "ELDİVEN", "AYAKKABI", "ÇORAP", "PANTOLON", "GÖMLEK", "KAZAK", "MONT", "CEKET", "KABAN", "YAĞMURLUK", "ŞEMSİYE", "ÇANTA", "ANAHTAR"
-        ];
-
         this.state = {
-            status: 'lobby', // lobby, playing, evaluating, finished
+            status: 'lobby', // lobby, ebe_word_select, playing, countdown, evaluating, finished
             players: {},
             round: 1,
-            totalRounds: 3,
+            totalRounds: 5,
             turnDuration: 45,
             timeIncrease: 15,
             settings: {
@@ -28,17 +21,20 @@ class KelimeAviGameEngine {
             targetWord: '',
             revealedLetters: 1,
             submittedWords: {},
-            ebeGuesses: []
+            ebeGuesses: [],
+            countdownSec: 3
         };
 
         this.onStateChange = null;
         this.onTimerTick = null;
         this.onSound = null;
         this.onShowResult = null;
+        this.onCountdownTick = null;
 
         this.localEndTime = 0;
         this.renderFrame = null;
         this.lastTickSec = -1;
+        this.countdownInterval = null;
     }
 
     setState(newState) {
@@ -52,7 +48,7 @@ class KelimeAviGameEngine {
     }
 
     removePlayer(id) {
-        if (this.state.status === 'playing') {
+        if (this.state.status === 'playing' || this.state.status === 'ebe_word_select' || this.state.status === 'countdown') {
             this.state.players[id].disconnected = true;
             
             const activeCount = Object.keys(this.state.players).filter(pid => !this.state.players[pid].disconnected).length;
@@ -66,8 +62,6 @@ class KelimeAviGameEngine {
 
             if (this.state.currentEbe === id) {
                 this.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.");
-            } else {
-                this.checkAllSubmissions();
             }
             this.setState({ players: this.state.players });
         } else {
@@ -77,11 +71,11 @@ class KelimeAviGameEngine {
     }
 
     startGame(settings) {
-        if (!this.isHost) return;
+        if (!this.isHost) return false;
         const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
         if (playerIds.length < 3) return false;
 
-        this.state.totalRounds = parseInt(settings.totalRounds) || 3;
+        this.state.totalRounds = parseInt(settings.totalRounds) || 5;
         this.state.turnDuration = parseInt(settings.turnDuration) || 45;
         this.state.timeIncrease = parseInt(settings.timeIncrease) || 15;
         this.state.settings.ebeWinPts = parseInt(settings.ebeWinPts) || 2;
@@ -99,7 +93,8 @@ class KelimeAviGameEngine {
         this.state.submittedWords = {};
         this.state.ebeGuesses = [];
         this.state.revealedLetters = 1;
-        this.state.status = 'playing';
+        this.state.targetWord = '';
+        this.state.status = 'ebe_word_select';
 
         const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
         this.state.currentEbe = playerIds[Math.floor(Math.random() * playerIds.length)];
@@ -108,7 +103,19 @@ class KelimeAviGameEngine {
             this.state.players[id].role = (id === this.state.currentEbe) ? 'ebe' : 'masum';
         });
 
-        this.state.targetWord = this.wordList[Math.floor(Math.random() * this.wordList.length)];
+        this.setState(this.state);
+    }
+
+    handleEbeTargetWord(peerId, word) {
+        if (!this.isHost || (this.state.status !== 'ebe_word_select' && this.state.status !== 'playing')) return;
+        if (peerId !== this.state.currentEbe) return;
+
+        const normWord = window.normalizeTurkishChars(word).trim().toUpperCase();
+        if (normWord.length < 2) return;
+
+        this.state.targetWord = normWord;
+        this.state.revealedLetters = 1;
+        this.state.status = 'playing';
         this.localEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
 
         this.setState(this.state);
@@ -116,7 +123,6 @@ class KelimeAviGameEngine {
     }
 
     handleMasumSubmission(peerId, word) {
-        if (!this.isHost || this.state.status !== 'playing') return;
         if (peerId === this.state.currentEbe) return;
 
         const normWord = window.normalizeTurkishChars(word).trim().toUpperCase();
@@ -125,34 +131,51 @@ class KelimeAviGameEngine {
         if (!normWord.startsWith(revealedPart)) return;
 
         this.state.submittedWords[peerId] = normWord;
-        this.setState(this.state);
-        this.checkAllSubmissions();
-    }
-
-    handleEbeGuesses(peerId, guesses) {
-        if (!this.isHost || this.state.status !== 'playing') return;
-        if (peerId !== this.state.currentEbe) return;
-        this.state.ebeGuesses = guesses.map(g => window.normalizeTurkishChars(g).trim().toUpperCase());
-        this.setState(this.state);
-        this.checkAllSubmissions();
-    }
-
-    checkAllSubmissions() {
-        if (!this.isHost || this.state.status !== 'playing') return;
-
-        const playerIds = Object.keys(this.state.players);
-        const activeMasums = playerIds.filter(id => id !== this.state.currentEbe && !this.state.players[id].disconnected);
-        
-        const receivedMasumWords = activeMasums.filter(id => this.state.submittedWords[id]).length;
-        const ebeSubmitted = this.state.ebeGuesses.length > 0;
-
-        if (receivedMasumWords >= activeMasums.length && ebeSubmitted) {
-            this.evaluateRound();
+        if (this.isHost) {
+            this.setState(this.state);
         }
     }
 
-    evaluateRound() {
+    handleEbeGuesses(peerId, guesses) {
+        if (peerId !== this.state.currentEbe) return;
+        this.state.ebeGuesses = guesses.map(g => window.normalizeTurkishChars(g).trim().toUpperCase());
+        if (this.isHost) {
+            this.setState(this.state);
+        }
+    }
+
+    handleTriggerMatch(peerId) {
         if (!this.isHost || this.state.status !== 'playing') return;
+        this.start3SecCountdown();
+    }
+
+    start3SecCountdown() {
+        if (!this.isHost) return;
+        this.state.status = 'countdown';
+        this.state.countdownSec = 3;
+        this.setState(this.state);
+
+        if (this.onSound) this.onSound('tick');
+
+        let count = 3;
+        if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+        this.countdownInterval = setInterval(() => {
+            count--;
+            this.state.countdownSec = count;
+            if (this.onCountdownTick) this.onCountdownTick(count);
+
+            if (count > 0) {
+                if (this.onSound) this.onSound('tick');
+            } else {
+                clearInterval(this.countdownInterval);
+                this.evaluateRound();
+            }
+        }, 1000);
+    }
+
+    evaluateRound() {
+        if (!this.isHost) return;
         this.state.status = 'evaluating';
 
         const targetWord = this.state.targetWord;
@@ -163,61 +186,60 @@ class KelimeAviGameEngine {
 
         let normalizedTarget = window.normalizeTurkishChars(targetWord).trim().toUpperCase();
 
+        // Exact match check for Jackpot
         let jackpotWinners = [];
         for (let [peerId, word] of Object.entries(this.state.submittedWords)) {
-            if (this.matcher.isMatch(word, normalizedTarget, 0.5)) {
+            if (word === normalizedTarget) {
                 jackpotWinners.push(peerId);
                 isJackpot = true;
             }
         }
 
         if (isJackpot) {
-            resultMsg = "JACKPOT! Masumlar ana kelimeyi buldu!";
+            resultMsg = `JACKPOT! Masumlar ana kelimeyi (${targetWord}) tam bildi!`;
             jackpotWinners.forEach(id => {
-                if(this.state.players[id]) this.state.players[id].score += this.state.settings.jackpotPts;
+                if (this.state.players[id]) this.state.players[id].score += this.state.settings.jackpotPts;
             });
             if (this.onSound) this.onSound('correct');
         } else {
-            let masumMatch = false;
-            let matchedWord = "";
-            let matchedPeers = [];
+            // Strict exact match among masums (NO FUZZY MATCH)
+            const wordCounts = {};
+            const wordPeerMap = {};
 
-            const entries = Object.entries(this.state.submittedWords);
-            for (let i = 0; i < entries.length; i++) {
-                let currentMatches = [entries[i][0]];
-                for (let j = i + 1; j < entries.length; j++) {
-                    if (this.matcher.isMatch(entries[i][1], entries[j][1])) {
-                        currentMatches.push(entries[j][0]);
-                        matchedWord = entries[i][1];
-                    }
-                }
-                if (currentMatches.length >= 2) {
-                    masumMatch = true;
-                    matchedPeers = currentMatches;
+            for (let [peerId, word] of Object.entries(this.state.submittedWords)) {
+                if (!word) continue;
+                wordCounts[word] = (wordCounts[word] || 0) + 1;
+                if (!wordPeerMap[word]) wordPeerMap[word] = [];
+                wordPeerMap[word].push(peerId);
+            }
+
+            // Find word matched by >= 2 masums
+            let matchedWord = null;
+            let matchedPeers = [];
+            for (let [w, count] of Object.entries(wordCounts)) {
+                if (count >= 2) {
+                    matchedWord = w;
+                    matchedPeers = wordPeerMap[w];
                     break;
                 }
             }
 
-            if (masumMatch) {
-                let ebeCaught = false;
-                for (let guess of this.state.ebeGuesses) {
-                    if (this.matcher.isMatch(guess, matchedWord)) {
-                        ebeCaught = true; break;
-                    }
-                }
+            if (matchedWord) {
+                // Check if Ebe guessed this exact word
+                const ebeCaught = this.state.ebeGuesses.includes(matchedWord);
 
                 if (ebeCaught) {
                     isEbeWin = true;
-                    resultMsg = "EBE KAZANDI! Masumların eşleştiği kelimeyi ("+matchedWord+") bildi.";
+                    resultMsg = `EBE KAZANDI! Masumların eşleştiği kelimeyi (${matchedWord}) yakaladı.`;
                     if (this.state.players[this.state.currentEbe]) {
                         this.state.players[this.state.currentEbe].score += this.state.settings.ebeWinPts;
                     }
                     if (this.onSound) this.onSound('taboo');
                 } else {
                     isMasumWin = true;
-                    resultMsg = "MASUMLAR KAZANDI! Eşleştiler ("+matchedWord+") ama Ebe bulamadı.";
+                    resultMsg = `MASUMLAR KAZANDI! "${matchedWord}" kelimesinde eşleştiler, Ebe yakalayamadı!`;
                     matchedPeers.forEach(id => {
-                        if(this.state.players[id]) {
+                        if (this.state.players[id]) {
                             this.state.players[id].score += this.state.settings.masumWinPts;
                         }
                     });
@@ -225,7 +247,7 @@ class KelimeAviGameEngine {
                     this.state.revealedLetters++;
                 }
             } else {
-                resultMsg = "Masumlar kendi aralarında eşleşemedi!";
+                resultMsg = "Masumlar kendi aralarında birebir eşleşemedi!";
                 if (this.onSound) this.onSound('pass');
             }
         }
@@ -235,11 +257,13 @@ class KelimeAviGameEngine {
 
         setTimeout(() => {
             this.handleRoundEndTransition(isJackpot, isEbeWin, isMasumWin);
-        }, 5000);
+        }, 4000);
     }
 
     handleRoundEndTransition(isJackpot, isEbeWin, isMasumWin) {
-        if (!isJackpot && !isEbeWin && isMasumWin) {
+        const targetLen = this.state.targetWord ? this.state.targetWord.length : 1;
+
+        if (!isJackpot && !isEbeWin && isMasumWin && this.state.revealedLetters <= targetLen) {
             this.state.status = 'playing';
             const left = Math.max(0, this.localEndTime - window.PairaTime.now());
             this.localEndTime = window.PairaTime.now() + left + (this.state.timeIncrease * 1000);
@@ -265,10 +289,20 @@ class KelimeAviGameEngine {
         if (this.onShowResult) this.onShowResult(reasonMsg);
         setTimeout(() => {
             this.startNewTurn();
-        }, 5000);
+        }, 4000);
     }
 
-    backToLobby() { this.state.status = 'lobby'; Object.keys(this.state.players).forEach(pId => { if (this.state.players[pId].disconnected) { delete this.state.players[pId]; } else { this.state.players[pId].score = 0; } }); this.setState(this.state); }
+    backToLobby() {
+        this.state.status = 'lobby';
+        Object.keys(this.state.players).forEach(pId => {
+            if (this.state.players[pId].disconnected) {
+                delete this.state.players[pId];
+            } else {
+                this.state.players[pId].score = 0;
+            }
+        });
+        this.setState(this.state);
+    }
 
     startRenderTimer() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
@@ -330,43 +364,54 @@ class KelimeAviView {
 
         const btnAdvanced = document.getElementById('btn-toggle-advanced');
         const advancedSettings = document.getElementById('advanced-settings');
-        if(btnAdvanced && advancedSettings) {
+        if (btnAdvanced && advancedSettings) {
             btnAdvanced.addEventListener('click', () => {
                 advancedSettings.classList.toggle('hidden');
             });
         }
 
-        const masumInput = document.getElementById('masum-word-input');
-        const btnSubmitMasum = document.getElementById('btn-submit-masum');
-        if(btnSubmitMasum && masumInput) {
-            const submitMasum = () => {
-                if(btnSubmitMasum.disabled) return;
-                const word = masumInput.value.trim();
-                if(word.length === 0) return;
-
-                if (window._gameState && window._gameState.targetWord) {
-                    const revealedPart = window.normalizeTurkishChars(window._gameState.targetWord.substring(0, window._gameState.revealedLetters)).toUpperCase();
-                    const normWord = window.normalizeTurkishChars(word).toUpperCase();
-                    if (!normWord.startsWith(revealedPart)) {
-                        if (window.showToast) window.showToast(`Kelime "${revealedPart}" harfi/harfleri ile başlamalıdır!`, "warning");
-                        return;
-                    }
+        // Ebe Secret Word Submit
+        const btnSubmitEbeTarget = document.getElementById('btn-submit-ebe-target');
+        const ebeTargetInput = document.getElementById('ebe-target-input');
+        if (btnSubmitEbeTarget && ebeTargetInput) {
+            const submitTarget = () => {
+                const word = ebeTargetInput.value.trim();
+                if (word.length < 2) {
+                    if (window.showToast) window.showToast("Lütfen en az 2 harfli bir kelime girin!", "warning");
+                    return;
                 }
-
-                btnSubmitMasum.disabled = true;
-                if(window.showToast) window.showToast("Kelime gönderildi, diğerleri bekleniyor...", "info");
-                this.callbacks.onSubmitMasum(word);
+                this.callbacks.onSubmitEbeTargetWord(word);
             };
-            btnSubmitMasum.addEventListener('click', submitMasum);
-            masumInput.addEventListener('keypress', (e) => {
-                if(e.key === 'Enter') submitMasum();
+            btnSubmitEbeTarget.addEventListener('click', submitTarget);
+            ebeTargetInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitTarget();
             });
         }
 
+        // Masum Word Input & Trigger Match
+        const masumInput = document.getElementById('masum-word-input');
+        const btnTriggerMatch = document.getElementById('btn-trigger-match');
+        if (btnTriggerMatch && masumInput) {
+            btnTriggerMatch.addEventListener('click', () => {
+                const word = masumInput.value.trim();
+                if (word.length > 0) {
+                    this.callbacks.onSubmitMasum(word);
+                }
+                this.callbacks.onTriggerMatch();
+            });
+
+            masumInput.addEventListener('change', () => {
+                const word = masumInput.value.trim();
+                if (word.length > 0) {
+                    this.callbacks.onSubmitMasum(word);
+                }
+            });
+        }
+
+        // Ebe Guesses
         const btnSubmitEbe = document.getElementById('btn-submit-ebe');
-        if(btnSubmitEbe) {
+        if (btnSubmitEbe) {
             const submitEbe = () => {
-                if(btnSubmitEbe.disabled) return;
                 const guesses = [
                     document.getElementById('ebe-guess-1')?.value.trim(),
                     document.getElementById('ebe-guess-2')?.value.trim(),
@@ -375,22 +420,17 @@ class KelimeAviView {
                     document.getElementById('ebe-guess-5')?.value.trim()
                 ].filter(g => g && g.length > 0);
 
-                if(guesses.length === 0) {
-                    if(window.showToast) window.showToast("En az bir tahmin yapmalısın!", "warning");
-                    return;
+                if (guesses.length > 0) {
+                    this.callbacks.onSubmitEbe(guesses);
+                    if (window.showToast) window.showToast("Tahminler kaydedildi!", "info");
                 }
-                btnSubmitEbe.disabled = true;
-                if(window.showToast) window.showToast("Tahminler gönderildi!", "info");
-                this.callbacks.onSubmitEbe(guesses);
             };
             btnSubmitEbe.addEventListener('click', submitEbe);
             
-            [1,2,3,4,5].forEach(i => {
+            [1, 2, 3, 4, 5].forEach(i => {
                 const input = document.getElementById(`ebe-guess-${i}`);
-                if(input) {
-                    input.addEventListener('keypress', (e) => {
-                        if(e.key === 'Enter') submitEbe();
-                    });
+                if (input) {
+                    input.addEventListener('change', submitEbe);
                 }
             });
         }
@@ -400,7 +440,7 @@ class KelimeAviView {
         window._gameState = state;
         if (state.status === 'lobby') {
             window.showScreen('lobby-screen');
-        } else if (state.status === 'playing' || state.status === 'evaluating') {
+        } else if (state.status === 'ebe_word_select' || state.status === 'playing' || state.status === 'countdown' || state.status === 'evaluating') {
             window.showScreen('game-screen');
             this.updateGameUI(state);
         } else if (state.status === 'finished') {
@@ -415,52 +455,55 @@ class KelimeAviView {
         const myId = this.myId;
         const amIEbe = (state.currentEbe === myId);
 
+        const ebeTargetArea = document.getElementById('ebe-target-select-area');
         const masumArea = document.getElementById('masum-area');
         const ebeArea = document.getElementById('ebe-area');
         const letterDisplay = document.getElementById('current-letters');
+        const statusMsg = document.getElementById('game-status-message');
+        const countdownOverlay = document.getElementById('countdown-overlay');
 
-        // Disable buttons if already submitted
-        const hasSubmittedMasum = !!state.submittedWords[myId];
-        const hasSubmittedEbe = state.ebeGuesses && state.ebeGuesses.length > 0;
-        
-        const btnSubmitMasum = document.getElementById('btn-submit-masum');
-        if (btnSubmitMasum) btnSubmitMasum.disabled = hasSubmittedMasum;
-        
-        const btnSubmitEbe = document.getElementById('btn-submit-ebe');
-        if (btnSubmitEbe) btnSubmitEbe.disabled = hasSubmittedEbe;
-
-        // Clear inputs ONLY when a new round starts
-        if (this._lastClearedRound !== state.round || this._lastClearedStatus !== state.status) {
-            if (state.status === 'playing' && Object.keys(state.submittedWords).length === 0 && state.ebeGuesses.length === 0) {
-                const masumInput = document.getElementById('masum-word-input');
-                if (masumInput) masumInput.value = '';
-
-                [1,2,3,4,5].forEach(i => {
-                    const input = document.getElementById(`ebe-guess-${i}`);
-                    if (input) input.value = '';
-                });
-                
-                this._lastClearedRound = state.round;
-                this._lastClearedStatus = state.status;
-            }
+        // Countdown overlay handling
+        if (state.status === 'countdown') {
+            countdownOverlay?.classList.remove('hidden');
+            const cdNum = document.getElementById('countdown-number');
+            if (cdNum) cdNum.innerText = state.countdownSec !== undefined ? state.countdownSec : 3;
+        } else {
+            countdownOverlay?.classList.add('hidden');
         }
 
-        const statusMsg = document.getElementById('game-status-message');
-        if (state.status === 'evaluating') {
-            // handled by onShowResult explicitly
-        } else {
+        if (state.status === 'ebe_word_select') {
+            if (amIEbe) {
+                ebeTargetArea?.classList.remove('hidden');
+                masumArea?.classList.add('hidden');
+                ebeArea?.classList.add('hidden');
+                if (statusMsg) statusMsg.innerText = "Kelimeni gir ve oyunu başlat!";
+                if (letterDisplay) letterDisplay.innerText = "???";
+            } else {
+                ebeTargetArea?.classList.add('hidden');
+                masumArea?.classList.add('hidden');
+                ebeArea?.classList.add('hidden');
+                if (statusMsg) statusMsg.innerText = "Ebe gizli kelimesini belirliyor...";
+                if (letterDisplay) letterDisplay.innerText = "Ebe Kelime Seçiyor...";
+            }
+            return;
+        }
+
+        ebeTargetArea?.classList.add('hidden');
+
+        if (statusMsg && state.status !== 'evaluating') {
             statusMsg.innerText = amIEbe ? "Ebesin! Sohbeti dinle, kelimeleri tahmin et!" : "Masumsun! Aranızda şifreli konuşun.";
             statusMsg.style.color = 'var(--text-main)';
         }
 
         if (amIEbe) {
-            masumArea.classList.add('hidden');
-            ebeArea.classList.remove('hidden');
-            letterDisplay.innerText = state.targetWord; // Ebe tüm kelimeyi görür
+            masumArea?.classList.add('hidden');
+            ebeArea?.classList.remove('hidden');
+            if (letterDisplay) letterDisplay.innerText = state.targetWord || "???";
         } else {
-            masumArea.classList.remove('hidden');
-            ebeArea.classList.add('hidden');
-            letterDisplay.innerText = state.targetWord.substring(0, state.revealedLetters) + "...";
+            masumArea?.classList.remove('hidden');
+            ebeArea?.classList.add('hidden');
+            const revealed = state.targetWord ? state.targetWord.substring(0, state.revealedLetters) : "";
+            if (letterDisplay) letterDisplay.innerText = revealed ? (revealed + "...") : "...";
         }
     }
 
@@ -468,7 +511,7 @@ class KelimeAviView {
         const scoresDiv = document.getElementById('final-scores');
         if (scoresDiv) {
             scoresDiv.innerHTML = '';
-            const sorted = Object.values(state.players).sort((a,b) => b.score - a.score);
+            const sorted = Object.values(state.players).sort((a, b) => b.score - a.score);
             sorted.forEach((p, index) => {
                 scoresDiv.innerHTML += `<div style="font-size: 1.2rem; margin: 10px 0;">${index+1}. ${window.escapeHtml(p.name)} - <strong>${p.score} Puan</strong></div>`;
             });
@@ -479,20 +522,8 @@ class KelimeAviView {
             const isLocalHost = sessionStorage.getItem('isHost') === 'true';
             if (isLocalHost) {
                 btnBack.style.display = 'inline-block';
-                const waitText = document.getElementById('waiting-rematch-text-kelimeavi');
-                if (waitText) waitText.remove();
             } else {
                 btnBack.style.display = 'none';
-                let waitText = document.getElementById('waiting-rematch-text-kelimeavi');
-                if (!waitText) {
-                    waitText = document.createElement('div');
-                    waitText.id = 'waiting-rematch-text-kelimeavi';
-                    waitText.style.color = 'var(--text-muted)';
-                    waitText.style.marginTop = '1rem';
-                    waitText.style.fontSize = '1.1rem';
-                    waitText.textContent = 'Kurucunun lobiye dönmesi bekleniyor...';
-                    btnBack.parentNode.appendChild(waitText);
-                }
             }
         }
     }
@@ -507,9 +538,9 @@ class KelimeAviView {
     }
 
     showResult(msg) {
-        if(window.showToast) window.showToast(msg, "info");
+        if (window.showToast) window.showToast(msg, "info");
         const gs = document.getElementById('game-status-message');
-        if(gs) {
+        if (gs) {
             gs.innerText = msg;
             gs.style.color = 'var(--warning)';
         }

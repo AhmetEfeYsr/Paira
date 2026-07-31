@@ -187,20 +187,51 @@ class TabuNetworkManager extends BaseGameNetwork {
 
     broadcastState() {
         if (!this.isHostNode) return;
-        const stateCopy = { ...this.engine.state };
-        const currentWord = stateCopy.activeWords && stateCopy.activeWords[stateCopy.wordIndex];
-        delete stateCopy.activeWords; // Optimization
-        stateCopy.currentWord = currentWord || null;
-
-        this.broadcast('SYNC', {
-            state: stateCopy,
-            hostId: this.myId,
-            localTurnEndTime: this.engine.localTurnEndTime,
-            pauseOffset: this.engine.pauseOffset
-        });
         
-        // Let view and lobby manager know
-        this.view.updateUI(this.engine.state, this.isHostNode);
+        const fullStateCopy = { ...this.engine.state };
+        const currentWord = fullStateCopy.activeWords && fullStateCopy.activeWords[fullStateCopy.wordIndex];
+        delete fullStateCopy.activeWords; // Optimization
+
+        const turnId = fullStateCopy.turnId;
+
+        Object.keys(this.connections).forEach(peerId => {
+            const isNarrator = (peerId === turnId);
+            const clientState = JSON.parse(JSON.stringify(fullStateCopy));
+            
+            if (!isNarrator && currentWord && clientState.status === 'playing') {
+                clientState.currentWord = {
+                    ana_kelime: "???",
+                    yasakli_kelimeler: ["???", "???", "???", "???", "???"],
+                    kategori: currentWord.kategori || "Genel",
+                    zorluk: currentWord.zorluk || 10
+                };
+            } else {
+                clientState.currentWord = currentWord || null;
+            }
+
+            this.sendToPeer(peerId, 'SYNC', {
+                state: clientState,
+                hostId: this.myId,
+                localTurnEndTime: this.engine.localTurnEndTime,
+                pauseOffset: this.engine.pauseOffset
+            });
+        });
+
+        // Update local host UI
+        const isHostNarrator = (this.myId === turnId);
+        const hostState = JSON.parse(JSON.stringify(fullStateCopy));
+        if (!isHostNarrator && currentWord && hostState.status === 'playing') {
+            hostState.currentWord = {
+                ana_kelime: "???",
+                yasakli_kelimeler: ["???", "???", "???", "???", "???"],
+                kategori: currentWord.kategori || "Genel",
+                zorluk: currentWord.zorluk || 10
+            };
+        } else {
+            hostState.currentWord = currentWord || null;
+        }
+
+        this.view.updateUI(hostState, this.isHostNode);
         
         const myId = this.myId;
         this.lobbyUI.renderPlayers(this.engine.state.players, myId, (p, isMe) => {

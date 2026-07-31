@@ -7,21 +7,25 @@ class KelimeAviNetwork extends BaseGameNetwork {
             onStateSync: (state) => this.handleStateSync(state),
             onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
             onPlayerLeave: (id) => this.handlePlayerLeave(id),
-            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId),
-            onPeerReady: (id) => {
-                this.view.setMyId(id);
-                this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
-            }
+            onAction: (action, payload, senderId) => this.handleAction(action, payload, senderId)
         });
         
         this.engine = engine;
         this.view = view;
 
+        const initialCode = this.isHostNode ? (sessionStorage.getItem('myId') || sessionStorage.getItem('roomCode') || '') : (this.roomCode || '');
+
         this.lobbyUI = new SharedLobbyUI({
-            roomCode: '',
+            roomCode: initialCode,
             isHost: this.isHostNode,
             onKickPlayer: (id) => this.kickPlayer(id)
         });
+
+        this.onPeerReady = (id) => {
+            this.view.setMyId(id);
+            const codeToSet = this.isHostNode ? id : this.roomCode;
+            this.lobbyUI.setRoomCode(codeToSet);
+        };
 
         if (this.isHostNode) {
             this.engine.onStateChange = (state) => {
@@ -109,11 +113,17 @@ class KelimeAviNetwork extends BaseGameNetwork {
     handleAction(action, payload, senderId) {
         if (!this.isHostNode) return;
 
-        if (action === 'SUBMIT_MASUM') {
+        if (action === 'SUBMIT_EBE_TARGET') {
+            this.engine.handleEbeTargetWord(senderId, payload.word);
+        }
+        else if (action === 'SUBMIT_MASUM') {
             this.engine.handleMasumSubmission(senderId, payload.word);
         }
         else if (action === 'SUBMIT_EBE') {
             this.engine.handleEbeGuesses(senderId, payload.guesses);
+        }
+        else if (action === 'TRIGGER_MATCH') {
+            this.engine.handleTriggerMatch(senderId);
         }
     }
 
@@ -164,11 +174,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.showToast) window.showToast("Oynamak için en az 3 oyuncu gerekiyor!", "warning");
             }
         },
+        onSubmitEbeTargetWord: (word) => {
+            network.sendGameAction('SUBMIT_EBE_TARGET', { word });
+        },
         onSubmitMasum: (word) => {
             network.sendGameAction('SUBMIT_MASUM', { word });
         },
         onSubmitEbe: (guesses) => {
             network.sendGameAction('SUBMIT_EBE', { guesses });
+        },
+        onTriggerMatch: () => {
+            network.sendGameAction('TRIGGER_MATCH', {});
         },
         onBackToLobby: () => {
             if (isHost) engine.backToLobby();
@@ -194,5 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
         clientWaiting?.classList.remove('hidden');
     }
     
-    network.autoInit().catch(err => console.error("Network init failed", err));
+    network.autoInit().then((id) => {
+        const code = isHost ? (network.myId || id) : network.roomCode;
+        if (code && network.lobbyUI) {
+            network.lobbyUI.setRoomCode(code);
+        }
+    }).catch(err => console.error("Network init failed", err));
 });

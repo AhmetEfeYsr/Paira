@@ -164,8 +164,7 @@ class KronoGame {
             round: this.currentRound,
             totalRounds: this.settings.roundCount,
             timeLimit: this.settings.turnDuration,
-            events: selected,
-            correctOrder: sorted.map(e => e.id)
+            events: selected
         };
 
         this.network.send({
@@ -186,7 +185,8 @@ class KronoGame {
         
         // Initial random order is already provided by host in gameData.events
         this.currentRoundEvents = [...gameData.events];
-        this.correctOrder = gameData.correctOrder;
+        const sorted = [...this.currentRoundEvents].sort((a, b) => a.tarih - b.tarih);
+        this.correctOrder = sorted.map(e => e.id);
         
         this.hintsRemaining = 2;
         this.finishedPlayers = 0;
