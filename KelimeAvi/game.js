@@ -83,31 +83,8 @@ class KelimeAviGameEngine {
         this.state.settings.jackpotPts = parseInt(settings.jackpotPts) || 5;
 
         playerIds.forEach(id => this.state.players[id].score = 0);
-        this.state.round = 1;
         
-        this.startNewTurn();
-        return true;
-    }
-
-    startNewTurn() {
-        this.state.submittedWords = {};
-        this.state.ebeGuesses = [];
-        this.state.revealedLetters = 1;
-        this.state.targetWord = '';
-        this.state.status = 'ebe_word_select';
-
-        if (this.renderFrame) {
-            cancelAnimationFrame(this.renderFrame);
-            this.renderFrame = null;
-        }
-        if (this.countdownInterval) {
-            clearInterval(this.countdownInterval);
-            this.countdownInterval = null;
-        }
-
-        const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
-        
-        // Sequential turn rotation so every player becomes Ebe in turn
+        // Rotate Ebe once per GAME SESSION (new game)
         if (this.state.ebeIndex === undefined || this.state.ebeIndex >= playerIds.length - 1) {
             this.state.ebeIndex = 0;
         } else {
@@ -115,14 +92,37 @@ class KelimeAviGameEngine {
         }
         
         this.state.currentEbe = playerIds[this.state.ebeIndex] || playerIds[0];
-
         playerIds.forEach(id => {
             this.state.players[id].role = (id === this.state.currentEbe) ? 'ebe' : 'masum';
         });
 
+        this.state.round = 1;
+        this.state.revealedLetters = 1;
+        this.state.targetWord = '';
+        this.state.submittedWords = {};
+        this.state.ebeGuesses = [];
+        this.state.status = 'ebe_word_select';
+
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.countdownInterval) clearInterval(this.countdownInterval);
+
         this.setState(this.state);
-        
-        // Reset timer display
+        if (this.onTimerTick) this.onTimerTick(this.state.turnDuration);
+        return true;
+    }
+
+    startNextRound() {
+        this.state.submittedWords = {};
+        this.state.ebeGuesses = [];
+        this.state.status = 'playing';
+
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+        this.localEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
+        this.setState(this.state);
+        this.startRenderTimer();
+
         if (this.onTimerTick) {
             this.onTimerTick(this.state.turnDuration);
         }
@@ -290,22 +290,13 @@ class KelimeAviGameEngine {
     handleRoundEndTransition(isJackpot, isEbeWin, isMasumWin) {
         const targetLen = this.state.targetWord ? this.state.targetWord.length : 1;
 
-        if (!isJackpot && !isEbeWin && isMasumWin && this.state.revealedLetters <= targetLen) {
-            this.state.status = 'playing';
-            const left = Math.max(0, this.localEndTime - window.PairaTime.now());
-            this.localEndTime = window.PairaTime.now() + left + (this.state.timeIncrease * 1000);
-            this.state.submittedWords = {};
-            this.state.ebeGuesses = [];
+        if (isJackpot || isEbeWin || this.state.round >= this.state.totalRounds || this.state.revealedLetters > targetLen) {
+            this.state.status = 'finished';
             this.setState(this.state);
-            this.startRenderTimer();
         } else {
-            if (this.state.round >= this.state.totalRounds) {
-                this.state.status = 'finished';
-                this.setState(this.state);
-            } else {
-                this.state.round++;
-                this.startNewTurn();
-            }
+            // Next round of the same game with the SAME Ebe and SAME word (1 more letter revealed)
+            this.state.round++;
+            this.startNextRound();
         }
     }
 
@@ -532,6 +523,17 @@ class KelimeAviView {
         }
 
         ebeTargetArea?.classList.add('hidden');
+
+        // Clear input fields when a new round starts
+        if (state.status === 'playing' && this._lastPlayingRound !== state.round) {
+            this._lastPlayingRound = state.round;
+            const masumInput = document.getElementById('masum-word-input');
+            if (masumInput) masumInput.value = '';
+            [1, 2, 3, 4, 5].forEach(i => {
+                const input = document.getElementById(`ebe-guess-${i}`);
+                if (input) input.value = '';
+            });
+        }
 
         if (statusMsg && state.status !== 'evaluating') {
             statusMsg.innerText = amIEbe ? "Ebesin! Sohbeti dinle, kelimeleri tahmin et!" : "Masumsun! Aranızda şifreli konuşun.";
