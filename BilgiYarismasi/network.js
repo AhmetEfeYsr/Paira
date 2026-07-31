@@ -83,6 +83,9 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
 
     handlePlayerJoin(id, player) {
         if (this.isHostNode) {
+            if (player.oldId && player.oldId !== id && this.engine.state.players[player.oldId]) {
+                delete this.engine.state.players[player.oldId];
+            }
             this.engine.addPlayer(id, player.name, player.isHost || false);
         }
     }

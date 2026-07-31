@@ -75,6 +75,9 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
 
     handlePlayerJoin(id, player) {
         if (this.isHostNode) {
+            if (player.oldId && player.oldId !== id && this.engine.state.players[player.oldId]) {
+                delete this.engine.state.players[player.oldId];
+            }
             this.engine.addPlayer(id, player.name, player.isHost || false);
             this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
             this.broadcast('SYNC_PLAYERS', { players: this.engine.state.players });

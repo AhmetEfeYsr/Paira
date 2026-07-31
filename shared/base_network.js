@@ -46,6 +46,14 @@ class BaseGameNetwork extends window.PeerNetworkManager {
         if (this.isHostNode) {
             // Priority: Explicit roomCode from login, then existing myId, then new generation
             const customId = sessionStorage.getItem('roomCode') || sessionStorage.getItem('myId') || this.generateRoomCode();
+            this.myId = customId;
+            sessionStorage.setItem('myId', customId);
+
+            // Pre-register Host immediately in the engine so UI renders Host with 0ms delay
+            if (this.onPlayerJoin) {
+                this.onPlayerJoin(customId, { name: this.myName, isHost: true });
+            }
+
             return this.init(customId);
         } else {
             if (!this.roomCode) {
@@ -61,12 +69,13 @@ class BaseGameNetwork extends window.PeerNetworkManager {
     }
 
     _handlePeerReady(id) {
+        const oldId = this.myId;
         this.myId = id;
         sessionStorage.setItem('myId', id);
         
-        // Let the game know we are ready
+        // Let the game know we are ready with actual PeerJS ID
         if (this.onPlayerJoin && this.isHostNode) {
-            this.onPlayerJoin(id, { name: this.myName, isHost: true });
+            this.onPlayerJoin(id, { name: this.myName, isHost: true, oldId: oldId });
         }
     }
 

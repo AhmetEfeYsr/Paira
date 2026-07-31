@@ -172,6 +172,9 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
 
     handlePlayerJoin(id, player) {
         if (this.isHostNode) {
+            if (player.oldId && player.oldId !== id && this.engine.state.players[player.oldId]) {
+                delete this.engine.state.players[player.oldId];
+            }
             const state = this.engine.state;
             if (state.players[id]) {
                 state.players[id].name = player.name;
