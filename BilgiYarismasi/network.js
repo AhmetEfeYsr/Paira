@@ -13,21 +13,20 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
         this.engine = engine;
         this.view = view;
         
-        this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.view.setMyId(id);
-            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
-        };
-
-        window.addEventListener('beforeunload', () => {
-            this.leaveRoom();
-        });
+        const initialCode = this.isHostNode ? (sessionStorage.getItem('myId') || sessionStorage.getItem('roomCode') || '') : (this.roomCode || '');
 
         this.lobbyUI = new SharedLobbyUI({
-            roomCode: '',
+            roomCode: initialCode,
             isHost: this.isHostNode,
             onKickPlayer: (id) => this.kickPlayer(id)
         });
+
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            this.view.setMyId(id);
+            const codeToSet = this.isHostNode ? id : this.roomCode;
+            this.lobbyUI.setRoomCode(codeToSet);
+        };
 
         if (this.isHostNode) {
             this.engine.onStateChange = (state) => {

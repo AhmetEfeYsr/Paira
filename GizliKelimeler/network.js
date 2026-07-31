@@ -15,21 +15,24 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
 
         this.engine.isHostNode = this.isHostNode;
 
+        const initialCode = this.isHostNode ? (sessionStorage.getItem('myId') || sessionStorage.getItem('roomCode') || '') : (this.roomCode || '');
+
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: initialCode,
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id),
+            onRoomStart: () => this.startGame()
+        });
+
         this.onPeerReady = (id) => {
             super._handlePeerReady(id);
             this.view.setMyId(id);
-            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
+            const codeToSet = this.isHostNode ? id : this.roomCode;
+            this.lobbyUI.setRoomCode(codeToSet);
         };
 
         window.addEventListener('beforeunload', () => {
             this.leaveRoom();
-        });
-
-        this.lobbyUI = new SharedLobbyUI({
-            roomCode: '',
-            isHost: this.isHostNode,
-            onKickPlayer: (id) => this.kickPlayer(id),
-            onRoomStart: () => this.startGame()
         });
 
         // Link Engine events to Network Broadcasts (Host only)

@@ -14,17 +14,20 @@ class CizBilNetwork extends BaseGameNetwork {
         this.view = view;
         this.wasChoosing = false;
         
-        this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.view.setMyId(id);
-            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
-        };
+        const initialCode = this.isHostNode ? (sessionStorage.getItem('myId') || sessionStorage.getItem('roomCode') || '') : (this.roomCode || '');
 
         this.lobbyUI = new SharedLobbyUI({
-            roomCode: '',
+            roomCode: initialCode,
             isHost: this.isHostNode,
             onKickPlayer: (id) => this.kickPlayer(id)
         });
+
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            this.view.setMyId(id);
+            const codeToSet = this.isHostNode ? id : this.roomCode;
+            this.lobbyUI.setRoomCode(codeToSet);
+        };
 
         window.addEventListener('beforeunload', () => {
             this.leaveRoom();
