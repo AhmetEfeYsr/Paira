@@ -288,13 +288,11 @@ class KelimeAviGameEngine {
     }
 
     handleRoundEndTransition(isJackpot, isEbeWin, isMasumWin) {
-        const targetLen = this.state.targetWord ? this.state.targetWord.length : 1;
-
-        if (isJackpot || isEbeWin || this.state.round >= this.state.totalRounds || this.state.revealedLetters > targetLen) {
+        if (this.state.round >= this.state.totalRounds) {
             this.state.status = 'finished';
             this.setState(this.state);
         } else {
-            // Next round of the same game with the SAME Ebe and SAME word (1 more letter revealed)
+            // ALWAYS continue to the next round of the match with the SAME Ebe and SAME word
             this.state.round++;
             this.startNextRound();
         }
