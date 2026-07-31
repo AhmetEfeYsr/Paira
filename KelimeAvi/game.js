@@ -96,14 +96,36 @@ class KelimeAviGameEngine {
         this.state.targetWord = '';
         this.state.status = 'ebe_word_select';
 
+        if (this.renderFrame) {
+            cancelAnimationFrame(this.renderFrame);
+            this.renderFrame = null;
+        }
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+            this.countdownInterval = null;
+        }
+
         const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
-        this.state.currentEbe = playerIds[Math.floor(Math.random() * playerIds.length)];
+        
+        // Sequential turn rotation so every player becomes Ebe in turn
+        if (this.state.ebeIndex === undefined || this.state.ebeIndex >= playerIds.length - 1) {
+            this.state.ebeIndex = 0;
+        } else {
+            this.state.ebeIndex++;
+        }
+        
+        this.state.currentEbe = playerIds[this.state.ebeIndex] || playerIds[0];
 
         playerIds.forEach(id => {
             this.state.players[id].role = (id === this.state.currentEbe) ? 'ebe' : 'masum';
         });
 
         this.setState(this.state);
+        
+        // Reset timer display
+        if (this.onTimerTick) {
+            this.onTimerTick(this.state.turnDuration);
+        }
     }
 
     handleEbeTargetWord(peerId, word) {
@@ -120,6 +142,11 @@ class KelimeAviGameEngine {
 
         this.setState(this.state);
         this.startRenderTimer();
+
+        // Immediately sync initial timer value to all clients
+        if (this.onTimerTick) {
+            this.onTimerTick(this.state.turnDuration);
+        }
     }
 
     handleMasumSubmission(peerId, word) {
@@ -472,6 +499,21 @@ class KelimeAviView {
         }
 
         if (state.status === 'ebe_word_select') {
+            // Clear input fields when entering ebe_word_select for new turn
+            if (this._lastEbeSelectKey !== `${state.round}_${state.currentEbe}`) {
+                this._lastEbeSelectKey = `${state.round}_${state.currentEbe}`;
+                const ebeTargetInput = document.getElementById('ebe-target-input');
+                if (ebeTargetInput) ebeTargetInput.value = '';
+
+                const masumInput = document.getElementById('masum-word-input');
+                if (masumInput) masumInput.value = '';
+
+                [1, 2, 3, 4, 5].forEach(i => {
+                    const input = document.getElementById(`ebe-guess-${i}`);
+                    if (input) input.value = '';
+                });
+            }
+
             if (amIEbe) {
                 ebeTargetArea?.classList.remove('hidden');
                 masumArea?.classList.add('hidden');
@@ -485,6 +527,7 @@ class KelimeAviView {
                 if (statusMsg) statusMsg.innerText = "Ebe gizli kelimesini belirliyor...";
                 if (letterDisplay) letterDisplay.innerText = "Ebe Kelime Seçiyor...";
             }
+            this.updateTimer(state.turnDuration || 45);
             return;
         }
 
