@@ -7,6 +7,13 @@ class NetworkManager extends window.PeerNetworkManager {
         super({
             onPeerReady: (id) => {
                 console.log('Peer connected with ID:', id);
+                const roomCodeToSet = this.isHost ? id : this.roomCode;
+                const displayEl = document.getElementById('display-room-code');
+                if (displayEl) {
+                    displayEl.dataset.code = roomCodeToSet;
+                }
+                sessionStorage.setItem('roomCode', roomCodeToSet);
+
                 this.players[this.myId] = {
                     id: this.myId,
                     name: this.username,

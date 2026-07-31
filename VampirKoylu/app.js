@@ -67,6 +67,12 @@ function initNetwork() {
     const checkReady = setInterval(() => {
         if (network.peer && network.peer.id) {
             myId = network.myId;
+            const displayEl = document.getElementById('display-room-code');
+            const codeToSet = isHost ? myId : roomCode;
+            if (displayEl) {
+                displayEl.dataset.code = codeToSet;
+            }
+            sessionStorage.setItem('roomCode', codeToSet);
             if (window.gameScene) window.gameScene.setLocalPlayer(myId);
             clearInterval(checkReady);
         }

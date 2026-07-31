@@ -103,11 +103,12 @@ class TabuNetworkManager extends BaseGameNetwork {
     _handlePeerReady(id) {
         super._handlePeerReady(id);
         this.view.setMyId(id);
+        const codeToSet = this.isHostNode ? id : this.roomCode;
         if (this.isHostNode) {
             this.roomCode = id; // Sync roomCode with actual PeerJS ID
-            this.lobbyUI.setRoomCode(id);
-            this.view.updateUI(this.engine.state, this.isHostNode);
         }
+        this.lobbyUI.setRoomCode(codeToSet);
+        this.view.updateUI(this.engine.state, this.isHostNode);
     }
 
     handlePlayerJoin(peerId, payload) {

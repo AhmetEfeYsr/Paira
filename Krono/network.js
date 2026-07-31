@@ -47,18 +47,23 @@ class KronoNetwork extends BaseGameNetwork {
     }
 
     setupMultiplayerMode() {
+        const initialCode = this.isHostNode ? (sessionStorage.getItem('myId') || sessionStorage.getItem('roomCode') || '') : (this.roomCode || '');
+
+        this.lobbyUI = new SharedLobbyUI({
+            roomCode: initialCode,
+            isHost: this.isHostNode,
+            onKickPlayer: (id) => this.kickPlayer(id),
+            onRoomStart: () => {
+                this.startGame();
+            }
+        });
+
         this.onPeerReady = (id) => {
             super._handlePeerReady(id);
             this.game.myId = id;
-            
             if (this.isHostNode) {
-                this.game.players = [{
-                    id: id,
-                    name: this.myName,
-                    score: 0,
-                    isHost: true,
-                    status: 'ready'
-                }];
+                const hostPlayer = Object.values(this.game.players).find(p => p.isHost);
+                if (hostPlayer) hostPlayer.id = id;
                 this.game.updateLobbyUI();
             } else {
                 this.game.players = [{
@@ -71,20 +76,12 @@ class KronoNetwork extends BaseGameNetwork {
                 this.game.updateLobbyUI();
             }
 
-            this.lobbyUI.setRoomCode(this.isHostNode ? id : this.roomCode);
+            const codeToSet = this.isHostNode ? id : this.roomCode;
+            this.lobbyUI.setRoomCode(codeToSet);
         };
 
         window.addEventListener('beforeunload', () => {
             this.leaveRoom();
-        });
-
-        this.lobbyUI = new SharedLobbyUI({
-            roomCode: '',
-            isHost: this.isHostNode,
-            onKickPlayer: (id) => this.kickPlayer(id),
-            onRoomStart: () => {
-                this.startGame();
-            }
         });
 
         // Hide settings if not host
