@@ -45,9 +45,8 @@
                 <section class="settings-panel card custom-scrollbar" id="host-settings" style="overflow-y: auto;">
                     <h3 style="border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 12px;">Oyun Ayarları</h3>
                     <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 15px; margin-bottom: 1rem;">
-                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="45" min="20" max="180"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Toplam Tur</label><input type="number" id="round-count" value="5" min="1" max="20"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Süre Artışı (Sn)</label><input type="number" id="time-increase" value="15" min="0" max="60" title="Masumlar bildikçe süre ne kadar artsın?"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Tur Süresi (Sn)</label><input type="number" id="turn-duration" value="45" min="15" max="180"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Ebe Dönüş Turu</label><input type="number" id="round-count" value="1" min="1" max="5" title="Herkes kaç kez Ebe olsun?"></div>
                     </div>
 
                     <!-- Gelişmiş Ayarlar (Toggle) -->
@@ -55,8 +54,8 @@
 
                     <div id="advanced-settings" class="settings-grid hidden" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--code-bg); padding: 15px; border-radius: 10px;">
                         <div class="form-group" style="margin-bottom: 0;"><label>Ebe Avlarsa Puanı</label><input type="number" id="pts-ebe-win" value="2" min="1" max="10"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Masum Eşleşme Puanı</label><input type="number" id="pts-masum-win" value="1" min="1" max="10"></div>
-                        <div class="form-group" style="margin-bottom: 0;"><label>Jackpot Puanı</label><input type="number" id="pts-jackpot" value="5" min="1" max="20"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Masum Genel Puanı</label><input type="number" id="pts-masum-win" value="1" min="1" max="10"></div>
+                        <div class="form-group" style="margin-bottom: 0;"><label>Eşleşen Ekstra Puan</label><input type="number" id="pts-masum-extra" value="1" min="1" max="10"></div>
                     </div>
 
                     <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 15px; letter-spacing: 1px;">Oyunu Başlat</button>

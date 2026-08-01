@@ -22,9 +22,13 @@ class KelimeAviNetwork extends BaseGameNetwork {
         });
 
         this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
             this.view.setMyId(id);
             const codeToSet = this.isHostNode ? id : this.roomCode;
             this.lobbyUI.setRoomCode(codeToSet);
+            if (this.isHostNode && this.engine && this.engine.state) {
+                this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            }
         };
 
         if (this.isHostNode) {
@@ -87,6 +91,7 @@ class KelimeAviNetwork extends BaseGameNetwork {
         Object.keys(this.connections).forEach(peerId => {
             const isEbe = (peerId === fullState.currentEbe);
             const safeState = JSON.parse(JSON.stringify(fullState));
+            safeState.targetWordLength = fullState.targetWord ? fullState.targetWord.length : 0;
             
             if (!isEbe && safeState.status === 'playing' && safeState.targetWord) {
                 safeState.targetWord = safeState.targetWord.substring(0, safeState.revealedLetters);
@@ -104,12 +109,16 @@ class KelimeAviNetwork extends BaseGameNetwork {
                 delete this.engine.state.players[player.oldId];
             }
             this.engine.addPlayer(id, player.name, player.isHost || false);
+            this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.broadcastCensoredState();
         }
     }
 
     handlePlayerLeave(id) {
         if (this.isHostNode) {
             this.engine.removePlayer(id);
+            this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.broadcastCensoredState();
         }
     }
 
