@@ -85,7 +85,7 @@ class KelimeAviGameEngine {
         const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
         if (playerIds.length < 3) return false;
 
-        this.state.totalRounds = parseInt(settings.totalRounds) || 1;
+        this.state.totalRounds = parseInt(settings.totalRounds) || 4;
         this.state.turnDuration = parseInt(settings.turnDuration) || 45;
         this.state.settings.ebeWinPts = parseInt(settings.ebeWinPts) || 2;
         this.state.settings.masumWinPts = parseInt(settings.masumWinPts) || 1;
@@ -108,11 +108,6 @@ class KelimeAviGameEngine {
         }
 
         if (this.state.ebeIndex >= playerIds.length) {
-            this.state.ebeIndex = 0;
-            this.state.round++;
-        }
-
-        if (this.state.round > this.state.totalRounds) {
             this.state.status = 'finished';
             this.setState(this.state);
             return;
@@ -123,11 +118,13 @@ class KelimeAviGameEngine {
             this.state.players[id].role = (id === this.state.currentEbe) ? 'ebe' : 'masum';
         });
 
+        this.state.round = 1;
         this.state.revealedLetters = 1;
         this.state.targetWord = '';
         this.state.targetWordLength = 0;
         this.state.submittedWords = {};
         this.state.ebeGuesses = [];
+        this.state.failedAttempts = 0;
         this.state.status = 'ebe_word_select';
 
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
@@ -340,10 +337,15 @@ class KelimeAviGameEngine {
 
         setTimeout(() => {
             if (isTurnOver) {
-                this.state.failedAttempts = 0;
-                this.advanceToNextTurn();
+                this.advanceToNextEbe();
             } else {
-                this.continueCurrentTurnRound();
+                this.state.round++;
+                if (this.state.round > this.state.totalRounds) {
+                    if (this.onShowResult) this.onShowResult(`Bu Ebe için toplam ${this.state.totalRounds} tur tamamlandı! Yeni Ebe'ye geçiliyor...`);
+                    setTimeout(() => this.advanceToNextEbe(), 3000);
+                } else {
+                    this.continueCurrentTurnRound();
+                }
             }
         }, 4000);
     }
@@ -357,7 +359,7 @@ class KelimeAviGameEngine {
         this.startRenderTimer();
     }
 
-    advanceToNextTurn() {
+    advanceToNextEbe() {
         this.state.ebeIndex++;
         this.startTurnForEbe();
     }
@@ -368,7 +370,7 @@ class KelimeAviGameEngine {
         this.setState(this.state);
         if (this.onShowResult) this.onShowResult(reasonMsg);
         setTimeout(() => {
-            this.advanceToNextTurn();
+            this.advanceToNextEbe();
         }, 4000);
     }
 
@@ -544,7 +546,7 @@ class KelimeAviView {
 
         const roundInd = document.getElementById('round-indicator');
         if (roundInd) {
-            roundInd.innerText = `EBE: ${ebeName} (${currentEbeNum} / ${totalPlayers})`;
+            roundInd.innerText = `EBE: ${ebeName} (${currentEbeNum} / ${totalPlayers}) • Tur ${state.round} / ${state.totalRounds}`;
         }
 
         const ebeTargetArea = document.getElementById('ebe-target-select-area');
