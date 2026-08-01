@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Ajan Kelimeler - Online Ajan ve Kelime Oyunu | Paira Games</title>
+    <title>Gizli Kelimeler - Online Kelime ve Tahmin Oyunu | Paira Games</title>
     <script src="../shared/shared.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -113,11 +113,11 @@
                 </div>
             </header>
 
-            <div class="game-layout" style="display: flex; flex-direction: column; width: 100%;">
-                <main class="play-area" style="overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <div class="game-layout" style="display: flex; flex-direction: column; width: 100%; flex: 1; min-height: 0;">
+                <main class="play-area custom-scrollbar" style="overflow-y: auto; width: 100%; display: flex; flex-direction: column; align-items: center; flex: 1; min-height: 0;">
 
                     <!-- CLUE AREA -->
-                    <div class="clue-area glass-panel" id="clue-area" style="width: 100%; max-width: 1200px; box-sizing: border-box; margin-bottom: 1rem;">
+                    <div class="clue-area" id="clue-area" style="width: 100%; max-width: 1200px; box-sizing: border-box; margin-bottom: 1rem;">
                         <div id="clue-input-section" class="hidden" style="width: 100%; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
                             <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20" style="margin: 0; min-width: 200px; flex: 1; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
                             <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px; margin: 0; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
@@ -164,8 +164,8 @@
     </main>
 
     <div class="game-seo-info">
-        <h2>Paira Ajan Kelimeler Hakkında</h2>
-        <p>Ajan Kelimeler, arkadaşlarınızla veya ailenizle oynayabileceğiniz, strateji ve kelime bilgisini bir araya getiren heyecan verici bir çevrimiçi masa oyunudur. Popüler Codenames oyunundan esinlenen bu yapım, oyuncuları iki ana takıma ayırarak zeka dolu bir rekabete davet eder. Oyunda temel amaç, kendi takımınıza ait gizli kelimeleri, rakip takımdan önce bulmaktır. Oyunun başında her takımdan bir kişi 'Ajan' (Spymaster) olarak seçilir, diğer oyuncular ise 'Tahminci' rolünü üstlenir. Oyun tahtası üzerinde rastgele dizilmiş kelimeler bulunur ve her kelimenin kime ait olduğu sadece Ajanlar tarafından bilinir. Ajanlar, takımlarına kendi renklerindeki kelimeleri buldurmak için tek kelimelik bir ipucu ve bu ipucunun kaç kelimeyle bağlantılı olduğunu belirten bir sayı verirler. Örneğin, 'Meyve' ve '2' diyerek tahtadaki 'Elma' ve 'Armut' kelimelerini işaret edebilirler. Tahminciler, aldıkları bu kısıtlı bilgiyle tahtadaki doğru kelimeleri seçmeye çalışırlar. Ancak çok dikkatli olmaları gerekir; çünkü tahtada rakip takımın kelimeleri, tarafsız kelimeler ve seçildiği an oyunu anında kaybettiren bir 'Suikastçı' kelimesi bulunur. Yanlış seçimler sıranın rakibe geçmesine veya oyunun aniden sonlanmasına neden olabilir. Ajan Kelimeler, sadece bir kelime bulma oyunu değil, aynı zamanda derin bir psikolojik ve stratejik mücadeledir. Takım arkadaşlarınızın nasıl düşündüğünü anlamak ve Ajanın verdiği ipuçlarını doğru analiz etmek başarının anahtarıdır. Farklı zorluk seviyeleri, geniş kelime havuzu ve hızlı oynanış yapısıyla Ajan Kelimeler, her yaştan oyuncu için eğlenceli ve öğretici bir deneyim sunar. Şimdi stratejinizi belirleyin, ipuçlarını takip edin ve takımınızı zafere taşıyın!</p>
+        <h2>Paira Gizli Kelimeler Hakkında</h2>
+        <p>Gizli Kelimeler, arkadaşlarınızla veya ailenizle oynayabileceğiniz, strateji ve kelime bilgisini bir araya getiren heyecan verici bir çevrimiçi masa oyunudur. Popüler Codenames oyunundan esinlenen bu yapım, oyuncuları iki ana takıma ayırarak zeka dolu bir rekabete davet eder. Oyunda temel amaç, kendi takımınıza ait gizli kelimeleri, rakip takımdan önce bulmaktır. Oyunun başında her takımdan bir kişi 'Ajan' (Spymaster) olarak seçilir, diğer oyuncular ise 'Tahminci' rolünü üstlenir. Oyun tahtası üzerinde rastgele dizilmiş kelimeler bulunur ve her kelimenin kime ait olduğu sadece Ajanlar tarafından bilinir. Ajanlar, takımlarına kendi renklerindeki kelimeleri buldurmak için tek kelimelik bir ipucu ve bu ipucunun kaç kelimeyle bağlantılı olduğunu belirten bir sayı verirler. Örneğin, 'Meyve' ve '2' diyerek tahtadaki 'Elma' ve 'Armut' kelimelerini işaret edebilirler. Tahminciler, aldıkları bu kısıtlı bilgiyle tahtadaki doğru kelimeleri seçmeye çalışırlar. Ancak çok dikkatli olmaları gerekir; çünkü tahtada rakip takımın kelimeleri, tarafsız kelimeler ve seçildiği an oyunu anında kaybettiren bir 'Suikastçı' kelimesi bulunur. Yanlış seçimler sıranın rakibe geçmesine veya oyunun aniden sonlanmasına neden olabilir. Gizli Kelimeler, sadece bir kelime bulma oyunu değil, aynı zamanda derin bir psikolojik ve stratejik mücadeledir. Takım arkadaşlarınızın nasıl düşündüğünü anlamak ve Ajanın verdiği ipuçlarını doğru analiz etmek başarının anahtarıdır. Farklı zorluk seviyeleri, geniş kelime havuzu ve hızlı oynanış yapısıyla Gizli Kelimeler, her yaştan oyuncu için eğlenceli ve öğretici bir deneyim sunar. Şimdi stratejinizi belirleyin, ipuçlarını takip edin ve takımınızı zafere taşıyın!</p>
     </div>
 
     <footer class="app-footer">

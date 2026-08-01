@@ -1,5 +1,14 @@
 /* Custom Gizli Kelimeler Styles */
 
+:root {
+    --team-a-color: #3b82f6;
+    --team-a-bg: rgba(59, 130, 246, 0.25);
+    --team-b-color: #ef4444;
+    --team-b-bg: rgba(239, 68, 68, 0.25);
+    --neutral-color: #94a3b8;
+    --assassin-color: #1e293b;
+}
+
 .clue-area {
     width: 100%;
     max-width: 1200px;
@@ -8,7 +17,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 80px;
+    min-height: 60px;
+    background: var(--card-bg);
+    border: var(--glass-border);
+    border-radius: 14px;
 }
 
 #clue-input-section, #clue-display-section {
@@ -44,8 +56,7 @@
     gap: clamp(6px, 1.5vw, 12px);
     width: 100%;
     max-width: 900px; 
-    margin: 0 auto; 
-    grid-auto-rows: 1fr;
+    margin: 0 auto;
 }
 
 .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
@@ -59,7 +70,7 @@
     padding: clamp(0.5rem, 1vw, 1rem) 0.5rem;
     text-align: center;
     font-weight: 800;
-    font-size: clamp(0.7rem, 1.5vw, 1.1rem);
+    font-size: clamp(0.75rem, 1.5vw, 1.1rem);
     color: var(--text-main);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -69,12 +80,12 @@
     justify-content: center;
     word-break: break-word;
     overflow-wrap: anywhere;
-    min-height: clamp(50px, 8vh, 90px); 
+    min-height: clamp(55px, 8vh, 90px); 
     min-width: 0;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     position: relative;
     z-index: 10;
-    aspect-ratio: 2 / 1; 
+    aspect-ratio: 2.2 / 1; 
 }
 
 .board-card:hover {
@@ -129,7 +140,7 @@
 .board-card.team-a.revealed { background: var(--team-a-color); border-color: var(--team-a-color); color: #ffffff !important; }
 .board-card.team-b.revealed { background: var(--team-b-color); border-color: var(--team-b-color); color: #ffffff !important; }
 .board-card.neutral.revealed { background: var(--neutral-color); border-color: var(--neutral-color); color: #ffffff !important; }
-.board-card.assassin.revealed { background: var(--assassin-color); border-color: var(--text-main); color: var(--team-a-color) !important; }
+.board-card.assassin.revealed { background: var(--assassin-color); border-color: #f87171; color: #f87171 !important; }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
@@ -138,3 +149,4 @@
     .game-board { gap: 6px; }
     .board-container { align-items: stretch; }
 }
+
