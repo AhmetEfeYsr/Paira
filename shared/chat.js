@@ -1,34 +1,45 @@
 /**
  * ChatListener - Unified Twitch and Kick chat listener for streamer vs chat games.
- *
- * Twitch: Uses native WebSockets (TMI).
- * Kick: Fetches chatroom and pusher info from a custom Cloud Function endpoint to bypass Cloudflare,
- *       then uses native WebSockets to connect to Pusher.
+ * Supports single platform (Twitch or Kick) OR Dual/Cross-Platform mode (Hem Twitch Hem Kick!).
  */
 class ChatListener {
     constructor(platform, channel, onMessageCallback, onErrorCallback = null) {
-        this.platform = platform.toLowerCase();
-        this.channel = channel.toLowerCase();
+        this.platform = (platform || 'twitch').toLowerCase();
+        
+        if (typeof channel === 'object' && channel !== null) {
+            this.twitchChannel = (channel.twitch || '').toLowerCase();
+            this.kickChannel = (channel.kick || '').toLowerCase();
+            this.channel = this.twitchChannel || this.kickChannel;
+        } else {
+            this.channel = (channel || '').toLowerCase();
+            this.twitchChannel = this.channel;
+            this.kickChannel = this.channel;
+        }
+
         this.onMessage = onMessageCallback;
         this.onError = onErrorCallback;
-        this.ws = null;
+
+        this.twitchWs = null;
+        this.kickWs = null;
+        this.ws = null; // fallback reference
         this.isStopped = false;
         this.reconnectTimeout = null;
 
-        // IMPORTANT: Replace this with your deployed Google Cloud Function URL
-        this.kickCloudFunctionUrl = 'https://us-central1-precise-rune-465721-f3.cloudfunctions.net/getKickInfo';
-        // Cloudflare Worker Proxy URL (0ms 100% uptime Cloudflare Edge Worker)
         this.kickWorkerUrl = 'https://canimablam.ahmetefeyasar07.workers.dev';
     }
 
     start() {
         this.isStopped = false;
         if (this.platform === 'twitch') {
-            this.startTwitch();
+            this.startTwitch(this.twitchChannel);
         } else if (this.platform === 'kick') {
-            this.startKick();
+            this.startKick(this.kickChannel);
+        } else if (this.platform === 'both' || this.platform === 'crossplatform') {
+            console.log(`[ChatListener] Starting Dual Cross-Platform mode (Twitch: ${this.twitchChannel}, Kick: ${this.kickChannel})...`);
+            if (this.twitchChannel) this.startTwitch(this.twitchChannel);
+            if (this.kickChannel) this.startKick(this.kickChannel);
         } else {
-            this.handleError('Unsupported platform. Use "twitch" or "kick".');
+            this.handleError('Desteklenmeyen platform. "twitch", "kick" veya "both" kullanın.');
         }
     }
 
@@ -38,13 +49,37 @@ class ChatListener {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
+        if (this.twitchPingInterval) {
+            clearInterval(this.twitchPingInterval);
+            this.twitchPingInterval = null;
+        }
+        if (this.kickPingInterval) {
+            clearInterval(this.kickPingInterval);
+            this.kickPingInterval = null;
+        }
+        if (this.twitchWs) {
+            this.twitchWs.close();
+            this.twitchWs = null;
+        }
+        if (this.kickWs) {
+            this.kickWs.close();
+            this.kickWs = null;
         }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
+        }
+    }
+
+    updateStatusConnected() {
+        const status = document.getElementById('chat-status');
+        if (status) {
+            if (this.platform === 'both' || this.platform === 'crossplatform') {
+                status.textContent = '• Twitch & Kick Bağlı';
+            } else {
+                status.textContent = '• Bağlı';
+            }
+            status.style.color = 'var(--success)';
         }
     }
 
@@ -63,35 +98,32 @@ class ChatListener {
         }
     }
 
-    startTwitch() {
-        this.stop();
-        const cleanChannel = this.channel.trim().toLowerCase().replace(/^#/, '');
+    startTwitch(targetChannel = this.twitchChannel) {
+        if (!targetChannel) return;
+        const cleanChannel = targetChannel.trim().toLowerCase().replace(/^#/, '');
         console.log(`[Twitch] Connecting to ${cleanChannel} chat...`);
-        this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+        const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+        this.twitchWs = ws;
+        this.ws = ws;
 
-        this.ws.onopen = () => {
+        ws.onopen = () => {
             console.log(`[Twitch] Connected to #${cleanChannel} chat.`);
-            const status = document.getElementById('chat-status');
-            if (status) {
-                status.textContent = '• Bağlı';
-                status.style.color = 'var(--success)';
-            }
-            this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
-            this.ws.send('PASS SCHMOOPIIE');
-            this.ws.send(`NICK justinfan${Math.floor(Math.random() * 80000)}`);
-            this.ws.send(`JOIN #${cleanChannel}`);
+            this.updateStatusConnected();
+            ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+            ws.send('PASS SCHMOOPIIE');
+            ws.send(`NICK justinfan${Math.floor(Math.random() * 80000)}`);
+            ws.send(`JOIN #${cleanChannel}`);
             if (this.onOpen) this.onOpen();
 
-            // Client keep-alive ping interval (every 30s)
-            if (this.pingInterval) clearInterval(this.pingInterval);
-            this.pingInterval = setInterval(() => {
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send('PING :tmi.twitch.tv');
+            if (this.twitchPingInterval) clearInterval(this.twitchPingInterval);
+            this.twitchPingInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send('PING :tmi.twitch.tv');
                 }
             }, 30000);
         };
 
-        this.ws.onmessage = (event) => {
+        ws.onmessage = (event) => {
             const rawMessage = event.data;
             const lines = rawMessage.split('\r\n');
 
@@ -99,7 +131,7 @@ class ChatListener {
                 if (!message) continue;
 
                 if (message.startsWith('PING')) {
-                    this.ws.send('PONG :tmi.twitch.tv');
+                    ws.send('PONG :tmi.twitch.tv');
                 } else if (message.includes('PRIVMSG')) {
                     const usernameMatch = message.match(/display-name=([^;]+)/) || message.match(/:(.*?)!/);
                     let username = usernameMatch ? usernameMatch[1] : 'Unknown';
@@ -112,39 +144,40 @@ class ChatListener {
                     const content = contentMatch ? contentMatch[1].trim() : '';
 
                     if (content && this.onMessage) {
-                        this.onMessage(username, content);
+                        const prefix = (this.platform === 'both' || this.platform === 'crossplatform') ? '[Twitch] ' : '';
+                        this.onMessage(prefix + username, content, 'twitch');
                     }
                 }
             }
         };
 
-        this.ws.onerror = (error) => {
-            this.handleError('[Twitch] WebSocket hatası oluştu');
+        ws.onerror = (error) => {
+            console.error('[Twitch] WebSocket error:', error);
         };
 
-        this.ws.onclose = () => {
+        ws.onclose = () => {
             console.log('[Twitch] Disconnected.');
             if (this.onClose) this.onClose();
 
             if (!this.isStopped) {
                 const status = document.getElementById('chat-status');
                 if (status) {
-                    status.textContent = '• Yeniden Bağlanıyor...';
+                    status.textContent = '• Twitch Yeniden Bağlanıyor...';
                     status.style.color = 'var(--warning)';
                 }
                 this.reconnectTimeout = setTimeout(() => {
                     if (!this.isStopped) {
                         console.log('[Twitch] Reconnecting...');
-                        this.startTwitch();
+                        this.startTwitch(targetChannel);
                     }
                 }, 3000);
             }
         };
     }
 
-    async startKick() {
-        this.stop();
-        const cleanChannel = this.channel.trim().toLowerCase();
+    async startKick(targetChannel = this.kickChannel) {
+        if (!targetChannel) return;
+        const cleanChannel = targetChannel.trim().toLowerCase();
         console.log(`[Kick] Fetching channel data client-side for ${cleanChannel}...`);
 
         const targets = [];
@@ -176,24 +209,13 @@ class ChatListener {
             {
                 url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/' + cleanChannel)}`,
                 isWrapper: true
-            },
-            {
-                url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`,
-                isWrapper: true
-            },
-            {
-                url: `https://corsproxy.io/?https://kick.com/api/v2/channels/${cleanChannel}`,
-                isWrapper: false
-            },
-            {
-                url: `${this.kickCloudFunctionUrl}?channel=${cleanChannel}`,
-                isWrapper: false
             }
         );
 
         const fetchTarget = async (target) => {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4000);
+            const timer = setTimeout(() => controller.abort(), 6000);
+
             try {
                 const response = await fetch(target.url, { signal: controller.signal });
                 clearTimeout(timer);
@@ -252,25 +274,20 @@ class ChatListener {
         try {
             const result = await Promise.any(targets.map(target => fetchTarget(target)));
             console.log(`[Kick] Resolved Chatroom ID: ${result.chatroomId}, Key: ${result.pusherKey}, Cluster: ${result.pusherCluster}`);
-            this.connectToKickPusher(result.pusherKey, result.pusherCluster, result.chatroomId);
+            this.connectToKickPusher(result.pusherKey, result.pusherCluster, result.chatroomId, cleanChannel);
         } catch (e) {
             this.handleError(`[Kick] "${cleanChannel}" için Kick kanal bilgileri alınamadı. Lütfen kanal adını kontrol edin.`);
         }
     }
 
-    connectToKickPusher(key, cluster, chatroomId) {
-        // Build Pusher connection URL
+    connectToKickPusher(key, cluster, chatroomId, targetChannel = this.kickChannel) {
         const pusherUrl = `wss://ws-${cluster}.pusher.com/app/${key}?protocol=7&client=js&version=8.3.0&flash=false`;
-        this.ws = new WebSocket(pusherUrl);
+        const ws = new WebSocket(pusherUrl);
+        this.kickWs = ws;
 
-        this.ws.onopen = () => {
-            console.log(`[Kick] Connected to Pusher for ${this.channel} (Chatroom ID: ${chatroomId}).`);
-            const status = document.getElementById('chat-status');
-            if (status) {
-                status.textContent = '• Bağlı';
-                status.style.color = 'var(--success)';
-            }
-            // Subscribe to the chatroom channel
+        ws.onopen = () => {
+            console.log(`[Kick] Connected to Pusher for ${targetChannel} (Chatroom ID: ${chatroomId}).`);
+            this.updateStatusConnected();
             const subscribeMsg = JSON.stringify({
                 event: 'pusher:subscribe',
                 data: {
@@ -278,62 +295,52 @@ class ChatListener {
                     channel: `chatrooms.${chatroomId}.v2`
                 }
             });
-            this.ws.send(subscribeMsg);
+            ws.send(subscribeMsg);
             if (this.onOpen) this.onOpen();
 
-            // Client keep-alive ping interval (every 20s)
-            if (this.pingInterval) clearInterval(this.pingInterval);
-            this.pingInterval = setInterval(() => {
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+            if (this.kickPingInterval) clearInterval(this.kickPingInterval);
+            this.kickPingInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
                 }
             }, 20000);
         };
 
-        this.ws.onmessage = (event) => {
+        ws.onmessage = (event) => {
             try {
-                const msg = JSON.parse(event.data);
+                const message = JSON.parse(event.data);
 
-                // Handle Pusher keep-alive ping
-                if (msg.event === 'pusher:ping') {
-                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                        this.ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
-                    }
-                    return;
-                }
-
-                if (msg.event && (msg.event.includes('ChatMessageEvent') || msg.event === 'App\\Events\\ChatMessageEvent')) {
-                    const chatData = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
-                    const username = chatData.sender?.username || chatData.sender?.slug || chatData.user?.username || 'Anonim';
-                    const content = chatData.content;
+                if (message.event === 'App\\Events\\ChatMessageEvent') {
+                    const data = JSON.parse(message.data);
+                    const username = data.sender?.username || 'Unknown';
+                    const content = data.content || '';
 
                     if (content && this.onMessage) {
-                        this.onMessage(username, content);
+                        const prefix = (this.platform === 'both' || this.platform === 'crossplatform') ? '[Kick] ' : '';
+                        this.onMessage(prefix + username, content, 'kick');
                     }
                 }
-            } catch (e) {
-                // Ignore parse errors
-            }
+            } catch (e) {}
         };
 
-        this.ws.onerror = (error) => {
-            this.handleError('[Kick] Pusher WebSocket error');
+        ws.onerror = (error) => {
+            console.error('[Kick] WebSocket error:', error);
         };
 
-        this.ws.onclose = () => {
-            console.log('[Kick] Disconnected from Pusher.');
+        ws.onclose = () => {
+            console.log('[Kick] Disconnected.');
             if (this.onClose) this.onClose();
 
-            if (!this.isStopped && chatroomId) {
+            if (!this.isStopped) {
                 const status = document.getElementById('chat-status');
                 if (status) {
-                    status.textContent = '• Yeniden Bağlanıyor...';
+                    status.textContent = '• Kick Yeniden Bağlanıyor...';
                     status.style.color = 'var(--warning)';
                 }
                 this.reconnectTimeout = setTimeout(() => {
                     if (!this.isStopped) {
-                        console.log('[Kick] Reconnecting to Pusher...');
-                        this.connectToKickPusher(key, cluster, chatroomId);
+                        console.log('[Kick] Reconnecting...');
+                        this.startKick(targetChannel);
                     }
                 }, 3000);
             }
@@ -341,4 +348,5 @@ class ChatListener {
     }
 }
 
+// Export to window object
 window.ChatListener = ChatListener;

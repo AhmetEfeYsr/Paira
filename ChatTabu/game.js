@@ -1,5 +1,5 @@
 /**
- * ChatTabuGameEngine - Core game logic supporting Multi-Streamer (2+ Players), Cross-Platform, and Configurable Rules
+ * ChatTabuGameEngine - Core game logic supporting Multi-Streamer (2+ Players), Dual Cross-Platform (Twitch + Kick simultaneously), and Configurable Rules
  */
 class ChatTabuGameEngine {
     constructor() {
@@ -137,7 +137,6 @@ class ChatTabuGameEngine {
                     const hostPlayer = this.state.players.find(p => p.isHost);
                     if (hostPlayer) hostPlayer.score += 1;
                 } else {
-                    // Award score to the streamer whose chat guessed it (or narrator)
                     const targetPlayer = this.state.players.find(p => p.id === streamerId) || this.state.players.find(p => p.id === this.state.turnId);
                     if (targetPlayer) {
                         targetPlayer.score += 1;
@@ -171,7 +170,6 @@ class ChatTabuGameEngine {
         // Advance to next streamer turn in multi-streamer room
         this.state.currentTurnIndex = (this.state.currentTurnIndex + 1) % (this.state.turnOrder.length || 1);
         
-        // If wrapped back to first streamer, advance round
         if (this.state.currentTurnIndex === 0) {
             this.state.currentRound += 1;
         }
@@ -228,12 +226,12 @@ class ChatTabuView {
         this.chatListener = null;
     }
 
-    setupChatListener(platform, channel, onMessage) {
+    setupChatListener(platform, channelConfig, onMessage) {
         if (typeof window.ChatListener === 'undefined') return;
         if (this.chatListener) {
             this.chatListener.stop();
         }
-        this.chatListener = new window.ChatListener(platform, channel, onMessage);
+        this.chatListener = new window.ChatListener(platform, channelConfig, onMessage);
         this.chatListener.start();
     }
 
@@ -250,7 +248,10 @@ class ChatTabuView {
         if (countDisplay) countDisplay.textContent = players.length;
 
         players.forEach((p, idx) => {
-            const platformIcon = p.platform === 'twitch' ? '🟣 Twitch' : '🟢 Kick';
+            let platformIcon = '🟣 Twitch';
+            if (p.platform === 'kick') platformIcon = '🟢 Kick';
+            else if (p.platform === 'both') platformIcon = '⚡ Twitch + Kick';
+
             const roleBadge = p.isHost 
                 ? '<span class="badge" style="background:var(--primary-purple); color:#fff; font-size:0.75rem; padding:2px 8px; border-radius:6px;">Kurucu</span>' 
                 : `<span class="badge" style="background:var(--input-bg); border:1px solid var(--btn-secondary-border); color:var(--text-muted); font-size:0.75rem; padding:2px 8px; border-radius:6px;">Yayıncı ${idx + 1}</span>`;
@@ -284,9 +285,14 @@ class ChatTabuView {
         // Topbar Active Turn Indicator
         if (activeTurnIndicator) {
             if (state.mode === 'solo') {
-                activeTurnIndicator.innerHTML = `<span>👤 Tek Oyunculu Mod</span>`;
+                const p = state.players[0];
+                const icon = p?.platform === 'both' ? '⚡ Twitch + Kick' : (p?.platform === 'kick' ? '🟢 Kick' : '🟣 Twitch');
+                activeTurnIndicator.innerHTML = `<span>👤 Tek Oyunculu Mod (${icon})</span>`;
             } else if (activePlayer) {
-                const icon = activePlayer.platform === 'twitch' ? '🟣' : '🟢';
+                let icon = '🟣';
+                if (activePlayer.platform === 'kick') icon = '🟢';
+                else if (activePlayer.platform === 'both') icon = '⚡';
+
                 activeTurnIndicator.innerHTML = `
                     <span>🎙️ Anlatan Yayıncı:</span>
                     <span style="color:var(--primary-purple);">${icon} @${window.escapeHtml(activePlayer.name)}</span>
@@ -464,7 +470,10 @@ class ChatTabuView {
                 item.className = 'leaderboard-item';
                 item.style.fontWeight = '700';
 
-                const icon = p.platform === 'twitch' ? '🟣' : '🟢';
+                let icon = '🟣';
+                if (p.platform === 'kick') icon = '🟢';
+                else if (p.platform === 'both') icon = '⚡';
+
                 item.innerHTML = `
                     <span>${icon} @${window.escapeHtml(p.name)}</span>
                     <span style="color:var(--success); font-weight:bold;">${p.score} Puan</span>
@@ -520,6 +529,8 @@ function initChatTabuIndexPage() {
     const platformInput = document.getElementById('platform-select');
     const modeCards = document.querySelectorAll('.mode-card');
     const modeInput = document.getElementById('game-mode-select');
+    const singleChannelGroup = document.getElementById('single-channel-group');
+    const dualChannelGroup = document.getElementById('dual-channel-group');
     const soloActions = document.getElementById('solo-actions');
     const multiplayerActions = document.getElementById('multiplayer-actions');
     const loginStatus = document.getElementById('login-status');
@@ -536,14 +547,25 @@ function initChatTabuIndexPage() {
             tab.classList.add('active');
             const platform = tab.dataset.platform;
             if (platformInput) platformInput.value = platform;
+
             if (platform === 'twitch') {
                 tab.style.border = '2px solid #9146FF';
                 tab.style.background = 'rgba(145, 70, 255, 0.2)';
                 tab.style.color = '#fff';
-            } else {
+                if (singleChannelGroup) singleChannelGroup.style.display = 'block';
+                if (dualChannelGroup) dualChannelGroup.style.display = 'none';
+            } else if (platform === 'kick') {
                 tab.style.border = '2px solid #53FC18';
                 tab.style.background = 'rgba(83, 252, 24, 0.15)';
                 tab.style.color = '#fff';
+                if (singleChannelGroup) singleChannelGroup.style.display = 'block';
+                if (dualChannelGroup) dualChannelGroup.style.display = 'none';
+            } else if (platform === 'both') {
+                tab.style.border = '2px solid var(--warning)';
+                tab.style.background = 'rgba(255, 170, 0, 0.15)';
+                tab.style.color = '#fff';
+                if (singleChannelGroup) singleChannelGroup.style.display = 'none';
+                if (dualChannelGroup) dualChannelGroup.style.display = 'block';
             }
         });
     });
@@ -573,16 +595,60 @@ function initChatTabuIndexPage() {
         });
     });
 
+    const checkEasterEgg = (nameStr) => {
+        if (!nameStr) return nameStr;
+        if (nameStr.toLowerCase().trim() === 'pairaaa') {
+            if (window.showToast) window.showToast('canım ablam 💜', 'info');
+            return 'canım ablam 💜';
+        }
+        return nameStr;
+    };
+
     const getFormValues = () => {
-        const channel = document.getElementById('channel-input')?.value.trim();
         const platform = platformInput?.value || 'twitch';
         const mode = modeInput?.value || 'solo';
-        if (!channel) {
-            if (loginStatus) loginStatus.innerText = 'Lütfen bir kanal kullanıcı adı girin!';
-            if (window.showToast) window.showToast('Lütfen bir kanal kullanıcı adı girin!', 'error');
-            return null;
+
+        if (platform === 'both') {
+            const twitchCh = document.getElementById('twitch-channel-input')?.value.trim();
+            const kickCh = document.getElementById('kick-channel-input')?.value.trim();
+
+            if (!twitchCh && !kickCh) {
+                if (loginStatus) loginStatus.innerText = 'Lütfen en az bir kanal kullanıcı adı girin!';
+                if (window.showToast) window.showToast('Lütfen en az bir kanal kullanıcı adı girin!', 'error');
+                return null;
+            }
+
+            const rawTwitch = twitchCh || kickCh;
+            const rawKick = kickCh || twitchCh;
+            const channelObj = { twitch: rawTwitch, kick: rawKick };
+
+            let displayName = twitchCh && kickCh ? `${twitchCh} (Twitch & Kick)` : rawTwitch;
+            if (rawTwitch.toLowerCase() === 'pairaaa' || rawKick.toLowerCase() === 'pairaaa') {
+                displayName = 'canım ablam 💜';
+                if (window.showToast) window.showToast('canım ablam 💜', 'info');
+            }
+
+            return {
+                channel: JSON.stringify(channelObj),
+                platform: 'both',
+                mode: mode,
+                displayName: displayName
+            };
+        } else {
+            const channel = document.getElementById('channel-input')?.value.trim();
+            if (!channel) {
+                if (loginStatus) loginStatus.innerText = 'Lütfen bir kanal kullanıcı adı girin!';
+                if (window.showToast) window.showToast('Lütfen bir kanal kullanıcı adı girin!', 'error');
+                return null;
+            }
+            const displayName = checkEasterEgg(channel);
+            return {
+                channel: channel,
+                platform: platform,
+                mode: mode,
+                displayName: displayName
+            };
         }
-        return { channel, platform, mode };
     };
 
     document.getElementById('btn-start-solo')?.addEventListener('click', () => {
@@ -590,6 +656,7 @@ function initChatTabuIndexPage() {
         if (!vals) return;
         sessionStorage.setItem('chattabu_channel', vals.channel);
         sessionStorage.setItem('chattabu_platform', vals.platform);
+        sessionStorage.setItem('chattabu_display_name', vals.displayName);
         sessionStorage.setItem('chattabu_mode', 'solo');
         window.location.href = 'game.html';
     });
@@ -599,6 +666,7 @@ function initChatTabuIndexPage() {
         if (!vals) return;
         sessionStorage.setItem('chattabu_channel', vals.channel);
         sessionStorage.setItem('chattabu_platform', vals.platform);
+        sessionStorage.setItem('chattabu_display_name', vals.displayName);
         sessionStorage.setItem('chattabu_mode', 'multiplayer');
         sessionStorage.setItem('chattabu_isHost', 'true');
         window.location.href = 'game.html';
@@ -616,35 +684,11 @@ function initChatTabuIndexPage() {
         }
         sessionStorage.setItem('chattabu_channel', vals.channel);
         sessionStorage.setItem('chattabu_platform', vals.platform);
+        sessionStorage.setItem('chattabu_display_name', vals.displayName);
         sessionStorage.setItem('chattabu_mode', 'multiplayer');
         sessionStorage.setItem('chattabu_isHost', 'false');
         sessionStorage.setItem('chattabu_room', roomCode);
         window.location.href = 'game.html';
-    });
-
-    // Keyboard ENTER support
-    document.getElementById('channel-input')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const mode = modeInput?.value || 'solo';
-            if (mode === 'solo') {
-                document.getElementById('btn-start-solo')?.click();
-            } else {
-                const roomCode = document.getElementById('room-code-input')?.value.trim();
-                if (roomCode) {
-                    document.getElementById('btn-join')?.click();
-                } else {
-                    document.getElementById('btn-host')?.click();
-                }
-            }
-        }
-    });
-
-    document.getElementById('room-code-input')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('btn-join')?.click();
-        }
     });
 }
 
@@ -825,16 +869,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Init Network & Room State
-    const channel = sessionStorage.getItem('chattabu_channel');
-    const platform = sessionStorage.getItem('chattabu_platform');
+    const channelRaw = sessionStorage.getItem('chattabu_channel');
+    const platform = sessionStorage.getItem('chattabu_platform') || 'twitch';
+    let displayName = sessionStorage.getItem('chattabu_display_name') || channelRaw;
+
+    if (channelRaw && channelRaw.toLowerCase().includes('pairaaa')) {
+        displayName = 'canım ablam 💜';
+    }
+
     const mode = sessionStorage.getItem('chattabu_mode') || 'solo';
     const isHostUser = sessionStorage.getItem('chattabu_isHost') === 'true';
     const roomCode = sessionStorage.getItem('chattabu_room');
 
-    if (!channel || !platform) {
+    if (!channelRaw || !platform) {
         window.location.href = 'index.html';
         return;
     }
+
+    let channelConfig = channelRaw;
+    try {
+        if (channelRaw.startsWith('{')) {
+            channelConfig = JSON.parse(channelRaw);
+        }
+    } catch(e) {}
 
     engine.state.mode = mode;
 
@@ -842,15 +899,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('lobby-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
 
-        engine.state.players = [{ id: 'solo-player', name: channel, platform: platform, score: 0, isHost: true }];
-        document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
-        view.setupChatListener(platform, channel, handleChatMessage);
+        engine.state.players = [{ id: 'solo-player', name: displayName, platform: platform, score: 0, isHost: true }];
+        document.getElementById('channel-name-display').textContent = displayName;
+        view.setupChatListener(platform, channelConfig, handleChatMessage);
         
         engine.startGameSolo();
         return;
     }
 
-    document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
+    document.getElementById('channel-name-display').textContent = displayName;
 
     if (isHostUser) {
         document.getElementById('settings-card').style.display = 'flex';
@@ -866,7 +923,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isHostUser) {
             document.getElementById('room-code-val').textContent = data.roomCode;
-            engine.state.players = [{ id: myId, name: channel, platform: platform, score: 0, isHost: true }];
+            engine.state.players = [{ id: myId, name: displayName, platform: platform, score: 0, isHost: true }];
             view.updateLobbyPlayers(engine.state.players);
         }
     } catch (e) {
@@ -892,7 +949,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handleNetworkData = (data, sender) => {
         if (data.type === 'REQUEST_INFO') {
-            window.Network.sendToHost({ type: 'CLIENT_INFO', channel, platform, myId: window.Network.getMyId() });
+            window.Network.sendToHost({ type: 'CLIENT_INFO', channel: displayName, platform, myId: window.Network.getMyId() });
         }
         else if (data.type === 'CLIENT_INFO') {
             const senderId = data.myId || sender;
@@ -930,7 +987,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 engine.state = { ...engine.state, ...data.state };
             }
 
-            view.setupChatListener(platform, channel, handleChatMessage);
+            view.setupChatListener(platform, channelConfig, handleChatMessage);
             view.updateGameUI(engine.state, window.Network.getMyId());
             view.updateLeaderboard(engine.state.players, engine.state.scores);
             engine.startTimer();
