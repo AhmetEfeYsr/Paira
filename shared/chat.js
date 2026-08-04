@@ -108,6 +108,10 @@ class ChatListener {
 
         const targets = [
             {
+                url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`,
+                isWrapper: false
+            },
+            {
                 url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/' + cleanChannel)}`,
                 isWrapper: true
             },
@@ -116,23 +120,18 @@ class ChatListener {
                 isWrapper: true
             },
             {
-                url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`,
-                isWrapper: false
-            },
-            {
                 url: `https://corsproxy.io/?https://kick.com/api/v2/channels/${cleanChannel}`,
                 isWrapper: false
             }
         ];
 
-        let chatroomId = null;
-        let pusherKey = 'eb1f5f2e6192d192080a';
-        let pusherCluster = 'us2';
-
-        for (const target of targets) {
+        const fetchTarget = async (target) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4000);
             try {
-                const response = await fetch(target.url);
-                if (!response.ok) continue;
+                const response = await fetch(target.url, { signal: controller.signal });
+                clearTimeout(timer);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 let content = '';
                 if (target.isWrapper) {
@@ -142,7 +141,11 @@ class ChatListener {
                     content = await response.text();
                 }
 
-                if (!content) continue;
+                if (!content) throw new Error('Empty content');
+
+                let foundId = null;
+                let foundKey = 'eb1f5f2e6192d192080a';
+                let foundCluster = 'us2';
 
                 if (content.includes('__NEXT_DATA__')) {
                     const match = content.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
@@ -151,39 +154,42 @@ class ChatListener {
                             const nextData = JSON.parse(match[1]);
                             const channelData = nextData.props?.pageProps?.channel;
                             if (channelData) {
-                                chatroomId = channelData.chatroom?.id || channelData.id;
-                                if (channelData.pusher?.key) pusherKey = channelData.pusher.key;
-                                if (channelData.pusher?.cluster) pusherCluster = channelData.pusher.cluster;
-                                if (chatroomId) break;
+                                foundId = channelData.chatroom?.id || channelData.id;
+                                if (channelData.pusher?.key) foundKey = channelData.pusher.key;
+                                if (channelData.pusher?.cluster) foundCluster = channelData.pusher.cluster;
                             }
                         } catch (e) {}
                     }
                 }
 
-                try {
-                    const json = typeof content === 'object' ? content : JSON.parse(content);
-                    const parsedId = json.chatroom_id || json.chatroom?.id || json.id;
-                    if (parsedId) {
-                        chatroomId = parsedId;
-                        if (json.pusher_key) pusherKey = json.pusher_key;
-                        if (json.pusher?.key) pusherKey = json.pusher.key;
-                        if (json.pusher_cluster) pusherCluster = json.pusher_cluster;
-                        if (json.pusher?.cluster) pusherCluster = json.pusher.cluster;
-                        break;
-                    }
-                } catch (e) {}
-            } catch (e) {
-                console.warn(`[Kick Client Fetch] Target failed (${target.url}):`, e);
+                if (!foundId) {
+                    try {
+                        const json = typeof content === 'object' ? content : JSON.parse(content);
+                        foundId = json.chatroom_id || json.chatroom?.id || json.id;
+                        if (json.pusher_key) foundKey = json.pusher_key;
+                        if (json.pusher?.key) foundKey = json.pusher.key;
+                        if (json.pusher_cluster) foundCluster = json.pusher_cluster;
+                        if (json.pusher?.cluster) foundCluster = json.pusher.cluster;
+                    } catch (e) {}
+                }
+
+                if (foundId) {
+                    return { chatroomId: foundId, pusherKey: foundKey, pusherCluster: foundCluster };
+                }
+                throw new Error('Chatroom ID not found');
+            } catch (err) {
+                clearTimeout(timer);
+                throw err;
             }
-        }
+        };
 
-        if (!chatroomId) {
+        try {
+            const result = await Promise.any(targets.map(target => fetchTarget(target)));
+            console.log(`[Kick] Resolved Chatroom ID: ${result.chatroomId}, Key: ${result.pusherKey}, Cluster: ${result.pusherCluster}`);
+            this.connectToKickPusher(result.pusherKey, result.pusherCluster, result.chatroomId);
+        } catch (e) {
             this.handleError(`[Kick] "${cleanChannel}" için Kick kanal bilgileri alınamadı. Lütfen kanal adını kontrol edin.`);
-            return;
         }
-
-        console.log(`[Kick] Resolved Chatroom ID: ${chatroomId}, Key: ${pusherKey}, Cluster: ${pusherCluster}`);
-        this.connectToKickPusher(pusherKey, pusherCluster, chatroomId);
     }
 
     connectToKickPusher(key, cluster, chatroomId) {

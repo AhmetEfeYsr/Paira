@@ -312,10 +312,12 @@ window.PairaTime = {
                 if (data.utc_datetime) { // worldtimeapi
                     serverTime = new Date(data.utc_datetime).getTime() + latency;
                 } else if (data.dateTime) { // timeapi.io
-                    serverTime = new Date(data.dateTime + 'Z').getTime() + latency;
+                    const isoString = data.dateTime.endsWith('Z') ? data.dateTime : data.dateTime + 'Z';
+                    serverTime = new Date(isoString).getTime() + latency;
                 }
                 
-                if (serverTime) {
+                // Safety check: Only accept offset if it's realistic (within 10 seconds of local time)
+                if (serverTime && !isNaN(serverTime) && Math.abs(serverTime - Date.now()) < 10000) {
                     this.syncServerTime = serverTime;
                     this.syncPerformanceTime = performance.now();
                     console.log(`Time synchronized via ${api}. Offset from local:`, this.syncServerTime - Date.now());
@@ -325,7 +327,7 @@ window.PairaTime = {
                 // Silently fail individual APIs as we have fallbacks
             }
         }
-        console.warn("All Time API syncs failed, using local time base.");
+        console.warn("All Time API syncs failed or offset too large, using local time base.");
     },
     now() {
         return this.syncServerTime + (performance.now() - this.syncPerformanceTime);
