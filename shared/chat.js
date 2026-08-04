@@ -12,12 +12,15 @@ class ChatListener {
         this.onMessage = onMessageCallback;
         this.onError = onErrorCallback;
         this.ws = null;
+        this.isStopped = false;
+        this.reconnectTimeout = null;
 
         // IMPORTANT: Replace this with your deployed Google Cloud Function URL
         this.kickCloudFunctionUrl = 'https://us-central1-precise-rune-465721-f3.cloudfunctions.net/getKickInfo';
     }
 
     start() {
+        this.isStopped = false;
         if (this.platform === 'twitch') {
             this.startTwitch();
         } else if (this.platform === 'kick') {
@@ -28,6 +31,11 @@ class ChatListener {
     }
 
     stop() {
+        this.isStopped = true;
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -235,6 +243,20 @@ class ChatListener {
         this.ws.onclose = () => {
             console.log('[Kick] Disconnected from Pusher.');
             if (this.onClose) this.onClose();
+
+            if (!this.isStopped && chatroomId) {
+                const status = document.getElementById('chat-status');
+                if (status) {
+                    status.textContent = '• Yeniden Bağlanıyor...';
+                    status.style.color = 'var(--warning)';
+                }
+                this.reconnectTimeout = setTimeout(() => {
+                    if (!this.isStopped) {
+                        console.log('[Kick] Reconnecting to Pusher...');
+                        this.connectToKickPusher(key, cluster, chatroomId);
+                    }
+                }, 3000);
+            }
         };
     }
 }
