@@ -206,9 +206,17 @@ class ChatListener {
             try {
                 const msg = JSON.parse(event.data);
 
+                // Handle Pusher keep-alive ping
+                if (msg.event === 'pusher:ping') {
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+                    }
+                    return;
+                }
+
                 if (msg.event === 'App\\Events\\ChatMessageEvent') {
-                    const chatData = JSON.parse(msg.data);
-                    const username = chatData.sender.username;
+                    const chatData = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+                    const username = chatData.sender?.username || chatData.sender?.slug || 'Anonim';
                     const content = chatData.content;
 
                     if (content && this.onMessage) {
@@ -216,7 +224,7 @@ class ChatListener {
                     }
                 }
             } catch (e) {
-                // Ignore parse errors for non-JSON or other pusher internal messages like ping/pong
+                // Ignore parse errors
             }
         };
 

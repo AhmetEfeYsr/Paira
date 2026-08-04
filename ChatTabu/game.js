@@ -244,14 +244,20 @@ class ChatTabuView {
     }
 
     setupChatListener(platform, channel, onMessage) {
-        if (this.chatListener) this.chatListener.stop();
         if (typeof window.ChatListener === 'undefined') return;
+
+        if (this.chatListener && 
+            this.chatListener.platform === (platform || '').toLowerCase() && 
+            this.chatListener.channel === (channel || '').toLowerCase() &&
+            this.chatListener.ws && 
+            (this.chatListener.ws.readyState === WebSocket.OPEN || this.chatListener.ws.readyState === WebSocket.CONNECTING)) {
+            return;
+        }
+
+        if (this.chatListener) this.chatListener.stop();
 
         this.chatListener = new window.ChatListener(platform, channel, onMessage);
         this.chatListener.start();
-        
-        const status = document.getElementById('chat-status');
-        if (status) status.textContent = '• Bağlı';
     }
 
     stopChatListener() {
