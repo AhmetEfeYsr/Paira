@@ -36,17 +36,28 @@ class ChatListener {
 
     handleError(errorMsg) {
         console.error(errorMsg);
+        const status = document.getElementById('chat-status');
+        if (status) {
+            status.textContent = '• Bağlantı Hatası';
+            status.style.color = 'var(--danger)';
+        }
         if (this.onError) {
             this.onError(errorMsg);
         }
-    }
-
+        if (window.showToast) {
+            window.showToast(errorMsg, 'error');
+        }
     startTwitch() {
         this.stop();
         this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
         this.ws.onopen = () => {
             console.log(`[Twitch] Connected to ${this.channel} chat.`);
+            const status = document.getElementById('chat-status');
+            if (status) {
+                status.textContent = '• Bağlı';
+                status.style.color = 'var(--success)';
+            }
             this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
             this.ws.send('PASS SCHMOOPIIE');
             this.ws.send(`NICK justinfan${Math.floor(Math.random() * 80000)}`);
@@ -82,24 +93,78 @@ class ChatListener {
 
     async startKick() {
         this.stop();
-        try {
-            console.log(`[Kick] Fetching channel data for ${this.channel}...`);
-            // Call the cloud function to get pusher key, cluster and chatroom_id
-            const response = await fetch(`${this.kickCloudFunctionUrl}?channel=${this.channel}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch Kick channel info from Cloud Function.');
+        console.log(`[Kick] Fetching channel data client-side for ${this.channel}...`);
+
+        const targets = [
+            {
+                url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://kick.com/' + this.channel)}`,
+                type: 'html'
+            },
+            {
+                url: `https://corsproxy.io/?https://kick.com/${this.channel}`,
+                type: 'html'
+            },
+            {
+                url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://kick.com/api/v2/channels/' + this.channel)}`,
+                type: 'json'
+            },
+            {
+                url: `https://corsproxy.io/?https://kick.com/api/v2/channels/${this.channel}`,
+                type: 'json'
             }
-            const data = await response.json();
+        ];
 
-            if (!data.chatroom_id || !data.pusher_key || !data.pusher_cluster) {
-                throw new Error('Invalid response from Cloud Function: Missing pusher or chatroom data.');
+        let chatroomId = null;
+        let pusherKey = 'eb1f5f2e6192d192080a';
+        let pusherCluster = 'us2';
+
+        for (const target of targets) {
+            try {
+                const response = await fetch(target.url);
+                if (!response.ok) continue;
+
+                const content = await response.text();
+
+                if (content.includes('__NEXT_DATA__')) {
+                    const match = content.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+                    if (match && match[1]) {
+                        const nextData = JSON.parse(match[1]);
+                        const channelData = nextData.props?.pageProps?.channel;
+                        if (channelData) {
+                            chatroomId = channelData.chatroom?.id || channelData.id;
+                            if (channelData.pusher?.key) pusherKey = channelData.pusher.key;
+                            if (channelData.pusher?.cluster) pusherCluster = channelData.pusher.cluster;
+                            if (chatroomId) break;
+                        }
+                    }
+                }
+
+                try {
+                    const json = JSON.parse(content);
+                    const parsedId = json.chatroom_id || json.chatroom?.id || json.id;
+                    if (parsedId) {
+                        chatroomId = parsedId;
+                        if (json.pusher_key) pusherKey = json.pusher_key;
+                        if (json.pusher?.key) pusherKey = json.pusher.key;
+                        if (json.pusher_cluster) pusherCluster = json.pusher_cluster;
+                        if (json.pusher?.cluster) pusherCluster = json.pusher.cluster;
+                        break;
+                    }
+                } catch (e) {
+                    // Ignore non-JSON content
+                }
+            } catch (e) {
+                console.warn(`[Kick Client Fetch] Target failed (${target.url}):`, e);
             }
-
-            this.connectToKickPusher(data.pusher_key, data.pusher_cluster, data.chatroom_id);
-
-        } catch (error) {
-            this.handleError(`[Kick] Initialization error: ${error.message}`);
         }
+
+        if (!chatroomId) {
+            this.handleError('[Kick] Kick kanal bilgileri istemci tarafında alınamadı. Lütfen kanal adını kontrol edin.');
+            return;
+        }
+
+        console.log(`[Kick] Resolved Chatroom ID: ${chatroomId}, Key: ${pusherKey}, Cluster: ${pusherCluster}`);
+        this.connectToKickPusher(pusherKey, pusherCluster, chatroomId);
     }
 
     connectToKickPusher(key, cluster, chatroomId) {
@@ -109,6 +174,11 @@ class ChatListener {
 
         this.ws.onopen = () => {
             console.log(`[Kick] Connected to Pusher for ${this.channel} (Chatroom ID: ${chatroomId}).`);
+            const status = document.getElementById('chat-status');
+            if (status) {
+                status.textContent = '• Bağlı';
+                status.style.color = 'var(--success)';
+            }
             // Subscribe to the chatroom channel
             const subscribeMsg = JSON.stringify({
                 event: 'pusher:subscribe',
