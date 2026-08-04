@@ -54,30 +54,33 @@ export default {
 
       if (!content) throw new Error("Empty content");
 
-      // 1. Check __NEXT_DATA__
+      // 1. Check __NEXT_DATA__ in HTML
       if (content.includes("__NEXT_DATA__")) {
         const match = content.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
         if (match && match[1]) {
           const nextData = JSON.parse(match[1]);
           const channelData = nextData.props?.pageProps?.channel;
           if (channelData) {
-            return {
-              chatroom_id: channelData.chatroom?.id || channelData.id,
-              pusher_key: channelData.pusher?.key || "eb1f5f2e6192d192080a",
-              pusher_cluster: channelData.pusher?.cluster || "us2"
-            };
+            const trueChatroomId = channelData.chatroom?.id || channelData.chatroom_id;
+            if (trueChatroomId) {
+              return {
+                chatroom_id: trueChatroomId,
+                pusher_key: channelData.pusher?.key || "32cbd69e4b950bf97679",
+                pusher_cluster: channelData.pusher?.cluster || "us2"
+              };
+            }
           }
         }
       }
 
-      // 2. Check Direct JSON
+      // 2. Check Direct JSON response
       try {
         const data = typeof content === 'object' ? content : JSON.parse(content);
-        const chatroomId = data.id || data.chatroom_id || data.chatroom?.id;
-        if (chatroomId) {
+        const trueChatroomId = data.chatroom?.id || data.chatroom_id || (targetUrl.includes('/chatroom') ? data.id : null);
+        if (trueChatroomId) {
           return {
-            chatroom_id: chatroomId,
-            pusher_key: data.pusher_key || data.pusher?.key || "eb1f5f2e6192d192080a",
+            chatroom_id: trueChatroomId,
+            pusher_key: data.pusher_key || data.pusher?.key || "32cbd69e4b950bf97679",
             pusher_cluster: data.pusher_cluster || data.pusher?.cluster || "us2"
           };
         }

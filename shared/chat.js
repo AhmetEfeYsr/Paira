@@ -38,6 +38,10 @@ class ChatListener {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -171,7 +175,7 @@ class ChatListener {
                 if (!content) throw new Error('Empty content');
 
                 let foundId = null;
-                let foundKey = 'eb1f5f2e6192d192080a';
+                let foundKey = '32cbd69e4b950bf97679';
                 let foundCluster = 'us2';
 
                 if (content.includes('__NEXT_DATA__')) {
@@ -181,7 +185,7 @@ class ChatListener {
                             const nextData = JSON.parse(match[1]);
                             const channelData = nextData.props?.pageProps?.channel;
                             if (channelData) {
-                                foundId = channelData.chatroom?.id || channelData.id;
+                                foundId = channelData.chatroom?.id || channelData.chatroom_id;
                                 if (channelData.pusher?.key) foundKey = channelData.pusher.key;
                                 if (channelData.pusher?.cluster) foundCluster = channelData.pusher.cluster;
                             }
@@ -192,7 +196,7 @@ class ChatListener {
                 if (!foundId) {
                     try {
                         const json = typeof content === 'object' ? content : JSON.parse(content);
-                        foundId = json.chatroom_id || json.chatroom?.id || json.id;
+                        foundId = json.chatroom?.id || json.chatroom_id || (target.url.includes('/chatroom') ? json.id : null);
                         if (json.pusher_key) foundKey = json.pusher_key;
                         if (json.pusher?.key) foundKey = json.pusher.key;
                         if (json.pusher_cluster) foundCluster = json.pusher_cluster;
@@ -241,6 +245,14 @@ class ChatListener {
             });
             this.ws.send(subscribeMsg);
             if (this.onOpen) this.onOpen();
+
+            // Client keep-alive ping interval (every 20s)
+            if (this.pingInterval) clearInterval(this.pingInterval);
+            this.pingInterval = setInterval(() => {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+                }
+            }, 20000);
         };
 
         this.ws.onmessage = (event) => {
@@ -255,9 +267,9 @@ class ChatListener {
                     return;
                 }
 
-                if (msg.event === 'App\\Events\\ChatMessageEvent') {
+                if (msg.event && (msg.event.includes('ChatMessageEvent') || msg.event === 'App\\Events\\ChatMessageEvent')) {
                     const chatData = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
-                    const username = chatData.sender?.username || chatData.sender?.slug || 'Anonim';
+                    const username = chatData.sender?.username || chatData.sender?.slug || chatData.user?.username || 'Anonim';
                     const content = chatData.content;
 
                     if (content && this.onMessage) {
