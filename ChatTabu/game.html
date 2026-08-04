@@ -14,44 +14,97 @@
 
     <style>
         /* Style Reset applied by base already. Adding Layout specific */
-        .chat-tabu-layout { display: flex; flex-grow: 1; width: 100%; overflow: hidden; border-radius: 12px; gap: 1rem; min-height: 0; }
-        .game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; min-height: 0; overflow: hidden; }
-        .sidebar { flex: 1; min-width: 300px; max-width: 350px; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; display: flex; flex-direction: column; padding: 1rem; overflow: hidden; }
+        .chat-tabu-layout { 
+            display: grid; 
+            grid-template-columns: 260px 1fr 300px; 
+            gap: 1rem; 
+            width: 100%; 
+            height: calc(100vh - 160px); 
+            max-height: 650px; 
+            min-height: 500px; 
+            overflow: hidden; 
+            border-radius: 12px; 
+            align-items: start;
+        }
 
-        .card-tabu { background: var(--card-bg); border-radius: 1.5rem; border: 1px solid var(--border-color); width: 100%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; margin-bottom: 1rem; overflow: hidden; }
-        .card-header { background: var(--header-bg); padding: 1rem; border-bottom: 2px solid var(--primary-purple); }
-        .main-word { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 15px var(--glow-primary); margin: 0; }
+        .game-area { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; 
+            padding: 0.5rem; 
+            height: 100%; 
+            overflow: hidden; 
+            order: 2;
+        }
 
-        .forbidden-words-list { list-style: none; padding: 1rem; overflow-y: auto; flex: 1; }
-        .forbidden-words-list li { font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: 500; color: var(--danger); margin: 0.5rem 0; text-transform: uppercase; }
+        .sidebar { 
+            background: var(--card-bg); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 1rem; 
+            overflow: hidden; 
+            height: 100%; 
+            max-height: 100%;
+        }
 
-        .controls { display: flex; gap: 1rem; width: 100%; max-width: 500px; justify-content: center; flex-shrink: 0; }
+        .sidebar-left { order: 1; }
+        .sidebar-right { order: 3; }
+
+        .card-tabu { 
+            background: var(--card-bg); 
+            border-radius: 1.5rem; 
+            border: 1px solid var(--border-color); 
+            width: 100%; 
+            max-width: 480px; 
+            height: 380px !important; 
+            max-height: 380px !important; 
+            text-align: center; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            flex: none !important; 
+            margin-bottom: 1rem; 
+            overflow: hidden; 
+        }
+
+        .card-header { background: var(--header-bg); padding: 1rem; border-bottom: 2px solid var(--primary-purple); flex-shrink: 0; }
+        .main-word { font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 15px var(--glow-primary); margin: 0; }
+
+        .forbidden-words-list { list-style: none; padding: 1rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 0.4rem; }
+        .forbidden-words-list li { font-size: clamp(1.2rem, 3vw, 1.4rem); font-weight: 500; color: var(--danger); margin: 0.2rem 0; text-transform: uppercase; }
+
+        .controls { display: flex; gap: 1rem; width: 100%; max-width: 480px; justify-content: center; flex-shrink: 0; }
         .controls .btn { flex: 1; padding: 12px !important; }
 
-        .sidebar-header { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 0.5rem; flex-shrink: 0; }
-        .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; margin-bottom: 1rem; }
-        .chat-msg { background: var(--input-bg); padding: 0.8rem 1rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+        .sidebar-header { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.8rem; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 0.5rem; flex-shrink: 0; }
+        .chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; margin-bottom: 0; height: 100%; }
+        .chat-msg { background: var(--input-bg); padding: 0.6rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; line-height: 1.35; word-break: break-word; }
         .chat-msg strong { color: var(--primary-purple); }
         .chat-msg.correct { background: var(--success-bg); border: 1px solid var(--success); animation: pulse 1s infinite alternate; }
 
-        .leaderboard { height: 35%; border-top: 1px solid var(--btn-secondary-border); padding-top: 1rem; display: flex; flex-direction: column; flex-shrink: 0; }
+        .leaderboard { height: 100%; display: flex; flex-direction: column; flex: 1; border: none; padding-top: 0; }
         .leaderboard-list { overflow-y: auto; flex: 1; padding-right: 5px; }
-        .leaderboard-item { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid var(--btn-secondary-bg); align-items: center; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--btn-secondary-bg); align-items: center; font-size: 0.95rem; }
 
-        .status-badge { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-main); padding: 10px 20px; background: var(--header-bg); border-radius: 10px; border: 1px solid var(--primary-purple); font-weight: 600; text-align: center; width: 100%; max-width: 500px; flex-shrink: 0; }
+        .status-badge { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-main); padding: 10px 20px; background: var(--header-bg); border-radius: 10px; border: 1px solid var(--primary-purple); font-weight: 600; text-align: center; width: 100%; max-width: 480px; flex-shrink: 0; }
 
         @keyframes pulse {
             0% { box-shadow: 0 0 5px var(--success); }
             100% { box-shadow: 0 0 15px var(--success); }
         }
 
-        @media (max-width: 900px) {
-            .chat-tabu-layout { flex-direction: column; overflow: visible; }
-            .game-area { padding: 0.5rem; overflow: visible; min-height: auto; }
-            .sidebar { max-width: 100%; min-height: 400px; flex: none; }
+        @media (max-width: 960px) {
+            .chat-tabu-layout { display: flex; flex-direction: column; height: auto; max-height: none; overflow: visible; }
+            .game-area { padding: 0.5rem; overflow: visible; min-height: auto; order: 1; }
+            .sidebar-left { order: 2; width: 100%; max-width: 100%; min-height: 200px; }
+            .sidebar-right { order: 3; width: 100%; max-width: 100%; min-height: 350px; }
             .leaderboard { height: auto; min-height: 150px; }
             #app-container { overflow-y: auto; }
-            .card-tabu { min-height: 300px; flex: none; }
+            .card-tabu { height: 350px !important; max-height: 350px !important; flex: none; }
         }
     </style>
 
@@ -77,16 +130,35 @@
 
             <div class="lobby-grid">
                 <!-- Sol Taraf (Ayarlar) -->
-                <div class="card settings-card" id="settings-card" style="display: none;">
-                    <h3>Oyun Ayarları <span style="font-size: 0.8rem; color: var(--text-muted);">(Sadece Kurucu)</span></h3>
+                <div class="card settings-card" id="settings-card" style="display: none; padding: 1.2rem;">
+                    <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--btn-secondary-border); padding-bottom: 0.5rem;">Oyun Ayarları <span style="font-size: 0.8rem; color: var(--text-muted);">(Sadece Kurucu)</span></h3>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 0.4rem;">Sohbet Tahmin Kuralları</label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; background: var(--input-bg); padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--btn-secondary-border);">
+                            <input type="checkbox" id="setting-allow-any-chat" checked style="width: 18px; height: 18px; accent-color: var(--primary-purple);">
+                            <span>Tüm Bağlı Sohbetler Tahmin Edebilsin (Çapraz Chat)</span>
+                        </label>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 0.3rem;">Tur Süresi (sn)</label>
+                            <input type="number" id="setting-turn-duration" value="60" min="30" max="180" style="padding: 0.5rem; font-size: 0.95rem;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 0.3rem;">Toplam Tur Sayısı</label>
+                            <input type="number" id="setting-max-rounds" value="5" min="1" max="15" style="padding: 0.5rem; font-size: 0.95rem;">
+                        </div>
+                    </div>
 
                     <div style="flex-grow: 1;"></div>
-                    <button id="btn-start-game" class="btn btn-primary btn-block" style="padding: 12px; margin-top: 1rem;">Oyunu Başlat</button>
+                    <button id="btn-start-game" class="btn btn-primary btn-block" style="padding: 12px; margin-top: 1rem; font-weight: 700;">Oyunu Başlat</button>
                 </div>
 
                 <!-- Sağ Taraf (Oyuncular) -->
                 <div class="card players-card">
-                    <h3 style="margin-bottom: 0;">Yayıncılar</h3>
+                    <h3 style="margin-bottom: 0;">Yayıncılar (<span id="player-count-display">1</span>)</h3>
                     <div class="players-panel">
                         <ul id="players-list" class="custom-scrollbar">
                             <!-- Players -->
@@ -101,16 +173,9 @@
 
         <!-- GAME SCREEN -->
         <section id="game-screen" class="view-state">
-            <div class="game-topbar">
-                <div class="score-board">
-                    <div class="team-a" style="display: flex; flex-direction: column; align-items: center;">
-                        <span style="font-size: 0.8rem; color: var(--text-muted);" id="p1-name">Yayıncı 1</span>
-                        <span id="p1-score">0 Puan</span>
-                    </div>
-                    <div class="team-b" style="display: flex; flex-direction: column; align-items: center;">
-                        <span style="font-size: 0.8rem; color: var(--text-muted);" id="p2-name">Yayıncı 2</span>
-                        <span id="p2-score">0 Puan</span>
-                    </div>
+            <div class="game-topbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div id="active-turn-indicator" style="display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; color: var(--text-main);">
+                    <!-- Active narrator info -->
                 </div>
 
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -121,7 +186,15 @@
             </div>
 
             <div class="chat-tabu-layout">
-                <!-- Main Game Area (Streamer View) -->
+                <!-- Sol Taraf: Liderlik Tablosu -->
+                <div class="sidebar sidebar-left">
+                    <div class="sidebar-header" style="font-size: 1.1rem; text-align: center;">🏆 Liderlik Tablosu</div>
+                    <div class="leaderboard-list custom-scrollbar" id="leaderboard-list">
+                        <!-- Scores -->
+                    </div>
+                </div>
+
+                <!-- Orta: Oyun Alanı (Streamer View) -->
                 <div class="game-area">
                     <div id="round-display" style="display:none; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">Tur: 1/5</div>
                     <div id="turn-timer" class="timer" style="display:none; margin-bottom: 5px;">60</div>
@@ -147,21 +220,14 @@
                     </div>
                 </div>
 
-                <!-- Sidebar (Chat Feed & Leaderboard) -->
-                <div class="sidebar">
+                <!-- Sağ Taraf: Sohbet Akışı -->
+                <div class="sidebar sidebar-right">
                     <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Sohbet (<span id="channel-name-display"></span>)</span>
+                        <span>💬 Sohbet (<span id="channel-name-display"></span>)</span>
                         <span id="chat-status" style="font-size: 0.8rem; color: var(--success);">• Bağlı</span>
                     </div>
                     <div class="chat-feed custom-scrollbar" id="chat-feed">
                         <!-- Messages will appear here -->
-                    </div>
-
-                    <div class="leaderboard">
-                        <div class="sidebar-header" style="font-size: 1.2rem;">Liderlik Tablosu</div>
-                        <div class="leaderboard-list custom-scrollbar" id="leaderboard-list">
-                            <!-- Scores -->
-                        </div>
                     </div>
                 </div>
             </div>

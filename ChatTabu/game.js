@@ -1,5 +1,5 @@
 /**
- * ChatTabuGameEngine - Core game logic
+ * ChatTabuGameEngine - Core game logic supporting Multi-Streamer (2+ Players), Cross-Platform, and Configurable Rules
  */
 class ChatTabuGameEngine {
     constructor() {
@@ -13,22 +13,24 @@ class ChatTabuGameEngine {
 
         this.state = {
             mode: 'solo',
-            hostName: '',
-            clientName: '',
-            hostPlatform: '',
-            clientPlatform: '',
-            clientId: null,
-            hostScore: 0,
-            clientScore: 0,
+            players: [], // Array of { id, name, platform, score, isHost }
+            turnOrder: [], // Array of player IDs
+            currentTurnIndex: 0,
             turnId: null,
             isGameStarted: false,
             activeWord: null,
             currentRound: 1,
             maxRounds: 5,
+            turnDuration: 60,
             turnEndTime: null,
             isGameOver: false,
-            scores: {}, // username -> score
-            isPaused: false
+            scores: {}, // chat username -> score
+            isPaused: false,
+            settings: {
+                allowAnyChat: true,
+                pointsPerCorrect: 1,
+                tabooPenalty: 1
+            }
         };
 
         this.wordDatabase = [];
@@ -69,7 +71,7 @@ class ChatTabuGameEngine {
         if (cleanGuess === cleanTarget) return true;
 
         if (this.fuzzyMatcher) {
-            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, 1.0); // Strict taboo tolerance
+            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, 1.0);
         }
         return cleanGuess === cleanTarget;
     }
@@ -78,21 +80,28 @@ class ChatTabuGameEngine {
         this.state.mode = 'solo';
         this.state.isGameStarted = true;
         this.state.isGameOver = false;
-        this.state.hostScore = 0;
         this.state.scores = {};
         this.state.turnEndTime = window.PairaTime.now() + 180000; // 3 minutes total for solo mode
         this.nextWord();
         this.startTimer();
     }
 
-    startMultiplayer(hostId) {
-        this.state.turnId = hostId;
+    startMultiplayer(hostId, settings = {}) {
+        this.state.settings = { ...this.state.settings, ...settings };
+        this.state.turnOrder = this.state.players.map(p => p.id);
+        this.state.currentTurnIndex = 0;
+        this.state.turnId = this.state.turnOrder[0] || hostId;
         this.state.isGameStarted = true;
-        this.state.hostScore = 0;
-        this.state.clientScore = 0;
         this.state.currentRound = 1;
         this.state.isGameOver = false;
-        this.state.turnEndTime = window.PairaTime.now() + 60000;
+
+        const duration = (this.state.turnDuration || 60) * 1000;
+        this.state.turnEndTime = window.PairaTime.now() + duration;
+
+        // Reset player scores
+        this.state.players.forEach(p => p.score = 0);
+        this.state.scores = {};
+
         this.setState(this.state);
         this.nextWord();
         this.startTimer();
@@ -104,42 +113,48 @@ class ChatTabuGameEngine {
         this.state.activeWord = this.wordDatabase[this.currentWordIndex];
         this.state.isPaused = false;
         if (this.state.isGameStarted && this.state.mode !== 'solo') {
-            this.state.turnEndTime = window.PairaTime.now() + 60000;
+            const duration = (this.state.turnDuration || 60) * 1000;
+            this.state.turnEndTime = window.PairaTime.now() + duration;
         }
         this.setState(this.state);
     }
 
-    checkGuess(username, message, myId, isHost) {
+    checkGuess(username, message, streamerId, isHost) {
         if (this.state.isPaused || !this.state.activeWord) return false;
 
         if (this.isMatch(message, this.state.activeWord.ana_kelime)) {
             this.state.isPaused = true;
-            if (!this.state.scores[username]) this.state.scores[username] = 0;
-            this.state.scores[username] += 1;
 
-            if (this.state.mode === 'solo') {
-                this.state.hostScore += 1;
-            } else if (isHost) {
-                if (this.state.turnId === myId) {
-                    this.state.hostScore += 1;
+            const allowAny = this.state.settings ? this.state.settings.allowAnyChat : true;
+            const isTurnStreamer = streamerId === this.state.turnId;
+
+            // In solo mode or when allowAnyChat is true or guess comes from active narrator's chat
+            if (this.state.mode === 'solo' || allowAny || isTurnStreamer) {
+                if (!this.state.scores[username]) this.state.scores[username] = 0;
+                this.state.scores[username] += 1;
+
+                if (this.state.mode === 'solo') {
+                    const hostPlayer = this.state.players.find(p => p.isHost);
+                    if (hostPlayer) hostPlayer.score += 1;
                 } else {
-                    this.state.clientScore += 1;
+                    // Award score to the streamer whose chat guessed it (or narrator)
+                    const targetPlayer = this.state.players.find(p => p.id === streamerId) || this.state.players.find(p => p.id === this.state.turnId);
+                    if (targetPlayer) {
+                        targetPlayer.score += 1;
+                    }
                 }
+
+                this.setState(this.state);
+                if (this.onWordMatch) this.onWordMatch(username, this.state.activeWord);
+
+                setTimeout(() => {
+                    if (this.state.mode === 'solo' || isHost) {
+                        this.nextWord();
+                    }
+                }, 2000);
+
+                return true;
             }
-
-            this.setState(this.state);
-            if (this.onWordMatch) this.onWordMatch(username, this.state.activeWord);
-
-            setTimeout(() => {
-                if (this.state.mode === 'solo' || isHost) {
-                    this.nextWord();
-                } else if (!isHost && this.state.turnId === myId) {
-                    // Client needs to request next word from host if it's their turn
-                    // handled by view callback
-                }
-            }, 2000);
-
-            return true;
         }
         return false;
     }
@@ -147,24 +162,30 @@ class ChatTabuGameEngine {
     handleTimeUp(myId, isHost) {
         if (!isHost || this.state.isGameOver) return;
 
-        const isHostTurn = this.state.turnId === myId;
-
-        if (isHostTurn) {
-            this.state.turnId = this.state.clientId;
-            this.state.turnEndTime = window.PairaTime.now() + 60000;
+        if (this.state.mode === 'solo') {
+            this.state.isGameOver = true;
             this.setState(this.state);
-            this.nextWord();
-        } else {
-            this.state.currentRound += 1;
-            if (this.state.currentRound > this.state.maxRounds) {
-                this.state.isGameOver = true;
-            } else {
-                this.state.turnId = myId;
-                this.state.turnEndTime = window.PairaTime.now() + 60000;
-                this.nextWord();
-            }
-            this.setState(this.state);
+            return;
         }
+
+        // Advance to next streamer turn in multi-streamer room
+        this.state.currentTurnIndex = (this.state.currentTurnIndex + 1) % (this.state.turnOrder.length || 1);
+        
+        // If wrapped back to first streamer, advance round
+        if (this.state.currentTurnIndex === 0) {
+            this.state.currentRound += 1;
+        }
+
+        if (this.state.currentRound > this.state.maxRounds) {
+            this.state.isGameOver = true;
+        } else {
+            this.state.turnId = this.state.turnOrder[this.state.currentTurnIndex];
+            const duration = (this.state.turnDuration || 60) * 1000;
+            this.state.turnEndTime = window.PairaTime.now() + duration;
+            this.nextWord();
+        }
+
+        this.setState(this.state);
 
         if (!this.state.isGameOver) {
             this.startTimer();
@@ -200,62 +221,18 @@ class ChatTabuGameEngine {
 }
 
 /**
- * ChatTabuView - Handles DOM
+ * ChatTabuView - Handles UI updates and rendering
  */
 class ChatTabuView {
-    constructor(callbacks) {
-        this.callbacks = callbacks;
-        this.isWordVisible = true;
+    constructor() {
         this.chatListener = null;
-
-        this.bindEvents();
-    }
-
-    bindEvents() {
-        // Game UI events
-        const btnToggleVisibility = document.getElementById('btn-toggle-visibility');
-        if (btnToggleVisibility) {
-            btnToggleVisibility.addEventListener('click', () => {
-                this.isWordVisible = !this.isWordVisible;
-                const mainWord = document.getElementById('main-word');
-                const forbiddenList = document.getElementById('forbidden-words');
-                const iconOpen = document.getElementById('icon-eye-open');
-                const iconClosed = document.getElementById('icon-eye-closed');
-                
-                if (this.isWordVisible) {
-                    mainWord.classList.remove('blurred-text');
-                    forbiddenList.classList.remove('blurred-text');
-                    iconOpen.style.display = 'block';
-                    iconClosed.style.display = 'none';
-                } else {
-                    mainWord.classList.add('blurred-text');
-                    forbiddenList.classList.add('blurred-text');
-                    iconOpen.style.display = 'none';
-                    iconClosed.style.display = 'block';
-                }
-            });
-        }
-
-        document.getElementById('btn-leave-lobby')?.addEventListener('click', () => this.callbacks.onLeave());
-        document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
-        document.getElementById('btn-start-game')?.addEventListener('click', () => this.callbacks.onStartGame());
-        document.getElementById('btn-skip')?.addEventListener('click', () => this.callbacks.onSkip());
-        document.getElementById('btn-taboo')?.addEventListener('click', () => this.callbacks.onTaboo());
     }
 
     setupChatListener(platform, channel, onMessage) {
         if (typeof window.ChatListener === 'undefined') return;
-
-        if (this.chatListener && 
-            this.chatListener.platform === (platform || '').toLowerCase() && 
-            this.chatListener.channel === (channel || '').toLowerCase() &&
-            this.chatListener.ws && 
-            (this.chatListener.ws.readyState === WebSocket.OPEN || this.chatListener.ws.readyState === WebSocket.CONNECTING)) {
-            return;
+        if (this.chatListener) {
+            this.chatListener.stop();
         }
-
-        if (this.chatListener) this.chatListener.stop();
-
         this.chatListener = new window.ChatListener(platform, channel, onMessage);
         this.chatListener.start();
     }
@@ -264,26 +241,36 @@ class ChatTabuView {
         if (this.chatListener) this.chatListener.stop();
     }
 
-    updateLobbyPlayers(hostName, clientName) {
+    updateLobbyPlayers(players) {
         const list = document.getElementById('players-list');
+        const countDisplay = document.getElementById('player-count-display');
         if (!list) return;
         list.innerHTML = '';
 
-        if (hostName) {
-            list.innerHTML += `<li><strong>${window.escapeHtml(hostName)}</strong> <span class="badge" style="background:var(--primary-purple)">Kurucu</span></li>`;
-        }
+        if (countDisplay) countDisplay.textContent = players.length;
 
-        if (clientName) {
-            list.innerHTML += `<li><strong>${window.escapeHtml(clientName)}</strong> <span class="badge" style="background:var(--danger)">Rakip</span></li>`;
-        }
+        players.forEach((p, idx) => {
+            const platformIcon = p.platform === 'twitch' ? '🟣 Twitch' : '🟢 Kick';
+            const roleBadge = p.isHost 
+                ? '<span class="badge" style="background:var(--primary-purple); color:#fff; font-size:0.75rem; padding:2px 8px; border-radius:6px;">Kurucu</span>' 
+                : `<span class="badge" style="background:var(--input-bg); border:1px solid var(--btn-secondary-border); color:var(--text-muted); font-size:0.75rem; padding:2px 8px; border-radius:6px;">Yayıncı ${idx + 1}</span>`;
+
+            list.innerHTML += `
+                <li style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--btn-secondary-bg); font-size:0.95rem;">
+                    <div>
+                        <strong>@${window.escapeHtml(p.name)}</strong>
+                        <span style="font-size:0.8rem; color:var(--text-muted); margin-left:6px;">(${platformIcon})</span>
+                    </div>
+                    ${roleBadge}
+                </li>
+            `;
+        });
     }
 
     updateGameUI(state, myId) {
         if (!state.isGameStarted) return;
 
-        document.getElementById('p1-score').textContent = `${state.hostScore} Puan`;
-        document.getElementById('p2-score').textContent = `${state.clientScore} Puan`;
-
+        const activePlayer = state.players.find(p => p.id === state.turnId);
         const isMyTurn = state.mode === 'solo' || state.turnId === myId;
         const statusEl = document.getElementById('turn-status');
         const mainEl = document.getElementById('main-word');
@@ -292,6 +279,21 @@ class ChatTabuView {
         const roundDisplay = document.getElementById('round-display');
         const turnTimer = document.getElementById('turn-timer');
         const toggleVisibilityBtn = document.getElementById('btn-toggle-visibility');
+        const activeTurnIndicator = document.getElementById('active-turn-indicator');
+
+        // Topbar Active Turn Indicator
+        if (activeTurnIndicator) {
+            if (state.mode === 'solo') {
+                activeTurnIndicator.innerHTML = `<span>👤 Tek Oyunculu Mod</span>`;
+            } else if (activePlayer) {
+                const icon = activePlayer.platform === 'twitch' ? '🟣' : '🟢';
+                activeTurnIndicator.innerHTML = `
+                    <span>🎙️ Anlatan Yayıncı:</span>
+                    <span style="color:var(--primary-purple);">${icon} @${window.escapeHtml(activePlayer.name)}</span>
+                    <span style="font-size:0.9rem; color:var(--text-muted);">(${activePlayer.score} Puan)</span>
+                `;
+            }
+        }
 
         if (turnTimer) {
             turnTimer.style.display = 'block';
@@ -321,18 +323,18 @@ class ChatTabuView {
                 }
                 if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
 
-                mainEl.textContent = `SÜRE DOLDU! (${state.hostScore} Kelime)`;
-                fbEl.innerHTML = `<li>3 Dakikalık Tur Tamamlandı</li><li>Toplam Bilinen: ${state.hostScore} Kelime</li>`;
+                const hostP = state.players.find(p => p.isHost);
+                const score = hostP ? hostP.score : 0;
+                mainEl.textContent = `SÜRE DOLDU! (${score} Kelime)`;
+                fbEl.innerHTML = `<li>3 Dakikalık Tur Tamamlandı</li><li>Toplam Bilinen: ${score} Kelime</li>`;
             } else {
                 controls.style.display = "none";
-                let winnerText = "Berabere!";
-                if (state.hostScore > state.clientScore) {
-                    winnerText = `${window.escapeHtml(state.hostName)} Kazandı!`;
-                } else if (state.clientScore > state.hostScore) {
-                    winnerText = `${window.escapeHtml(state.clientName)} Kazandı!`;
-                }
+                const sorted = [...state.players].sort((a, b) => b.score - a.score);
+                const winner = sorted[0];
+                let winnerText = winner ? `🏆 Kazanan: @${winner.name} (${winner.score} Puan)!` : "Oyun Bitti";
                 mainEl.textContent = winnerText;
-                fbEl.innerHTML = `<li>Host Puanı: ${state.hostScore}</li><li>Rakip Puanı: ${state.clientScore}</li>`;
+
+                fbEl.innerHTML = sorted.map(p => `<li>@${window.escapeHtml(p.name)}: ${p.score} Puan</li>`).join('');
             }
             return;
         }
@@ -368,7 +370,8 @@ class ChatTabuView {
                 fbEl.innerHTML = state.activeWord.yasakli_kelimeler.map(w => `<li>${window.escapeHtml(w.toLocaleUpperCase('tr-TR'))}</li>`).join('');
             }
         } else {
-            statusEl.textContent = "Diğer Yayıncı Anlatıyor...";
+            const activeName = activePlayer ? activePlayer.name : 'Yayıncı';
+            statusEl.textContent = `@${activeName} Anlatıyor...`;
             statusEl.style.borderColor = "var(--danger)";
             if (toggleVisibilityBtn) toggleVisibilityBtn.style.display = 'flex';
 
@@ -381,22 +384,17 @@ class ChatTabuView {
                     mainEl.textContent = state.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
                     fbEl.innerHTML = state.activeWord.yasakli_kelimeler.map(w => `<li>${window.escapeHtml(w.toLocaleUpperCase('tr-TR'))}</li>`).join('');
                 }
-            } else {
-                controls.style.display = "none";
-                mainEl.textContent = "SANSÜRLÜ";
-                fbEl.innerHTML = "<li>???</li><li>???</li><li>???</li><li>???</li><li>???</li>";
             }
         }
     }
 
-    addChatMessage(username, message, isLocal, isCorrect) {
+    addChatMessage(username, message, isSelf = false, isCorrect = false) {
         const chatFeed = document.getElementById('chat-feed');
         if (!chatFeed) return;
-        
+
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg';
-
-        if (!isLocal) {
+        if (isSelf) {
             msgDiv.style.borderLeft = '3px solid var(--warning)';
         }
         if (isCorrect) {
@@ -443,29 +441,67 @@ class ChatTabuView {
         }
     }
 
-    updateLeaderboard(scores) {
+    updateLeaderboard(players = [], chatScores = {}) {
         const list = document.getElementById('leaderboard-list');
         if (!list) return;
         list.innerHTML = '';
 
-        const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        // 1. Streamers Section
+        if (players.length > 0) {
+            const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+            
+            const header = document.createElement('div');
+            header.style.fontSize = '0.8rem';
+            header.style.fontWeight = '700';
+            header.style.color = 'var(--primary-purple)';
+            header.style.textTransform = 'uppercase';
+            header.style.marginBottom = '6px';
+            header.textContent = 'Yayıncı Skorları';
+            list.appendChild(header);
 
-        sortedScores.forEach(([uname, score]) => {
-            const item = document.createElement('div');
-            item.className = 'leaderboard-item';
+            sortedPlayers.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                item.style.fontWeight = '700';
 
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = uname;
+                const icon = p.platform === 'twitch' ? '🟣' : '🟢';
+                item.innerHTML = `
+                    <span>${icon} @${window.escapeHtml(p.name)}</span>
+                    <span style="color:var(--success); font-weight:bold;">${p.score} Puan</span>
+                `;
+                list.appendChild(item);
+            });
+        }
 
-            const scoreSpan = document.createElement('span');
-            scoreSpan.textContent = `${score} Puan`;
-            scoreSpan.style.color = 'var(--primary-purple)';
-            scoreSpan.style.fontWeight = 'bold';
+        // 2. Chatters Section
+        const sortedChatScores = Object.entries(chatScores).sort((a, b) => b[1] - a[1]);
+        if (sortedChatScores.length > 0) {
+            const header = document.createElement('div');
+            header.style.fontSize = '0.8rem';
+            header.style.fontWeight = '700';
+            header.style.color = 'var(--warning)';
+            header.style.textTransform = 'uppercase';
+            header.style.margin = '12px 0 6px 0';
+            header.textContent = 'Top Chat Tahmincileri';
+            list.appendChild(header);
 
-            item.appendChild(nameSpan);
-            item.appendChild(scoreSpan);
-            list.appendChild(item);
-        });
+            sortedChatScores.forEach(([uname, score]) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = uname;
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.textContent = `${score} Puan`;
+                scoreSpan.style.color = 'var(--primary-purple)';
+                scoreSpan.style.fontWeight = 'bold';
+
+                item.appendChild(nameSpan);
+                item.appendChild(scoreSpan);
+                list.appendChild(item);
+            });
+        }
     }
 
     updateTimer(seconds) {
@@ -480,14 +516,54 @@ class ChatTabuView {
  * Function to handle index.html initialization (login form & mode selection)
  */
 function initChatTabuIndexPage() {
-    const modeSelect = document.getElementById('game-mode-select');
+    const platformTabs = document.querySelectorAll('.platform-tab');
+    const platformInput = document.getElementById('platform-select');
+    const modeCards = document.querySelectorAll('.mode-card');
+    const modeInput = document.getElementById('game-mode-select');
     const soloActions = document.getElementById('solo-actions');
     const multiplayerActions = document.getElementById('multiplayer-actions');
     const loginStatus = document.getElementById('login-status');
 
-    if (modeSelect) {
-        modeSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'solo') {
+    // Platform Tab Click Handler
+    platformTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            platformTabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.border = '2px solid var(--btn-secondary-border)';
+                t.style.background = 'var(--input-bg)';
+                t.style.color = 'var(--text-muted)';
+            });
+            tab.classList.add('active');
+            const platform = tab.dataset.platform;
+            if (platformInput) platformInput.value = platform;
+            if (platform === 'twitch') {
+                tab.style.border = '2px solid #9146FF';
+                tab.style.background = 'rgba(145, 70, 255, 0.2)';
+                tab.style.color = '#fff';
+            } else {
+                tab.style.border = '2px solid #53FC18';
+                tab.style.background = 'rgba(83, 252, 24, 0.15)';
+                tab.style.color = '#fff';
+            }
+        });
+    });
+
+    // Mode Card Click Handler
+    modeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            modeCards.forEach(c => {
+                c.classList.remove('active');
+                c.style.border = '2px solid var(--btn-secondary-border)';
+                c.style.background = 'var(--input-bg)';
+            });
+            card.classList.add('active');
+            card.style.border = '2px solid var(--primary-purple)';
+            card.style.background = 'var(--header-bg)';
+
+            const mode = card.dataset.mode;
+            if (modeInput) modeInput.value = mode;
+
+            if (mode === 'solo') {
                 if (soloActions) soloActions.style.display = 'block';
                 if (multiplayerActions) multiplayerActions.style.display = 'none';
             } else {
@@ -495,15 +571,15 @@ function initChatTabuIndexPage() {
                 if (multiplayerActions) multiplayerActions.style.display = 'flex';
             }
         });
-    }
+    });
 
     const getFormValues = () => {
         const channel = document.getElementById('channel-input')?.value.trim();
-        const platform = document.getElementById('platform-select')?.value;
-        const mode = document.getElementById('game-mode-select')?.value;
+        const platform = platformInput?.value || 'twitch';
+        const mode = modeInput?.value || 'solo';
         if (!channel) {
-            if (loginStatus) loginStatus.innerText = 'Lütfen bir kanal adı girin!';
-            if (window.showToast) window.showToast('Lütfen bir kanal adı girin!', 'error');
+            if (loginStatus) loginStatus.innerText = 'Lütfen bir kanal kullanıcı adı girin!';
+            if (window.showToast) window.showToast('Lütfen bir kanal kullanıcı adı girin!', 'error');
             return null;
         }
         return { channel, platform, mode };
@@ -523,7 +599,7 @@ function initChatTabuIndexPage() {
         if (!vals) return;
         sessionStorage.setItem('chattabu_channel', vals.channel);
         sessionStorage.setItem('chattabu_platform', vals.platform);
-        sessionStorage.setItem('chattabu_mode', vals.mode);
+        sessionStorage.setItem('chattabu_mode', 'multiplayer');
         sessionStorage.setItem('chattabu_isHost', 'true');
         window.location.href = 'game.html';
     });
@@ -540,7 +616,7 @@ function initChatTabuIndexPage() {
         }
         sessionStorage.setItem('chattabu_channel', vals.channel);
         sessionStorage.setItem('chattabu_platform', vals.platform);
-        sessionStorage.setItem('chattabu_mode', vals.mode);
+        sessionStorage.setItem('chattabu_mode', 'multiplayer');
         sessionStorage.setItem('chattabu_isHost', 'false');
         sessionStorage.setItem('chattabu_room', roomCode);
         window.location.href = 'game.html';
@@ -550,7 +626,7 @@ function initChatTabuIndexPage() {
     document.getElementById('channel-input')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const mode = document.getElementById('game-mode-select')?.value;
+            const mode = modeInput?.value || 'solo';
             if (mode === 'solo') {
                 document.getElementById('btn-start-solo')?.click();
             } else {
@@ -572,93 +648,130 @@ function initChatTabuIndexPage() {
     });
 }
 
-// MAIN INTEGRATION
+/**
+ * Main Game Controller initialization for game.html
+ */
 document.addEventListener('DOMContentLoaded', async () => {
-    // If on index page, bind login form events
-    if (document.getElementById('channel-input') || document.getElementById('game-mode-select')) {
+    if (document.getElementById('login-screen')) {
         initChatTabuIndexPage();
+        return;
     }
 
-    // Only init game logic if we are on game page
-    if (!document.getElementById('main-word')) return;
-
-    window.PairaTime = window.PairaTime || { now: () => Date.now() };
-    if (window.PairaAudio) window.PairaAudio.init();
+    if (!document.getElementById('game-screen')) return;
 
     const engine = new ChatTabuGameEngine();
+    const view = new ChatTabuView();
+
     await engine.loadWords();
 
-    const view = new ChatTabuView({
-        onLeave: () => {
-            view.stopChatListener();
-            if (window.Network && window.Network.disconnectPeer) window.Network.disconnectPeer();
-            window.location.href = 'index.html';
-        },
-        onStartGame: () => {
-            if (!engine.state.clientName) {
-                if (window.showToast) window.showToast("Oyuna başlamak için bir rakibin katılması gerekiyor!", "warning");
-                else alert("Oyunu başlatmak için bir rakibin katılması gerekiyor!");
-                return;
-            }
-            engine.startMultiplayer(window.Network.getMyId());
-            if (window.Network && window.Network.broadcastToClients) {
-                window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
-                window.Network.broadcastToClients({ type: 'START_GAME' });
-            }
-            
-            document.getElementById('lobby-screen').classList.remove('active');
-            document.getElementById('game-screen').classList.add('active');
+    // DOM Controls
+    const btnSkip = document.getElementById('btn-skip');
+    const btnTaboo = document.getElementById('btn-taboo');
+    const btnStartGame = document.getElementById('btn-start-game');
+    const btnLeaveLobby = document.getElementById('btn-leave-lobby');
+    const btnLeaveGame = document.getElementById('btn-leave-game');
+    const btnToggleVisibility = document.getElementById('btn-toggle-visibility');
+    const iconEyeOpen = document.getElementById('icon-eye-open');
+    const iconEyeClosed = document.getElementById('icon-eye-closed');
 
-            const channel = sessionStorage.getItem('chattabu_channel');
-            const platform = sessionStorage.getItem('chattabu_platform');
-            view.setupChatListener(platform, channel, (u, m) => handleChatMessage(u, m));
-        },
-        onSkip: () => {
+    let wordVisible = true;
+
+    if (btnToggleVisibility) {
+        btnToggleVisibility.addEventListener('click', () => {
+            wordVisible = !wordVisible;
+            const mainWord = document.getElementById('main-word');
+            const forbiddenWords = document.getElementById('forbidden-words');
+
+            if (wordVisible) {
+                if (mainWord) mainWord.style.filter = 'none';
+                if (forbiddenWords) forbiddenWords.style.filter = 'none';
+                if (iconEyeOpen) iconEyeOpen.style.display = 'block';
+                if (iconEyeClosed) iconEyeClosed.style.display = 'none';
+            } else {
+                if (mainWord) mainWord.style.filter = 'blur(12px)';
+                if (forbiddenWords) forbiddenWords.style.filter = 'blur(12px)';
+                if (iconEyeOpen) iconEyeOpen.style.display = 'none';
+                if (iconEyeClosed) iconEyeClosed.style.display = 'block';
+            }
+        });
+    }
+
+    if (btnSkip) {
+        btnSkip.addEventListener('click', () => {
             if (engine.state.mode === 'solo') {
                 if (engine.state.isGameOver) {
-                    const btnSkip = document.getElementById('btn-skip');
-                    if (btnSkip) btnSkip.textContent = 'Pas Geç';
                     engine.startGameSolo();
-                    return;
+                    view.updateGameUI(engine.state, null);
+                } else {
+                    engine.nextWord();
                 }
-                engine.nextWord();
-                return;
-            }
-            if (window.Network && window.Network.isHost() && engine.state.turnId === window.Network.getMyId()) {
+            } else if (window.Network && window.Network.isHost()) {
                 engine.nextWord();
                 window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
-                view.updateGameUI(engine.state, window.Network.getMyId());
-            } else if (window.Network && !window.Network.isHost()) {
+            } else {
                 window.Network.sendToHost({ type: 'SKIP_WORD' });
             }
-        },
-        onTaboo: () => {
-            if (engine.state.mode === 'solo' || engine.state.turnId === window.Network.getMyId() || engine.state.isGameOver) return;
+        });
+    }
+
+    if (btnTaboo) {
+        btnTaboo.addEventListener('click', () => {
             if (window.Network && window.Network.isHost()) {
-                engine.state.clientScore = Math.max(0, engine.state.clientScore - 1);
+                const narrator = engine.state.players.find(p => p.id === engine.state.turnId);
+                if (narrator) {
+                    narrator.score = Math.max(0, narrator.score - 1);
+                }
                 engine.nextWord();
                 window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
                 view.updateGameUI(engine.state, window.Network.getMyId());
-            } else if (window.Network) {
+                view.updateLeaderboard(engine.state.players, engine.state.scores);
+            } else {
                 window.Network.sendToHost({ type: 'TABOO_PRESSED' });
             }
-        }
-    });
+        });
+    }
 
-    engine.onStateChange = (state) => {
-        if (window.Network) {
-            view.updateGameUI(state, window.Network.getMyId());
-            if (window.Network.isHost()) {
-                window.Network.broadcastToClients({ type: 'SYNC_STATE', state, hostNow: window.PairaTime.now() });
+    if (btnStartGame) {
+        btnStartGame.addEventListener('click', () => {
+            if (window.Network && window.Network.isHost()) {
+                const allowAny = document.getElementById('setting-allow-any-chat')?.checked ?? true;
+                const turnDuration = parseInt(document.getElementById('setting-turn-duration')?.value) || 60;
+                const maxRounds = parseInt(document.getElementById('setting-max-rounds')?.value) || 5;
+
+                engine.state.turnDuration = turnDuration;
+                engine.state.maxRounds = maxRounds;
+
+                engine.startMultiplayer(window.Network.getMyId(), { allowAnyChat: allowAny });
+                window.Network.broadcastToClients({ type: 'START_GAME', state: engine.state });
+
+                document.getElementById('lobby-screen').classList.remove('active');
+                document.getElementById('game-screen').classList.add('active');
+
+                view.updateGameUI(engine.state, window.Network.getMyId());
+                view.updateLeaderboard(engine.state.players, engine.state.scores);
             }
-        } else {
-            view.updateGameUI(state, null);
-        }
-        view.updateLeaderboard(state.scores);
+        });
+    }
+
+    const leaveFn = () => {
+        view.stopChatListener();
+        if (window.Network) window.Network.disconnectPeer();
+        sessionStorage.removeItem('chattabu_room');
+        sessionStorage.removeItem('chattabu_isHost');
+        window.location.href = 'index.html';
     };
 
-    engine.onTimerTick = (secs) => {
-        view.updateTimer(secs);
+    if (btnLeaveLobby) btnLeaveLobby.addEventListener('click', leaveFn);
+    if (btnLeaveGame) btnLeaveGame.addEventListener('click', leaveFn);
+
+    // Engine callbacks
+    engine.onStateChange = (state) => {
+        view.updateGameUI(state, window.Network ? window.Network.getMyId() : null);
+        view.updateLeaderboard(state.players, state.scores);
+    };
+
+    engine.onTimerTick = (seconds) => {
+        view.updateTimer(seconds);
     };
 
     engine.onTimeUp = (state) => {
@@ -685,9 +798,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 type: 'GUESSED_CORRECTLY',
                 username,
                 word: word,
-                scores: engine.state.scores,
-                hostScore: engine.state.hostScore,
-                clientScore: engine.state.clientScore
+                state: engine.state
             });
         }
     };
@@ -702,29 +813,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const myId = window.Network.getMyId();
             const isHost = window.Network.isHost();
-            const isMyTurn = engine.state.turnId === myId;
 
-            if (engine.state.mode === 'chat_vs_chat') {
-                if (!isMyTurn) return; 
-                view.addChatMessage(username, message, true, false);
-                if (isHost) {
-                    engine.checkGuess(username, message, myId, true);
-                } else {
-                    window.Network.sendToHost({ type: 'CHECK_GUESS', username, message });
-                }
+            view.addChatMessage(username, message, true, false);
+            if (isHost) {
+                window.Network.broadcastToClients({ type: 'CHAT_MSG', username, message, streamerId: myId });
+                engine.checkGuess(username, message, myId, true);
             } else {
-                view.addChatMessage(username, message, true, false);
-                if (isHost) {
-                    window.Network.broadcastToClients({ type: 'CHAT_MSG', username, message });
-                    engine.checkGuess(username, message, myId, true);
-                } else {
-                    window.Network.sendToHost({ type: 'CHAT_MSG', username, message });
-                }
+                window.Network.sendToHost({ type: 'CHAT_MSG', username, message, streamerId: myId });
             }
         }
     };
 
-    // Init Network
+    // Init Network & Room State
     const channel = sessionStorage.getItem('chattabu_channel');
     const platform = sessionStorage.getItem('chattabu_platform');
     const mode = sessionStorage.getItem('chattabu_mode') || 'solo';
@@ -741,8 +841,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mode === 'solo') {
         document.getElementById('lobby-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
-        document.querySelector('.score-board').style.display = 'none';
-        
+
+        engine.state.players = [{ id: 'solo-player', name: channel, platform: platform, score: 0, isHost: true }];
         document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
         view.setupChatListener(platform, channel, handleChatMessage);
         
@@ -755,8 +855,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isHostUser) {
         document.getElementById('settings-card').style.display = 'flex';
         document.getElementById('room-code-display').style.display = 'flex';
-        engine.state.hostName = channel;
-        engine.state.hostPlatform = platform;
     } else {
         document.getElementById('settings-card').style.display = 'none';
         document.getElementById('room-code-display').style.display = 'none';
@@ -764,9 +862,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         const data = await window.Network.initPeer(isHostUser ? 'host' : 'client', roomCode);
+        const myId = window.Network.getMyId();
+
         if (isHostUser) {
             document.getElementById('room-code-val').textContent = data.roomCode;
-            view.updateLobbyPlayers(engine.state.hostName, engine.state.clientName);
+            engine.state.players = [{ id: myId, name: channel, platform: platform, score: 0, isHost: true }];
+            view.updateLobbyPlayers(engine.state.players);
         }
     } catch (e) {
         if (window.showToast) window.showToast(e.message || "Bağlantı hatası", "error");
@@ -776,22 +877,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.onPlayerJoined = (peerId) => {
         window.Network.broadcastToClients({ type: 'REQUEST_INFO' });
-        document.getElementById('lobby-status').textContent = 'Rakip bağlandı, bilgileri bekleniyor...';
+        document.getElementById('lobby-status').textContent = 'Yeni yayıncı katılıyor...';
     };
 
     window.onPlayerLeft = (peerId) => {
-        engine.state.clientName = '';
-        engine.state.clientPlatform = '';
-        engine.state.clientId = null;
-        view.updateLobbyPlayers(engine.state.hostName, engine.state.clientName);
-        document.getElementById('lobby-status').textContent = 'Rakip ayrıldı. Yeni rakip bekleniyor...';
-        
-        if (engine.state.isGameStarted && !engine.state.isGameOver) {
-            if (window.showToast) window.showToast("Rakip oyundan ayrıldı. Oyun sona erdi.", "error");
-            else alert("Rakip oyundan ayrıldı. Oyun sona erdi.");
-            engine.state.isGameOver = true;
-            engine.setState(engine.state);
-        }
+        engine.state.players = engine.state.players.filter(p => p.id !== peerId);
+        engine.state.turnOrder = engine.state.turnOrder.filter(id => id !== peerId);
+
+        view.updateLobbyPlayers(engine.state.players);
+        window.Network.broadcastToClients({ type: 'SYNC_LOBBY', players: engine.state.players });
+
+        document.getElementById('lobby-status').textContent = `${engine.state.players.length} yayıncı odada.`;
     };
 
     window.handleNetworkData = (data, sender) => {
@@ -799,11 +895,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.Network.sendToHost({ type: 'CLIENT_INFO', channel, platform, myId: window.Network.getMyId() });
         }
         else if (data.type === 'CLIENT_INFO') {
-            engine.state.clientName = data.channel;
-            engine.state.clientPlatform = data.platform;
-            engine.state.clientId = data.myId || sender;
-            view.updateLobbyPlayers(engine.state.hostName, engine.state.clientName);
-            document.getElementById('lobby-status').textContent = 'Rakip hazır!';
+            const senderId = data.myId || sender;
+            const existingIndex = engine.state.players.findIndex(p => p.id === senderId);
+            const pData = { id: senderId, name: data.channel, platform: data.platform, score: 0, isHost: false };
+            
+            if (existingIndex >= 0) {
+                engine.state.players[existingIndex] = pData;
+            } else {
+                engine.state.players.push(pData);
+            }
+
+            view.updateLobbyPlayers(engine.state.players);
+            window.Network.broadcastToClients({ type: 'SYNC_LOBBY', players: engine.state.players });
+            document.getElementById('lobby-status').textContent = `${engine.state.players.length} yayıncı hazır!`;
+        }
+        else if (data.type === 'SYNC_LOBBY') {
+            engine.state.players = data.players;
+            view.updateLobbyPlayers(engine.state.players);
         }
         else if (data.type === 'SYNC_STATE') {
             if (data.hostNow && data.state.turnEndTime) {
@@ -812,42 +920,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             engine.state = { ...engine.state, ...data.state };
             view.updateGameUI(engine.state, window.Network.getMyId());
-            view.updateLeaderboard(engine.state.scores);
+            view.updateLeaderboard(engine.state.players, engine.state.scores);
         }
         else if (data.type === 'START_GAME') {
             document.getElementById('lobby-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
 
-            if (engine.state.mode !== 'solo') {
-                document.getElementById('p1-name').textContent = engine.state.hostName;
-                document.getElementById('p2-name').textContent = engine.state.clientName;
+            if (data.state) {
+                engine.state = { ...engine.state, ...data.state };
             }
+
             view.setupChatListener(platform, channel, handleChatMessage);
             view.updateGameUI(engine.state, window.Network.getMyId());
+            view.updateLeaderboard(engine.state.players, engine.state.scores);
             engine.startTimer();
         }
-        else if (data.type === 'NEXT_WORD') {
-            engine.state.activeWord = data.word;
-            engine.state.isPaused = false;
-            engine.setState(engine.state);
-        }
         else if (data.type === 'GUESSED_CORRECTLY') {
-            engine.state.activeWord = data.word;
-            engine.state.scores = data.scores;
-            engine.state.hostScore = data.hostScore;
-            engine.state.clientScore = data.clientScore;
+            if (data.state) {
+                engine.state = { ...engine.state, ...data.state };
+            }
             view.triggerCorrectGuess(data.username);
-            engine.setState(engine.state);
+            view.updateGameUI(engine.state, window.Network.getMyId());
+            view.updateLeaderboard(engine.state.players, engine.state.scores);
             if (window.PairaAudio) window.PairaAudio.play('correct');
         }
         else if (data.type === 'SKIP_WORD') {
-            if (window.Network.isHost() && engine.state.turnId !== window.Network.getMyId()) {
-                engine.nextWord();
-                window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
-            }
-        }
-        else if (data.type === 'NEXT_WORD_REQ') {
-            if (window.Network.isHost() && engine.state.turnId !== window.Network.getMyId()) {
+            if (window.Network.isHost()) {
                 engine.nextWord();
                 window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
             }
@@ -855,29 +953,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (data.type === 'CHAT_MSG') {
             view.addChatMessage(data.username, data.message, false, false);
             if (window.Network.isHost()) {
-                engine.checkGuess(data.username, data.message, window.Network.getMyId(), true);
-            }
-        }
-        else if (data.type === 'CHECK_GUESS') {
-            if (window.Network.isHost()) {
-                engine.checkGuess(data.username, data.message, window.Network.getMyId(), true);
+                engine.checkGuess(data.username, data.message, data.streamerId || sender, true);
             }
         }
         else if (data.type === 'TABOO_PRESSED') {
             if (window.Network.isHost() && !engine.state.isGameOver && engine.state.isGameStarted) {
-                if (engine.state.turnId === window.Network.getMyId()) {
-                    engine.state.hostScore = Math.max(0, engine.state.hostScore - 1);
-                } else {
-                    engine.state.clientScore = Math.max(0, engine.state.clientScore - 1);
+                const narrator = engine.state.players.find(p => p.id === engine.state.turnId);
+                if (narrator) {
+                    narrator.score = Math.max(0, narrator.score - 1);
                 }
                 engine.nextWord();
                 window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
                 view.updateGameUI(engine.state, window.Network.getMyId());
+                view.updateLeaderboard(engine.state.players, engine.state.scores);
             }
         }
         else if (data.type === 'TURN_END') {
             engine.state.turnId = data.nextTurnId;
-            engine.state.turnEndTime = window.PairaTime.now() + 60000;
             engine.setState(engine.state);
             if (window.PairaAudio) window.PairaAudio.play('end');
         }

@@ -58,38 +58,67 @@
             <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! **Paira ChatTabu** ile siz anlatın, sohbetinizdeki (chat) herkes aynı anda tahmin etsin. En hızlı kim bilecek?</p>
         </div>
 
-        <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
-            <div class="form-group">
-                <label for="game-mode-select">Oyun Modu</label>
-                <select id="game-mode-select">
-                    <option value="solo">Tek Oyunculu (Klasik)</option>
-                    <option value="streamer_vs_streamer">Streamer vs Streamer</option>
-                    <option value="chat_vs_chat">Chat vs Chat</option>
-                </select>
+        <div style="max-width: 520px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 1.2rem; padding: 1.8rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+            <!-- ADIM 1: Platform Seçimi -->
+            <div class="form-group" style="margin-bottom: 1.4rem;">
+                <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">1. Canlı Yayın Platformu</label>
+                <div class="platform-tabs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                    <button type="button" class="platform-tab active" data-platform="twitch" style="padding: 12px; border-radius: 10px; border: 2px solid #9146FF; background: rgba(145, 70, 255, 0.2); color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                        <span style="font-size: 1.2rem;">🟣</span> Twitch
+                    </button>
+                    <button type="button" class="platform-tab" data-platform="kick" style="padding: 12px; border-radius: 10px; border: 2px solid var(--btn-secondary-border); background: var(--input-bg); color: var(--text-muted); font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                        <span style="font-size: 1.2rem;">🟢</span> Kick
+                    </button>
+                </div>
+                <input type="hidden" id="platform-select" value="twitch">
             </div>
 
-            <div class="form-group">
-                <label for="platform-select">Platform Seçimi</label>
-                <select id="platform-select">
-                    <option value="twitch">Twitch</option>
-                    <option value="kick">Kick</option>
-                </select>
+            <!-- ADIM 2: Kanal Adı -->
+            <div class="form-group" style="margin-bottom: 1.4rem;">
+                <label for="channel-input" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">2. Yayıncı Kanal Kullanıcı Adı</label>
+                <div style="position: relative; display: flex; align-items: center;">
+                    <span style="position: absolute; left: 14px; color: var(--primary-purple); font-weight: 700; font-size: 1.1rem;">@</span>
+                    <input type="text" id="channel-input" placeholder="kanal_adi (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="padding-left: 36px; font-weight: 600; font-size: 1.05rem;">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="channel-input">Kanal Adı</label>
-                <input type="text" id="channel-input" placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
+            <!-- ADIM 3: Oyun Modu -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">3. Oyun Modu Seçimi</label>
+                <div class="mode-cards-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                    <!-- Kart 1: Solo -->
+                    <div class="mode-card active" data-mode="solo" style="border: 2px solid var(--primary-purple); background: var(--header-bg); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="font-size: 1.4rem; margin-bottom: 4px;">👤</div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Tek Yayıncı</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">Kendi sohbetinle 3 dakikada kaç kelime bilinecek?</div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700; color: var(--success); text-transform: uppercase;">• Tek Kişilik Klasik</div>
+                    </div>
+
+                    <!-- Kart 2: Multiplayer -->
+                    <div class="mode-card" data-mode="multiplayer" style="border: 2px solid var(--btn-secondary-border); background: var(--input-bg); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="font-size: 1.4rem; margin-bottom: 4px;">⚔️</div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Çoklu Yayıncı</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">2+ yayıncı aynı odaya katılın, sohbetler yarışsın!</div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700; color: var(--primary-purple); text-transform: uppercase;">• Odaya Katıl / Kur</div>
+                    </div>
+                </div>
+                <input type="hidden" id="game-mode-select" value="solo">
             </div>
 
+            <!-- Aksiyon Butonları -->
             <div id="solo-actions">
-                <button id="btn-start-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Oyunu Başlat</button>
+                <button id="btn-start-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">🚀 Tek Oyunculu Oyunu Başlat</button>
             </div>
 
             <div id="multiplayer-actions" style="display: none; flex-direction: column; gap: 1rem;">
-                <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
-                <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">🏠 Yeni Çoklu Yayıncı Odası Kur</button>
+                <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
                     <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
-                    <span>VEYA</span>
+                    <span>VEYA VAROLAN ODAYA KATIL</span>
                     <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
                 </div>
                 <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
@@ -98,7 +127,7 @@
                 </div>
             </div>
 
-            <div id="login-status" class="status-msg" style="margin-top: 10px; text-align: center; color: var(--danger);"></div>
+            <div id="login-status" class="status-msg" style="margin-top: 12px; text-align: center; color: var(--danger); font-weight: 600;"></div>
         </div>
 
         <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">

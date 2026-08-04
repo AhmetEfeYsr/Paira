@@ -65,10 +65,12 @@ class ChatListener {
 
     startTwitch() {
         this.stop();
+        const cleanChannel = this.channel.trim().toLowerCase().replace(/^#/, '');
+        console.log(`[Twitch] Connecting to ${cleanChannel} chat...`);
         this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
         this.ws.onopen = () => {
-            console.log(`[Twitch] Connected to ${this.channel} chat.`);
+            console.log(`[Twitch] Connected to #${cleanChannel} chat.`);
             const status = document.getElementById('chat-status');
             if (status) {
                 status.textContent = '• Bağlı';
@@ -77,33 +79,66 @@ class ChatListener {
             this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
             this.ws.send('PASS SCHMOOPIIE');
             this.ws.send(`NICK justinfan${Math.floor(Math.random() * 80000)}`);
-            this.ws.send(`JOIN #${this.channel}`);
+            this.ws.send(`JOIN #${cleanChannel}`);
             if (this.onOpen) this.onOpen();
+
+            // Client keep-alive ping interval (every 30s)
+            if (this.pingInterval) clearInterval(this.pingInterval);
+            this.pingInterval = setInterval(() => {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send('PING :tmi.twitch.tv');
+                }
+            }, 30000);
         };
 
         this.ws.onmessage = (event) => {
-            const message = event.data;
-            if (message.startsWith('PING')) {
-                this.ws.send('PONG :tmi.twitch.tv');
-            } else if (message.includes('PRIVMSG')) {
-                const usernameMatch = message.match(/display-name=([^;]+)/) || message.match(/:(.*?)!/);
-                const username = usernameMatch ? usernameMatch[1] : 'Unknown';
-                const contentMatch = message.match(/PRIVMSG #[^:]+:(.+)/);
-                const content = contentMatch ? contentMatch[1].trim() : '';
+            const rawMessage = event.data;
+            const lines = rawMessage.split('\r\n');
 
-                if (content && this.onMessage) {
-                    this.onMessage(username, content);
+            for (const message of lines) {
+                if (!message) continue;
+
+                if (message.startsWith('PING')) {
+                    this.ws.send('PONG :tmi.twitch.tv');
+                } else if (message.includes('PRIVMSG')) {
+                    const usernameMatch = message.match(/display-name=([^;]+)/) || message.match(/:(.*?)!/);
+                    let username = usernameMatch ? usernameMatch[1] : 'Unknown';
+                    if (!username || username === 'Unknown') {
+                        const fallbackMatch = message.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv/);
+                        if (fallbackMatch) username = fallbackMatch[1];
+                    }
+
+                    const contentMatch = message.match(/PRIVMSG #[^:]+:(.+)/);
+                    const content = contentMatch ? contentMatch[1].trim() : '';
+
+                    if (content && this.onMessage) {
+                        this.onMessage(username, content);
+                    }
                 }
             }
         };
 
         this.ws.onerror = (error) => {
-            this.handleError('[Twitch] WebSocket error');
+            this.handleError('[Twitch] WebSocket hatası oluştu');
         };
 
         this.ws.onclose = () => {
             console.log('[Twitch] Disconnected.');
             if (this.onClose) this.onClose();
+
+            if (!this.isStopped) {
+                const status = document.getElementById('chat-status');
+                if (status) {
+                    status.textContent = '• Yeniden Bağlanıyor...';
+                    status.style.color = 'var(--warning)';
+                }
+                this.reconnectTimeout = setTimeout(() => {
+                    if (!this.isStopped) {
+                        console.log('[Twitch] Reconnecting...');
+                        this.startTwitch();
+                    }
+                }, 3000);
+            }
         };
     }
 

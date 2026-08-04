@@ -76,10 +76,10 @@ const initPeer = async (mode, room = null) => {
 const setupHostConnection = (conn) => {
     console.log("Client connecting:", conn.peer);
 
-    // Auto accept if we only need 1 other player
-    if (Object.keys(connections).length >= 1) {
+    // Support up to 10 streamers in a single room
+    if (Object.keys(connections).length >= 10) {
         conn.on('open', () => {
-            conn.send({ type: 'ERROR', message: 'Oda dolu!' });
+            conn.send({ type: 'ERROR', message: 'Oda dolu! (Maksimum 10 yayıncı)' });
             setTimeout(() => conn.close(), 500);
         });
         return;

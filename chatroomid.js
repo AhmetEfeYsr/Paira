@@ -8,118 +8,118 @@
  */
 
 export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    const channel = url.searchParams.get("channel");
+    async fetch(request) {
+        const url = new URL(request.url);
+        const channel = url.searchParams.get("channel");
 
-    // CORS Preflight (OPTIONS)
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
-    }
-
-    if (!channel) {
-      return new Response(JSON.stringify({ error: "Kanal adı zorunludur" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+        // CORS Preflight (OPTIONS)
+        if (request.method === "OPTIONS") {
+            return new Response(null, {
+                headers: {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                },
+            });
         }
-      });
-    }
 
-    const cleanChannel = channel.trim().toLowerCase();
-
-    const fetchKickData = async (targetUrl, isWrapper = false) => {
-      const res = await fetch(targetUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          "Accept": "application/json, text/html"
+        if (!channel) {
+            return new Response(JSON.stringify({ error: "Kanal adı zorunludur" }), {
+                status: 400,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*"
+                }
+            });
         }
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      let content = "";
-      if (isWrapper) {
-        const wrapper = await res.json();
-        content = wrapper.contents || "";
-      } else {
-        content = await res.text();
-      }
+        const cleanChannel = channel.trim().toLowerCase();
 
-      if (!content) throw new Error("Empty content");
+        const fetchKickData = async (targetUrl, isWrapper = false) => {
+            const res = await fetch(targetUrl, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                    "Accept": "application/json, text/html"
+                }
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // 1. Check __NEXT_DATA__ in HTML
-      if (content.includes("__NEXT_DATA__")) {
-        const match = content.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
-        if (match && match[1]) {
-          const nextData = JSON.parse(match[1]);
-          const channelData = nextData.props?.pageProps?.channel;
-          if (channelData) {
-            const trueChatroomId = channelData.chatroom?.id || channelData.chatroom_id;
-            if (trueChatroomId) {
-              return {
-                chatroom_id: trueChatroomId,
-                pusher_key: channelData.pusher?.key || "32cbd69e4b950bf97679",
-                pusher_cluster: channelData.pusher?.cluster || "us2"
-              };
+            let content = "";
+            if (isWrapper) {
+                const wrapper = await res.json();
+                content = wrapper.contents || "";
+            } else {
+                content = await res.text();
             }
-          }
+
+            if (!content) throw new Error("Empty content");
+
+            // 1. Check __NEXT_DATA__ in HTML
+            if (content.includes("__NEXT_DATA__")) {
+                const match = content.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+                if (match && match[1]) {
+                    const nextData = JSON.parse(match[1]);
+                    const channelData = nextData.props?.pageProps?.channel;
+                    if (channelData) {
+                        const trueChatroomId = channelData.chatroom?.id || channelData.chatroom_id;
+                        if (trueChatroomId) {
+                            return {
+                                chatroom_id: trueChatroomId,
+                                pusher_key: channelData.pusher?.key || "32cbd69e4b950bf97679",
+                                pusher_cluster: channelData.pusher?.cluster || "us2"
+                            };
+                        }
+                    }
+                }
+            }
+
+            // 2. Check Direct JSON response
+            try {
+                const data = typeof content === 'object' ? content : JSON.parse(content);
+                const trueChatroomId = data.chatroom?.id || data.chatroom_id || (targetUrl.includes('/chatroom') ? data.id : null);
+                if (trueChatroomId) {
+                    return {
+                        chatroom_id: trueChatroomId,
+                        pusher_key: data.pusher_key || data.pusher?.key || "32cbd69e4b950bf97679",
+                        pusher_cluster: data.pusher_cluster || data.pusher?.cluster || "us2"
+                    };
+                }
+            } catch (e) { }
+
+            throw new Error("No Chatroom ID found");
+        };
+
+        const endpoints = [
+            { url: `https://kick.com/api/v2/channels/${cleanChannel}/chatroom`, isWrapper: false },
+            { url: `https://kick.com/api/v2/channels/${cleanChannel}`, isWrapper: false },
+            { url: `https://kick.com/api/v1/channels/${cleanChannel}`, isWrapper: false },
+            { url: `https://kick.com/${cleanChannel}`, isWrapper: false },
+            { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel + '/chatroom')}`, isWrapper: false },
+            { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`, isWrapper: false },
+            { url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/' + cleanChannel)}`, isWrapper: true }
+        ];
+
+        for (const ep of endpoints) {
+            try {
+                const data = await fetchKickData(ep.url, ep.isWrapper);
+                return new Response(JSON.stringify(data), {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                });
+            } catch (e) {
+                // Try next endpoint
+            }
         }
-      }
 
-      // 2. Check Direct JSON response
-      try {
-        const data = typeof content === 'object' ? content : JSON.parse(content);
-        const trueChatroomId = data.chatroom?.id || data.chatroom_id || (targetUrl.includes('/chatroom') ? data.id : null);
-        if (trueChatroomId) {
-          return {
-            chatroom_id: trueChatroomId,
-            pusher_key: data.pusher_key || data.pusher?.key || "32cbd69e4b950bf97679",
-            pusher_cluster: data.pusher_cluster || data.pusher?.cluster || "us2"
-          };
-        }
-      } catch (e) {}
-
-      throw new Error("No Chatroom ID found");
-    };
-
-    const endpoints = [
-      { url: `https://kick.com/api/v2/channels/${cleanChannel}/chatroom`, isWrapper: false },
-      { url: `https://kick.com/api/v2/channels/${cleanChannel}`, isWrapper: false },
-      { url: `https://kick.com/api/v1/channels/${cleanChannel}`, isWrapper: false },
-      { url: `https://kick.com/${cleanChannel}`, isWrapper: false },
-      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel + '/chatroom')}`, isWrapper: false },
-      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`, isWrapper: false },
-      { url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/' + cleanChannel)}`, isWrapper: true }
-    ];
-
-    for (const ep of endpoints) {
-      try {
-        const data = await fetchKickData(ep.url, ep.isWrapper);
-        return new Response(JSON.stringify(data), {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
-          }
+        return new Response(JSON.stringify({ error: `"${cleanChannel}" kanalı için Chatroom ID bulunamadı.` }), {
+            status: 444,
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
         });
-      } catch (e) {
-        // Try next endpoint
-      }
     }
-
-    return new Response(JSON.stringify({ error: `"${cleanChannel}" kanalı için Chatroom ID bulunamadı.` }), {
-      status: 444,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }
-    });
-  }
 };
