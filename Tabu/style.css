@@ -15,53 +15,131 @@
 }
 
 .taboo-card {
-    background: linear-gradient(145deg, var(--modal-bg), var(--toast-bg));
-    border: 2px solid var(--neon-purple); border-radius: 16px;
-    width: 100%; max-width: 450px; text-align: center;
-    box-shadow: 0 8px 25px var(--input-bg);
-
+    background: linear-gradient(145deg, var(--modal-bg), var(--bg-deep));
+    border: 2px solid var(--neon-purple);
+    border-radius: 20px;
+    width: 100%; max-width: 480px; text-align: center;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4), 0 0 20px var(--neon-glow-rgba);
     display: flex;
     flex-direction: column;
     flex: 1; 
     min-height: 0; 
-    margin-bottom: clamp(0.6rem, 1.5vw, 1rem);
+    margin-bottom: clamp(0.8rem, 1.5vw, 1.2rem);
+    position: relative;
+    overflow: hidden;
 }
 
-.card-header { background: var(--header-bg); padding: clamp(1rem, 2.5vw, 1.4rem); border-bottom: 2px solid var(--primary-purple); border-radius: 14px 14px 0 0; flex-shrink: 0; }
-.card-header h2 { font-size: clamp(1.4rem, 3.5vw, 1.8rem); color: var(--text-main); margin: 0; letter-spacing: 1px; }
+.card-header {
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.35), rgba(var(--primary-rgb), 0.15));
+    padding: clamp(1.2rem, 3vw, 1.6rem);
+    border-bottom: 2px solid var(--neon-purple);
+    border-radius: 18px 18px 0 0;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.card-header h2 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    text-transform: uppercase;
+}
 
 #forbidden-words {
-    list-style: none; padding: clamp(1rem, 2.5vw, 1.4rem);
+    list-style: none;
+    padding: clamp(1rem, 2.5vw, 1.4rem);
     overflow-y: auto; 
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
 }
-#forbidden-words li { font-size: clamp(1rem, 2.5vw, 1.2rem); margin-bottom: 8px; color: var(--lilac); font-weight: 600; letter-spacing: 0.5px; }
-#forbidden-words li:last-child { margin-bottom: 0; }
+
+#forbidden-words li {
+    font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+    padding: 10px 16px;
+    background: rgba(231, 76, 60, 0.12);
+    border: 1px solid rgba(231, 76, 60, 0.35);
+    border-radius: 12px;
+    color: #ff9999;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+#forbidden-words li::before {
+    content: "🚫";
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+#forbidden-words li:hover {
+    transform: scale(1.02);
+    background: rgba(231, 76, 60, 0.2);
+}
 
 .narrator-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: clamp(0.6rem, 1.5vw, 0.8rem);
+    gap: clamp(0.6rem, 1.5vw, 1rem);
     width: 100%;
-    max-width: 450px;
+    max-width: 480px;
     justify-content: center;
     flex-shrink: 0; 
     padding-bottom: 5px;
 }
 
 .narrator-actions .btn {
-    flex: 1 1 110px;
-    padding: clamp(10px, 1.5vw, 14px) 10px !important;
-    font-size: clamp(0.9rem, 2vw, 1rem);
+    flex: 1;
+    padding: clamp(12px, 1.8vw, 16px) 12px !important;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    border-radius: 14px;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
-.chat-panel { display: flex; flex-direction: column; height: 100%; padding: clamp(0.8rem, 2vw, 1.2rem); background: var(--card-bg); min-height: 0; }
+.btn-key-hint {
+    font-size: 0.7rem;
+    opacity: 0.75;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.chat-panel { display: flex; flex-direction: column; height: 100%; padding: clamp(0.8rem, 2vw, 1.2rem); background: var(--card-bg); min-height: 0; border-radius: 16px; border: var(--glass-border); }
 .messages-container { flex-grow: 1; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; padding-right: 5px; }
 .chat-msg { background: var(--input-bg); padding: 8px 12px; border-radius: 8px; border-bottom-left-radius: 0; align-self: flex-start; max-width: 90%; word-break: break-word; line-height: 1.35; }
 .chat-msg.self { background: var(--header-bg); border-bottom-left-radius: 8px; border-bottom-right-radius: 0; align-self: flex-end; }
 .chat-input-wrapper { display: flex; gap: 8px; flex-shrink: 0; }
 .chat-input-wrapper input { flex-grow: 1; min-height: 36px; padding: 10px 14px; font-size: 15px; }
+
+.status-badge.guesser-mode {
+    background: rgba(138, 43, 226, 0.25);
+    border-color: var(--neon-purple);
+    color: var(--lilac);
+    box-shadow: 0 0 15px var(--neon-glow-rgba);
+}
+
+.status-badge.opponent-mode {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: var(--danger);
+    color: #ff9999;
+}
 
 .badge {
     padding: 4px 8px;
@@ -72,15 +150,16 @@
     background: var(--primary-purple);
 }
 
-.blurred-text {
-    filter: blur(8px);
-    opacity: 0.8;
-    user-select: none;
-    pointer-events: none;
+.pop-animation {
+    animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 @media (max-width: 900px) {
-    /* Mobilde yapısal olarak normal akışa izin verdik */
     .game-layout { grid-template-columns: 1fr; overflow-y: visible; display: flex; flex-direction: column; }
     .chat-panel { min-height: 250px; flex-shrink: 0; margin-top: 1rem; }
     .play-area { overflow: visible; flex-grow: 1; min-height: auto; }
@@ -88,7 +167,8 @@
 
 @media (max-width: 480px) {
     .btn { font-size: 0.9rem; padding: 10px 16px; }
-    #word-card h2 { font-size: 2rem; word-wrap: break-word; }
-    .narrator-actions { flex-direction: column; gap: 8px; }
-    .narrator-actions .btn { width: 100%; flex: none; }
+    #word-card h2 { font-size: 1.8rem; word-wrap: break-word; }
+    .narrator-actions { display: flex; flex-direction: row; gap: 6px; }
+    .narrator-actions .btn { flex: 1; min-width: 0; padding: 10px 6px !important; font-size: 0.85rem; }
+    .btn-key-hint { display: none; }
 }

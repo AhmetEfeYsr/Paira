@@ -348,10 +348,26 @@ class TabuView {
         document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
 
         document.getElementById('btn-send-chat')?.addEventListener('click', () => this.sendChat());
-        document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') this.sendChat(); });
+        document.getElementById('chat-input')?.addEventListener('keydown', (e) => { if(e.key === 'Enter') this.sendChat(); });
 
         document.getElementById('btn-leave-lobby')?.addEventListener('click', () => this.callbacks.onLeave());
         document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
+
+        // Keyboard shortcuts for quick narrating
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+            
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === ' ') {
+                e.preventDefault();
+                this.callbacks.onAction('CORRECT');
+            } else if (e.key === 'ArrowDown' || e.key === 't' || e.key === 'T' || e.key === 'x' || e.key === 'X') {
+                e.preventDefault();
+                this.callbacks.onAction('TABOO');
+            } else if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                this.callbacks.onAction('PASS');
+            }
+        });
     }
 
     sendChat() {

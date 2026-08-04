@@ -196,10 +196,12 @@ class TabuNetworkManager extends BaseGameNetwork {
         const turnId = fullStateCopy.turnId;
 
         Object.keys(this.connections).forEach(peerId => {
-            const isNarrator = (peerId === turnId);
+            const narratorPlayer = fullStateCopy.players[turnId];
+            const peerPlayer = fullStateCopy.players[peerId];
+            const isTeammateOfNarrator = (peerPlayer && narratorPlayer && peerPlayer.team === narratorPlayer.team && peerId !== turnId);
             const clientState = JSON.parse(JSON.stringify(fullStateCopy));
             
-            if (!isNarrator && currentWord && clientState.status === 'playing') {
+            if (isTeammateOfNarrator && currentWord && clientState.status === 'playing') {
                 clientState.currentWord = {
                     ana_kelime: "???",
                     yasakli_kelimeler: ["???", "???", "???", "???", "???"],
@@ -219,9 +221,12 @@ class TabuNetworkManager extends BaseGameNetwork {
         });
 
         // Update local host UI
-        const isHostNarrator = (this.myId === turnId);
+        const hostPlayer = fullStateCopy.players[this.myId];
+        const narratorPlayerHost = fullStateCopy.players[turnId];
+        const isHostTeammate = (hostPlayer && narratorPlayerHost && hostPlayer.team === narratorPlayerHost.team && this.myId !== turnId);
+
         const hostState = JSON.parse(JSON.stringify(fullStateCopy));
-        if (!isHostNarrator && currentWord && hostState.status === 'playing') {
+        if (isHostTeammate && currentWord && hostState.status === 'playing') {
             hostState.currentWord = {
                 ana_kelime: "???",
                 yasakli_kelimeler: ["???", "???", "???", "???", "???"],
