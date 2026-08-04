@@ -17,6 +17,8 @@ class ChatListener {
 
         // IMPORTANT: Replace this with your deployed Google Cloud Function URL
         this.kickCloudFunctionUrl = 'https://us-central1-precise-rune-465721-f3.cloudfunctions.net/getKickInfo';
+        // Cloudflare Worker Proxy URL (0ms 100% uptime Cloudflare Edge Worker)
+        this.kickWorkerUrl = 'https://canimablam.ahmetefeyasar07.workers.dev';
     }
 
     start() {
@@ -106,7 +108,20 @@ class ChatListener {
         const cleanChannel = this.channel.trim().toLowerCase();
         console.log(`[Kick] Fetching channel data client-side for ${cleanChannel}...`);
 
-        const targets = [
+        const targets = [];
+
+        if (this.kickWorkerUrl) {
+            targets.push({
+                url: `${this.kickWorkerUrl}?channel=${cleanChannel}`,
+                isWrapper: false
+            });
+        }
+
+        targets.push(
+            {
+                url: `https://thingproxy.freeboard.io/fetch/https://kick.com/api/v2/channels/${cleanChannel}`,
+                isWrapper: false
+            },
             {
                 url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`,
                 isWrapper: false
@@ -122,8 +137,12 @@ class ChatListener {
             {
                 url: `https://corsproxy.io/?https://kick.com/api/v2/channels/${cleanChannel}`,
                 isWrapper: false
+            },
+            {
+                url: `${this.kickCloudFunctionUrl}?channel=${cleanChannel}`,
+                isWrapper: false
             }
-        ];
+        );
 
         const fetchTarget = async (target) => {
             const controller = new AbortController();
