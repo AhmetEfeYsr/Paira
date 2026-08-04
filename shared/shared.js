@@ -335,11 +335,25 @@ window.PairaTime.sync();
 
 window.PairaAudio = {
     ctx: null,
+    _userGestureBound: false,
     init() {
         if (!this.ctx) {
             try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
         }
-        if (this.ctx?.state === 'suspended') this.ctx.resume();
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+        if (!this._userGestureBound) {
+            this._userGestureBound = true;
+            const unlock = () => {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(() => {});
+                }
+            };
+            window.addEventListener('click', unlock, { once: true });
+            window.addEventListener('keydown', unlock, { once: true });
+            window.addEventListener('pointerdown', unlock, { once: true });
+        }
     },
     play(type) {
         if (!this.ctx) return;

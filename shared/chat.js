@@ -47,6 +47,8 @@ class ChatListener {
         if (window.showToast) {
             window.showToast(errorMsg, 'error');
         }
+    }
+
     startTwitch() {
         this.stop();
         this.ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
