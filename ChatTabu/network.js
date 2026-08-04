@@ -10,7 +10,13 @@ let roomCode = null;
 
 const initPeer = async (mode, room = null) => {
     isHost = mode === 'host';
-    roomCode = isHost ? generateRoomCode() : room.toUpperCase();
+    const getCode = () => {
+        if (typeof window.generateRoomCode === 'function') {
+            return window.generateRoomCode();
+        }
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
+    };
+    roomCode = isHost ? getCode() : (room ? room.toUpperCase() : '');
 
     // Use a deterministic peer ID for the host so clients can find them easily
     myId = isHost ? `paira-chattabu-${roomCode}` : `client-${Math.random().toString(36).substring(2, 9)}`;

@@ -206,69 +206,6 @@ class ChatTabuView {
     }
 
     bindEvents() {
-        // Mode switch
-        const modeSelect = document.getElementById('game-mode-select');
-        const soloActions = document.getElementById('solo-actions');
-        const multiplayerActions = document.getElementById('multiplayer-actions');
-        
-        if (modeSelect) {
-            modeSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'solo') {
-                    soloActions.style.display = 'block';
-                    multiplayerActions.style.display = 'none';
-                } else {
-                    soloActions.style.display = 'none';
-                    multiplayerActions.style.display = 'flex';
-                }
-            });
-        }
-
-        const getFormValues = () => {
-            const channel = document.getElementById('channel-input')?.value.trim();
-            const platform = document.getElementById('platform-select')?.value;
-            const mode = document.getElementById('game-mode-select')?.value;
-            if (!channel) {
-                document.getElementById('login-status').innerText = 'Lütfen bir kanal adı girin!';
-                return null;
-            }
-            return { channel, platform, mode };
-        };
-
-        document.getElementById('btn-start-solo')?.addEventListener('click', () => {
-            const vals = getFormValues();
-            if (!vals) return;
-            sessionStorage.setItem('chattabu_channel', vals.channel);
-            sessionStorage.setItem('chattabu_platform', vals.platform);
-            sessionStorage.setItem('chattabu_mode', 'solo');
-            window.location.href = 'game.html';
-        });
-
-        document.getElementById('btn-host')?.addEventListener('click', () => {
-            const vals = getFormValues();
-            if (!vals) return;
-            sessionStorage.setItem('chattabu_channel', vals.channel);
-            sessionStorage.setItem('chattabu_platform', vals.platform);
-            sessionStorage.setItem('chattabu_mode', vals.mode);
-            sessionStorage.setItem('chattabu_isHost', 'true');
-            window.location.href = 'game.html';
-        });
-
-        document.getElementById('btn-join')?.addEventListener('click', () => {
-            const vals = getFormValues();
-            if (!vals) return;
-            const roomCode = document.getElementById('room-code-input').value.trim().toUpperCase();
-            if (!roomCode || roomCode.length !== 6) {
-                document.getElementById('login-status').innerText = 'Lütfen geçerli bir 6 haneli oda kodu girin!';
-                return;
-            }
-            sessionStorage.setItem('chattabu_channel', vals.channel);
-            sessionStorage.setItem('chattabu_platform', vals.platform);
-            sessionStorage.setItem('chattabu_mode', vals.mode);
-            sessionStorage.setItem('chattabu_isHost', 'false');
-            sessionStorage.setItem('chattabu_room', roomCode);
-            window.location.href = 'game.html';
-        });
-
         // Game UI events
         const btnToggleVisibility = document.getElementById('btn-toggle-visibility');
         if (btnToggleVisibility) {
@@ -490,9 +427,110 @@ class ChatTabuView {
     }
 }
 
+/**
+ * Function to handle index.html initialization (login form & mode selection)
+ */
+function initChatTabuIndexPage() {
+    const modeSelect = document.getElementById('game-mode-select');
+    const soloActions = document.getElementById('solo-actions');
+    const multiplayerActions = document.getElementById('multiplayer-actions');
+    const loginStatus = document.getElementById('login-status');
+
+    if (modeSelect) {
+        modeSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'solo') {
+                if (soloActions) soloActions.style.display = 'block';
+                if (multiplayerActions) multiplayerActions.style.display = 'none';
+            } else {
+                if (soloActions) soloActions.style.display = 'none';
+                if (multiplayerActions) multiplayerActions.style.display = 'flex';
+            }
+        });
+    }
+
+    const getFormValues = () => {
+        const channel = document.getElementById('channel-input')?.value.trim();
+        const platform = document.getElementById('platform-select')?.value;
+        const mode = document.getElementById('game-mode-select')?.value;
+        if (!channel) {
+            if (loginStatus) loginStatus.innerText = 'Lütfen bir kanal adı girin!';
+            if (window.showToast) window.showToast('Lütfen bir kanal adı girin!', 'error');
+            return null;
+        }
+        return { channel, platform, mode };
+    };
+
+    document.getElementById('btn-start-solo')?.addEventListener('click', () => {
+        const vals = getFormValues();
+        if (!vals) return;
+        sessionStorage.setItem('chattabu_channel', vals.channel);
+        sessionStorage.setItem('chattabu_platform', vals.platform);
+        sessionStorage.setItem('chattabu_mode', 'solo');
+        window.location.href = 'game.html';
+    });
+
+    document.getElementById('btn-host')?.addEventListener('click', () => {
+        const vals = getFormValues();
+        if (!vals) return;
+        sessionStorage.setItem('chattabu_channel', vals.channel);
+        sessionStorage.setItem('chattabu_platform', vals.platform);
+        sessionStorage.setItem('chattabu_mode', vals.mode);
+        sessionStorage.setItem('chattabu_isHost', 'true');
+        window.location.href = 'game.html';
+    });
+
+    document.getElementById('btn-join')?.addEventListener('click', () => {
+        const vals = getFormValues();
+        if (!vals) return;
+        const roomCodeInput = document.getElementById('room-code-input');
+        const roomCode = roomCodeInput ? roomCodeInput.value.trim().toUpperCase() : '';
+        if (!roomCode || roomCode.length !== 6) {
+            if (loginStatus) loginStatus.innerText = 'Lütfen geçerli bir 6 haneli oda kodu girin!';
+            if (window.showToast) window.showToast('Lütfen geçerli bir 6 haneli oda kodu girin!', 'error');
+            return;
+        }
+        sessionStorage.setItem('chattabu_channel', vals.channel);
+        sessionStorage.setItem('chattabu_platform', vals.platform);
+        sessionStorage.setItem('chattabu_mode', vals.mode);
+        sessionStorage.setItem('chattabu_isHost', 'false');
+        sessionStorage.setItem('chattabu_room', roomCode);
+        window.location.href = 'game.html';
+    });
+
+    // Keyboard ENTER support
+    document.getElementById('channel-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const mode = document.getElementById('game-mode-select')?.value;
+            if (mode === 'solo') {
+                document.getElementById('btn-start-solo')?.click();
+            } else {
+                const roomCode = document.getElementById('room-code-input')?.value.trim();
+                if (roomCode) {
+                    document.getElementById('btn-join')?.click();
+                } else {
+                    document.getElementById('btn-host')?.click();
+                }
+            }
+        }
+    });
+
+    document.getElementById('room-code-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn-join')?.click();
+        }
+    });
+}
+
 // MAIN INTEGRATION
 document.addEventListener('DOMContentLoaded', async () => {
-    // Only init if we are on game page
+    // If on index page, bind login form events
+    if (document.getElementById('channel-input') || document.getElementById('game-mode-select')) {
+        initChatTabuIndexPage();
+    }
+
+    // Only init game logic if we are on game page
     if (!document.getElementById('main-word')) return;
 
     window.PairaTime = window.PairaTime || { now: () => Date.now() };
