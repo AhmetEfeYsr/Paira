@@ -67,6 +67,17 @@
     background: rgba(142, 68, 173, 0.4) !important;
 }
 
+/* Back button - red */
+.back-btn {
+    background: rgba(231, 76, 60, 0.25) !important;
+    border: 2px solid rgba(231, 76, 60, 0.7) !important;
+    color: #ffffff !important;
+}
+.back-btn:hover {
+    box-shadow: 0 0 14px rgba(231, 76, 60, 0.5);
+    background: rgba(231, 76, 60, 0.4) !important;
+}
+
 /* Give up button - red */
 .giveup-btn {
     background: rgba(231, 76, 60, 0.25) !important;

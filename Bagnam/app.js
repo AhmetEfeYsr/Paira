@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnEndless) btnEndless.addEventListener('click', () => initGame(null, true));
     if(btnGuess) btnGuess.addEventListener('click', handleGuess);
     if(wordInput) {
-        wordInput.addEventListener('keypress', (e) => {
+        wordInput.addEventListener('keydown', (e) => {
             if(e.key === 'Enter') handleGuess();
         });
     }
