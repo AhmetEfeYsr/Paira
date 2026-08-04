@@ -525,50 +525,92 @@ class ChatTabuView {
  * Function to handle index.html initialization (login form & mode selection)
  */
 function initChatTabuIndexPage() {
-    const platformTabs = document.querySelectorAll('.platform-tab');
+    const toggleTwitch = document.getElementById('toggle-twitch');
+    const toggleKick = document.getElementById('toggle-kick');
     const platformInput = document.getElementById('platform-select');
     const modeCards = document.querySelectorAll('.mode-card');
     const modeInput = document.getElementById('game-mode-select');
     const singleChannelGroup = document.getElementById('single-channel-group');
     const dualChannelGroup = document.getElementById('dual-channel-group');
+    const singlePlatformIcon = document.getElementById('single-platform-icon');
     const soloActions = document.getElementById('solo-actions');
     const multiplayerActions = document.getElementById('multiplayer-actions');
     const loginStatus = document.getElementById('login-status');
 
-    // Platform Tab Click Handler
-    platformTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            platformTabs.forEach(t => {
-                t.classList.remove('active');
-                t.style.border = '2px solid var(--btn-secondary-border)';
-                t.style.background = 'var(--input-bg)';
-                t.style.color = 'var(--text-muted)';
-            });
-            tab.classList.add('active');
-            const platform = tab.dataset.platform;
-            if (platformInput) platformInput.value = platform;
+    let isTwitchActive = true;
+    let isKickActive = false;
 
-            if (platform === 'twitch') {
-                tab.style.border = '2px solid #9146FF';
-                tab.style.background = 'rgba(145, 70, 255, 0.2)';
-                tab.style.color = '#fff';
-                if (singleChannelGroup) singleChannelGroup.style.display = 'block';
-                if (dualChannelGroup) dualChannelGroup.style.display = 'none';
-            } else if (platform === 'kick') {
-                tab.style.border = '2px solid #53FC18';
-                tab.style.background = 'rgba(83, 252, 24, 0.15)';
-                tab.style.color = '#fff';
-                if (singleChannelGroup) singleChannelGroup.style.display = 'block';
-                if (dualChannelGroup) dualChannelGroup.style.display = 'none';
-            } else if (platform === 'both') {
-                tab.style.border = '2px solid var(--warning)';
-                tab.style.background = 'rgba(255, 170, 0, 0.15)';
-                tab.style.color = '#fff';
-                if (singleChannelGroup) singleChannelGroup.style.display = 'none';
-                if (dualChannelGroup) dualChannelGroup.style.display = 'block';
+    const updatePlatformUI = () => {
+        if (toggleTwitch) {
+            if (isTwitchActive) {
+                toggleTwitch.classList.add('active');
+                toggleTwitch.style.border = '2px solid #9146FF';
+                toggleTwitch.style.background = 'rgba(145, 70, 255, 0.2)';
+                toggleTwitch.style.color = '#fff';
+                toggleTwitch.style.boxShadow = '0 4px 12px rgba(145,70,255,0.3)';
+            } else {
+                toggleTwitch.classList.remove('active');
+                toggleTwitch.style.border = '2px solid var(--btn-secondary-border)';
+                toggleTwitch.style.background = 'var(--input-bg)';
+                toggleTwitch.style.color = 'var(--text-muted)';
+                toggleTwitch.style.boxShadow = 'none';
             }
+        }
+
+        if (toggleKick) {
+            if (isKickActive) {
+                toggleKick.classList.add('active');
+                toggleKick.style.border = '2px solid #53FC18';
+                toggleKick.style.background = 'rgba(83, 252, 24, 0.15)';
+                toggleKick.style.color = '#fff';
+                toggleKick.style.boxShadow = '0 4px 12px rgba(83,252,24,0.2)';
+            } else {
+                toggleKick.classList.remove('active');
+                toggleKick.style.border = '2px solid var(--btn-secondary-border)';
+                toggleKick.style.background = 'var(--input-bg)';
+                toggleKick.style.color = 'var(--text-muted)';
+                toggleKick.style.boxShadow = 'none';
+            }
+        }
+
+        if (isTwitchActive && isKickActive) {
+            if (platformInput) platformInput.value = 'both';
+            if (singleChannelGroup) singleChannelGroup.style.display = 'none';
+            if (dualChannelGroup) dualChannelGroup.style.display = 'block';
+        } else if (isKickActive) {
+            if (platformInput) platformInput.value = 'kick';
+            if (singleChannelGroup) singleChannelGroup.style.display = 'block';
+            if (dualChannelGroup) dualChannelGroup.style.display = 'none';
+            if (singlePlatformIcon) {
+                singlePlatformIcon.textContent = '🟢';
+                singlePlatformIcon.style.color = '#53FC18';
+            }
+        } else {
+            if (platformInput) platformInput.value = 'twitch';
+            if (singleChannelGroup) singleChannelGroup.style.display = 'block';
+            if (dualChannelGroup) dualChannelGroup.style.display = 'none';
+            if (singlePlatformIcon) {
+                singlePlatformIcon.textContent = '@';
+                singlePlatformIcon.style.color = 'var(--primary-purple)';
+            }
+        }
+    };
+
+    if (toggleTwitch) {
+        toggleTwitch.addEventListener('click', () => {
+            if (isTwitchActive && !isKickActive) return;
+            isTwitchActive = !isTwitchActive;
+            updatePlatformUI();
         });
-    });
+    }
+
+    if (toggleKick) {
+        toggleKick.addEventListener('click', () => {
+            if (isKickActive && !isTwitchActive) return;
+            isKickActive = !isKickActive;
+            updatePlatformUI();
+        });
+    }
 
     // Mode Card Click Handler
     modeCards.forEach(card => {

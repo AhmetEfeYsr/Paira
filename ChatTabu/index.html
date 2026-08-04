@@ -59,18 +59,15 @@
         </div>
 
         <div style="max-width: 520px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 1.2rem; padding: 1.8rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
-            <!-- ADIM 1: Platform Seçimi -->
+            <!-- ADIM 1: Platform Seçimi (Tıklanıp Açılıp Kapanabilir 2 Buton) -->
             <div class="form-group" style="margin-bottom: 1.4rem;">
-                <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">1. Canlı Yayın Platformu</label>
-                <div class="platform-tabs" style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 0.6rem;">
-                    <button type="button" class="platform-tab active" data-platform="twitch" style="padding: 10px 8px; border-radius: 10px; border: 2px solid #9146FF; background: rgba(145, 70, 255, 0.2); color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">1. Canlı Yayın Platformu Seçimi</label>
+                <div class="platform-toggles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                    <button type="button" class="platform-toggle active" id="toggle-twitch" data-platform="twitch" style="padding: 12px; border-radius: 10px; border: 2px solid #9146FF; background: rgba(145, 70, 255, 0.2); color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(145,70,255,0.3);">
                         <span>🟣</span> Twitch
                     </button>
-                    <button type="button" class="platform-tab" data-platform="kick" style="padding: 10px 8px; border-radius: 10px; border: 2px solid var(--btn-secondary-border); background: var(--input-bg); color: var(--text-muted); font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                    <button type="button" class="platform-toggle" id="toggle-kick" data-platform="kick" style="padding: 12px; border-radius: 10px; border: 2px solid var(--btn-secondary-border); background: var(--input-bg); color: var(--text-muted); font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
                         <span>🟢</span> Kick
-                    </button>
-                    <button type="button" class="platform-tab" data-platform="both" style="padding: 10px 8px; border-radius: 10px; border: 2px solid var(--btn-secondary-border); background: var(--input-bg); color: var(--text-muted); font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" title="Aynı anda hem Twitch hem Kick sohbetini bağlayın!">
-                        <span>⚡</span> Twitch + Kick
                     </button>
                 </div>
                 <input type="hidden" id="platform-select" value="twitch">
@@ -79,22 +76,22 @@
             <!-- ADIM 2: Kanal Adı (Tekli veya İkili Çapraz Chat) -->
             <div class="form-group" id="single-channel-group" style="margin-bottom: 1.4rem;">
                 <label for="channel-input" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">2. Yayıncı Kanal Kullanıcı Adı</label>
-                <div style="position: relative; display: flex; align-items: center;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary-purple); font-weight: 700; font-size: 1.1rem; line-height: 1; pointer-events: none;">@</span>
-                    <input type="text" id="channel-input" placeholder="kanal_adi (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="padding-left: 36px; font-weight: 600; font-size: 1.05rem; height: 48px; box-sizing: border-box; width: 100%;">
+                <div style="display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--btn-secondary-border); border-radius: 10px; padding: 0 14px; height: 50px; box-sizing: border-box; width: 100%;">
+                    <span id="single-platform-icon" style="font-weight: 700; font-size: 1.15rem; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--primary-purple); user-select: none; line-height: 1;">@</span>
+                    <input type="text" id="channel-input" placeholder="kanal_adi (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="flex: 1; border: none; background: transparent; padding: 0; margin: 0; outline: none; color: var(--text-main); font-weight: 600; font-size: 1.05rem; height: 100%; box-sizing: border-box;">
                 </div>
             </div>
 
-            <div class="form-group" id="dual-channel-group" style="display: none; margin-bottom: 1.4rem; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid var(--btn-secondary-border);">
-                <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--warning);">2. Çapraz Chat Kanal İsimleri</label>
-                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                    <div style="position: relative; display: flex; align-items: center;">
-                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 700; color: #C084FC; line-height: 1; pointer-events: none;">🟣 Twitch:</span>
-                        <input type="text" id="twitch-channel-input" placeholder="Twitch kullanıcı adı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="padding-left: 95px; font-weight: 600; font-size: 0.95rem; height: 44px; box-sizing: border-box; width: 100%;">
+            <div class="form-group" id="dual-channel-group" style="display: none; margin-bottom: 1.4rem; background: rgba(255,255,255,0.03); padding: 14px; border-radius: 12px; border: 1px solid var(--btn-secondary-border);">
+                <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.8rem; display: block; color: var(--warning);">2. Çapraz Chat Kanal İsimleri (Twitch + Kick)</label>
+                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div style="display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--btn-secondary-border); border-radius: 10px; padding: 0 14px; height: 46px; box-sizing: border-box; width: 100%;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #C084FC; margin-right: 10px; white-space: nowrap; user-select: none; display: inline-flex; align-items: center;">🟣 Twitch:</span>
+                        <input type="text" id="twitch-channel-input" placeholder="Twitch kullanıcı adı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="flex: 1; border: none; background: transparent; padding: 0; margin: 0; outline: none; color: var(--text-main); font-weight: 600; font-size: 0.95rem; height: 100%; box-sizing: border-box;">
                     </div>
-                    <div style="position: relative; display: flex; align-items: center;">
-                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 700; color: #53FC18; line-height: 1; pointer-events: none;">🟢 Kick:</span>
-                        <input type="text" id="kick-channel-input" placeholder="Kick kullanıcı adı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="padding-left: 80px; font-weight: 600; font-size: 0.95rem; height: 44px; box-sizing: border-box; width: 100%;">
+                    <div style="display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--btn-secondary-border); border-radius: 10px; padding: 0 14px; height: 46px; box-sizing: border-box; width: 100%;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #53FC18; margin-right: 10px; white-space: nowrap; user-select: none; display: inline-flex; align-items: center;">🟢 Kick:</span>
+                        <input type="text" id="kick-channel-input" placeholder="Kick kullanıcı adı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50" style="flex: 1; border: none; background: transparent; padding: 0; margin: 0; outline: none; color: var(--text-main); font-weight: 600; font-size: 0.95rem; height: 100%; box-sizing: border-box;">
                     </div>
                 </div>
             </div>
@@ -120,7 +117,7 @@
                             <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Çoklu Yayıncı</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">2+ yayıncı aynı odaya katılın, sohbetler yarışsın!</div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: #E9D5FF; text-shadow: 0 0 10px rgba(233,213,255,0.4); text-transform: uppercase;">• ODAYA KATIL / KUR</div>
+                        <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: var(--success); text-transform: uppercase;">• ODAYA KATIL / KUR</div>
                     </div>
                 </div>
                 <input type="hidden" id="game-mode-select" value="solo">
