@@ -280,6 +280,7 @@ async function handleGuess() {
             if (match) {
                 if (!wordsToCheck.includes(base)) wordsToCheck.push(base);
             } else {
+                if (!wordsToCheck.includes(base)) wordsToCheck.push(base);
                 for (let i = 1; i <= 5; i++) {
                     const withSuffix = `${base}_${i}`;
                     if (!wordsToCheck.includes(withSuffix)) wordsToCheck.push(withSuffix);
@@ -301,20 +302,22 @@ async function handleGuess() {
                 }
             }
         } else {
-            // Fetch all homonyms in a single query per base word using startAt/endAt to limit Firebase network traffic
-            const fetchPromises = basesToCheck.map(async (base) => {
-                const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}.json?orderBy="$key"&startAt="${encodeURIComponent(base)}_"&endAt="${encodeURIComponent(base)}_\uf8ff"`;
-                const response = await fetch(url);
-                if (response.ok) {
-                    const resJson = await response.json();
-                    if (resJson) {
-                        Object.keys(resJson).forEach(key => {
+            // Fetch homonym variants directly via parallel GET requests (avoids 401 unindexed orderBy error on Firebase RTDB)
+            const fetchPromises = wordsToCheck.map(async (w) => {
+                const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${encodeURIComponent(w)}.json`;
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const resJson = await response.json();
+                        if (resJson && typeof resJson === 'object') {
                             foundData.push({
-                                word: key,
-                                data: resJson[key]
+                                word: w,
+                                data: resJson
                             });
-                        });
+                        }
                     }
+                } catch (e) {
+                    console.error("Kelime varyantı çekilirken hata:", w, e);
                 }
             });
             await Promise.all(fetchPromises);
