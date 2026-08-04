@@ -95,24 +95,25 @@ class ChatListener {
 
     async startKick() {
         this.stop();
-        console.log(`[Kick] Fetching channel data client-side for ${this.channel}...`);
+        const cleanChannel = this.channel.trim().toLowerCase();
+        console.log(`[Kick] Fetching channel data client-side for ${cleanChannel}...`);
 
         const targets = [
             {
-                url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://kick.com/' + this.channel)}`,
-                type: 'html'
+                url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/' + cleanChannel)}`,
+                isWrapper: true
             },
             {
-                url: `https://corsproxy.io/?https://kick.com/${this.channel}`,
-                type: 'html'
+                url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`,
+                isWrapper: true
             },
             {
-                url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://kick.com/api/v2/channels/' + this.channel)}`,
-                type: 'json'
+                url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel)}`,
+                isWrapper: false
             },
             {
-                url: `https://corsproxy.io/?https://kick.com/api/v2/channels/${this.channel}`,
-                type: 'json'
+                url: `https://corsproxy.io/?https://kick.com/api/v2/channels/${cleanChannel}`,
+                isWrapper: false
             }
         ];
 
@@ -125,24 +126,34 @@ class ChatListener {
                 const response = await fetch(target.url);
                 if (!response.ok) continue;
 
-                const content = await response.text();
+                let content = '';
+                if (target.isWrapper) {
+                    const jsonWrapper = await response.json();
+                    content = jsonWrapper.contents || '';
+                } else {
+                    content = await response.text();
+                }
+
+                if (!content) continue;
 
                 if (content.includes('__NEXT_DATA__')) {
                     const match = content.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
                     if (match && match[1]) {
-                        const nextData = JSON.parse(match[1]);
-                        const channelData = nextData.props?.pageProps?.channel;
-                        if (channelData) {
-                            chatroomId = channelData.chatroom?.id || channelData.id;
-                            if (channelData.pusher?.key) pusherKey = channelData.pusher.key;
-                            if (channelData.pusher?.cluster) pusherCluster = channelData.pusher.cluster;
-                            if (chatroomId) break;
-                        }
+                        try {
+                            const nextData = JSON.parse(match[1]);
+                            const channelData = nextData.props?.pageProps?.channel;
+                            if (channelData) {
+                                chatroomId = channelData.chatroom?.id || channelData.id;
+                                if (channelData.pusher?.key) pusherKey = channelData.pusher.key;
+                                if (channelData.pusher?.cluster) pusherCluster = channelData.pusher.cluster;
+                                if (chatroomId) break;
+                            }
+                        } catch (e) {}
                     }
                 }
 
                 try {
-                    const json = JSON.parse(content);
+                    const json = typeof content === 'object' ? content : JSON.parse(content);
                     const parsedId = json.chatroom_id || json.chatroom?.id || json.id;
                     if (parsedId) {
                         chatroomId = parsedId;
@@ -152,16 +163,14 @@ class ChatListener {
                         if (json.pusher?.cluster) pusherCluster = json.pusher.cluster;
                         break;
                     }
-                } catch (e) {
-                    // Ignore non-JSON content
-                }
+                } catch (e) {}
             } catch (e) {
                 console.warn(`[Kick Client Fetch] Target failed (${target.url}):`, e);
             }
         }
 
         if (!chatroomId) {
-            this.handleError('[Kick] Kick kanal bilgileri istemci tarafında alınamadı. Lütfen kanal adını kontrol edin.');
+            this.handleError(`[Kick] "${cleanChannel}" için Kick kanal bilgileri alınamadı. Lütfen kanal adını kontrol edin.`);
             return;
         }
 
