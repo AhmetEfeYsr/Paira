@@ -119,6 +119,14 @@ class ChatListener {
 
         targets.push(
             {
+                url: `https://thingproxy.freeboard.io/fetch/https://kick.com/api/v2/channels/${cleanChannel}/chatroom`,
+                isWrapper: false
+            },
+            {
+                url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://kick.com/api/v2/channels/' + cleanChannel + '/chatroom')}`,
+                isWrapper: false
+            },
+            {
                 url: `https://thingproxy.freeboard.io/fetch/https://kick.com/api/v2/channels/${cleanChannel}`,
                 isWrapper: false
             },
