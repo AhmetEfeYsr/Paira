@@ -1,4 +1,4 @@
-/* Elementler specific styles */
+/* Elementler specific styles - Modernized 4-Player Co-Op Canvas Styling */
 
 #game-canvas {
     width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 0 0 clamp(16px, 3vw, 24px) clamp(16px, 3vw, 24px);
@@ -52,10 +52,36 @@
 
 .level-node.state-unlocked {
     background: var(--primary-purple);
-    box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.8);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.8);
 }
 
 .level-node.state-completed {
     background: var(--warning); 
     box-shadow: 0 0 15px rgba(250, 204, 21, 0.6);
+}
+
+/* 4-Player Control Cards & HUD Overlay */
+.player-card-ates {
+    border-left: 4px solid #ef4444 !important;
+    background: rgba(239, 68, 68, 0.08) !important;
+}
+.player-card-su {
+    border-left: 4px solid #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+.player-card-hava {
+    border-left: 4px solid #facc15 !important;
+    background: rgba(250, 204, 21, 0.08) !important;
+}
+.player-card-elektrik {
+    border-left: 4px solid #a855f7 !important;
+    background: rgba(168, 85, 247, 0.08) !important;
+}
+
+.hud-pill {
+    backdrop-filter: blur(10px);
+    background: rgba(15, 23, 42, 0.85);
+    border-radius: 12px;
+    padding: 6px 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }

@@ -165,8 +165,8 @@ class PlayerEntity extends Rect {
         switch(role) {
             case 'ates': return '#ef4444'; // Red
             case 'su': return '#3b82f6'; // Blue
-            case 'doga': return '#10b981'; // Green
             case 'hava': return '#facc15'; // Yellow
+            case 'elektrik': return '#a855f7'; // Neon Purple
             default: return '#ffffff';
         }
     }
@@ -681,8 +681,8 @@ class GameEngine {
         switch(role) {
             case 'ates': return '#ef4444';
             case 'su': return '#3b82f6';
-            case 'doga': return '#10b981';
             case 'hava': return '#facc15';
+            case 'elektrik': return '#a855f7';
             default: return '#ffffff';
         }
     }
