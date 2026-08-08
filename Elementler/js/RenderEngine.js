@@ -180,10 +180,32 @@ class RenderEngine {
                     this.ctx.stroke();
                 } else if (tile === 7) {
                     // Wooden Block (Burnable by Fire)
-                    this.ctx.fillStyle = '#92400e';
+                    this.ctx.fillStyle = '#78350f';
                     this.ctx.fillRect(x, y, tileSize, tileSize);
                     this.ctx.strokeStyle = '#451a03';
+                    this.ctx.lineWidth = 2;
                     this.ctx.strokeRect(x, y, tileSize, tileSize);
+
+                    // Wooden Plank Seams
+                    this.ctx.strokeStyle = '#92400e';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + 2, y + 10); this.ctx.lineTo(x + tileSize - 2, y + 10);
+                    this.ctx.moveTo(x + 2, y + 22); this.ctx.lineTo(x + tileSize - 2, y + 22);
+                    this.ctx.stroke();
+
+                    // Wood Grain Knots
+                    this.ctx.strokeStyle = '#b45309';
+                    this.ctx.beginPath();
+                    this.ctx.arc(x + 12, y + 16, 2, 0, Math.PI * 2);
+                    this.ctx.stroke();
+
+                    // Corner Iron Rivets
+                    this.ctx.fillStyle = '#27272a';
+                    this.ctx.fillRect(x + 3, y + 3, 3, 3);
+                    this.ctx.fillRect(x + tileSize - 6, y + 3, 3, 3);
+                    this.ctx.fillRect(x + 3, y + tileSize - 6, 3, 3);
+                    this.ctx.fillRect(x + tileSize - 6, y + tileSize - 6, 3, 3);
 
                     // Wood texture lines
                     this.ctx.strokeStyle = '#b45309';

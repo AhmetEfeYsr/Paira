@@ -412,21 +412,26 @@ class GameEngine {
 
         this.lastTime = 0;
         this.running = false;
+        this.dynamicEntities = [];
 
-        this.dynamicEntities = []; // Kutular vb. için
+        // Attach modern modular RenderEngine & LevelManager
+        if (window.RenderEngine) {
+            this.renderEngine = new window.RenderEngine(canvasId);
+            window.renderEngine = this.renderEngine;
+        }
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
     }
 
     resize() {
-        // Containerın boyutunu al
         const container = document.getElementById('game-screen');
         if(container && container.clientWidth > 0) {
             this.canvas.width = container.clientWidth;
             this.canvas.height = container.clientHeight;
             this.camera.w = this.canvas.width;
             this.camera.h = this.canvas.height;
+            if (this.renderEngine) this.renderEngine.resize();
         }
     }
 
@@ -438,23 +443,27 @@ class GameEngine {
         this.camera.mw = this.mapW;
         this.camera.mh = this.mapH;
 
-        // Grid to Rects (32x32 tiles diyelim)
+        this.currentGrid = typeof mapData.grid === 'function' ? mapData.grid() : mapData.grid;
+
+        // Grid to Rects (32x32 tiles)
         const TILE = 32;
-        for (let y = 0; y < mapData.grid.length; y++) {
-            for (let x = 0; x < mapData.grid[y].length; x++) {
-                const val = mapData.grid[y][x];
-                if (val === 1) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'solid'));
-                else if (val === 2) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_ates')); // Lav (Suyu öldürür)
-                else if (val === 3) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_su')); // Su (Ateşi öldürür)
-                else if (val === 4) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_doga')); // Asit (İkisini de öldürür)
-                else if (val === 5) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'sarmasik'));
-                else if (val === 6) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'firtina'));
-                else if (val === 7) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'tahta_duvar'));
-                else if (val === 8) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'boru'));
+        if (this.currentGrid) {
+            for (let y = 0; y < this.currentGrid.length; y++) {
+                for (let x = 0; x < this.currentGrid[y].length; x++) {
+                    const val = this.currentGrid[y][x];
+                    if (val === 1) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'solid'));
+                    else if (val === 2) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_ates'));
+                    else if (val === 3) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_su'));
+                    else if (val === 4) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'danger_doga'));
+                    else if (val === 5) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'sarmasik'));
+                    else if (val === 6) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'firtina'));
+                    else if (val === 7) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'tahta_duvar'));
+                    else if (val === 8) this.rects.push(new Rect(x*TILE, y*TILE, TILE, TILE, 'boru'));
+                }
             }
         }
 
-        // Entity ler (Kapılar, objeler vb.)
+        // Entities (Doors, Switches, Exit gates)
         if(mapData.entities) {
             mapData.entities.forEach(e => {
                 if (e.type === 'box') {
@@ -505,17 +514,31 @@ class GameEngine {
 
         let dt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
-        if (dt > 0.1) dt = 0.1; // Uzun lagları engelle
+        if (dt > 0.1) dt = 0.1;
 
-        // Game Logic (Buton tetikleri vs)
+        // Game Logic (Buttons, triggers)
         if(window.gameApp) window.gameApp.logicTick(this.rects, this.players, this.dynamicEntities);
+
+        // Synchronize wood burning grid changes to this.rects
+        if (this.currentGrid) {
+            const TILE = 32;
+            this.rects = this.rects.filter(r => {
+                if (r.type === 'tahta_duvar') {
+                    const c = Math.floor(r.x / TILE);
+                    const rIdx = Math.floor(r.y / TILE);
+                    if (this.currentGrid[rIdx] && this.currentGrid[rIdx][c] === 0) {
+                        return false; // Remove collision box for destroyed wood!
+                    }
+                }
+                return !r.destroyed;
+            });
+        }
 
         // Update Dynamic Entities (Boxes, Seesaws)
         for (let entity of this.dynamicEntities) {
             if (entity.type === 'box') {
                 entity.update(dt, this.rects);
             } else if (entity.type === 'seesaw') {
-                // Tahterevalli için oyuncular ve kutuları argüman geç
                 const allDynamic = [...Object.values(this.players), ...this.dynamicEntities.filter(e => e.type === 'box')];
                 entity.update(dt, allDynamic);
             }
@@ -523,8 +546,6 @@ class GameEngine {
 
         // Update Physics
         for (let id in this.players) {
-            // Local oyuncu tam hesaplanır.
-            // Uzaktaki oyuncular interpolation ile veya gönderdikleri x/y ile yumuşatılır (Burada basit linear çalıştırıyoruz).
             this.players[id].update(dt, this.rects);
         }
 
@@ -533,11 +554,16 @@ class GameEngine {
             this.camera.follow(this.players[this.localPlayerId]);
         }
 
-        this.render();
+        this.render(dt);
         requestAnimationFrame((t) => this.loop(t));
     }
 
-    render() {
+    render(dt = 0.016) {
+        if (this.renderEngine) {
+            const levelLm = { grid: this.currentGrid, entities: this.rects, tileSize: 32 };
+            this.renderEngine.render(Object.values(this.players), levelLm, dt);
+            return;
+        }
         // Arkaplan
         this.ctx.fillStyle = '#0a1128';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
