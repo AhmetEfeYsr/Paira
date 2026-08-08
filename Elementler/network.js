@@ -8,15 +8,17 @@ let hostId = null;
 let connections = {};
 let isCodeVisible = false;
 
-// Element rolleri sabit sıra: 1. Su, 2. Ateş, 3. Doğa, 4. Hava
-const ELEMENT_ROLES = ['su', 'ates', 'doga', 'hava'];
+// Element rolleri sabit sıra: 1. Ateş, 2. Su, 3. Hava, 4. Elektrik
+const ELEMENT_ROLES = ['ates', 'su', 'hava', 'elektrik'];
 
-// --- KISA ODA KODU ÜRETİCİ ---
-
+function getRoomCode() {
+    if (typeof window.generateRoomCode === 'function') return window.generateRoomCode();
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 // --- KULLANICI ROLÜ VE BAĞLANTIYI BAŞLATMA ---
 function setupUserRole() {
-    const storedName = sessionStorage.getItem('playerName');
+    const storedName = sessionStorage.getItem('playerName') || sessionStorage.getItem('username');
     const storedIsHost = sessionStorage.getItem('isHost') === 'true';
     const storedRoomCode = sessionStorage.getItem('roomCode');
 
@@ -34,7 +36,8 @@ function setupUserRole() {
     if (isHost) {
         document.getElementById('host-settings').classList.remove('hidden');
         document.getElementById('client-waiting').classList.add('hidden');
-        initPeer(generateRoomCode());
+        const code = storedRoomCode || getRoomCode();
+        initPeer(code);
     } else {
         if (!storedRoomCode) {
             window.location.href = 'index.html';
@@ -113,7 +116,7 @@ function initPeer(customId = null) {
             showToast("Oda bulunamadı veya kapandı. Ana sayfaya dönülüyor.", "error");
             setTimeout(() => { window.location.href = 'index.html'; }, 2000);
         } else if (err.type === 'unavailable-id' && isHost) {
-            initPeer(generateRoomCode()); // Çakışma varsa yeni kod al
+            initPeer(getRoomCode()); // Çakışma varsa yeni kod al
         } else if (err.type === 'network' || err.type === 'server-error') {
             showToast("Bağlantı hatası. Lütfen sayfayı yenileyin.", "error");
         }

@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // SessionStorage'ı temizle - Temizleme işlemini daha garantiye almak için her açılışta yapıyoruz.
-    const keysToRemove = ['playerName', 'username', 'isHost', 'roomCode', 'myId', 'isSolo'];
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    // SessionStorage'ı sadece ana giriş sayfasında temizle
+    if (!window.location.pathname.endsWith('game.html')) {
+        const keysToRemove = ['playerName', 'username', 'isHost', 'roomCode', 'myId', 'isSolo'];
+        keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    }
 
     const btnHost = document.getElementById('btn-host');
     const btnJoin = document.getElementById('btn-join');
