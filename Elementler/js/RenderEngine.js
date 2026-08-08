@@ -4,7 +4,7 @@
  * modern glowing graphics, and dynamic 4-player HUD overlays.
  */
 
-class Camera {
+class RenderCamera {
     constructor(canvasWidth, canvasHeight, mapWidth, mapHeight) {
         this.x = 0;
         this.y = 0;
@@ -46,7 +46,7 @@ class RenderEngine {
         if (!this.canvas) return;
         this.ctx = this.canvas.getContext('2d');
 
-        this.camera = new Camera(this.canvas.width, this.canvas.height, 2000, 1500);
+        this.camera = new RenderCamera(this.canvas.width, this.canvas.height, 2000, 1500);
         this.particles = [];
 
         this.resize();
