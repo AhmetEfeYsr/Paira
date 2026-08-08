@@ -144,7 +144,7 @@ class KelimeAviGameEngine {
         if (!this.isHost || (this.state.status !== 'ebe_word_select' && this.state.status !== 'playing')) return;
         if (peerId !== this.state.currentEbe) return;
 
-        const normWord = window.normalizeTurkishChars(word).trim().toUpperCase();
+        const normWord = word.trim().toLocaleUpperCase('tr-TR');
         if (normWord.length < 2) return;
 
         this.state.targetWord = normWord;
@@ -167,13 +167,16 @@ class KelimeAviGameEngine {
     handleMasumSubmission(peerId, word) {
         if (peerId === this.state.currentEbe) return;
         if (this.state.status !== 'playing') return;
+        if (!this.state.targetWord) return;
 
-        const normWord = window.normalizeTurkishChars(word).trim().toLowerCase();
-        const revealedPart = window.normalizeTurkishChars(this.state.targetWord.substring(0, this.state.revealedLetters)).trim().toLowerCase();
+        const cleanWord = word.trim().toLocaleUpperCase('tr-TR');
+        const cleanTarget = this.state.targetWord.trim().toLocaleUpperCase('tr-TR');
+        const revealedPrefix = cleanTarget.substring(0, this.state.revealedLetters);
 
-        if (!normWord.startsWith(revealedPart)) return;
+        // Enforce that masum submitted word MUST start with the currently revealed letters
+        if (!cleanWord.startsWith(revealedPrefix)) return;
 
-        this.state.submittedWords[peerId] = normWord.toUpperCase();
+        this.state.submittedWords[peerId] = cleanWord;
         if (this.isHost) {
             this.setState(this.state);
         }
@@ -184,7 +187,7 @@ class KelimeAviGameEngine {
         if (this.state.status !== 'playing') return;
 
         this.state.ebeGuesses = guesses
-            .map(g => window.normalizeTurkishChars(g).trim().toUpperCase())
+            .map(g => g.trim().toLocaleUpperCase('tr-TR'))
             .filter(g => g.length > 0);
             
         if (this.isHost) {
@@ -234,14 +237,16 @@ class KelimeAviGameEngine {
         const targetWord = this.state.targetWord;
         let resultMsg = "";
         let isJackpot = false;
-        let isTurnOver = false;
+        let isWordOver = false;
 
-        const normalizedTarget = window.normalizeTurkishChars(targetWord).trim().toUpperCase();
+        const cleanTarget = targetWord.trim().toLocaleUpperCase('tr-TR');
+        const revealedPrefix = cleanTarget.substring(0, this.state.revealedLetters);
 
         // 1. Check for Jackpot: Exact match with targetWord
         const jackpotWinners = [];
         for (let [peerId, word] of Object.entries(this.state.submittedWords)) {
-            if (word === normalizedTarget) {
+            const cleanSubmitted = word.trim().toLocaleUpperCase('tr-TR');
+            if (cleanSubmitted === cleanTarget) {
                 jackpotWinners.push(peerId);
                 isJackpot = true;
             }
@@ -260,17 +265,22 @@ class KelimeAviGameEngine {
             this.state.revealedLetters = targetWord.length;
             resultMsg = `JACKPOT! Masumlar ana kelimeyi (${targetWord}) bildi! Bilenlere +${ptsPerWinner} puan!`;
             if (this.onSound) this.onSound('correct');
-            isTurnOver = true;
+            isWordOver = true;
         } else {
-            // 2. Count masum word submissions
+            // 2. Count masum word submissions (Strictly checking revealedPrefix)
             const wordCounts = {};
             const wordPeerMap = {};
 
             for (let [peerId, word] of Object.entries(this.state.submittedWords)) {
                 if (!word) continue;
-                wordCounts[word] = (wordCounts[word] || 0) + 1;
-                if (!wordPeerMap[word]) wordPeerMap[word] = [];
-                wordPeerMap[word].push(peerId);
+                const cleanWord = word.trim().toLocaleUpperCase('tr-TR');
+                
+                // Enforce revealed prefix match
+                if (!cleanWord.startsWith(revealedPrefix)) continue;
+
+                wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
+                if (!wordPeerMap[cleanWord]) wordPeerMap[cleanWord] = [];
+                wordPeerMap[cleanWord].push(peerId);
             }
 
             // Find match (word chosen by >= 2 masums)
@@ -286,7 +296,8 @@ class KelimeAviGameEngine {
 
             if (matchedWord) {
                 // Check if Ebe guessed this candidate word
-                const ebeCaught = this.state.ebeGuesses.includes(matchedWord);
+                const cleanGuesses = this.state.ebeGuesses.map(g => g.trim().toLocaleUpperCase('tr-TR'));
+                const ebeCaught = cleanGuesses.includes(matchedWord);
 
                 if (ebeCaught) {
                     resultMsg = `EBE KAZANDI! Masumların eşleştiği kelimeyi ("${matchedWord}") Ebe yakaladı! (+${this.state.settings.ebeWinPts} Puan)`;
@@ -294,7 +305,7 @@ class KelimeAviGameEngine {
                         this.state.players[this.state.currentEbe].score += this.state.settings.ebeWinPts;
                     }
                     if (this.onSound) this.onSound('taboo');
-                    isTurnOver = true; // Ebe wins turn -> advance to next Ebe
+                    isWordOver = true; // Current word is finished
                 } else {
                     // Masums win round!
                     this.state.revealedLetters++;
@@ -318,7 +329,7 @@ class KelimeAviGameEngine {
 
                     if (this.state.revealedLetters >= targetWord.length) {
                         resultMsg += ` Tüm harfler açıldı! Kelime: ${targetWord}`;
-                        isTurnOver = true;
+                        isWordOver = true;
                     }
                 }
             } else {
@@ -327,7 +338,7 @@ class KelimeAviGameEngine {
                 if (this.onSound) this.onSound('pass');
                 if (this.state.failedAttempts >= 3) {
                     resultMsg += ` 3 denemede eşleşme olmadığı için tur bitti! Kelime: ${targetWord}`;
-                    isTurnOver = true;
+                    isWordOver = true;
                 }
             }
         }
@@ -336,16 +347,16 @@ class KelimeAviGameEngine {
         if (this.onShowResult) this.onShowResult(resultMsg);
 
         setTimeout(() => {
-            if (isTurnOver) {
-                this.advanceToNextEbe();
-            } else {
+            if (isWordOver) {
                 this.state.round++;
                 if (this.state.round > this.state.totalRounds) {
                     if (this.onShowResult) this.onShowResult(`Bu Ebe için toplam ${this.state.totalRounds} tur tamamlandı! Yeni Ebe'ye geçiliyor...`);
                     setTimeout(() => this.advanceToNextEbe(), 3000);
                 } else {
-                    this.continueCurrentTurnRound();
+                    this.startNextWordForSameEbe();
                 }
+            } else {
+                this.continueCurrentTurnRound();
             }
         }, 4000);
     }
@@ -357,6 +368,28 @@ class KelimeAviGameEngine {
         this.localEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
         this.setState(this.state);
         this.startRenderTimer();
+    }
+
+    startNextWordForSameEbe() {
+        this.state.revealedLetters = 1;
+        this.state.targetWord = '';
+        this.state.targetWordLength = 0;
+        this.state.submittedWords = {};
+        this.state.ebeGuesses = [];
+        this.state.failedAttempts = 0;
+        this.state.status = 'ebe_word_select';
+
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+        const ebePlayer = this.state.players[this.state.currentEbe];
+        const ebeName = ebePlayer ? ebePlayer.name : 'Bilinmeyen';
+        if (this.onShowResult) {
+            this.onShowResult(`📢 EBE: ${ebeName} - ${this.state.round} / ${this.state.totalRounds}. tur için yeni kelimesini belirliyor...`);
+        }
+
+        this.setState(this.state);
+        if (this.onTimerTick) this.onTimerTick(this.state.turnDuration);
     }
 
     advanceToNextEbe() {
@@ -476,9 +509,26 @@ class KelimeAviView {
         const masumInput = document.getElementById('masum-word-input');
         const btnTriggerMatch = document.getElementById('btn-trigger-match');
         if (btnTriggerMatch && masumInput) {
+            const checkPrefix = (word, showAlert = false) => {
+                const gameState = window._gameState;
+                if (gameState && gameState.targetWord && gameState.revealedLetters > 0) {
+                    const cleanTarget = gameState.targetWord.trim().toLocaleUpperCase('tr-TR');
+                    const prefix = cleanTarget.substring(0, gameState.revealedLetters);
+                    const upperWord = word.trim().toLocaleUpperCase('tr-TR');
+                    if (!upperWord.startsWith(prefix)) {
+                        if (showAlert && window.showToast) {
+                            window.showToast(`Girdiğiniz kelime '${prefix}' harfi/harfleri ile başlamalıdır!`, "warning");
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            };
+
             btnTriggerMatch.addEventListener('click', () => {
                 const word = masumInput.value.trim();
                 if (word.length > 0) {
+                    if (!checkPrefix(word, true)) return;
                     this.callbacks.onSubmitMasum(word);
                 }
                 this.callbacks.onTriggerMatch();
@@ -487,6 +537,7 @@ class KelimeAviView {
             masumInput.addEventListener('input', () => {
                 const word = masumInput.value.trim();
                 if (word.length > 0) {
+                    if (!checkPrefix(word, false)) return;
                     this.callbacks.onSubmitMasum(word);
                 }
             });
@@ -623,8 +674,8 @@ class KelimeAviView {
             if (letterDisplay) {
                 const target = state.targetWord || "???";
                 const revLen = state.revealedLetters || 1;
-                const revPart = target.substring(0, revLen);
-                const restPart = target.substring(revLen);
+                const revPart = target.substring(0, revLen).toLocaleUpperCase('tr-TR');
+                const restPart = target.substring(revLen).toLocaleUpperCase('tr-TR');
                 letterDisplay.innerText = `${revPart}${restPart ? ' (' + restPart + ')' : ''}`;
             }
         } else {
@@ -632,7 +683,7 @@ class KelimeAviView {
             ebeArea?.classList.add('hidden');
             if (letterDisplay) {
                 const revealed = state.targetWord ? state.targetWord.substring(0, state.revealedLetters) : "";
-                letterDisplay.innerText = revealed ? (revealed.toUpperCase().split('').join(' ') + ' ...') : "...";
+                letterDisplay.innerText = revealed ? (revealed.toLocaleUpperCase('tr-TR').split('').join(' ') + ' ...') : "...";
             }
         }
     }
