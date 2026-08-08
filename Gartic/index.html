@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
@@ -7,11 +8,14 @@
     <title>Paira Gartic | Twitch ve Kick İçin İnteraktif Çizim Oyunu</title>
 
     <!-- SEO & Social Meta Tags -->
-    <meta name="description" content="Paira Gartic ile yayınınızda izleyicilerinizle interaktif çizim ve tahmin oyunu oynayın! Siz çizin, Twitch veya Kick sohbetiniz anında tahmin etsin.">
-    <meta name="keywords" content="paira gartic, gartic oyna, twitch çizim oyunu, kick interaktif oyunlar, yayıncı çizim oyunu, izleyici etkileşim oyunları">
+    <meta name="description"
+        content="Paira Gartic ile yayınınızda izleyicilerinizle interaktif çizim ve tahmin oyunu oynayın! Siz çizin, Twitch veya Kick sohbetiniz anında tahmin etsin.">
+    <meta name="keywords"
+        content="paira gartic, gartic oyna, twitch çizim oyunu, kick interaktif oyunlar, yayıncı çizim oyunu, izleyici etkileşim oyunları">
 
     <meta property="og:title" content="Gartic - Yayınınız İçin Eğlenceli Çizim Deneyimi">
-    <meta property="og:description" content="Sohbetinizle (chat) birlikte oynayabileceğiniz en eğlenceli çizim oyunu. Siz çizin, izleyicileriniz ise doğruyu bulsun!">
+    <meta property="og:description"
+        content="Sohbetinizle (chat) birlikte oynayabileceğiniz en eğlenceli çizim oyunu. Siz çizin, izleyicileriniz ise doğruyu bulsun!">
     <meta property="og:type" content="website">
 
     <!-- Schema.org -->
@@ -31,7 +35,9 @@
     }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="../shared/shared.css">
 
@@ -44,36 +50,48 @@
     <meta property="og:image" content="https://pairaaa.com/main_logo.avif">
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
+
 <body>
     <div class="glass-bg"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
-        <div class="hero-content">
-            <div class="game-logo-container" style="position: relative; display: inline-block;"><img src="../logolar/cizbil.svg" alt="ÇizBil Logo"><a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a></div>
-            <h1 class="gradient-text">Chat ÇizBil</h1>
-            <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! **Paira Gartic** (ÇizBil) ile siz çizin, sohbetinizdeki (chat) herkes aynı anda tahmin etsin. En hızlı kim bilecek?</p>
-        </div>
-
-        <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
-            <div class="form-group">
-                <label for="platform-select">Platform Seçimi</label>
-                <select id="platform-select" >
-                    <option value="twitch">Twitch</option>
-                    <option value="kick">Kick</option>
-                </select>
+    <main id="app-container" class="glass-panel custom-scrollbar"
+        style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active"
+            style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+            <div class="hero-content">
+                <div class="game-logo-container" style="position: relative; display: inline-block;"><img
+                        src="../logolar/cizbil.svg" alt="ÇizBil Logo"><a href="dev.html" class="dev-notes-btn"
+                        title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                            height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg></a></div>
+                <h1 class="gradient-text">Chat ÇizBil</h1>
+                <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! **Paira Gartic** (ÇizBil)
+                    ile siz çizin, sohbetinizdeki (chat) herkes aynı anda tahmin etsin. En hızlı kim bilecek?</p>
             </div>
 
-            <div class="form-group">
-                <label for="channel-input">Kanal Adı</label>
-                <input type="text" id="channel-input"  placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off" spellcheck="false" maxlength="50">
+            <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
+                <div class="form-group">
+                    <label for="platform-select">Platform Seçimi</label>
+                    <select id="platform-select">
+                        <option value="twitch">Twitch</option>
+                        <option value="kick">Kick</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="channel-input">Kanal Adı</label>
+                    <input type="text" id="channel-input" placeholder="Yayıncı kanalı (örn: pairaaa)" autocomplete="off"
+                        spellcheck="false" maxlength="50">
+                </div>
+
+                <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
+                <div id="login-status" class="status-msg"></div>
             </div>
 
-            <button id="btn-start" class="btn btn-primary btn-block">Oyunu Başlat</button>
-            <div id="login-status" class="status-msg"></div>
-        </div>
-
-        <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
                 <h2>Nasıl Oynanır? 🎨</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
@@ -99,11 +117,19 @@
 
     <div class="game-seo-info">
         <h2>Paira Gartic Hakkında</h2>
-        <p>Canlı yayınlarında izleyicilerinle olan etkileşimi zirveye taşıyacak bir oyun mu arıyorsun? Karşında <strong>Paira Gartic</strong>! Klasik çizim ve tahmin oyunlarının Twitch ve Kick yayıncıları için özel olarak tasarlanmış bu versiyonunda yayıncı çizer, chat tahmin eder.</p>
+        <p>Canlı yayınlarında izleyicilerinle olan etkileşimi zirveye taşıyacak bir oyun mu arıyorsun? Karşında
+            <strong>Paira Gartic</strong>! Klasik çizim ve tahmin oyunlarının Twitch ve Kick yayıncıları için özel
+            olarak tasarlanmış bu versiyonunda yayıncı çizer, chat tahmin eder.</p>
 
-        <p>Oyun başladığında sadece senin görebileceğin gizli bir kelime verilir. Görevin, bu kelimeyi dijital tuvale çizerek izleyicilerine anlatmaktır. Çizim esnasında harf veya rakam kullanmak kesinlikle yasaktır! Sen yeteneklerini (ya da yeteneksizliğini) sergilerken, izleyicilerin de sohbet ekranından ne çizdiğini bulmaya çalışır. Sistem chat akışını anlık olarak takip eder ve doğru tahmini yapan ilk izleyiciyi bularak puanını verir.</p>
+        <p>Oyun başladığında sadece senin görebileceğin gizli bir kelime verilir. Görevin, bu kelimeyi dijital tuvale
+            çizerek izleyicilerine anlatmaktır. Çizim esnasında harf veya rakam kullanmak kesinlikle yasaktır! Sen
+            yeteneklerini (ya da yeteneksizliğini) sergilerken, izleyicilerin de sohbet ekranından ne çizdiğini bulmaya
+            çalışır. Sistem chat akışını anlık olarak takip eder ve doğru tahmini yapan ilk izleyiciyi bularak puanını
+            verir.</p>
 
-        <p>Oynamak için herhangi bir kurulum yapmana gerek yok. Sadece kanal adını gir ve chatini oyuna bağla. İster muazzam sanat eserleri yarat, istersen çöp adamlarla chatini krize sok. Yayınlarına yepyeni bir eğlence katacak bu interaktif çizim deneyimine hemen başla!</p>
+        <p>Oynamak için herhangi bir kurulum yapmana gerek yok. Sadece kanal adını gir ve chatini oyuna bağla. İster
+            muazzam sanat eserleri yarat, istersen çöp adamlarla chatini krize sok. Yayınlarına yepyeni bir eğlence
+            katacak bu interaktif çizim deneyimine hemen başla!</p>
     </div>
 
     <!-- Scripts -->
@@ -118,7 +144,7 @@
                 status.innerText = 'Lütfen bir kanal adı girin!';
                 status.className = 'status-msg error error-shake';
                 if (window.showToast) window.showToast('Lütfen bir kanal adı girin!', 'error');
-                
+
                 // Shake the input too
                 const input = document.getElementById('channel-input');
                 input.classList.add('error-shake');
@@ -132,4 +158,5 @@
         });
     </script>
 </body>
+
 </html>

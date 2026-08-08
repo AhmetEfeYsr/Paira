@@ -3,7 +3,7 @@
  * Supports single platform (Twitch or Kick) OR Dual/Cross-Platform mode (Hem Twitch Hem Kick!).
  */
 class ChatListener {
-    constructor(platform, channel, onMessageCallback, onErrorCallback = null) {
+    constructor(platform, channel, onMessageCallback, onErrorCallback = null, onOpenCallback = null) {
         this.platform = (platform || 'twitch').toLowerCase();
         
         if (typeof channel === 'object' && channel !== null) {
@@ -18,12 +18,16 @@ class ChatListener {
 
         this.onMessage = onMessageCallback;
         this.onError = onErrorCallback;
+        this.onOpen = onOpenCallback;
+        this.isConnected = false;
 
         this.twitchWs = null;
         this.kickWs = null;
         this.ws = null; // fallback reference
         this.isStopped = false;
         this.reconnectTimeout = null;
+        this.twitchReconnectDelay = 3000;
+        this.kickReconnectDelay = 3000;
 
         this.kickWorkerUrl = 'https://canimablam.ahmetefeyasar07.workers.dev';
     }
@@ -72,6 +76,7 @@ class ChatListener {
     }
 
     updateStatusConnected() {
+        this.isConnected = true;
         const status = document.getElementById('chat-status');
         if (status) {
             if (this.platform === 'both' || this.platform === 'crossplatform') {
@@ -108,6 +113,7 @@ class ChatListener {
 
         ws.onopen = () => {
             console.log(`[Twitch] Connected to #${cleanChannel} chat.`);
+            this.twitchReconnectDelay = 3000;
             this.updateStatusConnected();
             ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
             ws.send('PASS SCHMOOPIIE');
@@ -162,15 +168,17 @@ class ChatListener {
             if (!this.isStopped) {
                 const status = document.getElementById('chat-status');
                 if (status) {
-                    status.textContent = '• Twitch Yeniden Bağlanıyor...';
+                    status.textContent = `• Twitch Yeniden Bağlanıyor (${Math.round(this.twitchReconnectDelay/1000)}sn)...`;
                     status.style.color = 'var(--warning)';
                 }
+                const delay = this.twitchReconnectDelay;
+                this.twitchReconnectDelay = Math.min(30000, this.twitchReconnectDelay * 1.5);
                 this.reconnectTimeout = setTimeout(() => {
                     if (!this.isStopped) {
                         console.log('[Twitch] Reconnecting...');
                         this.startTwitch(targetChannel);
                     }
-                }, 3000);
+                }, delay);
             }
         };
     }

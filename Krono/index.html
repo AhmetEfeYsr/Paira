@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
     <title>Krono | Paira Krono - Tarih Sıralama ve Genel Kültür Oyunu</title>
-    <meta name="description" content="Olayları kronolojik sıraya koyabilir misin? Krono ile tarihi olayları, buluşları ve önemli anları doğru sıraya diz, arkadaşlarınla online yarış. Paira Krono ücretsiz oyna.">
-    <meta name="keywords" content="paira krono, tarih oyunu online, kronolojik sıralama oyunu, genel kültür oyunları, eğitici oyunlar online, tarih testi">
+    <meta name="description"
+        content="Olayları kronolojik sıraya koyabilir misin? Krono ile tarihi olayları, buluşları ve önemli anları doğru sıraya diz, arkadaşlarınla online yarış. Paira Krono ücretsiz oyna.">
+    <meta name="keywords"
+        content="paira krono, tarih oyunu online, kronolojik sıralama oyunu, genel kültür oyunları, eğitici oyunlar online, tarih testi">
     <meta name="author" content="Paira Games">
     <meta name="robots" content="index, follow">
 
     <meta property="og:type" content="website">
     <meta property="og:title" content="Krono - Zaman Yolculuğuna Hazır Mısın?">
-    <meta property="og:description" content="Tarihi olayları ne kadar iyi biliyorsun? Olayları doğru sıraya diz ve genel kültürünü kanıtla.">
+    <meta property="og:description"
+        content="Tarihi olayları ne kadar iyi biliyorsun? Olayları doğru sıraya diz ve genel kültürünü kanıtla.">
 
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:title" content="Krono - Zaman Yolculuğuna Hazır Mısın?">
-    <meta property="twitter:description" content="Tarihi olayları ne kadar iyi biliyorsun? Olayları doğru sıraya diz ve genel kültürünü kanıtla.">
+    <meta property="twitter:description"
+        content="Tarihi olayları ne kadar iyi biliyorsun? Olayları doğru sıraya diz ve genel kültürünü kanıtla.">
 
     <script type="application/ld+json">
     {
@@ -39,8 +44,9 @@
       }
     }
     </script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="../shared/shared.css">
 
@@ -51,39 +57,55 @@
     <meta property="og:image" content="https://pairaaa.com/main_logo.avif">
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
+
 <body>
     <div id="toast-container" class="toast-container"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+    <main id="app-container" class="glass-panel custom-scrollbar"
+        style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active"
+            style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
                 <div class="game-logo-container" style="position: relative; display: inline-block;">
                     <img src="../logolar/krono.avif" alt="Krono Logo">
-                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a>
+                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg></a>
                 </div>
                 <h1 class="gradient-text">Krono</h1>
-                <p class="seo-description">Zaman tünelinde kaybolmaya hazır mısın? **Paira Krono**'da önüne gelen olayları en eskiden en yeniye doğru sırala. Hızın ve bilgin seni zirveye taşıyacak!</p>
+                <p class="seo-description">Zaman tünelinde kaybolmaya hazır mısın? **Paira Krono**'da önüne gelen
+                    olayları en eskiden en yeniye doğru sırala. Hızın ve bilgin seni zirveye taşıyacak!</p>
             </div>
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
                 <div class="form-group">
                     <label for="username-input">Oyuncu Adı</label>
-                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)"
+                        autocomplete="off" maxlength="25">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <button id="btn-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; background: var(--success); color: white;">Solo Oyna</button>
-                    
-                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Arkadaşına Meydan Oku (Oda Kur)</button>
-                    
-                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                    <button id="btn-solo" class="btn btn-primary btn-block"
+                        style="padding: 14px; font-size: 1.1rem; background: var(--success); color: white;">Solo
+                        Oyna</button>
+
+                    <button id="btn-host" class="btn btn-primary btn-block"
+                        style="padding: 14px; font-size: 1.1rem;">Arkadaşına Meydan Oku (Oda Kur)</button>
+
+                    <div
+                        style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
                         <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
                         <span>VEYA</span>
                         <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
                     </div>
-                    
+
                     <div class="join-row" style="display: flex; gap: 10px; align-items: stretch;">
-                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
-                        <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10"
+                            style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">
+                        <button id="btn-join" class="btn btn-secondary"
+                            style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
                     </div>
                 </div>
             </div>
@@ -101,11 +123,13 @@
                     </div>
                     <div class="rule-card">
                         <h3>3. Sıralama Yap</h3>
-                        <p>Olayları gerçekleşme tarihlerine göre (eskiden yeniye) sürükleyerek veya tıklayarak sırala.</p>
+                        <p>Olayları gerçekleşme tarihlerine göre (eskiden yeniye) sürükleyerek veya tıklayarak sırala.
+                        </p>
                     </div>
                     <div class="rule-card">
                         <h3>4. Puanları Al</h3>
-                        <p>Ne kadar çok olayı doğru sıraya koyarsan o kadar yüksek puan kazanırsın. Zaman dolmadan bitir!</p>
+                        <p>Ne kadar çok olayı doğru sıraya koyarsan o kadar yüksek puan kazanırsın. Zaman dolmadan
+                            bitir!</p>
                     </div>
                 </div>
             </div>
@@ -114,13 +138,23 @@
 
     <div class="game-seo-info">
         <h2>Paira Krono Hakkında</h2>
-        <p>Tarih bilginize güveniyor musun? <strong>Paira Krono</strong>, insanlık tarihinin akışını değiştiren olayları, icatları ve savaşları kronolojik olarak sıralamaya çalıştığınız sürükleyici bir bulmaca oyunudur.</p>
-        
-        <p>Oyuna başladığınızda karşınıza karışık sırada dizilmiş beş farklı tarihi olay gelir. Göreviniz, tekerleğin icadından Fransız Devrimi'ne kadar uzanan bu geniş yelpazedeki olayları en eskiden en yeniye doğru sürükleyip bırakarak doğru bir şekilde sıralamaktır. Süreye karşı yarıştığınız bu oyunda hızlı düşünmek size ekstra puan kazandırır. Eğer bir tarihten tam emin değilseniz, stratejik olarak ipuçlarınızı kullanabilir ve takıldığınız yerleri geçebilirsiniz.</p>
+        <p>Tarih bilginize güveniyor musun? <strong>Paira Krono</strong>, insanlık tarihinin akışını değiştiren
+            olayları, icatları ve savaşları kronolojik olarak sıralamaya çalıştığınız sürükleyici bir bulmaca oyunudur.
+        </p>
 
-        <p>Krono, sadece tarih meraklıları için değil, genel kültürünü eğlenceli bir şekilde geliştirmek isteyen herkes için harika bir seçenektir. İster tek oyunculu (solo) modda kendi rekorlarınızı kırmaya çalışın, ister arkadaşlarınızla aynı odaya katılıp kimin daha iyi bir tarihçi olduğunu kanıtlayın. Tarayıcı üzerinden hiçbir şey indirmeden anında oynanabilen Krono'da geçmişin tozlu sayfalarına keyifli bir yolculuk yapın!</p>
+        <p>Oyuna başladığınızda karşınıza karışık sırada dizilmiş beş farklı tarihi olay gelir. Göreviniz, tekerleğin
+            icadından Fransız Devrimi'ne kadar uzanan bu geniş yelpazedeki olayları en eskiden en yeniye doğru
+            sürükleyip bırakarak doğru bir şekilde sıralamaktır. Süreye karşı yarıştığınız bu oyunda hızlı düşünmek size
+            ekstra puan kazandırır. Eğer bir tarihten tam emin değilseniz, stratejik olarak ipuçlarınızı kullanabilir ve
+            takıldığınız yerleri geçebilirsiniz.</p>
+
+        <p>Krono, sadece tarih meraklıları için değil, genel kültürünü eğlenceli bir şekilde geliştirmek isteyen herkes
+            için harika bir seçenektir. İster tek oyunculu (solo) modda kendi rekorlarınızı kırmaya çalışın, ister
+            arkadaşlarınızla aynı odaya katılıp kimin daha iyi bir tarihçi olduğunu kanıtlayın. Tarayıcı üzerinden
+            hiçbir şey indirmeden anında oynanabilen Krono'da geçmişin tozlu sayfalarına keyifli bir yolculuk yapın!</p>
     </div>
 
     <script src="../shared/login.js"></script>
 </body>
+
 </html>

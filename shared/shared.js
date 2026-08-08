@@ -10,6 +10,7 @@ class PairaSharedUI {
             this.injectSEOFooter();
             this.updateLogos(localStorage.getItem('paira_theme') || 'paira');
             this.initFullscreenToggle();
+            this.initVisualViewportHandler();
         };
 
         if (document.readyState === 'loading') {
@@ -175,6 +176,28 @@ class PairaSharedUI {
                 if (banner) banner.classList.add('show');
             }, 1000);
         }
+    }
+
+    initVisualViewportHandler() {
+        if (!window.visualViewport) return;
+        const handleResize = () => {
+            const layoutHeight = window.innerHeight;
+            const currentHeight = window.visualViewport.height;
+            const keyboardHeight = Math.max(0, layoutHeight - currentHeight);
+            const appContainer = document.getElementById('app-container') || document.body;
+            if (keyboardHeight > 120) {
+                appContainer.style.paddingBottom = `${keyboardHeight}px`;
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                    setTimeout(() => {
+                        document.activeElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }, 100);
+                }
+            } else {
+                appContainer.style.paddingBottom = '';
+            }
+        };
+        window.visualViewport.addEventListener('resize', handleResize);
+        window.visualViewport.addEventListener('scroll', handleResize);
     }
 
     injectSEOFooter() {

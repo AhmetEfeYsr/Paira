@@ -334,12 +334,24 @@
     #current-player-indicator { justify-content: center; }
     #clue-input-section { flex-wrap: wrap; justify-content: center; }
     .board-card {
-        padding: 0.4rem 0.2rem;
-        min-height: 50px;
-        font-size: clamp(0.7rem, 2.8vw, 0.95rem);
-        line-height: 1.2;
-        aspect-ratio: 2 / 1;
+        padding: 0.35rem 0.15rem;
+        min-height: 44px;
+        font-size: clamp(0.65rem, 2.6vw, 0.9rem);
+        line-height: 1.15;
+        aspect-ratio: auto;
+        word-break: break-word;
+        hyphens: auto;
     }
-    .game-board { gap: 6px; }
-    .board-container { align-items: stretch; padding: 0 0.4rem; }
+    .game-board { gap: 5px; }
+    .grid-5x5 { grid-template-columns: repeat(5, 1fr); }
+    .board-container { align-items: stretch; padding: 0 0.2rem; }
+}
+
+@media (max-width: 480px) {
+    .board-card {
+        padding: 0.3rem 0.1rem;
+        min-height: 40px;
+        font-size: 0.7rem;
+    }
+    .game-board { gap: 4px; }
 }

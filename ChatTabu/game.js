@@ -226,12 +226,12 @@ class ChatTabuView {
         this.chatListener = null;
     }
 
-    setupChatListener(platform, channelConfig, onMessage) {
+    setupChatListener(platform, channelConfig, onMessage, onOpen = null, onError = null) {
         if (typeof window.ChatListener === 'undefined') return;
         if (this.chatListener) {
             this.chatListener.stop();
         }
-        this.chatListener = new window.ChatListener(platform, channelConfig, onMessage);
+        this.chatListener = new window.ChatListener(platform, channelConfig, onMessage, onError, onOpen);
         this.chatListener.start();
     }
 
@@ -827,14 +827,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 engine.state.turnDuration = turnDuration;
                 engine.state.maxRounds = maxRounds;
 
-                engine.startMultiplayer(window.Network.getMyId(), { allowAnyChat: allowAny });
-                window.Network.broadcastToClients({ type: 'START_GAME', state: engine.state });
+                let started = false;
+                const launchMP = () => {
+                    if (started) return;
+                    started = true;
+                    engine.startMultiplayer(window.Network.getMyId(), { allowAnyChat: allowAny });
+                    window.Network.broadcastToClients({ type: 'START_GAME', state: engine.state });
 
-                document.getElementById('lobby-screen').classList.remove('active');
-                document.getElementById('game-screen').classList.add('active');
+                    document.getElementById('lobby-screen').classList.remove('active');
+                    document.getElementById('game-screen').classList.add('active');
 
-                view.updateGameUI(engine.state, window.Network.getMyId());
-                view.updateLeaderboard(engine.state.players, engine.state.scores);
+                    view.updateGameUI(engine.state, window.Network.getMyId());
+                    view.updateLeaderboard(engine.state.players, engine.state.scores);
+                    if (window.showToast) window.showToast("Sohbet Bağlandı! Oyun Başladı! 🎉", "success");
+                };
+
+                if (view.chatListener && view.chatListener.isConnected) {
+                    launchMP();
+                } else {
+                    if (window.showToast) window.showToast("Sohbete bağlanılıyor...", "info");
+                    view.setupChatListener(platform, channelConfig, handleChatMessage, () => {
+                        launchMP();
+                    });
+                    setTimeout(() => { launchMP(); }, 3000);
+                }
             }
         });
     }
@@ -943,9 +959,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         engine.state.players = [{ id: 'solo-player', name: displayName, platform: platform, score: 0, isHost: true }];
         document.getElementById('channel-name-display').textContent = displayName;
-        view.setupChatListener(platform, channelConfig, handleChatMessage);
         
-        engine.startGameSolo();
+        const statusEl = document.getElementById('turn-status');
+        if (statusEl) {
+            statusEl.textContent = "⏳ Sohbete Bağlanılıyor, Lütfen Bekleyin...";
+            statusEl.style.borderColor = "var(--warning)";
+        }
+        if (window.showToast) window.showToast("Sohbete bağlanılıyor... Bağlantı sağlandıktan sonra oyun başlayacak.", "info");
+
+        let gameStarted = false;
+        const launchSolo = () => {
+            if (gameStarted) return;
+            gameStarted = true;
+            engine.startGameSolo();
+            view.updateGameUI(engine.state, null);
+            if (window.showToast) window.showToast("Sohbet Bağlandı! Oyun Başladı! 🎉", "success");
+        };
+
+        view.setupChatListener(platform, channelConfig, handleChatMessage, () => {
+            launchSolo();
+        });
+
+        setTimeout(() => {
+            launchSolo();
+        }, 3000);
         return;
     }
 
@@ -1029,10 +1066,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 engine.state = { ...engine.state, ...data.state };
             }
 
-            view.setupChatListener(platform, channelConfig, handleChatMessage);
-            view.updateGameUI(engine.state, window.Network.getMyId());
-            view.updateLeaderboard(engine.state.players, engine.state.scores);
-            engine.startTimer();
+            let started = false;
+            const launchClient = () => {
+                if (started) return;
+                started = true;
+                view.updateGameUI(engine.state, window.Network.getMyId());
+                view.updateLeaderboard(engine.state.players, engine.state.scores);
+                engine.startTimer();
+            };
+
+            view.setupChatListener(platform, channelConfig, handleChatMessage, () => {
+                launchClient();
+            });
+            setTimeout(() => { launchClient(); }, 2500);
         }
         else if (data.type === 'GUESSED_CORRECTLY') {
             if (data.state) {

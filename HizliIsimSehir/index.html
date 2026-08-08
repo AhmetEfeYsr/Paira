@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
     <title>Hızlı İsim Şehir | Paira Games - Online Kelime Yarışı</title>
-    <meta name="description" content="Klasik isim şehir oyunu artık çok daha hızlı! Paira Hızlı İsim Şehir ile arkadaşlarınla online yarış, kelime dağarcığını konuştur ve en yüksek puanı topla.">
-    <meta name="keywords" content="paira hizli isim sehir, online isim şehir, kelime oyunu arkadaşla, klasik oyunlar online, ücretsiz multiplayer oyunlar">
+    <meta name="description"
+        content="Klasik isim şehir oyunu artık çok daha hızlı! Paira Hızlı İsim Şehir ile arkadaşlarınla online yarış, kelime dağarcığını konuştur ve en yüksek puanı topla.">
+    <meta name="keywords"
+        content="paira hizli isim sehir, online isim şehir, kelime oyunu arkadaşla, klasik oyunlar online, ücretsiz multiplayer oyunlar">
     <meta name="author" content="Paira Games">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Facebook / Discord -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Hızlı İsim Şehir - En Hızlı Sen mi Yazacaksın?">
-    <meta property="og:description" content="Harfi seç, kategorileri doldur ve butona bas! Arkadaşlarınla online isim şehir heyecanı Paira'da.">
+    <meta property="og:description"
+        content="Harfi seç, kategorileri doldur ve butona bas! Arkadaşlarınla online isim şehir heyecanı Paira'da.">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:title" content="Hızlı İsim Şehir - En Hızlı Sen mi Yazacaksın?">
-    <meta property="twitter:description" content="Harfi seç, kategorileri doldur ve butona bas! Arkadaşlarınla online isim şehir heyecanı Paira'da.">
+    <meta property="twitter:description"
+        content="Harfi seç, kategorileri doldur ve butona bas! Arkadaşlarınla online isim şehir heyecanı Paira'da.">
 
     <!-- Schema.org JSON-LD -->
     <script type="application/ld+json">
@@ -43,7 +48,8 @@
     }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="../shared/shared.css">
 
@@ -54,36 +60,50 @@
     <meta property="og:image" content="https://pairaaa.com/main_logo.avif">
     <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
+
 <body>
     <div id="toast-container" class="toast-container"></div>
 
-    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
-        <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
+    <main id="app-container" class="glass-panel custom-scrollbar"
+        style="overflow: visible !important; max-height: none !important;">
+        <section id="login-screen" class="view-state active"
+            style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
                 <div class="game-logo-container" style="position: relative; display: inline-block;">
                     <img src="../logolar/isim-sehir.svg" alt="İsim Şehir Logo">
-                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a>
+                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg></a>
                 </div>
                 <h1 class="gradient-text">Hızlı İsim Şehir</h1>
-                <p class="seo-description">Hafızana ve hızına güveniyor musun? **Paira Hızlı İsim Şehir**'de sıra sana geldiğinde belirlenen harf ve kategori için en hızlı cevabı ver, puanları topla!</p>
+                <p class="seo-description">Hafızana ve hızına güveniyor musun? **Paira Hızlı İsim Şehir**'de sıra sana
+                    geldiğinde belirlenen harf ve kategori için en hızlı cevabı ver, puanları topla!</p>
             </div>
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
                 <div class="form-group">
                     <label for="username-input">Oyuncu Adı</label>
-                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
+                    <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)"
+                        autocomplete="off" maxlength="25">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
-                    <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
+                    <button id="btn-host" class="btn btn-primary btn-block"
+                        style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
+                    <div
+                        style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
                         <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
                         <span>VEYA</span>
                         <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
                     </div>
-                <div class="join-row" style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 1rem;">
-                    <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10" style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
-                    <button id="btn-join" class="btn btn-secondary" style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
-                </div>
+                    <div class="join-row" style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 1rem;">
+                        <input type="text" id="room-code-input" placeholder="Oda Kodu" autocomplete="off" maxlength="10"
+                            style="flex: 1; margin: 0; text-align: center; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
+                        <button id="btn-join" class="btn btn-secondary"
+                            style="margin: 0; padding: 0 24px; font-size: 1.05rem; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Katıl</button>
+                    </div>
                 </div>
             </div>
 
@@ -100,11 +120,13 @@
                     </div>
                     <div class="rule-card">
                         <h3>3. Kelimeni Yaz</h3>
-                        <p>Sistem tarafından o tur için belirlenen harf ve kategorideki kelimeyi saniyeler içinde yaz.</p>
+                        <p>Sistem tarafından o tur için belirlenen harf ve kategorideki kelimeyi saniyeler içinde yaz.
+                        </p>
                     </div>
                     <div class="rule-card">
                         <h3>4. Puanları Kap</h3>
-                        <p>Yazdığın kelimenin uzunluğu kadar puan kazanırsın. Diğer oyuncular senin cevabını oylayabilir!</p>
+                        <p>Yazdığın kelimenin uzunluğu kadar puan kazanırsın. Diğer oyuncular senin cevabını
+                            oylayabilir!</p>
                     </div>
                 </div>
             </div>
@@ -113,13 +135,22 @@
 
     <div class="game-seo-info">
         <h2>Paira Hızlı İsim Şehir Hakkında</h2>
-        <p>Kağıt kalemle oynadığımız o klasik isim şehir oyunu artık çok daha tempolu ve rekabetçi! <strong>Paira Hızlı İsim Şehir</strong>, sırayla yarıştığınız, genel kültürünüzü ve klavye hızınızı aynı anda test eden dinamik bir kelime oyunudur.</p>
-        
-        <p>Bu modda, klasik oyunun aksine tüm oyuncular aynı anda yazmaz. Her turda bir oyuncuya sıra gelir ve sistem o oyuncu için bir harf ile bir kategori belirler (Örneğin: 'B harfi ile başlayan Şehir'). Amacınız, kısıtlı süreniz dolmadan doğru kelimeyi yazıp göndermektir. Diğer oyuncular sizin verdiğiniz cevabı izler ve gerekirse itiraz ederek oylama başlatabilirler.</p>
-        
-        <p>Puanlama sisteminde ise önemli bir detay var: Bulduğunuz kelime ne kadar uzunsa o kadar çok puan kazanırsınız! Sadece hızlı olmak yetmez, army zamanda yaratıcı ve uzun kelimeler bulmak size şampiyonluğu getirebilir. İster arkadaşlarınla istersen de dünyanın dört bir yanından oyuncularla kapış. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden bu amansız yarışa hemen katıl!</p>
+        <p>Kağıt kalemle oynadığımız o klasik isim şehir oyunu artık çok daha tempolu ve rekabetçi! <strong>Paira Hızlı
+                İsim Şehir</strong>, sırayla yarıştığınız, genel kültürünüzü ve klavye hızınızı aynı anda test eden
+            dinamik bir kelime oyunudur.</p>
+
+        <p>Bu modda, klasik oyunun aksine tüm oyuncular aynı anda yazmaz. Her turda bir oyuncuya sıra gelir ve sistem o
+            oyuncu için bir harf ile bir kategori belirler (Örneğin: 'B harfi ile başlayan Şehir'). Amacınız, kısıtlı
+            süreniz dolmadan doğru kelimeyi yazıp göndermektir. Diğer oyuncular sizin verdiğiniz cevabı izler ve
+            gerekirse itiraz ederek oylama başlatabilirler.</p>
+
+        <p>Puanlama sisteminde ise önemli bir detay var: Bulduğunuz kelime ne kadar uzunsa o kadar çok puan
+            kazanırsınız! Sadece hızlı olmak yetmez, army zamanda yaratıcı ve uzun kelimeler bulmak size şampiyonluğu
+            getirebilir. İster arkadaşlarınla istersen de dünyanın dört bir yanından oyuncularla kapış. Hiçbir şey
+            indirmene gerek kalmadan tarayıcın üzerinden bu amansız yarışa hemen katıl!</p>
     </div>
 
     <script src="../shared/login.js"></script>
 </body>
+
 </html>
