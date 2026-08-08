@@ -346,30 +346,156 @@ class RenderEngine {
         this.ctx.globalAlpha = 1.0;
     }
 
+    drawElementalCharacter(p) {
+        this.ctx.save();
+
+        const cx = p.x + p.w / 2;
+        const cy = p.y + p.h / 2;
+        const radius = p.w / 2;
+
+        if (p.role === 'ates') {
+            // 🔥 Ateş Karakteri: Alev Şeklinde Parlak Gradient Gövde
+            this.ctx.shadowColor = '#ef4444';
+            this.ctx.shadowBlur = 18;
+
+            const grad = this.ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+            grad.addColorStop(0, '#fde047');
+            grad.addColorStop(0.4, '#f97316');
+            grad.addColorStop(1, '#ef4444');
+            this.ctx.fillStyle = grad;
+
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy + 2, radius - 2, 0, Math.PI);
+            this.ctx.quadraticCurveTo(cx - radius, cy - 8, cx, p.y - 8);
+            this.ctx.quadraticCurveTo(cx + radius, cy - 8, cx + radius, cy + 2);
+            this.ctx.fill();
+
+            // Alev Taç Kıvılcımı
+            this.ctx.fillStyle = '#facc15';
+            this.ctx.beginPath();
+            this.ctx.arc(cx + Math.sin(this.animTimer * 3) * 5, p.y - 6, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Gözler
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillStyle = '#ffffff';
+            const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX, cy - 2, 4, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8, cy - 2, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.ctx.fillStyle = '#0f172a';
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX + (p.dir === 1 ? 1 : -1), cy - 2, 2, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8 + (p.dir === 1 ? 1 : -1), cy - 2, 2, 0, Math.PI * 2);
+            this.ctx.fill();
+        } else if (p.role === 'su') {
+            // 💧 Su Karakteri: Parlak Sıvı Damlası
+            this.ctx.shadowColor = '#3b82f6';
+            this.ctx.shadowBlur = 18;
+
+            const grad = this.ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, radius + 4);
+            grad.addColorStop(0, '#7dd3fc');
+            grad.addColorStop(0.5, '#3b82f6');
+            grad.addColorStop(1, '#1d4ed8');
+            this.ctx.fillStyle = grad;
+
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Yansıma Halkası
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            this.ctx.beginPath();
+            this.ctx.arc(cx - 5, cy - 5, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Gözler
+            this.ctx.fillStyle = '#ffffff';
+            const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX, cy, 4, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8, cy, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.ctx.fillStyle = '#0f172a';
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX + (p.dir === 1 ? 1 : -1), cy, 2, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8 + (p.dir === 1 ? 1 : -1), cy, 2, 0, Math.PI * 2);
+            this.ctx.fill();
+        } else if (p.role === 'hava') {
+            // 💨 Hava Karakteri: Rüzgar Spirit
+            this.ctx.shadowColor = '#facc15';
+            this.ctx.shadowBlur = 18;
+
+            const grad = this.ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+            grad.addColorStop(0, '#fef08a');
+            grad.addColorStop(1, '#eab308');
+            this.ctx.fillStyle = grad;
+
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Rüzgar Halkası
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            // Gözler
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillStyle = '#0f172a';
+            const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX, cy - 2, 3, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8, cy - 2, 3, 0, Math.PI * 2);
+            this.ctx.fill();
+        } else if (p.role === 'elektrik') {
+            // ⚡ Elektrik Karakteri: Plazma Şimşek Küresi
+            this.ctx.shadowColor = '#a855f7';
+            this.ctx.shadowBlur = 20;
+
+            const grad = this.ctx.createRadialGradient(cx, cy, 2, cx, cy, radius + 4);
+            grad.addColorStop(0, '#f0abfc');
+            grad.addColorStop(0.6, '#a855f7');
+            grad.addColorStop(1, '#6b21a8');
+            this.ctx.fillStyle = grad;
+
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Gözler
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillStyle = '#ffffff';
+            const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX, cy - 2, 4, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8, cy - 2, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+        } else {
+            this.ctx.fillStyle = p.color || '#ffffff';
+            this.ctx.fillRect(p.x, p.y, p.w, p.h);
+        }
+
+        // İsim Etiketi
+        this.ctx.shadowBlur = 0;
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 11px Poppins, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(p.name || p.role.toUpperCase(), cx, p.y - 12);
+
+        this.ctx.restore();
+    }
+
     drawPlayers(players) {
         players.forEach(p => {
             if (!p || p.dead) return;
-
-            // Player Aura Glow
-            this.ctx.shadowColor = p.color;
-            this.ctx.shadowBlur = 14;
-
-            // Player Body
-            this.ctx.fillStyle = p.color;
-            this.ctx.fillRect(p.x, p.y, p.w, p.h);
-
-            // Eyes facing movement direction
-            this.ctx.shadowBlur = 0;
-            this.ctx.fillStyle = '#0f172a';
-            const eyeOffset = p.dir === 1 ? 18 : 6;
-            this.ctx.fillRect(p.x + eyeOffset, p.y + 8, 4, 6);
-            this.ctx.fillRect(p.x + eyeOffset + 6, p.y + 8, 4, 6);
-
-            // Player Label
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = 'bold 11px sans-serif';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText(p.name || p.role.toUpperCase(), p.x + p.w / 2, p.y - 8);
+            this.drawElementalCharacter(p);
         });
     }
 

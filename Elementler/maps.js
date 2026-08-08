@@ -36,8 +36,8 @@ window.MAPS = {
             for(let y=15; y<20; y++) g[y][18] = 8; // Boru
             return g;
         })(),
-        spawns: { su: { x: 100, y: 400 } },
-        entities: [ { type: 'exit', x: 28*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'su' } } ]
+        spawns: { ates: { x: 100, y: 400 }, su: { x: 100, y: 400 }, hava: { x: 100, y: 400 }, elektrik: { x: 100, y: 400 } },
+        entities: [ { type: 'exit', x: 28*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'any' } } ]
     },
 
     "map_1_2": {

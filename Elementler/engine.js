@@ -314,7 +314,7 @@ class PlayerEntity extends Rect {
             }
 
             // ÇIKIŞ KAPILARI
-            if (r.type === 'exit' && r.props.role === this.role) {
+            if (r.type === 'exit' && (!r.props || !r.props.role || r.props.role === 'any' || r.props.role === this.role)) {
                 // Sadece merkez noktası kapı içindeyse kabul et
                 if(this.x + this.w/2 > r.x && this.x + this.w/2 < r.x + r.w && this.y + this.h/2 > r.y && this.y + this.h/2 < r.y + r.h) {
                     this.finish();
@@ -646,32 +646,125 @@ class GameEngine {
         // Oyuncular
         for (let id in this.players) {
             const p = this.players[id];
-            if (p.dead) continue; // Ölüler çizilmez (veya hayalet çizilir)
+            if (p.dead) continue;
 
-            this.ctx.fillStyle = p.color;
+            const cx = p.x + p.w / 2;
+            const cy = p.y + p.h / 2;
+            const radius = p.w / 2;
 
-            // Eğer su borudaysa ince çizilir, uçuyorsa farklı vs. (Görsel cilalar)
-            if (p.role === 'su' && this.rects.some(r => r.type==='boru' && p.intersects(r))) {
-                this.ctx.fillRect(p.x, p.y + p.h - 10, p.w, 10); // İncecik su oldu
+            this.ctx.save();
+            if (p.role === 'ates') {
+                this.ctx.shadowColor = '#ef4444';
+                this.ctx.shadowBlur = 16;
+
+                const grad = this.ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+                grad.addColorStop(0, '#fde047');
+                grad.addColorStop(0.5, '#f97316');
+                grad.addColorStop(1, '#ef4444');
+                this.ctx.fillStyle = grad;
+
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy + 2, radius - 2, 0, Math.PI);
+                this.ctx.quadraticCurveTo(cx - radius, cy - 8, cx, p.y - 8);
+                this.ctx.quadraticCurveTo(cx + radius, cy - 8, cx + radius, cy + 2);
+                this.ctx.fill();
+
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = '#ffffff';
+                const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+                this.ctx.beginPath();
+                this.ctx.arc(eyeX, cy - 2, 4, 0, Math.PI * 2);
+                this.ctx.arc(eyeX + 8, cy - 2, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = '#0f172a';
+                this.ctx.beginPath();
+                this.ctx.arc(eyeX + (p.dir === 1 ? 1 : -1), cy - 2, 2, 0, Math.PI * 2);
+                this.ctx.arc(eyeX + 8 + (p.dir === 1 ? 1 : -1), cy - 2, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else if (p.role === 'su') {
+                this.ctx.shadowColor = '#3b82f6';
+                this.ctx.shadowBlur = 16;
+
+                const grad = this.ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, radius + 4);
+                grad.addColorStop(0, '#7dd3fc');
+                grad.addColorStop(0.5, '#3b82f6');
+                grad.addColorStop(1, '#1d4ed8');
+                this.ctx.fillStyle = grad;
+
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.beginPath();
+                this.ctx.arc(cx - 4, cy - 4, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = '#ffffff';
+                const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+                this.ctx.beginPath();
+                this.ctx.arc(eyeX, cy, 4, 0, Math.PI * 2);
+                this.ctx.arc(eyeX + 8, cy, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = '#0f172a';
+                this.ctx.beginPath();
+                this.ctx.arc(eyeX + (p.dir === 1 ? 1 : -1), cy, 2, 0, Math.PI * 2);
+                this.ctx.arc(eyeX + 8 + (p.dir === 1 ? 1 : -1), cy, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else if (p.role === 'hava') {
+                this.ctx.shadowColor = '#facc15';
+                this.ctx.shadowBlur = 16;
+
+                const grad = this.ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+                grad.addColorStop(0, '#fef08a');
+                grad.addColorStop(1, '#eab308');
+                this.ctx.fillStyle = grad;
+
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = '#0f172a';
+                const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+                this.ctx.beginPath();
+                this.ctx.arc(eyeX, cy - 2, 3, 0, Math.PI * 2);
+                this.ctx.arc(eyeX + 8, cy - 2, 3, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else if (p.role === 'elektrik') {
+                this.ctx.shadowColor = '#a855f7';
+                this.ctx.shadowBlur = 18;
+
+                const grad = this.ctx.createRadialGradient(cx, cy, 2, cx, cy, radius + 4);
+                grad.addColorStop(0, '#f0abfc');
+                grad.addColorStop(0.6, '#a855f7');
+                grad.addColorStop(1, '#6b21a8');
+                this.ctx.fillStyle = grad;
+
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = '#ffffff';
+                const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+                this.ctx.beginPath();
+                this.ctx.arc(eyeX, cy - 2, 4, 0, Math.PI * 2);
+                this.ctx.arc(eyeX + 8, cy - 2, 4, 0, Math.PI * 2);
+                this.ctx.fill();
             } else {
+                this.ctx.fillStyle = p.color || '#ffffff';
                 this.ctx.fillRect(p.x, p.y, p.w, p.h);
-
-                // Gözler (yönüne göre)
-                this.ctx.fillStyle = 'black';
-                if(p.dir === 1) { // Sağa bakıyor
-                    this.ctx.fillRect(p.x + 20, p.y + 8, 4, 4);
-                    this.ctx.fillRect(p.x + 28, p.y + 8, 4, 4);
-                } else { // Sola bakıyor
-                    this.ctx.fillRect(p.x + 4, p.y + 8, 4, 4);
-                    this.ctx.fillRect(p.x + 12, p.y + 8, 4, 4);
-                }
             }
 
-            // İsim etiketi
-            this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            this.ctx.font = '10px Poppins';
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 11px Poppins, sans-serif';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(p.name, p.x + p.w/2, p.y - 8);
+            this.ctx.fillText(p.name, cx, p.y - 12);
+            this.ctx.restore();
         }
 
         this.ctx.restore();
