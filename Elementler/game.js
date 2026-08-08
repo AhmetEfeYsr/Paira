@@ -281,7 +281,12 @@ class GameManager {
     startGameEngine() {
         if(this.engine) this.engine.stop();
 
-        const EngineClass = window.GameEngine || GameEngine;
+        const EngineClass = window.GameEngine || (typeof GameEngine !== 'undefined' ? GameEngine : null);
+        if (!EngineClass) {
+            console.error("GameEngine script is not loaded properly.");
+            if (window.showToast) window.showToast("Oyun motoru yüklenemedi. Lütfen sayfayı yenileyin.", "error");
+            return;
+        }
         this.engine = new EngineClass('game-canvas');
 
         // UI Geçişi
