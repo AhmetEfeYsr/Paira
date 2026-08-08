@@ -117,24 +117,53 @@ class HizliIsimSehirGameEngine {
         this.setState(this.state);
     }
 
+    async fetchWithTimeout(resource, options = {}, timeoutMs = 2500) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(resource, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(id);
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            return null;
+        }
+    }
+
+    async logWordToCloudflare(word, categoryId, categoryName, status, letter) {
+        try {
+            const workerUrl = window.CF_WORKER_URL || 'https://dbuptodate.pairaaa.com/api/log-word';
+            await this.fetchWithTimeout(workerUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word, categoryId, categoryName, status, letter })
+            }, 1500);
+        } catch (e) {}
+    }
+
     async checkWikipedia(word, keywords, requiredLetterLower) {
         const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
-            const wikiRes = await fetch(wikiUrl);
+            const wikiRes = await this.fetchWithTimeout(wikiUrl, {}, 2500);
+            if (!wikiRes || !wikiRes.ok) return false;
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search) {
                 const lowerWord = word.toLocaleLowerCase('tr-TR');
                 const normWord = window.normalizeTurkishChars(lowerWord).trim();
+                const normLetter = window.normalizeTurkishChars(requiredLetterLower || '').trim();
+                
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
-                    
-                    if (requiredLetterLower && !title.startsWith(requiredLetterLower)) {
-                        continue;
-                    }
-                    
                     const normTitle = window.normalizeTurkishChars(title).trim();
                     const normSnippet = window.normalizeTurkishChars(snippet).trim();
+                    
+                    if (normLetter && !normTitle.startsWith(normLetter)) {
+                        continue;
+                    }
                     
                     const titleWords = normTitle.split(/[\s,()\-.:]+/);
                     if (title === lowerWord || normTitle === normWord || titleWords.includes(normWord)) {
@@ -159,7 +188,7 @@ Kelime: "${word}"
 Bu kelime bu kategoriye uygun mu ve belirtilen harfle mi başlıyor? 
 Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açıklama"}`;
 
-            const response = await fetch('/api/ai/generate', {
+            const response = await this.fetchWithTimeout('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -167,13 +196,13 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                     prompt: prompt,
                     temperature: 0.5
                 })
-            });
+            }, 2500);
+            if (!response || !response.ok) return { valid: false, reason: "" };
             const data = await response.json();
             const result = JSON.parse(data.text);
             return { valid: !!result.valid, reason: result.reason || "" };
         } catch (e) {
-            console.error("LLM Validation Error:", e);
-            return { valid: false, reason: "Yapay zeka doğrulaması başarısız oldu." };
+            return { valid: false, reason: "" };
         }
     }
 
@@ -183,27 +212,33 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (this.apiCache[cacheKey] !== undefined) return this.apiCache[cacheKey];
 
         let result = false;
+        const normLetter = window.normalizeTurkishChars(requiredLetterLower || '').trim();
+
         try {
             if (catId === 'sehir') {
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
-                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
-                const data = await response.json();
-                result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
-                if (result) {
-                    const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
-                    if (!nameLower.startsWith(requiredLetterLower)) result = false;
+                const response = await this.fetchWithTimeout(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
+                if (response && response.ok) {
+                    const data = await response.json();
+                    result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+                    if (result) {
+                        const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
+                        const normName = window.normalizeTurkishChars(nameLower).trim();
+                        if (normLetter && !normName.startsWith(normLetter)) result = false;
+                    }
                 }
                 if (!result) result = await this.checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredLetterLower);
             }
             else if (catId === 'ulke') {
                 const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await this.fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     result = Array.isArray(data) && data.length > 0;
                     if (result) {
-                        const trName = data[0].translations?.tur?.common?.toLocaleLowerCase('tr-TR');
-                        if (trName && !trName.startsWith(requiredLetterLower)) {
+                        const trName = data[0].translations?.tur?.common?.toLocaleLowerCase('tr-TR') || '';
+                        const normName = window.normalizeTurkishChars(trName).trim();
+                        if (normLetter && normName && !normName.startsWith(normLetter)) {
                             result = false;
                         }
                     }
@@ -212,39 +247,24 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             }
             else if (catId === 'film_dizi') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await this.fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
-                        const match = data.results.find(item => 
-                            item.wrapperType === 'track' && 
-                            (item.kind === 'feature-movie' || item.kind === 'tv-episode') &&
-                            item.trackName.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower)
-                        );
+                        const match = data.results.find(item => {
+                            const name = (item.trackName || item.collectionName || '').toLocaleLowerCase('tr-TR');
+                            const normName = window.normalizeTurkishChars(name).trim();
+                            return normLetter ? normName.startsWith(normLetter) : true;
+                        });
                         result = !!match;
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel'], requiredLetterLower);
-            }
-            else if (catId === 'muzik') {
-                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.results) {
-                        const match = data.results.find(item => 
-                            ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') &&
-                            (item.trackName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower) || item.artistName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower))
-                        );
-                        result = !!match;
-                    }
-                }
-                if (!result) result = await this.checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel', 'yapım', 'sezon'], requiredLetterLower);
             }
             else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
-                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
-                if (response.ok) {
+                const response = await this.fetchWithTimeout(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
                         const normWord = window.normalizeTurkishChars(word).trim();
@@ -264,14 +284,23 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             }
             else if (catId === 'yazar') {
                 const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await this.fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.docs) {
                         result = data.docs.some(doc => doc.name.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower));
                     }
                 }
                 if (!result) result = await this.checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat'], requiredLetterLower);
+            }
+            else if (catId === 'marka') {
+                result = await this.checkWikipedia(word, ['marka', 'şirket', 'holding', 'üretici', 'kuruluş'], requiredLetterLower);
+            }
+            else if (catId === 'oyun') {
+                result = await this.checkWikipedia(word, ['oyun', 'video oyunu', 'oyunu', 'game'], requiredLetterLower);
+            }
+            else if (catId === 'unlu') {
+                result = await this.checkWikipedia(word, ['ünlü', 'oyuncu', 'sanatçı', 'sunucu', 'fenomen'], requiredLetterLower);
             }
             else if (catId === 'hastalik') {
                 result = await this.checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], requiredLetterLower);
@@ -359,18 +388,10 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                         }
                     }
                 }
-                
-                if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
+
+                // If not in local dictionary, try timeout-protected API validation (max 2.5s)
+                if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'sarkici', 'yazar', 'marka', 'oyun', 'unlu', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
                     isValidInDict = await this.validateViaApi(this.state.currentCategory.id, word, letterLower);
-                }
-                
-                // Gemini Fallback if still invalid
-                if (!isValidInDict) {
-                    const llmRes = await this.validateViaLlm(this.state.currentCategory.name, word, this.state.letter);
-                    if (llmRes.valid) {
-                        isValidInDict = true;
-                        llmReason = llmRes.reason;
-                    }
                 }
             }
 
@@ -392,6 +413,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             if (this.state.appealTimeout) clearTimeout(this.state.appealTimeout);
             this.state.appealTimeout = setTimeout(() => {
                 if (this.state.status === 'WAITING_APPEAL') {
+                    // Log unappealed rejected word to Cloudflare
+                    this.logWordToCloudflare(word, this.state.currentCategory.id, this.state.currentCategory.name, 'REJECTED', this.state.letter);
                     this.advanceTurn();
                 }
             }, 3000);
@@ -437,12 +460,17 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         const totalVotes = yes + no;
         const isAccepted = totalVotes > 0 && yes > totalVotes / 2;
         
-        const { playerId, word } = this.state.pendingNextTurn;
+        const { playerId, word, category } = this.state.pendingNextTurn;
         
         let score = 0;
         if (isAccepted) {
             score = word.length;
             this.state.players[playerId].score += score;
+            // Log voted accepted word to Cloudflare Worker
+            this.logWordToCloudflare(word, category.id, category.name, 'VOTED_ACCEPTED', this.state.letter);
+        } else {
+            // Log voted rejected word to Cloudflare Worker
+            this.logWordToCloudflare(word, category.id, category.name, 'REJECTED', this.state.letter);
         }
         
         if (this.onVoteResult) this.onVoteResult({ isAccepted, word, score, playerId });
@@ -513,12 +541,23 @@ class HizliIsimSehirView {
         this.autoNextRoundTimer = null;
         
         this.defaultCategories = [
-            { id: 'isim', name: 'İsim' }, { id: 'sehir', name: 'Şehir' }, { id: 'hayvan', name: 'Hayvan' },
-            { id: 'bitki', name: 'Bitki' }, { id: 'esya', name: 'Eşya' }, { id: 'ulke', name: 'Ülke' },
-            { id: 'unlu', name: 'Ünlü' }, { id: 'meslek', name: 'Meslek' }, { id: 'renk', name: 'Renk' },
-            { id: 'film_dizi', name: 'Film/Dizi' }, { id: 'marka', name: 'Marka' }, { id: 'yiyecek', name: 'Yiyecek' },
-            { id: 'oyun', name: 'Oyun' }, { id: 'muzik', name: 'Müzik' }, { id: 'spor', name: 'Spor' },
-            { id: 'hastalik', name: 'Hastalık' }, { id: 'yazar', name: 'Yazar' }, { id: 'sarkici', name: 'Şarkıcı' }
+            { id: 'isim', name: 'İsim' },
+            { id: 'sehir', name: 'Şehir' },
+            { id: 'ulke', name: 'Ülke' },
+            { id: 'hayvan', name: 'Hayvan' },
+            { id: 'bitki', name: 'Bitki' },
+            { id: 'esya', name: 'Eşya' },
+            { id: 'meslek', name: 'Meslek' },
+            { id: 'yiyecek', name: 'Yiyecek' },
+            { id: 'renk', name: 'Renk' },
+            { id: 'film_dizi', name: 'Film/Dizi' },
+            { id: 'sarkici', name: 'Şarkıcı' },
+            { id: 'yazar', name: 'Yazar' },
+            { id: 'marka', name: 'Marka' },
+            { id: 'oyun', name: 'Oyun' },
+            { id: 'unlu', name: 'Ünlü' },
+            { id: 'hastalik', name: 'Hastalık' },
+            { id: 'spor', name: 'Spor' }
         ];
 
         this.bindEvents();
