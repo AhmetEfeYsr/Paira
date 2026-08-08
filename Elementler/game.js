@@ -265,11 +265,12 @@ class GameManager {
         }
 
         switch(e.code) {
-            case 'KeyW': case 'ArrowUp': this.keys.up = isDown; break;
-            case 'KeyS': case 'ArrowDown': this.keys.down = isDown; break;
-            case 'KeyA': case 'ArrowLeft': this.keys.left = isDown; break;
-            case 'KeyD': case 'ArrowRight': this.keys.right = isDown; break;
-            case 'Space': this.keys.jump = isDown; break;
+            case 'KeyW': case 'ArrowUp': case 'KeyI': case 'Numpad8': this.keys.up = isDown; break;
+            case 'KeyS': case 'ArrowDown': case 'KeyK': case 'Numpad5': this.keys.down = isDown; break;
+            case 'KeyA': case 'ArrowLeft': case 'KeyJ': case 'Numpad4': this.keys.left = isDown; break;
+            case 'KeyD': case 'ArrowRight': case 'KeyL': case 'Numpad6': this.keys.right = isDown; break;
+            case 'Space': case 'KeyU': case 'NumpadAdd': this.keys.jump = isDown; break;
+            case 'KeyF': case 'ShiftLeft': case 'ShiftRight': case 'KeyO': case 'Numpad0': case 'NumpadEnter': this.keys.action = isDown; break;
             default: return;
         }
 

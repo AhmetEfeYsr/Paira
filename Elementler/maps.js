@@ -25,19 +25,38 @@ window.MAPS = {
     // ==================================================================
 
     "map_1_1": {
-        name: "Su'nun Uyanışı", treeX: 50, treeY: 90, type: 'hexagon',
+        name: "Ateş'in Yolu (1. Bölüm)", treeX: 50, treeY: 90, type: 'hexagon',
         unlocks: ["map_1_2", "map_1_3"],
         width: 1200, height: 800,
         grid: (function() {
             let g = createGrid(38, 25);
-            for(let x=2; x<15; x++) g[15][x] = 1; // Başlangıç
-            for(let x=18; x<30; x++) g[20][x] = 1; // Alt platform
-            for(let x=25; x<35; x++) g[10][x] = 1; // Çıkış platformu
-            for(let y=15; y<20; y++) g[y][18] = 8; // Boru
+            // Platform 1 (Başlangıç)
+            for(let x=2; x<13; x++) g[18][x] = 1;
+            // Tahta Engel (Ateş [F] ile Yakar)
+            for(let y=12; y<18; y++) g[y][13] = 7;
+            for(let y=12; y<18; y++) g[y][14] = 7;
+            // Platform 2 (Kutu & Buton)
+            for(let x=15; x<27; x++) g[18][x] = 1;
+            // Platform 3 (Çıkış)
+            for(let x=27; x<36; x++) g[16][x] = 1;
+            // Çukur Tehlikesi (Düşen anında respawn olur)
+            for(let x=2; x<36; x++) g[24][x] = 2;
             return g;
         })(),
-        spawns: { ates: { x: 100, y: 400 }, su: { x: 100, y: 400 }, hava: { x: 100, y: 400 }, elektrik: { x: 100, y: 400 } },
-        entities: [ { type: 'exit', x: 28*TILE, y: 8*TILE, w: TILE*2, h: TILE*2, props: { role: 'any' } } ]
+        spawns: {
+            ates: { x: 100, y: 500 },
+            su: { x: 100, y: 500 },
+            hava: { x: 100, y: 500 },
+            elektrik: { x: 100, y: 500 }
+        },
+        entities: [
+            // İtilebilir kutu ve Ağırlık butonu kapıyı açar
+            { type: 'box', x: 17*TILE, y: 17*TILE, w: TILE, h: TILE, props: { resistance: 0.8 } },
+            { type: 'button', x: 24*TILE, y: 18*TILE - 8, w: TILE, h: 16, props: { color: '#ef4444', targetId: 'gate_1', requiresWeight: true } },
+            { type: 'door', x: 26*TILE, y: 12*TILE, w: TILE, h: TILE*6, props: { id: 'gate_1', color: '#dc2626', open: false } },
+            // Çıkış kapısı (Herkes geçebilir)
+            { type: 'exit', x: 32*TILE, y: 14*TILE, w: TILE*2, h: TILE*2, props: { role: 'any' } }
+        ]
     },
 
     "map_1_2": {

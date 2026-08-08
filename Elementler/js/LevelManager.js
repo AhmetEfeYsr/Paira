@@ -45,15 +45,15 @@ class LevelManager {
             // 1. ATEŞ ÖĞRETİCİ (Fire Tutorial)
             // ==========================================
             'map_1_1': {
-                name: "1. Bölüm: Ateşin Gücü (Yakma Öğreticisi)",
+                name: "1. Bölüm: Ateş'in Yolu (Ateş Öğreticisi)",
                 tileSize: 32, width: 1200, height: 800,
-                spawns: { ates: { x: 100, y: 450 }, su: { x: 100, y: 450 }, hava: { x: 100, y: 450 }, elektrik: { x: 100, y: 450 } },
+                spawns: { ates: { x: 100, y: 500 }, su: { x: 100, y: 500 }, hava: { x: 100, y: 500 }, elektrik: { x: 100, y: 500 } },
                 grid: this.createGridWithWood(38, 25),
                 entities: [
-                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'ates' } },
-                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'su' } },
-                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'hava' } },
-                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'elektrik' } }
+                    { type: 'box', x: 17*32, y: 17*32, w: 32, h: 32, props: { resistance: 0.8 } },
+                    { type: 'button', x: 24*32, y: 18*32 - 8, w: 32, h: 16, props: { color: '#ef4444', targetId: 'gate_1', requiresWeight: true } },
+                    { type: 'door', x: 26*32, y: 12*32, w: 32, h: 32*6, props: { id: 'gate_1', color: '#dc2626', open: false } },
+                    { type: 'exit', x: 32*32, y: 14*32, w: 64, h: 64, props: { role: 'any' } }
                 ]
             },
 

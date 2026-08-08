@@ -223,6 +223,20 @@ class PlayerEntity extends Rect {
 
         // Sensörler / Özel Zemin Kontrolleri
         this.checkSensors(levelRects);
+
+        // Trigger Elemental Powers
+        if (window.ElementPowers) {
+            const tempLm = { grid: null, entities: levelRects, tileSize: 32 };
+            if (this.role === 'ates' && (this.input.action || this.input.jump)) {
+                window.ElementPowers.triggerFireBurn(this, tempLm);
+            } else if (this.role === 'su' && (this.input.action || this.input.down)) {
+                window.ElementPowers.triggerWaterPipeConduit(this, tempLm);
+            } else if (this.role === 'hava') {
+                window.ElementPowers.triggerAirUpdraft(this, tempLm, dt);
+            } else if (this.role === 'elektrik') {
+                window.ElementPowers.triggerElectricCircuit(this, tempLm);
+            }
+        }
     }
 
     handleCollisions(rects, axis, dt) {
@@ -459,7 +473,13 @@ class GameEngine {
     }
 
     addPlayer(id, role, name, sx, sy, isLocal) {
-        const p = new PlayerEntity(id, role, name, sx, sy);
+        let p;
+        if (role === 'ates' && window.FirePlayer) p = new window.FirePlayer(id, name, sx, sy);
+        else if (role === 'su' && window.WaterPlayer) p = new window.WaterPlayer(id, name, sx, sy);
+        else if (role === 'hava' && window.AirPlayer) p = new window.AirPlayer(id, name, sx, sy);
+        else if (role === 'elektrik' && window.ElectricityPlayer) p = new window.ElectricityPlayer(id, name, sx, sy);
+        else p = new PlayerEntity(id, role, name, sx, sy);
+
         p.isLocal = isLocal;
         if(isLocal) this.localPlayerId = id;
         this.players[id] = p;
