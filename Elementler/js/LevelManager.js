@@ -1,31 +1,36 @@
 /**
  * LevelManager.js
- * Handles tutorial & 4-Player co-op puzzle levels, tile grids, entity maps,
- * exit criteria, and level progression.
+ * Manages 1-Player Tutorials, 2-Player, 3-Player, and 4-Player Co-Op Master levels.
+ * Zero-Softlock Guaranteed: All pits contain hazard liquids (instant respawn) or escape updrafts.
  */
 
 class LevelManager {
     constructor() {
-        this.currentLevelId = 'tutorial_1';
+        this.currentLevelId = 'map_4_1';
         this.tileSize = 32;
         this.grid = [];
         this.entities = [];
         this.spawns = {};
-        this.width = 1200;
-        this.height = 800;
+        this.width = 1600;
+        this.height = 900;
 
         this.levels = this.getBuiltInLevels();
     }
 
     loadLevel(levelId) {
-        const levelData = this.levels[levelId] || this.levels['tutorial_1'];
+        const levelData = this.levels[levelId] || window.MAPS?.[levelId] || this.levels['map_4_1'];
         this.currentLevelId = levelId;
         this.tileSize = levelData.tileSize || 32;
-        this.width = levelData.width || 1200;
-        this.height = levelData.height || 800;
+        this.width = levelData.width || 1600;
+        this.height = levelData.height || 900;
 
-        // Clone grid structure
-        this.grid = JSON.parse(JSON.stringify(levelData.grid));
+        // Clone grid structure if function or array
+        if (typeof levelData.grid === 'function') {
+            this.grid = levelData.grid();
+        } else {
+            this.grid = JSON.parse(JSON.stringify(levelData.grid || []));
+        }
+
         // Clone entity structures
         this.entities = JSON.parse(JSON.stringify(levelData.entities || []));
         // Spawns
@@ -36,50 +41,105 @@ class LevelManager {
 
     getBuiltInLevels() {
         return {
-            // Level 1: Ateş Öğretici (Fire Tutorial)
-            'tutorial_ates': {
-                name: "Ateşin Gücü (Yakma Öğreticisi)",
+            // ==========================================
+            // 1. ATEŞ ÖĞRETİCİ (Fire Tutorial)
+            // ==========================================
+            'map_1_1': {
+                name: "1. Bölüm: Ateşin Gücü (Yakma Öğreticisi)",
                 tileSize: 32, width: 1200, height: 800,
-                spawns: { ates: { x: 100, y: 450 } },
-                grid: this.createGridWithWoodBarrier(38, 25),
+                spawns: { ates: { x: 100, y: 450 }, su: { x: 100, y: 450 }, hava: { x: 100, y: 450 }, elektrik: { x: 100, y: 450 } },
+                grid: this.createGridWithWood(38, 25),
                 entities: [
-                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'ates' } }
-                ]
-            },
-            // Level 2: Su Öğretici (Water Pipe Tutorial)
-            'tutorial_su': {
-                name: "Su Süzülüşü (Boru Öğreticisi)",
-                tileSize: 32, width: 1200, height: 800,
-                spawns: { su: { x: 100, y: 450 } },
-                grid: this.createGridWithPipes(38, 25),
-                entities: [
-                    { type: 'exit', x: 1000, y: 256, w: 64, h: 64, props: { role: 'su' } }
-                ]
-            },
-            // Level 3: Hava Öğretici (Air Updraft Tutorial)
-            'tutorial_hava': {
-                name: "Havanın Süzülüşü (Rüzgar Öğreticisi)",
-                tileSize: 32, width: 1200, height: 800,
-                spawns: { hava: { x: 100, y: 550 } },
-                grid: this.createGridWithWind(38, 25),
-                entities: [
-                    { type: 'exit', x: 1000, y: 192, w: 64, h: 64, props: { role: 'hava' } }
-                ]
-            },
-            // Level 4: Elektrik Öğretici (Electricity Tutorial)
-            'tutorial_elektrik': {
-                name: "Elektrik Devresi (Şalter Öğreticisi)",
-                tileSize: 32, width: 1200, height: 800,
-                spawns: { elektrik: { x: 100, y: 450 } },
-                grid: this.createStandardGrid(38, 25),
-                entities: [
-                    { type: 'electric_panel', x: 400, y: 448, w: 32, h: 32, props: { targetId: 'elec_door_1' } },
-                    { type: 'electric_door', x: 700, y: 320, w: 32, h: 160, props: { id: 'elec_door_1', open: false } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'ates' } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'su' } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'hava' } },
                     { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'elektrik' } }
                 ]
             },
-            // Level 5: 4-Player Master Co-Op Synergy
-            'coop_4p_master': {
+
+            // ==========================================
+            // 2. SU ÖĞRETİCİ (Water Pipe Tutorial)
+            // ==========================================
+            'map_1_2': {
+                name: "2. Bölüm: Su Süzülüşü (Boru Öğreticisi)",
+                tileSize: 32, width: 1200, height: 800,
+                spawns: { ates: { x: 100, y: 450 }, su: { x: 100, y: 450 }, hava: { x: 100, y: 450 }, elektrik: { x: 100, y: 450 } },
+                grid: this.createGridWithPipes(38, 25),
+                entities: [
+                    { type: 'exit', x: 1000, y: 224, w: 64, h: 64, props: { role: 'su' } },
+                    { type: 'exit', x: 1000, y: 224, w: 64, h: 64, props: { role: 'ates' } },
+                    { type: 'exit', x: 1000, y: 224, w: 64, h: 64, props: { role: 'hava' } },
+                    { type: 'exit', x: 1000, y: 224, w: 64, h: 64, props: { role: 'elektrik' } }
+                ]
+            },
+
+            // ==========================================
+            // 3. HAVA ÖĞRETİCİ (Air Updraft Tutorial)
+            // ==========================================
+            'map_1_3': {
+                name: "3. Bölüm: Havanın Süzülüşü (Rüzgar Öğreticisi)",
+                tileSize: 32, width: 1200, height: 800,
+                spawns: { ates: { x: 100, y: 550 }, su: { x: 100, y: 550 }, hava: { x: 100, y: 550 }, elektrik: { x: 100, y: 550 } },
+                grid: this.createGridWithWind(38, 25),
+                entities: [
+                    { type: 'exit', x: 1000, y: 160, w: 64, h: 64, props: { role: 'hava' } },
+                    { type: 'exit', x: 1000, y: 160, w: 64, h: 64, props: { role: 'ates' } },
+                    { type: 'exit', x: 1000, y: 160, w: 64, h: 64, props: { role: 'su' } },
+                    { type: 'exit', x: 1000, y: 160, w: 64, h: 64, props: { role: 'elektrik' } }
+                ]
+            },
+
+            // ==========================================
+            // 4. ELEKTRİK ÖĞRETİCİ (Electricity Tutorial)
+            // ==========================================
+            'map_1_4': {
+                name: "4. Bölüm: Elektrik Akımı (Şalter Öğreticisi)",
+                tileSize: 32, width: 1200, height: 800,
+                spawns: { ates: { x: 100, y: 450 }, su: { x: 100, y: 450 }, hava: { x: 100, y: 450 }, elektrik: { x: 100, y: 450 } },
+                grid: this.createGridWithElectricPanel(38, 25),
+                entities: [
+                    { type: 'electric_panel', x: 400, y: 448, w: 32, h: 32, props: { targetId: 'door_e1' } },
+                    { type: 'electric_door', x: 700, y: 320, w: 32, h: 160, props: { id: 'door_e1', open: false } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'elektrik' } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'ates' } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'su' } },
+                    { type: 'exit', x: 1000, y: 416, w: 64, h: 64, props: { role: 'hava' } }
+                ]
+            },
+
+            // ==========================================
+            // 5. 2-PLAYER CO-OP SYNERGY (Ateş + Su)
+            // ==========================================
+            'map_2_1': {
+                name: "Ateş ve Su Yardımlaşması (2-Player)",
+                tileSize: 32, width: 1400, height: 850,
+                spawns: { ates: { x: 100, y: 550 }, su: { x: 160, y: 550 } },
+                grid: this.create2PlayerGrid(44, 26),
+                entities: [
+                    { type: 'exit', x: 1200, y: 250, w: 64, h: 64, props: { role: 'ates' } },
+                    { type: 'exit', x: 1200, y: 450, w: 64, h: 64, props: { role: 'su' } }
+                ]
+            },
+
+            // ==========================================
+            // 6. 3-PLAYER CO-OP SYNERGY (Ateş + Su + Hava)
+            // ==========================================
+            'map_3_1': {
+                name: "Üçlü Element Denzesi (3-Player)",
+                tileSize: 32, width: 1500, height: 850,
+                spawns: { ates: { x: 100, y: 550 }, su: { x: 160, y: 550 }, hava: { x: 220, y: 550 } },
+                grid: this.create3PlayerGrid(47, 26),
+                entities: [
+                    { type: 'exit', x: 1300, y: 200, w: 64, h: 64, props: { role: 'ates' } },
+                    { type: 'exit', x: 1300, y: 350, w: 64, h: 64, props: { role: 'su' } },
+                    { type: 'exit', x: 1300, y: 500, w: 64, h: 64, props: { role: 'hava' } }
+                ]
+            },
+
+            // ==========================================
+            // 7. 4-PLAYER MASTER CO-OP SYNERGY (Ateş + Su + Hava + Elektrik)
+            // ==========================================
+            'map_4_1': {
                 name: "4 Element Kadim Tapınağı (4-Player Co-Op)",
                 tileSize: 32, width: 1600, height: 900,
                 spawns: {
@@ -88,16 +148,12 @@ class LevelManager {
                     hava: { x: 220, y: 650 },
                     elektrik: { x: 280, y: 650 }
                 },
-                grid: this.createCoopMasterGrid(50, 28),
+                grid: this.create4PlayerMasterGrid(50, 28),
                 entities: [
-                    // Electrical Panel triggers door
-                    { type: 'electric_panel', x: 450, y: 648, w: 32, h: 32, props: { targetId: 'door_a' } },
-                    { type: 'electric_door', x: 600, y: 512, w: 32, h: 192, props: { id: 'door_a', open: false } },
+                    { type: 'electric_panel', x: 450, y: 648, w: 32, h: 32, props: { targetId: 'door_master' } },
+                    { type: 'electric_door', x: 600, y: 512, w: 32, h: 192, props: { id: 'door_master', open: false } },
+                    { type: 'moving_platform', x: 700, y: 450, w: 128, h: 20, active: false, rangeX: 300, speed: 120, props: { id: 'door_master' } },
 
-                    // Moving Platform
-                    { type: 'moving_platform', x: 700, y: 450, w: 128, h: 20, active: false, rangeX: 300, speed: 120, props: { id: 'door_a' } },
-
-                    // Exits for all 4 players
                     { type: 'exit', x: 1400, y: 200, w: 64, h: 64, props: { role: 'ates' } },
                     { type: 'exit', x: 1400, y: 320, w: 64, h: 64, props: { role: 'su' } },
                     { type: 'exit', x: 1400, y: 440, w: 64, h: 64, props: { role: 'hava' } },
@@ -107,68 +163,92 @@ class LevelManager {
         };
     }
 
-    createStandardGrid(w, h) {
-        let grid = [];
-        for (let y = 0; y < h; y++) {
-            let row = [];
-            for (let x = 0; x < w; x++) {
-                if (y === 0 || y === h - 1 || x === 0 || x === w - 1) row.push(1); // Boundary solid wall
-                else if (y === 16) row.push(1); // Floor platform
-                else row.push(0);
-            }
-            grid.push(row);
-        }
-        return grid;
-    }
-
-    createGridWithWoodBarrier(w, h) {
-        let grid = this.createStandardGrid(w, h);
-        // Place wooden wall at column 20
-        for (let y = 10; y < 16; y++) {
-            grid[y][20] = 7; // Wood tile 7
-        }
-        return grid;
-    }
-
-    createGridWithPipes(w, h) {
-        let grid = this.createStandardGrid(w, h);
-        // Vertical pipe conduit from floor 16 to floor 9
-        for (let y = 9; y <= 16; y++) {
-            grid[y][18] = 8; // Pipe tile 8
-        }
-        for (let x = 18; x < 34; x++) grid[9][x] = 1; // Upper floor
-        return grid;
-    }
-
-    createGridWithWind(w, h) {
-        let grid = this.createStandardGrid(w, h);
-        // Vertical wind corridor (Tile 6)
-        for (let y = 7; y < 16; y++) {
-            grid[y][15] = 6;
-            grid[y][16] = 6;
-        }
-        for (let x = 16; x < 34; x++) grid[7][x] = 1; // Elevated floor
-        return grid;
-    }
-
-    createCoopMasterGrid(w, h) {
+    createStandardBaseGrid(w, h) {
         let grid = [];
         for (let y = 0; y < h; y++) {
             let row = [];
             for (let x = 0; x < w; x++) {
                 if (y === 0 || y === h - 1 || x === 0 || x === w - 1) row.push(1);
-                else if (y === 22) row.push(1); // Ground floor
+                else if (y === 16) row.push(1); // Floor
+                else if (y > 16 && y < h - 1) row.push(2); // Lava hazard floor at bottom for instant respawn!
                 else row.push(0);
             }
             grid.push(row);
         }
-        // Wood barrier on ground floor
-        for (let y = 17; y < 22; y++) grid[y][18] = 7;
-        // Pipe conduit
+        return grid;
+    }
+
+    createGridWithWood(w, h) {
+        let grid = this.createStandardBaseGrid(w, h);
+        for (let y = 10; y < 16; y++) grid[y][20] = 7; // Wooden wall
+        for (let x = 20; x < 35; x++) grid[16][x] = 1;
+        return grid;
+    }
+
+    createGridWithPipes(w, h) {
+        let grid = this.createStandardBaseGrid(w, h);
+        for (let y = 8; y <= 16; y++) grid[y][18] = 8; // Pipe conduit
+        for (let x = 18; x < 35; x++) grid[8][x] = 1; // Upper platform
+        return grid;
+    }
+
+    createGridWithWind(w, h) {
+        let grid = this.createStandardBaseGrid(w, h);
+        for (let y = 6; y < 16; y++) { grid[y][16] = 6; grid[y][17] = 6; } // Wind updraft
+        for (let x = 17; x < 35; x++) grid[6][x] = 1; // High platform
+        return grid;
+    }
+
+    createGridWithElectricPanel(w, h) {
+        let grid = this.createStandardBaseGrid(w, h);
+        for (let x = 22; x < 35; x++) grid[16][x] = 1;
+        return grid;
+    }
+
+    create2PlayerGrid(w, h) {
+        let grid = [];
+        for (let y = 0; y < h; y++) {
+            let row = [];
+            for (let x = 0; x < w; x++) {
+                if (y === 0 || y === h - 1 || x === 0 || x === w - 1) row.push(1);
+                else if (y === 20) row.push(1);
+                else if (y > 20 && y < h - 1) row.push(2); // Instant respawn pit
+                else row.push(0);
+            }
+            grid.push(row);
+        }
+        for (let y = 14; y < 20; y++) grid[y][16] = 7; // Wood wall for Fire
+        for (let y = 10; y <= 20; y++) grid[y][26] = 8; // Pipe for Water
+        for (let x = 26; x < 40; x++) grid[10][x] = 1;
+        return grid;
+    }
+
+    create3PlayerGrid(w, h) {
+        let grid = this.create2PlayerGrid(w, h);
+        for (let y = 6; y < 20; y++) { grid[y][34] = 6; grid[y][35] = 6; } // Wind for Air
+        for (let x = 35; x < 44; x++) grid[6][x] = 1;
+        return grid;
+    }
+
+    create4PlayerMasterGrid(w, h) {
+        let grid = [];
+        for (let y = 0; y < h; y++) {
+            let row = [];
+            for (let x = 0; x < w; x++) {
+                if (y === 0 || y === h - 1 || x === 0 || x === w - 1) row.push(1);
+                else if (y === 22) row.push(1);
+                else if (y > 22 && y < h - 1) row.push(2); // Instant respawn hazard pit
+                else row.push(0);
+            }
+            grid.push(row);
+        }
+        // Wood wall
+        for (let y = 17; y < 22; y++) grid[y][16] = 7;
+        // Pipe
         for (let y = 12; y <= 22; y++) grid[y][25] = 8;
-        // Wind updraft
-        for (let y = 8; y <= 22; y++) { grid[y][32] = 6; grid[y][33] = 6; }
-        // Upper floor platforms
+        // Wind corridor
+        for (let y = 7; y <= 22; y++) { grid[y][34] = 6; grid[y][35] = 6; }
+        // Platforms
         for (let x = 25; x < 48; x++) grid[12][x] = 1;
 
         return grid;

@@ -105,6 +105,27 @@ class GameManager {
             });
         }
 
+        const btnRestart = document.getElementById('btn-restart-level');
+        if(btnRestart) {
+            btnRestart.addEventListener('click', () => {
+                if(this.state.status === 'playing') {
+                    this.handleDeath();
+                }
+            });
+        }
+
+        const btnBackHud = document.getElementById('btn-back-lobby-hud');
+        if(btnBackHud) {
+            btnBackHud.addEventListener('click', () => {
+                if(NetworkManager.isHost()) {
+                    NetworkManager.sendGameAction('RETURN_LOBBY', {});
+                    this.executeActionLocally('RETURN_LOBBY', {});
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
         // Klavye Eventleri
         window.addEventListener('keydown', (e) => this.handleKey(e, true));
         window.addEventListener('keyup', (e) => this.handleKey(e, false));
@@ -237,6 +258,11 @@ class GameManager {
 
     handleKey(e, isDown) {
         if(this.state.status !== 'playing') return;
+
+        if (e.code === 'KeyR' && isDown) {
+            this.handleDeath();
+            return;
+        }
 
         switch(e.code) {
             case 'KeyW': case 'ArrowUp': this.keys.up = isDown; break;
