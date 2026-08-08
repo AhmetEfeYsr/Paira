@@ -377,7 +377,24 @@ class GameManager {
     }
 
     // OYUN MANTIĞI: ETKİLEŞİMLER (Engine Loop içinden her karede çağrılır)
-    logicTick(rects, players, dynamicEntities) {
+    checkOverlap(a, b) {
+        if (!a || !b) return false;
+        if (typeof a.intersects === 'function') return a.intersects(b);
+        if (typeof b.intersects === 'function') return b.intersects(a);
+        const aX = a.x !== undefined ? a.x : 0;
+        const aY = a.y !== undefined ? a.y : 0;
+        const aW = a.w !== undefined ? a.w : 32;
+        const aH = a.h !== undefined ? a.h : 32;
+
+        const bX = b.x !== undefined ? b.x : 0;
+        const bY = b.y !== undefined ? b.y : 0;
+        const bW = b.w !== undefined ? b.w : 32;
+        const bH = b.h !== undefined ? b.h : 32;
+
+        return aX < bX + bW && aX + aW > bX && aY < bY + bH && aY + aH > bY;
+    }
+
+    logicTick(rects, players, dynamicEntities = []) {
         if(!NetworkManager.isHost()) return; // Tetiklenmeleri sadece host hesaplar
 
         let allFinished = true;
@@ -391,10 +408,10 @@ class GameManager {
             if(!p.finished) allFinished = false;
 
             for (let r of rects) {
-                if(!p.intersects(r)) continue;
+                if(!this.checkOverlap(p, r)) continue;
 
                 // 1. ATEŞ YAKMASI (Tahta Duvar)
-                if (r.type === 'tahta_duvar' && p.role === 'ates') {
+                if (r.type === 'tahta_duvar' && p.role === 'ates' && (p.input?.action || p.input?.jump)) {
                     this.executeActionLocally('DESTROY_RECT', { rx: r.x, ry: r.y });
                     NetworkManager.sendGameAction('DESTROY_RECT', { rx: r.x, ry: r.y });
                 }
@@ -404,7 +421,6 @@ class GameManager {
         if(activePlayersCount === 0) allFinished = false;
 
         // 2. BUTONLAR - Ağırlık ve normal basım kontrolü
-        // Host tüm butonların state'ini kontrol edip gerekiyorsa basılı/basılmamış yapar
         const allEntities = [...Object.values(players), ...dynamicEntities.filter(e => e.type === 'box')];
 
         for (let r of rects) {
@@ -413,7 +429,7 @@ class GameManager {
 
                 // Butonun üstünde ağırlık var mı?
                 for (let e of allEntities) {
-                    if (e.intersects(r)) {
+                    if (this.checkOverlap(e, r)) {
                         isPressedNow = true;
                         break;
                     }

@@ -158,7 +158,23 @@ class PlayerEntity extends Rect {
         this.dir = 1; // 1 sağ, -1 sol
         this.isLocal = false; // Benim kontrolümde mi?
 
-        this.input = { up: false, down: false, left: false, right: false, jump: false };
+        this.input = { up: false, down: false, left: false, right: false, jump: false, action: false };
+    }
+
+    getRect() {
+        return { x: this.x, y: this.y, w: this.w, h: this.h };
+    }
+
+    intersects(other) {
+        if (!other) return false;
+        const oX = other.x !== undefined ? other.x : 0;
+        const oY = other.y !== undefined ? other.y : 0;
+        const oW = other.w !== undefined ? other.w : 32;
+        const oH = other.h !== undefined ? other.h : 32;
+        return this.x < oX + oW &&
+               this.x + this.w > oX &&
+               this.y < oY + oH &&
+               this.y + this.h > oY;
     }
 
     getColorByRole(role) {

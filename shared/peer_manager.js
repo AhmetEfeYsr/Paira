@@ -56,7 +56,45 @@ class PeerNetworkManager {
                 return reject(err);
             }
 
-            this.peer = new Peer(this.myId);
+            this.peer = new Peer(this.myId, {
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' },
+                        // ExpressTURN Server
+                        {
+                            urls: 'turn:free.expressturn.com:3478',
+                            username: '000000002101556582',
+                            credential: 'TJyzT955kfUmkWNHLwLJewn9ZHA='
+                        },
+                        {
+                            urls: 'turn:free.expressturn.com:3478?transport=tcp',
+                            username: '000000002101556582',
+                            credential: 'TJyzT955kfUmkWNHLwLJewn9ZHA='
+                        },
+                        // Open Relay Project (free TURN relay over UDP/TCP 443 for NAT/DPI bypass)
+                        {
+                            urls: 'turn:openrelay.metered.ca:80',
+                            username: 'openrelay',
+                            credential: 'openrelay'
+                        },
+                        {
+                            urls: 'turn:openrelay.metered.ca:443',
+                            username: 'openrelay',
+                            credential: 'openrelay'
+                        },
+                        {
+                            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                            username: 'openrelay',
+                            credential: 'openrelay'
+                        }
+                    ]
+                }
+            });
 
             this.peer.on('open', (id) => {
                 this.myId = id;
@@ -149,7 +187,18 @@ class PeerNetworkManager {
 
             const conn = this.peer.connect(hostId, { reliable: true });
 
+            let connectionTimeout = setTimeout(() => {
+                if (!conn.open) {
+                    try { conn.close(); } catch(e) {}
+                    const timeoutErr = new Error('Connection to host timed out.');
+                    timeoutErr.type = 'peer-unavailable';
+                    if (this.onError) this.onError(timeoutErr);
+                    reject(timeoutErr);
+                }
+            }, 12000);
+
             const checkOpen = () => {
+                clearTimeout(connectionTimeout);
                 this._setupConnection(conn);
                 resolve(conn);
             };
@@ -158,7 +207,10 @@ class PeerNetworkManager {
                 checkOpen();
             } else {
                 conn.on('open', checkOpen);
-                conn.on('error', (err) => reject(err));
+                conn.on('error', (err) => {
+                    clearTimeout(connectionTimeout);
+                    reject(err);
+                });
             }
         });
     }
