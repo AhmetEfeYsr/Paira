@@ -281,7 +281,8 @@ class GameManager {
     startGameEngine() {
         if(this.engine) this.engine.stop();
 
-        this.engine = new GameEngine('game-canvas');
+        const EngineClass = window.GameEngine || GameEngine;
+        this.engine = new EngineClass('game-canvas');
 
         // UI Geçişi
         document.getElementById('lobby-screen').classList.add('hidden');

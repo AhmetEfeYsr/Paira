@@ -687,3 +687,11 @@ class GameEngine {
         }
     }
 }
+
+// Global scope assignments
+window.Rect = Rect;
+window.PushableBox = PushableBox;
+window.Seesaw = Seesaw;
+window.PlayerEntity = PlayerEntity;
+window.Camera = Camera;
+window.GameEngine = GameEngine;
