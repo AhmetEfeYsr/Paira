@@ -43,7 +43,9 @@ class CizBilGameEngine {
         this.setState({ players: this.state.players });
 
         if (this.isHost && this.state.status === 'playing') {
-            if (this.state.currentDrawer === id) {
+            if (Object.keys(this.state.players).length < 2) {
+                this.endGame();
+            } else if (this.state.currentDrawer === id) {
                 this.checkWinOrNextRound(); // Drawer left, skip turn
             } else {
                 this.checkAllGuessed();
@@ -74,9 +76,10 @@ class CizBilGameEngine {
 
     startRound() {
         if (!this.isHost) return;
+        clearTimeout(this.wordChoiceTimeout);
 
         const activePlayers = Object.keys(this.state.players);
-        if (activePlayers.length === 0) {
+        if (activePlayers.length < 2) {
             this.endGame();
             return;
         }
@@ -103,10 +106,18 @@ class CizBilGameEngine {
         this.state.choices = [word1, word2];
         
         this.setState(this.state);
+
+        // FIX: Auto-choose word if drawer doesn't pick in 15 seconds
+        this.wordChoiceTimeout = setTimeout(() => {
+            if (this.state.status === 'playing' && this.state.choices) {
+                this.officialStartRound(word1);
+            }
+        }, 15000);
     }
 
     officialStartRound(chosenWord) {
         if (!this.isHost) return;
+        clearTimeout(this.wordChoiceTimeout);
         
         this.state.currentWord = chosenWord;
         this.state.choices = null;
@@ -395,6 +406,10 @@ class CizBilView {
 
     clearCanvasLocal() {
         if(this.drawingBoard) this.drawingBoard.clear(false);
+    }
+    
+    resetCanvasLocal() {
+        if(this.drawingBoard) this.drawingBoard.resetHistory();
     }
     
     undoCanvasLocal() {

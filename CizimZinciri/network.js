@@ -158,13 +158,21 @@ function handleNetworkData(action, payload, senderId) {
                 broadcastState({ action: 'PLAYER_WAITING', playerId: senderId });
             }
         } else if (action === 'ALBUM_NEXT') {
-            networkState.albumIndex++;
+            if (networkState.albumSequence && networkState.albumSequence.length > 0) {
+                networkState.albumIndex = Math.min(networkState.albumIndex + 1, networkState.albumSequence.length - 1);
+            } else {
+                networkState.albumIndex++;
+            }
             networkManager.broadcast('ALBUM_INDEX_UPDATE', { albumIndex: networkState.albumIndex });
             handlePlayingState({ action: 'ALBUM_UPDATE' });
         }
     } else {
         if (action === 'ALBUM_INDEX_UPDATE') {
-            networkState.albumIndex = payload.albumIndex;
+            if (networkState.albumSequence && networkState.albumSequence.length > 0) {
+                networkState.albumIndex = Math.min(payload.albumIndex, networkState.albumSequence.length - 1);
+            } else {
+                networkState.albumIndex = payload.albumIndex;
+            }
             handlePlayingState({ action: 'ALBUM_UPDATE' });
         } else if (action === 'PLAYER_WAITING') {
             networkState.completedTasks[payload.playerId] = true;
@@ -265,7 +273,7 @@ function startPhase(phase) {
     clearTimeout(turnTimeout);
     turnTimeout = setTimeout(() => {
         forceSubmitTasks();
-    }, (networkState.turnDuration + 2) * 1000);
+    }, (networkState.turnDuration + 6) * 1000);
 }
 
 function forceSubmitTasks() {

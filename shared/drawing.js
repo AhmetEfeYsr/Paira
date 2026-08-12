@@ -67,8 +67,26 @@ class AdvancedDrawingBoard {
         this.initEvents();
         this.resize();
         this.saveState();
+        this.updateCursor();
 
         window.addEventListener('resize', () => this.resize());
+
+        // Keyboard Shortcuts for easy drawing (Ctrl+Z, B, E, F)
+        document.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+            if (this.readOnly || !this.canvas || !this.canvas.isConnected) return;
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                this.undo(true);
+            } else if (e.key.toLowerCase() === 'b') {
+                this.setTool('brush');
+            } else if (e.key.toLowerCase() === 'e') {
+                this.setTool('eraser');
+            } else if (e.key.toLowerCase() === 'f') {
+                this.setTool('fill');
+            }
+        });
     }
 
     /** Resizes the canvas to match its parent container. */
@@ -133,19 +151,54 @@ class AdvancedDrawingBoard {
         }
     }
 
+    /** Updates canvas cursor to visual size/tool indicator for easier drawing */
+    updateCursor() {
+        if (!this.canvas || this.readOnly) {
+            if (this.canvas) this.canvas.style.cursor = 'default';
+            return;
+        }
+        if (this.currentTool === 'fill') {
+            this.canvas.style.cursor = 'crosshair';
+            return;
+        }
+        if (['rect', 'circle', 'line'].includes(this.currentTool)) {
+            this.canvas.style.cursor = 'crosshair';
+            return;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const displayScale = rect.width > 0 ? (rect.width / this.canvas.width) : 1;
+        const displaySize = Math.max(4, Math.min(64, this.currentSize * displayScale));
+        const color = this.currentTool === 'eraser' ? '#ffffff' : this.currentColor;
+        const strokeColor = (this.currentTool === 'eraser' || color === '#ffffff') ? '#000000' : '#ffffff';
+
+        const canvasSize = Math.ceil(displaySize + 6);
+        const center = canvasSize / 2;
+        const radius = displaySize / 2;
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}">`
+            + `<circle cx="${center}" cy="${center}" r="${radius}" fill="${color}" stroke="${strokeColor}" stroke-width="1.5"/>`
+            + `</svg>`;
+        const url = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        this.canvas.style.cursor = `url("${url}") ${center} ${center}, crosshair`;
+    }
+
     /** @param {string} color Hex color string. */
     setColor(color) {
         this.currentColor = color;
+        this.updateCursor();
     }
 
     /** @param {number} size Brush size. */
     setSize(size) {
         this.currentSize = size;
+        this.updateCursor();
     }
 
     /** @param {string} tool Tool name ('brush', 'eraser', 'fill', 'rect', 'circle', 'line'). */
     setTool(tool) {
         this.currentTool = tool;
+        this.updateCursor();
     }
 
     /**
@@ -256,7 +309,7 @@ class AdvancedDrawingBoard {
             this.isDrawing = false;
 
             // FIX: Reset touch flag after a short delay to allow mouse events again
-            if (e.type === 'touchend') {
+            if (e.type === 'touchend' || e.type === 'touchcancel') {
                 clearTimeout(this._touchEndTimer);
                 this._touchEndTimer = setTimeout(() => { this._lastInputWasTouch = false; }, 400);
             }
@@ -264,9 +317,44 @@ class AdvancedDrawingBoard {
             const pos = this.getPos(e);
 
             if (['brush', 'eraser'].includes(this.currentTool)) {
+                if (this.points.length === 1) {
+                    // Draw single dot if user tapped without dragging
+                    const p = this.points[0];
+                    this.ctx.lineCap = 'round';
+                    this.ctx.fillStyle = this.currentTool === 'eraser' ? '#ffffff' : this.currentColor;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, Math.max(1, this.currentSize / 2), 0, 2 * Math.PI);
+                    this.ctx.fill();
+
+                    if (this.onDrawEvent) {
+                        this.onDrawEvent({
+                            type: 'DOT',
+                            tool: this.currentTool,
+                            x: p.x / this.canvas.width,
+                            y: p.y / this.canvas.height,
+                            color: this.currentColor,
+                            size: this.currentSize / this.canvas.width
+                        });
+                    }
+                }
                 this.points = [];
                 if (this.onDrawEvent) this.onDrawEvent({ type: 'END_STROKE' });
             } else if (['rect', 'circle', 'line'].includes(this.currentTool)) {
+                this.ctx.strokeStyle = this.currentColor;
+                this.ctx.lineWidth = this.currentSize;
+                this.ctx.beginPath();
+                if (this.currentTool === 'rect') {
+                    this.ctx.strokeRect(this.startX, this.startY, pos.x - this.startX, pos.y - this.startY);
+                } else if (this.currentTool === 'circle') {
+                    const radius = Math.sqrt(Math.pow(pos.x - this.startX, 2) + Math.pow(pos.y - this.startY, 2));
+                    this.ctx.arc(this.startX, this.startY, radius, 0, 2 * Math.PI);
+                    this.ctx.stroke();
+                } else if (this.currentTool === 'line') {
+                    this.ctx.moveTo(this.startX, this.startY);
+                    this.ctx.lineTo(pos.x, pos.y);
+                    this.ctx.stroke();
+                }
+
                 if (this.onDrawEvent) {
                     this.onDrawEvent({
                         type: 'SHAPE',
@@ -292,6 +380,7 @@ class AdvancedDrawingBoard {
         this.canvas.addEventListener('touchstart', start, { passive: false });
         this.canvas.addEventListener('touchmove', draw, { passive: false });
         this.canvas.addEventListener('touchend', end);
+        this.canvas.addEventListener('touchcancel', end);
     }
 
     /** @param {Point} pos */
@@ -341,6 +430,15 @@ class AdvancedDrawingBoard {
                 this.onDrawEvent({ type: 'UNDO' });
             }
         }
+    }
+
+    /** Resets canvas and clears history stack completely (e.g. for new round) */
+    resetHistory() {
+        this.history = [];
+        this.historyStep = -1;
+        this.ctx.fillStyle = "#ffffff";
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.saveState();
     }
 
     /** @param {boolean} [sync=true] */
@@ -483,7 +581,20 @@ class AdvancedDrawingBoard {
             this.points = [{ x: data.x * w, y: data.y * h }];
         } else if (data.type === 'MOVE_STROKE') {
             this.drawSmoothLine({ x: data.x * w, y: data.y * h });
+        } else if (data.type === 'DOT') {
+            this.ctx.fillStyle = data.tool === 'eraser' ? '#ffffff' : data.color;
+            this.ctx.beginPath();
+            this.ctx.arc(data.x * w, data.y * h, Math.max(1, (data.size * w) / 2), 0, 2 * Math.PI);
+            this.ctx.fill();
+            this.saveState();
         } else if (data.type === 'END_STROKE') {
+            if (this.points.length === 1) {
+                const p = this.points[0];
+                this.ctx.fillStyle = this.ctx.strokeStyle;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, Math.max(1, this.ctx.lineWidth / 2), 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
             this.points = [];
             this.saveState();
         } else if (data.type === 'FILL') {

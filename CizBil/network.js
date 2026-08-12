@@ -37,7 +37,7 @@ class CizBilNetwork extends BaseGameNetwork {
             this.engine.onStateChange = (state) => {
                 if (state.choices && !this.wasChoosing) {
                      this.wasChoosing = true;
-                     this.view.clearCanvasLocal();
+                     this.view.resetCanvasLocal();
                      this.broadcast('CLEAR_CANVAS');
                 } else if (!state.choices) {
                      this.wasChoosing = false;

@@ -241,9 +241,17 @@ function presentWordChoices() {
     state.isPaused = true;
 
     // Pick two random distinct words
-    let word1 = wordDatabase[currentWordIndex];
+    if (!wordDatabase || wordDatabase.length === 0) {
+        wordDatabase = ["ELMA", "ARMUT", "ARABA", "TELEFON", "EV"];
+    }
+
+    let word1 = wordDatabase[currentWordIndex] || "ELMA";
     currentWordIndex = (currentWordIndex + 1) % wordDatabase.length;
-    let word2 = wordDatabase[currentWordIndex];
+    let word2 = wordDatabase[currentWordIndex] || "ARABA";
+    if (word1 === word2 && wordDatabase.length > 1) {
+        currentWordIndex = (currentWordIndex + 1) % wordDatabase.length;
+        word2 = wordDatabase[currentWordIndex] || "EV";
+    }
     currentWordIndex = (currentWordIndex + 1) % wordDatabase.length;
 
     document.getElementById('btn-choice-1').textContent = word1;
@@ -255,7 +263,7 @@ function presentWordChoices() {
     document.getElementById('btn-skip').style.display = 'none';
 
     if (drawingBoard) {
-        drawingBoard.clear(false);
+        drawingBoard.resetHistory();
     }
 }
 

@@ -986,16 +986,20 @@ body:has(.cookie-banner.show) #app-container {
 .canvas-container canvas { display: block; width: 100%; aspect-ratio: 16/9; }
 [data-theme="light"] .canvas-container { box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-color: var(--lilac-muted); }
 
-.toolbar { display: flex; gap: 1rem; margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color, var(--lilac-muted)); width: 100%; max-width: 1000px; justify-content: center; align-items: center; flex-wrap: wrap; margin-left: auto; margin-right: auto; }
-.color-picker { display: flex; gap: 0.5rem; }
-.color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
-.color-swatch:hover { transform: scale(1.1); }
-.color-swatch.active { border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.8); }
+.toolbar { display: flex; gap: 0.8rem; margin-top: 1rem; padding: 0.8rem 1rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color, var(--lilac-muted)); width: 100%; max-width: 1000px; justify-content: center; align-items: center; flex-wrap: wrap; margin-left: auto; margin-right: auto; user-select: none; }
+.color-picker { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; align-items: center; }
+.color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, box-shadow 0.2s; touch-action: manipulation; }
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.active { border-color: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.9), 0 0 0 2px var(--neon-purple); transform: scale(1.1); }
 
-.size-picker { display: flex; gap: 0.5rem; align-items: center; }
-.size-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--btn-secondary-bg); display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid var(--btn-secondary-border); }
-.size-btn.active { background: var(--btn-secondary-hover); border-color: var(--neon-purple); }
+.size-picker { display: flex; gap: 0.4rem; align-items: center; }
+.size-btn { width: 34px; height: 34px; border-radius: 50%; background: var(--btn-secondary-bg); display: flex; justify-content: center; align-items: center; cursor: pointer; border: 2px solid var(--btn-secondary-border); transition: transform 0.2s, border-color 0.2s; touch-action: manipulation; }
+.size-btn:hover { transform: scale(1.1); }
+.size-btn.active { background: var(--btn-secondary-hover); border-color: var(--neon-purple); box-shadow: 0 0 10px rgba(157, 78, 221, 0.5); }
 .size-dot { background: var(--text-main); border-radius: 50%; }
+.tool-picker { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.tool-btn { touch-action: manipulation; }
+.tool-btn.active { border-color: var(--neon-purple) !important; background: var(--btn-primary-bg) !important; color: #fff !important; }
 .tools { display: flex; gap: 0.5rem; }
 
 /* Custom Tooltip */

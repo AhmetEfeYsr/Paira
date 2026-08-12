@@ -160,7 +160,7 @@ export function updateGameStateUI(networkState, myId) {
     } else if (state === 'DRAW') {
         document.getElementById('draw-container').style.display = 'flex';
         document.getElementById('task-title').textContent = 'Aşağıdakini Çiz!';
-        drawingBoard.clear(false);
+        drawingBoard.resetHistory();
 
         if (lastEntry && lastEntry.type === 'text') {
             document.getElementById('word-to-draw').textContent = lastEntry.content;
