@@ -263,11 +263,12 @@ class TabuGameEngine {
 
     startRenderTimer() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
 
         if (this.lastTickSec === undefined) this.lastTickSec = -1;
 
-        const tick = () => {
-            if (this.state.status !== 'playing') return;
+        const checkTimer = () => {
+            if (this.state.status !== 'playing') return false;
 
             if (!this.state.isWaitingForReady && !this.state.isPaused) {
                 const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
@@ -281,26 +282,47 @@ class TabuGameEngine {
                 }
 
                 if (left <= 0) {
+                    if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
+                    if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
                     if (this.isHost) {
                         this.endTurn();
                     } else if (this.onTimerTick) {
                         this.onTimerTick(0, 'waiting');
                     }
-                    return;
+                    return true;
                 }
             } else if (this.state.isWaitingForReady) {
                 if (this.onTimerTick) this.onTimerTick(0, 'waiting');
             } else if (this.state.isPaused) {
                 if (this.onTimerTick) this.onTimerTick(0, 'paused');
             }
+            return false;
+        };
 
+        const tick = () => {
+            if (checkTimer()) return;
             this.renderFrame = requestAnimationFrame(tick);
         };
         this.renderFrame = requestAnimationFrame(tick);
+
+        // Fallback interval for background tab / throttled rAF
+        this.bgTimerInterval = setInterval(() => {
+            checkTimer();
+        }, 1000);
+
+        if (!this._visibilityListenerBound) {
+            this._visibilityListenerBound = true;
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.state.status === 'playing') {
+                    checkTimer();
+                }
+            });
+        }
     }
 
     endTurn() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
         if (this.onSound) this.onSound('timeup');
 
         this.advanceWord(); // Yeni anlatıcıya yeni kelime geçmesi için

@@ -315,8 +315,10 @@ window.showToast = function(msg, type = "info") {
 };
 
 window.PairaTime = {
+    timeOffset: 0,
     syncServerTime: Date.now(),
     syncPerformanceTime: performance.now(),
+    isSynced: false,
     async sync() {
         const apis = [
             'https://worldtimeapi.org/api/timezone/Etc/UTC',
@@ -339,18 +341,19 @@ window.PairaTime = {
                     serverTime = new Date(isoString).getTime() + latency;
                 }
                 
-                // Safety check: Only accept offset if it's realistic (within 10 seconds of local time)
-                if (serverTime && !isNaN(serverTime) && Math.abs(serverTime - Date.now()) < 10000) {
+                if (serverTime && !isNaN(serverTime)) {
+                    this.timeOffset = serverTime - Date.now();
                     this.syncServerTime = serverTime;
                     this.syncPerformanceTime = performance.now();
-                    console.log(`Time synchronized via ${api}. Offset from local:`, this.syncServerTime - Date.now());
+                    this.isSynced = true;
+                    console.log(`[PairaTime] Time synchronized via ${api}. Offset from local: ${this.timeOffset}ms`);
                     return;
                 }
             } catch (e) {
                 // Silently fail individual APIs as we have fallbacks
             }
         }
-        console.warn("All Time API syncs failed or offset too large, using local time base.");
+        console.warn("[PairaTime] API sync unavailable, using local time base.");
     },
     now() {
         return this.syncServerTime + (performance.now() - this.syncPerformanceTime);

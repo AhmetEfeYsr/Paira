@@ -233,9 +233,10 @@ class CizBilGameEngine {
 
     startRenderTimer() {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
 
-        const tick = () => {
-            if (this.state.status !== 'playing' || this.state.choices) return;
+        const checkTimer = () => {
+            if (this.state.status !== 'playing' || this.state.choices) return false;
 
             const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
             const secs = Math.ceil(left / 1000);
@@ -247,9 +248,35 @@ class CizBilGameEngine {
                 this.lastTickSec = secs;
             }
 
+            if (left <= 0) {
+                if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
+                if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+                if (this.isHost) {
+                    this.checkWinOrNextRound();
+                }
+                return true;
+            }
+            return false;
+        };
+
+        const tick = () => {
+            if (checkTimer()) return;
             this.renderFrame = requestAnimationFrame(tick);
         };
         this.renderFrame = requestAnimationFrame(tick);
+
+        this.bgTimerInterval = setInterval(() => {
+            checkTimer();
+        }, 1000);
+
+        if (!this._visibilityListenerBound) {
+            this._visibilityListenerBound = true;
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.state.status === 'playing') {
+                    checkTimer();
+                }
+            });
+        }
     }
 }
 
