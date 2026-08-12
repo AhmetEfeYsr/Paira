@@ -67,6 +67,24 @@ class TabuGameEngine {
         }
     }
 
+    shuffleTeams() {
+        const pKeys = Object.keys(this.state.players);
+        if (pKeys.length === 0) return;
+
+        // Fisher-Yates random shuffle
+        for (let i = pKeys.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pKeys[i], pKeys[j]] = [pKeys[j], pKeys[i]];
+        }
+
+        // Distribute players equally (or closest equal numbers) into Team A and Team B
+        pKeys.forEach((id, index) => {
+            this.state.players[id].team = (index % 2 === 0) ? 'A' : 'B';
+        });
+
+        this.setState({ players: this.state.players });
+    }
+
     setWords(words) {
         this.allWords = words && words.length > 0 ? words : this.fallbackWords;
     }
@@ -131,6 +149,13 @@ class TabuGameEngine {
     }
 
     startGame(settings) {
+        const pList = Object.values(this.state.players);
+        const countA = pList.filter(p => p.team === 'A').length;
+        const countB = pList.filter(p => p.team === 'B').length;
+        if ((countA === 0 || countB === 0) && pList.length >= 2) {
+            this.shuffleTeams();
+        }
+
         this.state.status = 'playing';
         this.state.scoreA = 0;
         this.state.scoreB = 0;
@@ -271,7 +296,8 @@ class TabuGameEngine {
             if (this.state.status !== 'playing') return false;
 
             if (!this.state.isWaitingForReady && !this.state.isPaused) {
-                const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
+                const currentHostTime = window.PairaTime.now() + (this.clientHostOffset || 0);
+                const left = Math.max(0, this.localTurnEndTime - currentHostTime);
                 const secs = Math.ceil(left / 1000);
 
                 if (this.onTimerTick) this.onTimerTick(secs, 'running');
@@ -369,6 +395,7 @@ class TabuView {
         };
 
         document.getElementById('btn-switch-team')?.addEventListener('click', () => this.callbacks.onSwitchTeam());
+        document.getElementById('btn-shuffle-teams')?.addEventListener('click', () => this.callbacks.onShuffleTeams());
         document.getElementById('btn-start-narrating')?.addEventListener('click', () => this.callbacks.onNarratorReady());
         document.getElementById('btn-pause')?.addEventListener('click', () => this.callbacks.onTogglePause());
         document.getElementById('btn-correct')?.addEventListener('click', () => triggerAction('CORRECT'));
@@ -464,6 +491,10 @@ class TabuView {
         if (state.isWaitingForReady) {
             wordCard.classList.add('hidden');
             narratorActions.classList.add('hidden');
+            const mainWordEl = document.getElementById('main-word');
+            const forbiddenWordsEl = document.getElementById('forbidden-words');
+            if (mainWordEl) mainWordEl.innerText = '';
+            if (forbiddenWordsEl) forbiddenWordsEl.innerHTML = '';
 
             if (amINarrator) {
                 startTurnContainer.classList.remove('hidden');

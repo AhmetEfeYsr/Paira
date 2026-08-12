@@ -54,6 +54,10 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
                 if (this.engine.state.status !== 'lobby') return;
                 this.sendGameAction('SWITCH_TEAM');
             },
+            onShuffleTeams: () => {
+                if (this.engine.state.status !== 'lobby') return;
+                this.sendGameAction('SHUFFLE_TEAMS');
+            },
             onSwitchRole: () => {
                 if (this.engine.state.status !== 'lobby') return;
                 this.sendGameAction('SWITCH_ROLE');
@@ -200,6 +204,9 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
     handleAction(action, payload, senderId) {
         if (action === 'SWITCH_TEAM' && this.isHostNode) {
             this.engine.switchTeam(senderId);
+        }
+        else if (action === 'SHUFFLE_TEAMS' && this.isHostNode) {
+            this.engine.shuffleTeams();
         }
         else if (action === 'SWITCH_ROLE' && this.isHostNode) {
             this.engine.switchRole(senderId);

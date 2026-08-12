@@ -73,6 +73,22 @@ class GizliKelimelerEngine {
         }
     }
 
+    shuffleTeams() {
+        const pKeys = Object.keys(this.state.players);
+        if (pKeys.length === 0) return;
+
+        for (let i = pKeys.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pKeys[i], pKeys[j]] = [pKeys[j], pKeys[i]];
+        }
+
+        pKeys.forEach((id, index) => {
+            this.state.players[id].team = (index % 2 === 0) ? 'A' : 'B';
+        });
+
+        this.setState({ players: this.state.players });
+    }
+
     switchRole(id) {
         if (this.state.players[id]) {
             this.state.players[id].role = this.state.players[id].role === 'SPYMASTER' ? 'GUESSER' : 'SPYMASTER';
@@ -303,6 +319,7 @@ class GizliKelimelerView {
 
     bindEvents() {
         document.getElementById('btn-switch-team')?.addEventListener('click', () => this.callbacks.onSwitchTeam());
+        document.getElementById('btn-shuffle-teams')?.addEventListener('click', () => this.callbacks.onShuffleTeams());
         document.getElementById('btn-switch-role')?.addEventListener('click', () => this.callbacks.onSwitchRole());
         document.getElementById('btn-start-game')?.addEventListener('click', () => this.callbacks.onStartGame());
 

@@ -12,6 +12,9 @@ class TabuNetworkManager extends BaseGameNetwork {
         
         this.engine = engine;
         this.view = view;
+        if (this.view && (this.myId || sessionStorage.getItem('myId'))) {
+            this.view.setMyId(this.myId || sessionStorage.getItem('myId'));
+        }
 
         // Initialize Shared Lobby UI
         this.lobbyUI = new SharedLobbyUI({
@@ -41,6 +44,9 @@ class TabuNetworkManager extends BaseGameNetwork {
         this.view.callbacks = {
             onSwitchTeam: () => {
                 this.sendGameAction('SWITCH_TEAM');
+            },
+            onShuffleTeams: () => {
+                this.sendGameAction('SHUFFLE_TEAMS');
             },
             onNarratorReady: () => {
                 this.sendAction('NARRATOR_READY');
@@ -161,6 +167,10 @@ class TabuNetworkManager extends BaseGameNetwork {
         this.engine.setState(payload.state);
         if (payload.hostId) this.roomCode = payload.hostId;
 
+        if (payload.hostTimestamp !== undefined && !this.isHostNode) {
+            this.engine.clientHostOffset = payload.hostTimestamp - window.PairaTime.now();
+        }
+
         if (payload.localTurnEndTime !== undefined) {
             this.engine.localTurnEndTime = payload.localTurnEndTime;
             this.engine.pauseOffset = payload.pauseOffset;
@@ -182,6 +192,9 @@ class TabuNetworkManager extends BaseGameNetwork {
 
         if (actionType === 'SWITCH_TEAM') {
             this.engine.switchTeam(senderId);
+        }
+        else if (actionType === 'SHUFFLE_TEAMS') {
+            this.engine.shuffleTeams();
         }
         else if (actionType === 'ACTION') {
             const aType = payload.actionType;
@@ -233,7 +246,8 @@ class TabuNetworkManager extends BaseGameNetwork {
                 state: clientState,
                 hostId: this.myId,
                 localTurnEndTime: this.engine.localTurnEndTime,
-                pauseOffset: this.engine.pauseOffset
+                pauseOffset: this.engine.pauseOffset,
+                hostTimestamp: window.PairaTime.now()
             });
         });
 
