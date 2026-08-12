@@ -79,7 +79,7 @@ class TabuGameEngine {
             const cats = Array.isArray(category) ? category : [category];
             const hasAll = cats.includes('Hepsi');
             if (!hasAll && cats.length > 0) {
-                pool = pool.filter(w => cats.includes(w.kategori));
+                pool = pool.filter(w => w && w.kategori && cats.includes(w.kategori));
             }
         }
         
@@ -339,12 +339,19 @@ class TabuView {
     }
 
     bindEvents() {
+        const triggerAction = (action) => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                try { navigator.vibrate(30); } catch(e) {}
+            }
+            this.callbacks.onAction(action);
+        };
+
         document.getElementById('btn-switch-team')?.addEventListener('click', () => this.callbacks.onSwitchTeam());
         document.getElementById('btn-start-narrating')?.addEventListener('click', () => this.callbacks.onNarratorReady());
         document.getElementById('btn-pause')?.addEventListener('click', () => this.callbacks.onTogglePause());
-        document.getElementById('btn-correct')?.addEventListener('click', () => this.callbacks.onAction('CORRECT'));
-        document.getElementById('btn-taboo')?.addEventListener('click', () => this.callbacks.onAction('TABOO'));
-        document.getElementById('btn-pass')?.addEventListener('click', () => this.callbacks.onAction('PASS'));
+        document.getElementById('btn-correct')?.addEventListener('click', () => triggerAction('CORRECT'));
+        document.getElementById('btn-taboo')?.addEventListener('click', () => triggerAction('TABOO'));
+        document.getElementById('btn-pass')?.addEventListener('click', () => triggerAction('PASS'));
         document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
 
         document.getElementById('btn-send-chat')?.addEventListener('click', () => this.sendChat());
@@ -353,19 +360,19 @@ class TabuView {
         document.getElementById('btn-leave-lobby')?.addEventListener('click', () => this.callbacks.onLeave());
         document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
 
-        // Keyboard shortcuts for quick narrating
+        // Keyboard shortcuts for quick narrating (Arrows, D/T/P, 1/2/3, Enter/Space)
         document.addEventListener('keydown', (e) => {
-            if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
             
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === ' ') {
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === ' ' || e.key === '1' || e.key === 'Enter') {
                 e.preventDefault();
-                this.callbacks.onAction('CORRECT');
-            } else if (e.key === 'ArrowDown' || e.key === 't' || e.key === 'T' || e.key === 'x' || e.key === 'X') {
+                triggerAction('CORRECT');
+            } else if (e.key === 'ArrowDown' || e.key === 't' || e.key === 'T' || e.key === 'x' || e.key === 'X' || e.key === '2') {
                 e.preventDefault();
-                this.callbacks.onAction('TABOO');
-            } else if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P') {
+                triggerAction('TABOO');
+            } else if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P' || e.key === '3') {
                 e.preventDefault();
-                this.callbacks.onAction('PASS');
+                triggerAction('PASS');
             }
         });
     }

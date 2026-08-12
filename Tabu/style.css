@@ -109,6 +109,14 @@
     justify-content: center;
     gap: 6px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    touch-action: manipulation;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    user-select: none;
+}
+
+.narrator-actions .btn:active {
+    transform: scale(0.94);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn-key-hint {
@@ -136,9 +144,11 @@
 }
 
 .status-badge.opponent-mode {
-    background: rgba(231, 76, 60, 0.2);
+    background: rgba(231, 76, 60, 0.25);
     border-color: var(--danger);
     color: #ff9999;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.3);
+    font-weight: 700;
 }
 
 .badge {
