@@ -113,8 +113,25 @@ class TabuNetworkManager extends BaseGameNetwork {
 
     handlePlayerJoin(peerId, payload) {
         const state = this.engine.state;
+        const oldId = payload.oldId;
+
         if (state.players[peerId]) {
             state.players[peerId].name = payload.name;
+        } else if (oldId && oldId !== peerId && state.players[oldId]) {
+            const oldP = state.players[oldId];
+            delete state.players[oldId];
+            state.players[peerId] = {
+                id: peerId,
+                name: payload.name || oldP.name,
+                isHost: oldP.isHost || false,
+                team: oldP.team || 'A'
+            };
+            if (state.turnId === oldId) {
+                state.turnId = peerId;
+            }
+            if (state.turnOrder) {
+                state.turnOrder = state.turnOrder.map(id => id === oldId ? peerId : id);
+            }
         } else {
             if (peerId === this.myId && this.isHostNode) {
                 this.engine.addPlayer(peerId, payload.name, true, 'A');

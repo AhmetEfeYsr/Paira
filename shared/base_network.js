@@ -60,18 +60,21 @@ class BaseGameNetwork extends window.PeerNetworkManager {
                 window.location.href = 'index.html';
                 return Promise.reject("No room code found.");
             }
+            const savedOldId = sessionStorage.getItem('lastMyId');
             return this.init().then(() => {
+                sessionStorage.setItem('lastMyId', this.myId);
                 return this.connectToHost(this.roomCode).then(() => {
-                    this.sendToPeer(this.roomCode, 'JOIN', { name: this.myName });
+                    this.sendToPeer(this.roomCode, 'JOIN', { name: this.myName, oldId: savedOldId });
                 });
             });
         }
     }
 
     _handlePeerReady(id) {
-        const oldId = this.myId;
+        const oldId = this.myId || sessionStorage.getItem('lastMyId');
         this.myId = id;
         sessionStorage.setItem('myId', id);
+        sessionStorage.setItem('lastMyId', id);
         
         // Let the game know we are ready with actual PeerJS ID
         if (this.onPlayerJoin && this.isHostNode) {

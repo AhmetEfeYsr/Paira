@@ -73,6 +73,17 @@ function initLobby() {
         },
         onPlayerJoin: (senderId, payload) => {
             if (isHost) {
+                if (payload.oldId && payload.oldId !== senderId && networkState.players[payload.oldId]) {
+                    delete networkState.players[payload.oldId];
+                    if (networkState.assignments && networkState.assignments[payload.oldId]) {
+                        networkState.assignments[senderId] = networkState.assignments[payload.oldId];
+                        delete networkState.assignments[payload.oldId];
+                    }
+                    if (networkState.completedTasks && networkState.completedTasks[payload.oldId] !== undefined) {
+                        networkState.completedTasks[senderId] = networkState.completedTasks[payload.oldId];
+                        delete networkState.completedTasks[payload.oldId];
+                    }
+                }
                 networkState.players[senderId] = { id: senderId, name: payload.name, isHost: senderId === myId };
                 broadcastState();
             }

@@ -100,10 +100,18 @@ class CizBilNetwork extends BaseGameNetwork {
 
     handlePlayerJoin(id, player) {
         if (this.isHostNode) {
+            let existingScore = 0;
             if (player.oldId && player.oldId !== id && this.engine.state.players[player.oldId]) {
+                existingScore = this.engine.state.players[player.oldId].score || 0;
                 delete this.engine.state.players[player.oldId];
+                if (this.engine.state.currentDrawer === player.oldId) {
+                    this.engine.state.currentDrawer = id;
+                }
             }
             this.engine.addPlayer(id, player.name, player.isHost || false);
+            if (existingScore > 0 && this.engine.state.players[id]) {
+                this.engine.state.players[id].score = existingScore;
+            }
         }
     }
 
