@@ -192,8 +192,10 @@ class ChatTabuGameEngine {
 
     startTimer() {
         if (this.timerRaf) cancelAnimationFrame(this.timerRaf);
-        const tick = () => {
-            if (!this.state.isGameStarted || this.state.isGameOver) return;
+        if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
+
+        const checkTimer = () => {
+            if (!this.state.isGameStarted || this.state.isGameOver) return false;
 
             if (this.state.turnEndTime) {
                 const remaining = Math.max(0, this.state.turnEndTime - window.PairaTime.now());
@@ -202,19 +204,38 @@ class ChatTabuGameEngine {
                 if (this.onTimerTick) this.onTimerTick(seconds);
 
                 if (remaining <= 0) {
+                    if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
+                    if (this.timerRaf) cancelAnimationFrame(this.timerRaf);
                     if (this.onTimeUp) this.onTimeUp(this.state);
-                } else {
-                    this.timerRaf = requestAnimationFrame(tick);
+                    return true;
                 }
-            } else {
-                this.timerRaf = requestAnimationFrame(tick);
             }
+            return false;
+        };
+
+        const tick = () => {
+            if (checkTimer()) return;
+            this.timerRaf = requestAnimationFrame(tick);
         };
         tick();
+
+        this.bgTimerInterval = setInterval(() => {
+            checkTimer();
+        }, 1000);
+
+        if (!this._visibilityListenerBound) {
+            this._visibilityListenerBound = true;
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.state.isGameStarted && !this.state.isGameOver) {
+                    checkTimer();
+                }
+            });
+        }
     }
 
     stopTimer() {
         if (this.timerRaf) cancelAnimationFrame(this.timerRaf);
+        if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
     }
 }
 

@@ -200,20 +200,26 @@ function submitDrawing(networkState, myId) {
 
 export function startTimer(duration, networkState, myId) {
     clearInterval(timerInterval);
-    let timeLeft = duration;
-
+    const endTime = window.PairaTime.now() + (duration * 1000);
     const display = document.getElementById('timer-display');
-    display.textContent = timeLeft;
+    let lastSecs = -1;
 
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        if(timeLeft >= 0) {
-            display.textContent = timeLeft;
+    const checkTimer = () => {
+        const remainingMs = Math.max(0, endTime - window.PairaTime.now());
+        const timeLeft = Math.ceil(remainingMs / 1000);
+
+        if (display) display.textContent = timeLeft;
+
+        if (timeLeft > 0) {
             if (timeLeft <= 10) {
-                display.style.color = "var(--danger)";
-                if (window.PairaAudio) window.PairaAudio.play('tick');
+                if (display) display.style.color = "var(--danger)";
+                if (lastSecs !== timeLeft) {
+                    if (window.PairaAudio) window.PairaAudio.play('tick');
+                    lastSecs = timeLeft;
+                }
+            } else if (display) {
+                display.style.color = "var(--warning)";
             }
-            else display.style.color = "var(--warning)";
         } else {
             clearInterval(timerInterval);
             if (window.PairaAudio) window.PairaAudio.play('end');
@@ -222,8 +228,20 @@ export function startTimer(duration, networkState, myId) {
                 if (networkState.state === 'WRITE') submitPromptFallback(networkState, myId);
                 else if (networkState.state === 'DRAW') submitDrawingFallback(networkState, myId);
             }
+            return true;
         }
-    }, 1000);
+        return false;
+    };
+
+    checkTimer();
+    timerInterval = setInterval(checkTimer, 500);
+
+    if (!window._cizimZinciriVisibilityBound) {
+        window._cizimZinciriVisibilityBound = true;
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkTimer();
+        });
+    }
 }
 
 function submitPromptFallback(networkState, myId) {
