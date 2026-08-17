@@ -360,4 +360,109 @@
     }
 }
 
-/* Modal and toast styles exist in shared/portal style but if needed can override */
+/* --- Input Clear Button --- */
+.input-clear-btn {
+    position: absolute;
+    right: 140px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.input-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+/* --- Best Guess Tracker Widget --- */
+.best-guess-widget {
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(21, 18, 54, 0.9));
+    border: 1px solid var(--neon-purple);
+    border-radius: 14px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(var(--primary-rgb), 0.25);
+    animation: popIn 0.3s ease;
+}
+
+.bgw-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bgw-icon {
+    font-size: 1.5rem;
+}
+
+.bgw-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.bgw-label {
+    font-size: 0.75rem;
+    color: var(--lilac);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.bgw-word {
+    font-size: 1.15rem;
+    color: var(--text-main);
+    text-transform: capitalize;
+}
+
+.bgw-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.bgw-rank {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--neon-purple);
+    font-family: monospace;
+}
+
+.bgw-bar-container {
+    width: 100px;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.bgw-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #f1c40f, #2ecc71);
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+@media (max-width: 480px) {
+    .input-clear-btn {
+        right: 120px;
+    }
+}
+

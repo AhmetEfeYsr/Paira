@@ -53,6 +53,50 @@ class InputManager {
     init() {
         window.addEventListener('keydown', (e) => this.handleKey(e, true));
         window.addEventListener('keyup', (e) => this.handleKey(e, false));
+
+        this.activeLocalPlayer = 0;
+        
+        const bindTouch = (id, action) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const setAction = (val) => {
+                const p = this.activeLocalPlayer;
+                if (this.playerInputs[p]) this.playerInputs[p][action] = val;
+                if (window.gameApp && window.gameApp.keys) {
+                    window.gameApp.keys[action] = val;
+                    if (window.gameApp.engine) {
+                        window.gameApp.engine.setLocalInput(window.gameApp.keys);
+                    }
+                    if (typeof window.NetworkManager !== 'undefined' && typeof window.NetworkManager.sendPhysicsTick === 'function' && window.gameApp.engine) {
+                        const localId = window.NetworkManager.getMyId();
+                        const playerObj = window.gameApp.engine.players[localId];
+                        if (playerObj) {
+                            window.NetworkManager.sendPhysicsTick({
+                                x: playerObj.x, y: playerObj.y, vx: playerObj.vx, vy: playerObj.vy, input: window.gameApp.keys
+                            });
+                        }
+                    }
+                }
+            };
+            btn.addEventListener('pointerdown', (e) => { e.preventDefault(); setAction(true); });
+            btn.addEventListener('pointerup', (e) => { e.preventDefault(); setAction(false); });
+            btn.addEventListener('pointercancel', (e) => { e.preventDefault(); setAction(false); });
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
+        };
+
+        bindTouch('touch-btn-left', 'left');
+        bindTouch('touch-btn-right', 'right');
+        bindTouch('touch-btn-jump', 'jump');
+        
+        const btnSwitch = document.getElementById('touch-btn-switch');
+        if (btnSwitch) {
+            btnSwitch.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                this.activeLocalPlayer = (this.activeLocalPlayer + 1) % 4;
+                if (window.showToast) window.showToast(`Kontrol Edilen Karakter: ${this.activeLocalPlayer + 1}`, "info");
+                if (window.PairaAudio) window.PairaAudio.play('pop');
+            });
+        }
     }
 
     handleKey(e, isPressed) {

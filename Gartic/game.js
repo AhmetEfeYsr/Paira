@@ -1,7 +1,9 @@
 // --- ÇizBil (Gartic) Logic ---
 
 // cizbilWords is loaded globally from shared/cizbil_words.js
-let wordDatabase = [...window.cizbilWords];
+let wordDatabase = (window.cizbilWords && Array.isArray(window.cizbilWords) && window.cizbilWords.length > 0) 
+    ? [...window.cizbilWords] 
+    : ["Elma", "Araba", "Güneş", "Ev", "Ağaç", "Köpek", "Kedi", "Telefon", "Bilgisayar", "Kitap", "Saat", "Uçak", "Gemi", "Tren", "Kalem"];
 let currentWordIndex = 0;
 let currentWord = "";
 let chatListener = null;
@@ -226,7 +228,7 @@ async function initGame() {
     });
     document.getElementById('btn-next').addEventListener('click', presentWordChoices);
     document.getElementById('btn-leave').addEventListener('click', () => {
-        chatListener.stop();
+        if (chatListener) chatListener.stop();
         window.location.href = 'index.html';
     });
 

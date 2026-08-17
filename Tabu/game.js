@@ -57,6 +57,12 @@ class TabuGameEngine {
 
     removePlayer(id) {
         delete this.state.players[id];
+        if (this.state.status === 'playing') {
+            this.state.turnOrder = this.generateTurnOrder();
+            if (this.state.turnIndex >= this.state.turnOrder.length) {
+                this.state.turnIndex = 0;
+            }
+        }
         this.setState({ players: this.state.players });
     }
 
@@ -148,7 +154,7 @@ class TabuGameEngine {
         return order;
     }
 
-    startGame(settings) {
+    startGame(settings = {}) {
         const pList = Object.values(this.state.players);
         const countA = pList.filter(p => p.team === 'A').length;
         const countB = pList.filter(p => p.team === 'B').length;
@@ -406,20 +412,51 @@ class TabuView {
         document.getElementById('btn-send-chat')?.addEventListener('click', () => this.sendChat());
         document.getElementById('chat-input')?.addEventListener('keydown', (e) => { if(e.key === 'Enter') this.sendChat(); });
 
-        document.getElementById('btn-leave-lobby')?.addEventListener('click', () => this.callbacks.onLeave());
-        document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
+        document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Lobiden Ayrıl",
+                message: "Lobiden ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) this.callbacks.onLeave();
+        });
+
+        document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) this.callbacks.onLeave();
+        });
+
+        document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+        });
+
+        document.getElementById('btn-clear-cats')?.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+        });
 
         // Keyboard shortcuts for quick narrating (Arrows, D/T/P, 1/2/3, Enter/Space)
         document.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
             
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === ' ' || e.key === '1' || e.key === 'Enter') {
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === '1') {
                 e.preventDefault();
                 triggerAction('CORRECT');
             } else if (e.key === 'ArrowDown' || e.key === 't' || e.key === 'T' || e.key === 'x' || e.key === 'X' || e.key === '2') {
                 e.preventDefault();
                 triggerAction('TABOO');
-            } else if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P' || e.key === '3') {
+            } else if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P' || e.key === '3' || e.key === ' ') {
                 e.preventDefault();
                 triggerAction('PASS');
             }

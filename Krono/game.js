@@ -47,15 +47,23 @@ class KronoGame {
 
     bindEvents() {
         // Lobby Events
-        document.getElementById('btn-leave-lobby')?.addEventListener('click', () => {
-            window.location.href = 'index.html';
+        document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Lobiden Ayrıl",
+                message: "Lobiden çıkmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) {
+                window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-copy-room')?.addEventListener('click', () => {
             const code = document.getElementById('display-room-code').dataset.code;
             if (code) {
-                navigator.clipboard.writeText(code);
-                this.showToast("Oda kodu kopyalandı", "success");
+                window.copyToClipboard(code, "Oda kodu kopyalandı!");
             }
         });
 
@@ -67,15 +75,16 @@ class KronoGame {
                 const eyeClosed = document.getElementById('icon-eye-closed');
                 const code = display.dataset.code;
                 
-                if (display.textContent === '••••••••') {
+                if (display.textContent.includes('•')) {
                     display.textContent = code;
-                    eyeOpen.classList.remove('hidden');
-                    eyeClosed.classList.add('hidden');
+                    eyeOpen?.classList.remove('hidden');
+                    eyeClosed?.classList.add('hidden');
                 } else {
                     display.textContent = '••••••••';
-                    eyeOpen.classList.add('hidden');
-                    eyeClosed.classList.remove('hidden');
+                    eyeOpen?.classList.add('hidden');
+                    eyeClosed?.classList.remove('hidden');
                 }
+                if (window.PairaAudio) window.PairaAudio.play('pop');
             });
         }
 
@@ -111,8 +120,17 @@ class KronoGame {
         });
 
         // Game Events
-        document.getElementById('btn-leave-game')?.addEventListener('click', () => {
-            window.location.href = 'index.html';
+        document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan çıkmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) {
+                window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-hint')?.addEventListener('click', () => this.useHint());
@@ -479,7 +497,7 @@ class KronoGame {
         this.network.send({
             type: 'SCORE_UPDATE',
             playerId: this.myId,
-            score: me.score
+            score: me ? me.score : roundScore
         });
 
         this.network.send({

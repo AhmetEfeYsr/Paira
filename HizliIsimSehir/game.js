@@ -64,6 +64,8 @@ class HizliIsimSehirGameEngine {
         } else if (index !== -1 && index === this.state.currentPlayerIndex) {
             if (this.state.status === 'PLAYING' || this.state.status === 'WAITING_APPEAL' || this.state.status === 'VOTING') {
                 this.state.status = 'PLAYING';
+                this.state.pendingNextTurn = null;
+                this.state.votes = { yes: 0, no: 0, votedPlayers: new Set() };
                 const totalPlayers = Object.keys(this.state.players).length;
                 if (this.state.currentPlayerIndex >= totalPlayers) {
                     this.state.status = 'SCOREBOARD';
@@ -86,9 +88,14 @@ class HizliIsimSehirGameEngine {
         return this.alphabet[array[0] % this.alphabet.length];
     }
 
-    startGame(config) {
+    startGame(config = {}) {
         if (!this.isHost) return;
-        this.config = config;
+        this.config = Object.assign({
+            roundCount: 3,
+            categories: this.defaultCategories || ['İsim', 'Şehir', 'Hayvan', 'Bitki'],
+            endCondition: 'time',
+            endValue: 45
+        }, config);
         
         for (const pId in this.state.players) {
             this.state.players[pId].score = 0;
@@ -616,6 +623,70 @@ class HizliIsimSehirView {
     }
 
     bindEvents() {
+        document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Lobiden Ayrıl",
+                message: "Lobiden ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+            this.callbacks.onConfigUpdate(this.getLocalConfig());
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+        });
+
+        document.getElementById('btn-clear-cats')?.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            this.callbacks.onConfigUpdate(this.getLocalConfig());
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+        });
+
+        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
+            const code = document.getElementById('display-room-code')?.dataset.code;
+            if (code) {
+                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            }
+        });
+
+        const toggleCodeBtn = document.getElementById('btn-toggle-code');
+        if (toggleCodeBtn) {
+            toggleCodeBtn.addEventListener('click', () => {
+                const display = document.getElementById('display-room-code');
+                const eyeOpen = document.getElementById('icon-eye-open');
+                const eyeClosed = document.getElementById('icon-eye-closed');
+                const code = display ? display.dataset.code : '';
+                
+                if (display && display.textContent.includes('•')) {
+                    display.textContent = code;
+                    eyeOpen?.classList.remove('hidden');
+                    eyeClosed?.classList.add('hidden');
+                } else if (display) {
+                    display.textContent = '••••••••';
+                    eyeOpen?.classList.add('hidden');
+                    eyeClosed?.classList.remove('hidden');
+                }
+                if (window.PairaAudio) window.PairaAudio.play('pop');
+            });
+        }
+
         document.getElementById('setting-rounds')?.addEventListener('change', () => this.callbacks.onConfigUpdate(this.getLocalConfig()));
         document.getElementById('setting-end-value')?.addEventListener('change', () => this.callbacks.onConfigUpdate(this.getLocalConfig()));
 
@@ -744,8 +815,8 @@ class HizliIsimSehirView {
         const currentPlayer = playersArr[state.currentPlayerIndex];
         const isMyTurn = currentPlayer && currentPlayer.id === this.myId;
 
-        document.getElementById('current-letter').textContent = state.letter;
-        document.getElementById('current-category-name').textContent = state.currentCategory.name;
+        document.getElementById('current-letter').textContent = state.letter || '';
+        document.getElementById('current-category-name').textContent = (state.currentCategory && state.currentCategory.name) ? state.currentCategory.name : '';
 
         const turnInd = document.getElementById('turn-indicator-text');
         if (turnInd) {

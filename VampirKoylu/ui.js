@@ -59,16 +59,38 @@ const els = {
 function setupUI() {
     els.lobby.codeDisplay.dataset.code = roomCode;
     
+    document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Lobiden Ayrıl",
+            message: "Lobiden ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Kal",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
+    document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Oyundan Ayrıl",
+            message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Oyuna Dön",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
     els.lobby.btnToggleCode.addEventListener('click', () => {
-        const isHidden = els.lobby.codeDisplay.textContent === '••••••••';
+        const isHidden = els.lobby.codeDisplay.textContent.includes('•');
         els.lobby.codeDisplay.textContent = isHidden ? roomCode : '••••••••';
         document.getElementById('icon-eye-open').classList.toggle('hidden', isHidden);
         document.getElementById('icon-eye-closed').classList.toggle('hidden', !isHidden);
+        if (window.PairaAudio) window.PairaAudio.play('pop');
     });
 
     els.lobby.btnCopy.addEventListener('click', () => {
-        navigator.clipboard.writeText(roomCode);
-        showToast("Oda kodu kopyalandı", "success");
+        window.copyToClipboard(roomCode, "Oda kodu panoya kopyalandı!");
     });
 
     if (isHost) {

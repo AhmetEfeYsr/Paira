@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let roomCode = '';
         if (!isHosting && !isSolo) {
             if (roomCodeInput) {
-                roomCode = roomCodeInput.value.trim().toUpperCase();
+                roomCode = roomCodeInput.value.trim().replace(/[ıİ]/g, 'I').replace(/i/g, 'I').toUpperCase().replace(/[^A-Z0-9]/g, '');
             }
             if (!roomCode) {
                 if (window.showToast) window.showToast("Oda kodu gerekli", "error");

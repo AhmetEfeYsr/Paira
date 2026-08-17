@@ -45,7 +45,8 @@ class BaseGameNetwork extends window.PeerNetworkManager {
 
         if (this.isHostNode) {
             // Priority: Explicit roomCode from login, then existing myId, then new generation
-            const customId = sessionStorage.getItem('roomCode') || sessionStorage.getItem('myId') || this.generateRoomCode();
+            const rawCode = sessionStorage.getItem('roomCode') || sessionStorage.getItem('myId') || this.generateRoomCode();
+            const customId = rawCode.replace(/[ıİ]/g, 'I').replace(/i/g, 'I').toUpperCase().replace(/[^A-Z0-9]/g, '');
             this.myId = customId;
             sessionStorage.setItem('myId', customId);
 
@@ -56,15 +57,32 @@ class BaseGameNetwork extends window.PeerNetworkManager {
 
             return this.init(customId);
         } else {
-            if (!this.roomCode) {
+            const rawRoom = this.roomCode;
+            if (!rawRoom) {
                 window.location.href = 'index.html';
                 return Promise.reject("No room code found.");
             }
+            this.roomCode = rawRoom.replace(/[ıİ]/g, 'I').replace(/i/g, 'I').toUpperCase().replace(/[^A-Z0-9]/g, '');
             const savedOldId = sessionStorage.getItem('lastMyId');
+
             return this.init().then(() => {
                 sessionStorage.setItem('lastMyId', this.myId);
                 return this.connectToHost(this.roomCode).then(() => {
-                    this.sendToPeer(this.roomCode, 'JOIN', { name: this.myName, oldId: savedOldId });
+                    // Send JOIN with automatic retry loop until Host sends ACK/SYNC (eliminates lost-JOIN packet bug)
+                    let joinAttempts = 0;
+                    this._joinHandshakeComplete = false;
+                    const sendJoin = () => {
+                        if (this._joinHandshakeComplete || joinAttempts >= 8) {
+                            if (this._joinInterval) clearInterval(this._joinInterval);
+                            return;
+                        }
+                        joinAttempts++;
+                        this.sendToPeer(this.roomCode, 'JOIN', { name: this.myName, oldId: savedOldId });
+                    };
+
+                    sendJoin();
+                    if (this._joinInterval) clearInterval(this._joinInterval);
+                    this._joinInterval = setInterval(sendJoin, 500);
                 });
             });
         }
@@ -76,6 +94,10 @@ class BaseGameNetwork extends window.PeerNetworkManager {
         sessionStorage.setItem('myId', id);
         sessionStorage.setItem('lastMyId', id);
         
+        if (typeof this.onPeerReady === 'function' && this.onPeerReady !== this._handlePeerReady) {
+            try { this.onPeerReady(id); } catch(e) { console.error("onPeerReady callback error:", e); }
+        }
+
         // Let the game know we are ready with actual PeerJS ID
         if (this.onPlayerJoin && this.isHostNode) {
             this.onPlayerJoin(id, { name: this.myName, isHost: true, oldId: oldId });
@@ -83,17 +105,31 @@ class BaseGameNetwork extends window.PeerNetworkManager {
     }
 
     _handleConnection(peerId, conn) {
-        // We wait for the 'JOIN' action payload to officially register the player.
+        // Automatically save incoming connection
+        if (!this.connections[peerId]) {
+            this.connections[peerId] = conn;
+        }
     }
 
     _handleDataReceived(action, payload, senderId) {
         if (action === 'JOIN' && this.isHostNode) {
             if (this.onPlayerJoin) this.onPlayerJoin(senderId, payload);
-        } 
+            // Immediately send ACK back so client knows host registered them
+            this.sendToPeer(senderId, 'JOIN_ACK', { success: true });
+            if (this.broadcastState) {
+                this.broadcastState();
+            }
+        }
+        else if (action === 'JOIN_ACK' && !this.isHostNode) {
+            this._joinHandshakeComplete = true;
+            if (this._joinInterval) clearInterval(this._joinInterval);
+        }
         else if (action === 'LEAVE' && this.isHostNode) {
             if (this.onPlayerLeave) this.onPlayerLeave(senderId);
         }
         else if (action === 'SYNC' && !this.isHostNode) {
+            this._joinHandshakeComplete = true;
+            if (this._joinInterval) clearInterval(this._joinInterval);
             if (this.onStateSync) this.onStateSync(payload);
         }
         else if (action === 'KICKED' && !this.isHostNode) {

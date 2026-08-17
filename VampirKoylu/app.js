@@ -170,6 +170,19 @@ function attemptHostMigration() {
                 gameState.players[myId] = gameState.players[oldMyId];
                 gameState.players[myId].id = myId;
                 delete gameState.players[oldMyId];
+
+                if (gameState.nightActions && gameState.nightActions[oldMyId]) {
+                    gameState.nightActions[myId] = gameState.nightActions[oldMyId];
+                    delete gameState.nightActions[oldMyId];
+                }
+                if (gameState.votes && gameState.votes[oldMyId]) {
+                    gameState.votes[myId] = gameState.votes[oldMyId];
+                    delete gameState.votes[oldMyId];
+                }
+                if (gameState.dayActions && gameState.dayActions[oldMyId]) {
+                    gameState.dayActions[myId] = gameState.dayActions[oldMyId];
+                    delete gameState.dayActions[oldMyId];
+                }
             }
             
             setTimeout(() => { 

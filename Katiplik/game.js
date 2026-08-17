@@ -84,14 +84,46 @@ class KatiplikGame {
             }
         });
 
-        document.getElementById('btn-cancel-wait')?.addEventListener('click', () => {
-            if (this.network) this.network.leaveRoom();
-            else window.location.href = 'index.html';
+        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
+            const code = document.getElementById('display-room-code')?.textContent;
+            if (code && code !== '----') {
+                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            }
         });
 
-        document.getElementById('btn-leave')?.addEventListener('click', () => {
-            if (this.network) this.network.leaveRoom();
-            else window.location.href = 'index.html';
+        document.getElementById('display-room-code')?.addEventListener('click', () => {
+            const code = document.getElementById('display-room-code')?.textContent;
+            if (code && code !== '----') {
+                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            }
+        });
+
+        document.getElementById('btn-cancel-wait')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Beklemeyi İptal Et",
+                message: "Lobiden ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) {
+                if (this.network) this.network.leaveRoom();
+                else window.location.href = 'index.html';
+            }
+        });
+
+        document.getElementById('btn-leave')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) {
+                if (this.network) this.network.leaveRoom();
+                else window.location.href = 'index.html';
+            }
         });
     }
 
@@ -263,7 +295,7 @@ class KatiplikGame {
         
         if (this.kbMode === 'en') {
             const charMap = {
-                'ı': 'i', 'ı': 'i', 'İ': 'I',
+                'ı': 'i', 'İ': 'I',
                 'â': 'a', 'î': 'i', 'û': 'u',
                 'Â': 'A', 'Î': 'I', 'Û': 'U',
                 'ç': 'c', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',

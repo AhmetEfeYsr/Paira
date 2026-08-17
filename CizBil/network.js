@@ -135,7 +135,9 @@ class CizBilNetwork extends BaseGameNetwork {
             const chatMsgText = isCorrect ? '***' : payload.text;
             const chatMsg = { name, text: chatMsgText, isCorrect };
             
-            this.view.addChatMessage(name, payload.text, isCorrect);
+            const isHostAuthorized = (this.myId === this.engine.state.currentDrawer) || (this.engine.state.correctGuessers && this.engine.state.correctGuessers.includes(this.myId));
+            const hostDisplayText = (isCorrect && !isHostAuthorized) ? '***' : payload.text;
+            this.view.addChatMessage(name, hostDisplayText, isCorrect);
             if (isCorrect && window.PairaAudio) window.PairaAudio.play('correct');
             
             this.broadcast('CHAT_EVENT', chatMsg);
@@ -258,6 +260,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const network = new CizBilNetwork(engine, view);
+    window.gameEngine = engine;
+    window.gameNetwork = network;
     
     if (!isHost) {
         engine.onTimerTick = (secs) => view.updateTimer(secs);

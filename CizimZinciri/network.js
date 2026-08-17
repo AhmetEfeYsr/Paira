@@ -34,6 +34,67 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('pointerdown', initAudioOnce, { once: true });
     document.addEventListener('keydown', initAudioOnce, { once: true });
 
+    document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Lobiden Ayrıl",
+            message: "Lobiden ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Kal",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
+    document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Oyundan Ayrıl",
+            message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Oyuna Dön",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
+    document.getElementById('btn-leave')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Oyundan Ayrıl",
+            message: "Oyundan ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Kal",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
+    document.getElementById('btn-copy-room')?.addEventListener('click', () => {
+        const code = document.getElementById('display-room-code')?.dataset.code;
+        if (code) {
+            window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+        }
+    });
+
+    const toggleCodeBtn = document.getElementById('btn-toggle-code');
+    if (toggleCodeBtn) {
+        toggleCodeBtn.addEventListener('click', () => {
+            const display = document.getElementById('display-room-code');
+            const eyeOpen = document.getElementById('icon-eye-open');
+            const eyeClosed = document.getElementById('icon-eye-closed');
+            const code = display ? display.dataset.code : '';
+            
+            if (display && display.textContent.includes('•')) {
+                display.textContent = code;
+                eyeOpen?.classList.remove('hidden');
+                eyeClosed?.classList.add('hidden');
+            } else if (display) {
+                display.textContent = '••••••••';
+                eyeOpen?.classList.add('hidden');
+                eyeClosed?.classList.remove('hidden');
+            }
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+        });
+    }
+
     initLobby();
 });
 
@@ -388,9 +449,25 @@ function handlePlayingState(lastAction) {
     }
 }
 
-function showAlbumScreen() {
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('hidden');
+export function returnToLobby() {
+    if (!isHost) return;
+    networkState.state = 'LOBBY';
+    networkState.currentRound = 0;
+    networkState.stories = {};
+    networkState.assignments = {};
+    networkState.completedTasks = {};
+    networkState.albumSequence = [];
+    networkState.currentAlbumIndex = 0;
+    broadcastState();
+    if (typeof window.showScreen === 'function') window.showScreen('lobby-screen');
+    updateLobbyUI();
+}
+
+export function showAlbumScreen() {
+    document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active');
+        s.classList.add('hidden');
+    });
     document.getElementById('album-screen').classList.add('active');
     document.getElementById('album-screen').classList.remove('hidden');
 
@@ -402,7 +479,7 @@ function showAlbumScreen() {
             broadcastAction({ type: 'ALBUM_NEXT' });
         };
         document.getElementById('btn-back-to-lobby').onclick = () => {
-            networkManager.leaveRoom();
+            returnToLobby();
         };
     }
 }

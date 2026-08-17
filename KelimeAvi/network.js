@@ -204,6 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const network = new KelimeAviNetwork(engine, view);
+    window.gameEngine = engine;
+    window.gameNetwork = network;
     
     if (!isHost) {
         engine.onTimerTick = (secs) => view.updateTimer(secs);

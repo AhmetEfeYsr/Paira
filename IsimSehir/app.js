@@ -86,6 +86,40 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.client-only').forEach(el => el.classList.remove('hidden'));
     }
 
+    document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Lobiden Ayrıl",
+            message: "Lobiden ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Kal",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
+    document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+        const confirmed = await window.pairaConfirm({
+            title: "Oyundan Ayrıl",
+            message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+            confirmText: "Ayrıl",
+            cancelText: "Oyuna Dön",
+            confirmType: "danger"
+        });
+        if (confirmed) window.location.href = 'index.html';
+    });
+
+    document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = true);
+        if (window.PairaAudio) window.PairaAudio.play('pop');
+    });
+
+    document.getElementById('btn-clear-cats')?.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+        if (window.PairaAudio) window.PairaAudio.play('pop');
+    });
+
     if (ui.btnToggleCode) {
         const iconEyeOpen = document.getElementById('icon-eye-open');
         const iconEyeClosed = document.getElementById('icon-eye-closed');
@@ -104,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ui.displayRoomCode) {
                 ui.displayRoomCode.textContent = isCodeVisible ? (ui.displayRoomCode.dataset.code || '') : '••••••••';
             }
+            if (window.PairaAudio) window.PairaAudio.play('pop');
         });
     }
 
@@ -111,11 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.btnCopyRoom.addEventListener('click', () => {
             const codeToCopy = ui.displayRoomCode?.dataset?.code;
             if (codeToCopy) {
-                navigator.clipboard.writeText(codeToCopy)
-                    .then(() => {
-                        showToast('Oda kodu kopyalandı!', 'success');
-                    })
-                    .catch(() => console.error('Kopyalanamadı'));
+                window.copyToClipboard(codeToCopy, "Oda kodu panoya kopyalandı!");
             }
         });
     }
@@ -717,6 +748,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let finishedVoters = new Set();
     let currentResultsData = null;
 
+    async function fetchWithTimeout(resource, options = {}, timeoutMs = 2500) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(resource, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(id);
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            return null;
+        }
+    }
+
     async function validateViaLlm(catName, word, requiredLetter) {
         try {
             const prompt = `Sen bir İsim Şehir oyunu hakemisin.
@@ -727,7 +774,7 @@ Kelime: "${word}"
 Bu kelime bu kategoriye uygun mu ve belirtilen harfle mi başlıyor? 
 Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açıklama"}`;
 
-            const response = await fetch('/api/ai/generate', {
+            const response = await fetchWithTimeout('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -735,7 +782,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                     prompt: prompt,
                     temperature: 0.5
                 })
-            });
+            }, 2500);
+            if (!response || !response.ok) return { valid: false, reason: "Yapay zeka yanıt vermedi." };
             const data = await response.json();
             let text = data.text;
             text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -744,6 +792,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         } catch (e) {
             console.error("LLM Validation Error:", e);
             return { valid: false, reason: "Yapay zeka doğrulaması başarısız oldu." };
+        }
     }
 
     async function validateViaLlmBatch(candidates) {
@@ -756,7 +805,7 @@ ${listStr}
 
 Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("valid": true/false) ve nedenini ("reason": "...") içeren bir JSON dizisi (array) formatında ver. Örn: [{"valid": true, "reason": "..."}, ...]`;
 
-            const response = await fetch('/api/ai/generate', {
+            const response = await fetchWithTimeout('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -764,7 +813,8 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
                     prompt: prompt,
                     temperature: 0.3
                 })
-            });
+            }, 3000);
+            if (!response || !response.ok) throw new Error("LLM request failed or timed out");
             const data = await response.json();
             let text = data.text;
             text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -791,7 +841,8 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
     async function checkWikipedia(word, keywords, requiredLetterLower) {
         const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
-            const wikiRes = await fetch(wikiUrl);
+            const wikiRes = await fetchWithTimeout(wikiUrl, {}, 2500);
+            if (!wikiRes || !wikiRes.ok) return false;
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search) {
                 const lowerWord = word.toLocaleLowerCase('tr-TR');
@@ -834,19 +885,21 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
         try {
             if (catId === 'sehir') {
                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
-                const response = await fetch(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
-                const data = await response.json();
-                result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
-                if (result) {
-                    const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
-                    if (!nameLower.startsWith(requiredLetterLower)) result = false;
+                const response = await fetchWithTimeout(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
+                if (response && response.ok) {
+                    const data = await response.json();
+                    result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
+                    if (result) {
+                        const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
+                        if (!nameLower.startsWith(requiredLetterLower)) result = false;
+                    }
                 }
                 if (!result) result = await checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredLetterLower);
             }
             else if (catId === 'ulke') {
                 const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     result = Array.isArray(data) && data.length > 0;
                     if (result) {
@@ -860,8 +913,8 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
             }
             else if (catId === 'film_dizi') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
                         const match = data.results.find(item => 
@@ -876,8 +929,8 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
             }
             else if (catId === 'muzik') {
                 const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
                         const match = data.results.find(item => 

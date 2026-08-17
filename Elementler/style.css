@@ -85,3 +85,42 @@
     padding: 6px 14px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
+
+/* Touch Controls */
+.touch-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(30, 27, 46, 0.75);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.touch-btn:active {
+    transform: scale(0.9);
+    background: rgba(var(--primary-rgb), 0.7);
+    border-color: var(--neon-purple);
+}
+
+.touch-btn-jump {
+    width: 68px;
+    height: 68px;
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.6), rgba(46, 204, 113, 0.6));
+    border-color: var(--success);
+}
+
+.touch-btn-switch {
+    background: rgba(250, 204, 21, 0.3);
+    border-color: var(--warning);
+}
+

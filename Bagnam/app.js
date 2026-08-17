@@ -47,16 +47,57 @@ document.addEventListener('DOMContentLoaded', () => {
             if(e.key === 'Enter') handleGuess();
         });
     }
+    const btnClearInput = document.getElementById('btn-clear-input');
+    if(btnClearInput && wordInput) {
+        btnClearInput.addEventListener('click', () => {
+            wordInput.value = '';
+            btnClearInput.classList.add('hidden');
+            wordInput.focus();
+        });
+        wordInput.addEventListener('input', () => {
+            if (wordInput.value.length > 0) {
+                btnClearInput.classList.remove('hidden');
+            } else {
+                btnClearInput.classList.add('hidden');
+            }
+        });
+    }
+
     if(btnGiveup) btnGiveup.addEventListener('click', handleGiveUp);
     if(btnHint) btnHint.addEventListener('click', handleHint);
 
     const btnLastHint = document.getElementById('btn-last-hint');
     if(btnLastHint) btnLastHint.addEventListener('click', showLastHint);
 
+    const btnShareResult = document.getElementById('btn-share-result');
+    if(btnShareResult) btnShareResult.addEventListener('click', shareVictoryResult);
+
+    const btnModalShare = document.getElementById('btn-modal-share');
+    if(btnModalShare) btnModalShare.addEventListener('click', shareVictoryResult);
+
+    const btnModalClose = document.getElementById('btn-modal-close');
+    if(btnModalClose) {
+        btnModalClose.addEventListener('click', () => {
+            const modal = document.getElementById('victory-modal');
+            if (modal) modal.classList.remove('active');
+        });
+    }
+
     const btnBack = document.getElementById('btn-back');
     if(btnBack) {
-        btnBack.addEventListener('click', () => {
-            if (hasWon || confirm("Oyundan çıkmak istediğinize emin misiniz? İlerlemeniz kaydedilecek.")) {
+        btnBack.addEventListener('click', async () => {
+            if (hasWon) {
+                window.showScreen('login-screen');
+                return;
+            }
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Çıkış",
+                message: "Oyundan çıkmak istediğinize emin misiniz? İlerlemeniz otomatik kaydedilecektir.",
+                confirmText: "Çık",
+                cancelText: "Devam Et",
+                confirmType: "warning"
+            });
+            if (confirmed) {
                 window.showScreen('login-screen');
                 const btnStart = document.getElementById('btn-start');
                 const btnPlayPast = document.getElementById('btn-play-past');
@@ -424,6 +465,26 @@ function renderHistory() {
     // Sort guesses by rank (lowest rank first)
     const sortedGuesses = [...guesses].sort((a, b) => a.rank - b.rank);
 
+    // Update best guess widget
+    const bestWidget = document.getElementById('best-guess-widget');
+    if (bestWidget) {
+        if (sortedGuesses.length > 0) {
+            const best = sortedGuesses[0];
+            bestWidget.classList.remove('hidden');
+            const wordEl = document.getElementById('best-guess-word');
+            const rankEl = document.getElementById('best-guess-rank');
+            const barEl = document.getElementById('best-guess-bar');
+            if (wordEl) wordEl.textContent = best.word;
+            if (rankEl) rankEl.textContent = `#${best.rank}`;
+            if (barEl) {
+                const pct = Math.max(5, (best.score * 100).toFixed(0));
+                barEl.style.width = `${pct}%`;
+            }
+        } else {
+            bestWidget.classList.add('hidden');
+        }
+    }
+
     sortedGuesses.forEach((g, index) => {
         const li = document.createElement('li');
         li.className = 'history-item';
@@ -548,17 +609,67 @@ function handleWin() {
     successMsg.classList.remove('hidden');
 
     if (window.PairaAudio) {
-        window.PairaAudio.play('correct');
+        window.PairaAudio.play('celebrate');
     }
 
-    showToast("Tebrikler! Günün kelimesini buldunuz.", "success");
+    showToast("Tebrikler! Günün kelimesini buldunuz. 🎉", "success");
+
+    // Open Victory Modal
+    const victoryModal = document.getElementById('victory-modal');
+    if (victoryModal) {
+        const targetWordEl = document.getElementById('victory-target-word');
+        const modalCountEl = document.getElementById('modal-guess-count');
+        const hintStatEl = document.getElementById('modal-hint-stat');
+        const emojiPreviewEl = document.getElementById('victory-emoji-preview');
+
+        const winGuess = guesses.find(g => g.rank === 1);
+        if (targetWordEl && winGuess) targetWordEl.textContent = winGuess.word.toUpperCase();
+        if (modalCountEl) modalCountEl.textContent = guesses.length;
+        if (hintStatEl) hintStatEl.textContent = hintsUsed > 0 ? `💡 ${hintsUsed} adet ipucu kullandın.` : `🔥 Hiç ipucu kullanmadan başardın!`;
+        if (emojiPreviewEl) emojiPreviewEl.textContent = generateEmojiShareText();
+
+        setTimeout(() => {
+            victoryModal.classList.add('active');
+        }, 500);
+    }
+}
+
+function generateEmojiShareText() {
+    const sorted = [...guesses].sort((a, b) => a.rank - b.rank);
+    let greenCount = 0;
+    let orangeCount = 0;
+    let redCount = 0;
+
+    guesses.forEach(g => {
+        if (g.rank === 1 || g.rank <= 300) greenCount++;
+        else if (g.rank <= 1500) orangeCount++;
+        else redCount++;
+    });
+
+    const dateStr = targetDate ? `(${targetDate})` : '';
+    let emojiBlocks = '🟩'.repeat(Math.min(greenCount, 5)) + '🟧'.repeat(Math.min(orangeCount, 5)) + '🟥'.repeat(Math.min(redCount, 5));
+    if (!emojiBlocks) emojiBlocks = '🟩🟩🟩';
+
+    return `Paira Bağnam ${dateStr}\n🎯 ${guesses.length} tahminde bildim!\n${emojiBlocks}\nhttps://pairaaa.com/Bagnam`;
+}
+
+function shareVictoryResult() {
+    const text = generateEmojiShareText();
+    window.copyToClipboard(text, "Sonucunuz panoya kopyalandı! Arkadaşlarınızla paylaşabilirsiniz.");
 }
 
 async function handleGiveUp() {
     if (hasWon) return;
 
-    const confirmGiveUp = confirm("Pes etmek istediğinize emin misiniz? Günün kelimesi gösterilecek ve oyun bitecek.");
-    if (!confirmGiveUp) return;
+    const confirmed = await window.pairaConfirm({
+        title: "Pes Et",
+        message: "Pes etmek istediğinize emin misiniz? Gizli kelime gösterilecek ve oyun tamamlanacaktır.",
+        confirmText: "Pes Et",
+        cancelText: "Vazgeç",
+        confirmType: "danger",
+        icon: "🏳️"
+    });
+    if (!confirmed) return;
 
     const inputEl = document.getElementById('word-input');
     const btnGuess = document.getElementById('btn-guess');
@@ -728,7 +839,15 @@ async function handleHint() {
             
             saveGameState(); // <-- Otomatik Kayıt
 
-            alert(hintMessage);
+            if (window.pairaAlert) {
+                window.pairaAlert({
+                    title: `İpucu (${hintTitle})`,
+                    message: displayData,
+                    buttonText: "Anladım"
+                });
+            } else {
+                alert(hintMessage);
+            }
         } else {
             showToast(`İpucu verisi bulunamadı (${hintKey}). Günün verisi henüz güncellenmemiş olabilir.`, "error");
         }
@@ -746,7 +865,15 @@ function showLastHint() {
         return;
     }
     const last = hintHistory[hintHistory.length - 1];
-    alert(`Son İpucu (${last.title}):\n\n${last.content}`);
+    if (window.pairaAlert) {
+        window.pairaAlert({
+            title: `Son İpucu (${last.title})`,
+            message: last.content,
+            buttonText: "Kapat"
+        });
+    } else {
+        alert(`Son İpucu (${last.title}):\n\n${last.content}`);
+    }
 }
 
 // ==========================================
@@ -810,4 +937,14 @@ function restoreGameState(state) {
     }
 
     renderHistory();
+
+    if (hasWon) {
+        const input = document.getElementById('guess-input');
+        const submitBtn = document.getElementById('btn-submit-guess');
+        if (input) input.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
+        if (btnHint) btnHint.classList.add('hidden');
+        const btnGiveup = document.getElementById('btn-giveup');
+        if (btnGiveup) btnGiveup.classList.add('hidden');
+    }
 }

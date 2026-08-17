@@ -53,7 +53,7 @@ class CizBilGameEngine {
         }
     }
 
-    startGame(settings) {
+    startGame(settings = {}) {
         if (!this.isHost) return;
         if (Object.keys(this.state.players).length < 2) return false;
 
@@ -298,6 +298,67 @@ class CizBilView {
     }
 
     bindEvents() {
+        document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Lobiden Ayrıl",
+                message: "Lobiden ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-leave')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
+            const code = document.getElementById('display-room-code')?.dataset.code;
+            if (code) {
+                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            }
+        });
+
+        const toggleCodeBtn = document.getElementById('btn-toggle-code');
+        if (toggleCodeBtn) {
+            toggleCodeBtn.addEventListener('click', () => {
+                const display = document.getElementById('display-room-code');
+                const eyeOpen = document.getElementById('icon-eye-open');
+                const eyeClosed = document.getElementById('icon-eye-closed');
+                const code = display ? display.dataset.code : '';
+                
+                if (display && display.textContent.includes('•')) {
+                    display.textContent = code;
+                    eyeOpen?.classList.remove('hidden');
+                    eyeClosed?.classList.add('hidden');
+                } else if (display) {
+                    display.textContent = '••••••••';
+                    eyeOpen?.classList.add('hidden');
+                    eyeClosed?.classList.remove('hidden');
+                }
+                if (window.PairaAudio) window.PairaAudio.play('pop');
+            });
+        }
+
         document.getElementById('btn-start-game')?.addEventListener('click', () => {
             const settings = {
                 turnDuration: document.getElementById('turn-duration')?.value,

@@ -112,7 +112,7 @@ class GizliKelimelerEngine {
         return arr;
     }
 
-    startGame(settings) {
+    startGame(settings = {}) {
         const size = parseInt(settings.boardSize) || 25;
         const duration = parseInt(settings.turnDuration) || 90;
 
@@ -290,6 +290,13 @@ class GizliKelimelerEngine {
         }
     }
 
+    stopTimer() {
+        if (this.renderFrame) {
+            clearTimeout(this.renderFrame);
+            this.renderFrame = null;
+        }
+    }
+
     switchTurn() {
         this.state.turnTeam = this.state.turnTeam === 'A' ? 'B' : 'A';
         this.state.phase = 'CLUE';
@@ -302,7 +309,7 @@ class GizliKelimelerEngine {
     endGame(winnerTeam) {
         this.state.status = 'ended';
         this.state.winnerTeam = winnerTeam;
-        if (this.renderFrame) clearTimeout(this.renderFrame);
+        this.stopTimer();
     }
 }
 
@@ -349,8 +356,28 @@ class GizliKelimelerView {
         document.getElementById('btn-end-turn')?.addEventListener('click', () => this.callbacks.onEndTurn());
 
         document.getElementById('btn-back-lobby')?.addEventListener('click', () => this.callbacks.onBackToLobby());
-        document.getElementById('btn-leave')?.addEventListener('click', () => this.callbacks.onLeave());
-        document.getElementById('btn-leave-game')?.addEventListener('click', () => this.callbacks.onLeave());
+        
+        document.getElementById('btn-leave')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Lobiden Ayrıl",
+                message: "Lobiden ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) this.callbacks.onLeave();
+        });
+
+        document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) this.callbacks.onLeave();
+        });
     }
 
     showScreen(screenId) {

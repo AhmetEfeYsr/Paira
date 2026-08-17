@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
     <title>Kelime Kapanı | Oyun Odası</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=Pacifico&display=swap" rel="stylesheet">
-    <script src="../shared/shared.js?v=1.0.2"></script>
+    <script src="../shared/shared.js?v=2.0.0"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=1.0.2">
-    <link rel="stylesheet" href="../shared/shared.css?v=1.0.2">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
+    <link rel="stylesheet" href="../shared/shared.css?v=2.0.0">
 
     <!-- Favicons -->
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
@@ -25,13 +28,22 @@
 
         <!-- LOBİ EKRANI -->
         <section id="lobby-screen" class="view-state active">
-            <header class="lobby-header">
-                <div class="code-container">
-                    <h2 style="margin:0; font-size: 1.15rem; color: var(--text-muted);">Oda Kodu:</h2>
-                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 2px; font-family: monospace; font-size: 1.4rem; user-select: none;">••••••••</span>
-                    <button id="btn-toggle-code" class="toggle-btn" title="Göster/Gizle">👁️</button>
+            <header class="lobby-header" style="justify-content: space-between; align-items: center; display: flex;">
+                <button id="btn-leave-lobby" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+                <div class="code-container" style="flex-grow: 1; justify-content: center; gap: 12px;">
+                    <h2 style="margin:0; font-size: 1.1rem; color: var(--text-muted); font-weight: 500;">Oda Kodu:</h2>
+                    <span id="display-room-code" data-code="" style="color: var(--neon-purple); letter-spacing: 4px; font-family: monospace; font-size: 1.5rem; user-select: none; font-weight: bold; min-width: 140px; text-align: center;">••••••••</span>
+                    <button id="btn-toggle-code" class="btn btn-icon toggle-btn" title="Göster/Gizle" style="padding: 8px; display: flex; align-items: center; justify-content: center;">
+                        <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    </button>
                 </div>
-                <button id="btn-copy-room" class="btn btn-secondary">Kopyala</button>
+                <button id="btn-copy-room" class="btn btn-secondary" style="display: flex; gap: 8px; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopyala
+                </button>
             </header>
 
             <div class="lobby-grid">
@@ -73,6 +85,9 @@
         <!-- OYUN EKRANI -->
         <section id="game-screen" class="view-state hidden">
             <header class="game-topbar card">
+                <button id="btn-leave-game" class="btn btn-danger btn-icon" title="Odadan Çık" style="padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 50%; width: 42px; height: 42px; padding: 0 !important;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
                 <div class="round-indicator" id="round-indicator">Tur 1 / 5</div>
 
                 <!-- Süre -->
@@ -161,12 +176,12 @@
         <p>Kelime Kapanı, sadece bir kelime oyunu değil, aynı zamanda bir psikolojik savaş ve çıkarım sanatıdır. Farklı zorluk seviyeleri ve özelleştirilebilir oda ayarları ile her seferinde benzersiz bir deneyim sunar. SEO uyumlu altyapısı ve akıcı arayüzü sayesinde tarayıcınız üzerinden anında oynamaya başlayabilirsiniz. Kelime dağarcığınızı test ederken aynı zamanda arkadaşlarınızın düşünce yapısını çözmeye çalışacağınız bu oyun, sosyal toplantılarınızın vazgeçilmezi olacaktır. Hemen bir oda kurun, stratejinizi belirleyin ve Kelime Kapanı dünyasında kimin daha zeki olduğunu kanıtlayın!</p>
     </div>
 
-    <script src="../shared/peer_manager.js?v=1.0.5"></script>
-    <script src="../shared/base_network.js?v=1.0.5"></script>
-    <script src="../shared/state_proxy.js?v=1.0.5"></script>
-    <script src="../shared/lobby_manager.js?v=1.0.5"></script>
-    <script src="game.js?v=1.0.5"></script>
-    <script src="network.js?v=1.0.5"></script>
+    <script src="../shared/peer_manager.js?v=2.0.0"></script>
+    <script src="../shared/base_network.js?v=2.0.0"></script>
+    <script src="../shared/state_proxy.js?v=2.0.0"></script>
+    <script src="../shared/lobby_manager.js?v=2.0.0"></script>
+    <script src="game.js?v=2.0.0"></script>
+    <script src="network.js?v=2.0.0"></script>
 
 </body>
 </html>

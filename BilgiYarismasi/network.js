@@ -22,7 +22,6 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
         });
 
         this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
             this.view.setMyId(id);
             const codeToSet = this.isHostNode ? id : this.roomCode;
             this.lobbyUI.setRoomCode(codeToSet);
@@ -150,6 +149,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const network = new BilgiYarismasiNetwork(engine, view);
+    window.gameEngine = engine;
+    window.gameNetwork = network;
     
     if (!isHost) {
         engine.onTimerTick = (secs) => view.updateTimer(secs);

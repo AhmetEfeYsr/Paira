@@ -84,8 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- PEERJS AĞ ALTYAPISI ---
 function initPeer(customId = null) {
     peer = new Peer(customId, {
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] },
-        // debug: 1
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true,
+        pingInterval: 5000,
+        config: window.PAIR_WEBRTC_CONFIG || { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] },
+        debug: 1
     });
 
     peer.on('open', (id) => {
@@ -125,7 +130,7 @@ function initPeer(customId = null) {
 
 function connectToPeer(targetId) {
     if (!targetId || targetId === myId) return;
-    const conn = peer.connect(targetId, { reliable: false }); // Fizik senkronizasyonu için UDP tarzı reliable:false daha hızlıdır ama WebRTC data channel'da tarayıcıya bağlıdır.
+    const conn = peer.connect(targetId, { reliable: true });
     setupConnection(conn);
 }
 
@@ -135,10 +140,29 @@ function setupConnection(conn) {
         if (isHost) {
             broadcastState(); // Lobi senkronizasyonu
         } else {
-            conn.send({ type: 'JOIN', id: myId, name: myName });
+            let joinAttempts = 0;
+            const sendJoin = () => {
+                if (window._elementlerJoined || joinAttempts >= 8) {
+                    if (window._elementlerJoinInterval) clearInterval(window._elementlerJoinInterval);
+                    return;
+                }
+                joinAttempts++;
+                if (conn && conn.open) {
+                    conn.send({ type: 'JOIN', id: myId, name: myName });
+                }
+            };
+            sendJoin();
+            if (window._elementlerJoinInterval) clearInterval(window._elementlerJoinInterval);
+            window._elementlerJoinInterval = setInterval(sendJoin, 500);
         }
     });
-    conn.on('data', (data) => handleData(data, conn.peer));
+    conn.on('data', (data) => {
+        if (data && data.type === 'SYNC_STATE') {
+            window._elementlerJoined = true;
+            if (window._elementlerJoinInterval) clearInterval(window._elementlerJoinInterval);
+        }
+        handleData(data, conn.peer);
+    });
     conn.on('close', () => handleDisconnect(conn.peer));
 }
 
@@ -178,7 +202,7 @@ function sendGameAction(action, payload) {
         broadcast({ type: 'ACTION', action: action, payload: payload });
     } else {
         if(connections[hostId] && connections[hostId].open) {
-            connections[hostId].send({ type: 'CLIENT_ACTION', action: action, payload: payload });
+            connections[hostId].send({ type: 'CLIENT_ACTION', action: action, payload: payload, peerId: myId });
         }
     }
 }
@@ -241,7 +265,8 @@ function handleData(data, peerId) {
     }
     else if (data.type === 'CLIENT_ACTION' && isHost) {
         // İstemci butona bastı vs, sunucu bunu onaylayıp herkese yayar
-        window.gameApp.processAction(data.action, data.payload, data.peerId);
+        const sender = data.peerId || peerId;
+        window.gameApp.processAction(data.action, data.payload, sender);
     }
     else if (data.type === 'ACTION') {
         // Sunucu onaylı aksiyon (Buton basılması, Kapı açılması, Ölüm, Seviye geçişi)

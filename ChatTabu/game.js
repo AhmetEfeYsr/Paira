@@ -447,12 +447,13 @@ class ChatTabuView {
         const chatFeed = document.getElementById('chat-feed');
         if (!chatFeed) return;
         
-        const lastMsgs = Array.from(chatFeed.querySelectorAll('.chat-msg')).slice(-15);
+        const lastMsgs = Array.from(chatFeed.querySelectorAll('.chat-msg')).slice(-50).reverse();
 
         for (let msgDiv of lastMsgs) {
             if (msgDiv.dataset.username === username && !msgDiv.classList.contains('correct')) {
                 msgDiv.classList.add('correct');
-                msgDiv.querySelector('span').textContent += ' (🎉 DOĞRU BİLDİ!)';
+                const span = msgDiv.querySelector('span');
+                if (span) span.textContent += ' (🎉 DOĞRU BİLDİ!)';
                 break;
             }
         }

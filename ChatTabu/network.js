@@ -16,7 +16,8 @@ const initPeer = async (mode, room = null) => {
         }
         return Math.random().toString(36).substring(2, 8).toUpperCase();
     };
-    roomCode = isHost ? getCode() : (room ? room.toUpperCase() : '');
+    const rawRoom = room || '';
+    roomCode = isHost ? getCode() : rawRoom.replace(/[ıİ]/g, 'I').replace(/i/g, 'I').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
     // Use a deterministic peer ID for the host so clients can find them easily
     myId = isHost ? `paira-chattabu-${roomCode}` : `client-${Math.random().toString(36).substring(2, 9)}`;
@@ -24,7 +25,13 @@ const initPeer = async (mode, room = null) => {
     return new Promise((resolve, reject) => {
         try {
             peer = new Peer(myId, {
-                debug: 2
+                host: '0.peerjs.com',
+                port: 443,
+                path: '/',
+                secure: true,
+                pingInterval: 5000,
+                config: window.PAIR_WEBRTC_CONFIG,
+                debug: 1
             });
         } catch (e) {
             reject(e);

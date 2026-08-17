@@ -427,8 +427,6 @@ window.PairaAudio = {
             osc.frequency.exponentialRampToValueAtTime(220, now + 0.5);
             gainNode.gain.setValueAtTime(0.0, now);
             gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-            osc.start(now); osc.stop(now + 1.0);
         } else if (type === 'pass') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, now);
@@ -436,7 +434,232 @@ window.PairaAudio = {
             gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
             osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'pop' || type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.08, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+            osc.start(now); osc.stop(now + 0.06);
+        } else if (type === 'celebrate') {
+            // Arpeggio chords
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const noteOsc = this.ctx.createOscillator();
+                const noteGain = this.ctx.createGain();
+                noteOsc.type = 'triangle';
+                noteOsc.frequency.setValueAtTime(freq, now + (i * 0.09));
+                noteGain.gain.setValueAtTime(0.0, now + (i * 0.09));
+                noteGain.gain.linearRampToValueAtTime(0.12, now + (i * 0.09) + 0.02);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.09) + 0.35);
+                noteOsc.connect(noteGain);
+                noteGain.connect(this.ctx.destination);
+                noteOsc.start(now + (i * 0.09));
+                noteOsc.stop(now + (i * 0.09) + 0.35);
+            });
         }
+    }
+};
+
+/**
+ * Modern Glassmorphism Confirmation Dialog replacing native confirm()
+ * Returns a Promise<boolean>
+ */
+window.pairaConfirm = function(options = {}) {
+    return new Promise((resolve) => {
+        const {
+            title = "Emin misiniz?",
+            message = "Bu işlemi onaylıyor musunuz?",
+            confirmText = "Evet",
+            cancelText = "Vazgeç",
+            confirmType = "danger", // danger, primary, warning
+            icon = "⚠️"
+        } = typeof options === 'string' ? { message: options } : options;
+
+        let overlay = document.getElementById('paira-modal-overlay');
+        if (overlay) overlay.remove();
+
+        overlay = document.createElement('div');
+        overlay.id = 'paira-modal-overlay';
+        overlay.className = 'paira-modal-overlay';
+
+        const btnClass = confirmType === 'danger' ? 'btn-danger' : (confirmType === 'warning' ? 'btn-warning' : 'btn-primary');
+        const iconClass = confirmType === 'danger' ? 'danger' : (confirmType === 'warning' ? 'warning' : 'success');
+
+        overlay.innerHTML = `
+            <div class="paira-modal-card">
+                <div class="paira-modal-icon ${iconClass}">
+                    ${icon}
+                </div>
+                <h3 class="paira-modal-title">${window.escapeHtml(title)}</h3>
+                <div class="paira-modal-body">${window.escapeHtml(message)}</div>
+                <div class="paira-modal-actions">
+                    <button id="paira-modal-cancel" class="btn btn-secondary">${window.escapeHtml(cancelText)}</button>
+                    <button id="paira-modal-confirm" class="btn ${btnClass}">${window.escapeHtml(confirmText)}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        // Force reflow for smooth animation
+        overlay.offsetHeight;
+        overlay.classList.add('active');
+
+        const close = (result) => {
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 260);
+            resolve(result);
+        };
+
+        const confirmBtn = overlay.querySelector('#paira-modal-confirm');
+        const cancelBtn = overlay.querySelector('#paira-modal-cancel');
+
+        confirmBtn.focus();
+        confirmBtn.addEventListener('click', () => close(true));
+        cancelBtn.addEventListener('click', () => close(false));
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close(false);
+        });
+
+        const keyHandler = (e) => {
+            if (e.key === 'Escape') {
+                document.removeEventListener('keydown', keyHandler);
+                close(false);
+            } else if (e.key === 'Enter') {
+                document.removeEventListener('keydown', keyHandler);
+                close(true);
+            }
+        };
+        document.addEventListener('keydown', keyHandler);
+    });
+};
+
+/**
+ * Modern Glassmorphism Alert Dialog replacing native alert()
+ */
+window.pairaAlert = function(options = {}) {
+    return new Promise((resolve) => {
+        const {
+            title = "Bilgilendirme",
+            message = "",
+            okText = "Tamam",
+            icon = "ℹ️"
+        } = typeof options === 'string' ? { message: options } : options;
+
+        let overlay = document.getElementById('paira-modal-overlay');
+        if (overlay) overlay.remove();
+
+        overlay = document.createElement('div');
+        overlay.id = 'paira-modal-overlay';
+        overlay.className = 'paira-modal-overlay';
+
+        overlay.innerHTML = `
+            <div class="paira-modal-card">
+                <div class="paira-modal-icon">
+                    ${icon}
+                </div>
+                <h3 class="paira-modal-title">${window.escapeHtml(title)}</h3>
+                <div class="paira-modal-body">${window.escapeHtml(message)}</div>
+                <div class="paira-modal-actions">
+                    <button id="paira-modal-ok" class="btn btn-primary btn-block">${window.escapeHtml(okText)}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        overlay.offsetHeight;
+        overlay.classList.add('active');
+
+        const close = () => {
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 260);
+            resolve(true);
+        };
+
+        const okBtn = overlay.querySelector('#paira-modal-ok');
+        okBtn.focus();
+        okBtn.addEventListener('click', close);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+    });
+};
+
+/**
+ * Universal Clipboard Copy Helper
+ */
+window.copyToClipboard = async function(text, successMsg = "Kopyalandı!") {
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+        window.showToast(successMsg, "success");
+        return true;
+    } catch (e) {
+        console.error("Clipboard copy failed", e);
+        window.showToast("Kopyalama başarısız oldu", "error");
+        return false;
+    }
+};
+
+/**
+ * Unified Room Code Eye Toggle & Copy Binder
+ */
+window.bindStandardLobbyCode = function(options = {}) {
+    const {
+        codeSpanId = 'display-room-code',
+        toggleBtnId = 'btn-toggle-code',
+        copyBtnId = 'btn-copy-room',
+        roomCode = ''
+    } = options;
+
+    const span = document.getElementById(codeSpanId);
+    const toggleBtn = document.getElementById(toggleBtnId);
+    const copyBtn = document.getElementById(copyBtnId);
+
+    if (span && roomCode) {
+        span.dataset.code = roomCode;
+    }
+
+    if (toggleBtn && span) {
+        toggleBtn.onclick = () => {
+            const currentCode = span.dataset.code || roomCode;
+            const eyeOpen = toggleBtn.querySelector('#icon-eye-open') || toggleBtn.querySelector('.icon-eye-open');
+            const eyeClosed = toggleBtn.querySelector('#icon-eye-closed') || toggleBtn.querySelector('.icon-eye-closed');
+
+            if (span.textContent.includes('•')) {
+                span.textContent = currentCode;
+                if (eyeOpen) eyeOpen.classList.remove('hidden');
+                if (eyeClosed) eyeClosed.classList.add('hidden');
+            } else {
+                span.textContent = '••••••••';
+                if (eyeOpen) eyeOpen.classList.add('hidden');
+                if (eyeClosed) eyeClosed.classList.remove('hidden');
+            }
+            if (window.PairaAudio) window.PairaAudio.play('pop');
+        };
+    }
+
+    if (copyBtn && span) {
+        copyBtn.onclick = () => {
+            const code = span.dataset.code || roomCode;
+            if (code) {
+                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            }
+        };
     }
 };
 

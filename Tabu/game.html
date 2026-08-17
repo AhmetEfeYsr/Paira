@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
     <title>Tabu Oyna | Paira Games - Ücretsiz Online Yasaklı Kelime Oyunu</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
-    <script src="../shared/shared.js"></script>
+    <script src="../shared/shared.js?v=2.0.0"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
+    <link rel="stylesheet" href="../shared/shared.css?v=2.0.0">
 
     <!-- Favicons -->
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
@@ -76,7 +79,13 @@
                         </div>
                     </div>
                     <div class="form-group" style="flex-grow: 1; display: flex; flex-direction: column; min-height: 0;">
-                        <label>Kategoriler</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <label style="margin: 0;">Kategoriler</label>
+                            <div style="display: flex; gap: 6px;">
+                                <button type="button" id="btn-select-all-cats" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">Tümünü Seç</button>
+                                <button type="button" id="btn-clear-cats" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">Temizle</button>
+                            </div>
+                        </div>
                         <div class="category-grid custom-scrollbar" id="category-selection" style="flex-grow: 1; margin-top: 8px;"><div style="color: var(--text-muted); font-size: 0.95rem; align-self: center; width: 100%; text-align: center;">Yükleniyor...</div></div>
                     </div>
                     <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; letter-spacing: 1px; display: flex; gap: 10px; align-items: center; justify-content: center;">
@@ -202,12 +211,12 @@
         <p>Arkadaş ortamlarının vazgeçilmezi olan bu oyun, hem kelime dağarcığını geliştirir hem de hızlı düşünme ve ekip çalışması yeteneklerini pekiştirir. Eğlenceli vakit geçirmek ve rekabetçi bir atmosfer yaratmak isteyenler için Tabu harika bir tercihtir. Sosyal etkileşimi artıran bu aktivite, army zamanda stratejik düşünmeyi de teşvik eder. Çünkü en zor kelimeleri bile en basit şekilde anlatabilmek için kelime haznenizi zorlamanız gerekir. Her yaştan oyuncunun keyifle katılabileceği bu dijital veya fiziksel oyun, boş zamanlarınızı değerlendirmenin en keyifli yollarından biridir. Unutmayın, önemli olan sadece anlatmak değil, yasaklara takılmadan en doğru ipuçlarını verebilmektir. Bu sayede hem eğlenebilir hem de zihinsel becerilerinizi keskinleştirirsiniz.</p>
     </div>
 
-    <script src="../shared/peer_manager.js?v=1.0.2"></script>
-    <script src="../shared/base_network.js?v=1.0.2"></script>
-    <script src="../shared/state_proxy.js?v=1.0.2"></script>
-    <script src="../shared/lobby_manager.js?v=1.0.2"></script>
-    <script src="game.js?v=1.0.2"></script>
-    <script src="network.js?v=1.0.2"></script>
+    <script src="../shared/peer_manager.js?v=2.0.0"></script>
+    <script src="../shared/base_network.js?v=2.0.0"></script>
+    <script src="../shared/state_proxy.js?v=2.0.0"></script>
+    <script src="../shared/lobby_manager.js?v=2.0.0"></script>
+    <script src="game.js?v=2.0.0"></script>
+    <script src="network.js?v=2.0.0"></script>
 
 </body>
 </html>

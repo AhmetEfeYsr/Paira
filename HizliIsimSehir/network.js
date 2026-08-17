@@ -191,12 +191,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const network = new HizliIsimSehirNetwork(engine, view);
+    window.gameEngine = engine;
+    window.gameNetwork = network;
     
     // Setup Timer Sync Hook
     let forceTurnTimeout = null;
     if (isHost) {
         engine.onStateChange = (state) => {
-            view.updateGameUI(state);
+            if (state.status === 'LOBBY') {
+                if (network.lobbyUI) network.lobbyUI.renderPlayers(state.players, network.myId);
+            } else {
+                view.updateGameUI(state);
+            }
             network.broadcastState({ state: state });
             
             if (forceTurnTimeout) {

@@ -152,16 +152,37 @@
 
             <div class="play-area"
                 style="max-width: 950px; width: 95%; margin: 0 auto; padding: 1rem; display: flex; flex-direction: column; flex: 1;">
-                <!-- Input Area -->
-                <div class="guess-input-wrapper">
+                <!-- Input Area with Clear button -->
+                <div class="guess-input-wrapper" style="position: relative;">
                     <input type="text" id="word-input" placeholder="Bir kelime girin..." autocomplete="off">
+                    <button id="btn-clear-input" class="input-clear-btn hidden" title="Temizle" type="button">&times;</button>
                     <button id="btn-guess" class="btn btn-primary">Tahmin Et</button>
+                </div>
+
+                <!-- Best Guess Tracker Widget -->
+                <div id="best-guess-widget" class="best-guess-widget hidden">
+                    <div class="bgw-left">
+                        <span class="bgw-icon">🏆</span>
+                        <div class="bgw-info">
+                            <span class="bgw-label">En Yakın Tahmin</span>
+                            <strong id="best-guess-word" class="bgw-word">...</strong>
+                        </div>
+                    </div>
+                    <div class="bgw-right">
+                        <span id="best-guess-rank" class="bgw-rank">#--</span>
+                        <div class="bgw-bar-container">
+                            <div id="best-guess-bar" class="bgw-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Feedback / Success Message -->
                 <div id="success-message" class="hidden success-banner">
                     <h2 style="margin:0;">Tebrikler! 🎉</h2>
                     <p>Günün kelimesini <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
+                        <button id="btn-share-result" class="btn btn-primary btn-sm">📋 Sonucu Kopyala & Paylaş</button>
+                    </div>
                 </div>
 
                 <!-- History List -->
@@ -177,6 +198,24 @@
             </div>
         </section>
     </main>
+
+    <!-- VICTORY CELEBRATION MODAL -->
+    <div id="victory-modal" class="paira-modal-overlay">
+        <div class="paira-modal-card">
+            <div class="paira-modal-icon success">🎉</div>
+            <h3 class="paira-modal-title">Harika İş! Kelimeyi Buldun!</h3>
+            <div class="paira-modal-body">
+                <div id="victory-target-word" style="font-size: 1.6rem; font-weight: 800; color: var(--neon-purple); margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">HEDEF</div>
+                <p style="margin-bottom: 0.5rem;">Gizli kelimeye <strong><span id="modal-guess-count">0</span></strong> tahminde ulaştın!</p>
+                <div id="modal-hint-stat" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"></div>
+                <div id="victory-emoji-preview" style="background: var(--code-bg); padding: 10px; border-radius: 10px; font-size: 1.1rem; line-height: 1.4; margin-bottom: 1rem; user-select: all;"></div>
+            </div>
+            <div class="paira-modal-actions" style="flex-direction: column; width: 100%;">
+                <button id="btn-modal-share" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.05rem;">📋 Sonucu Kopyala & Paylaş</button>
+                <button id="btn-modal-close" class="btn btn-secondary btn-block" style="padding: 10px;">Kapat</button>
+            </div>
+        </div>
+    </div>
 
     <div class="game-seo-info">
         <h2>Bağnam: Türkçe Anlamsal Kelime Bulmaca Deneyimi</h2>

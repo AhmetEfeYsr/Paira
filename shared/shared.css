@@ -1446,3 +1446,157 @@ body.fullscreen-active .leaderboard {
     fill: none;
 }
 
+/* ==========================================================================
+   Paira Modern Modal & Confirm System
+   ========================================================================== */
+.paira-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(8, 6, 20, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s;
+}
+
+.paira-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.paira-modal-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--lilac-muted);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px var(--neon-glow-rgba);
+    text-align: center;
+    position: relative;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.paira-modal-overlay.active .paira-modal-card {
+    transform: scale(1) translateY(0);
+}
+
+.paira-modal-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.8rem;
+    background: rgba(var(--primary-rgb), 0.15);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 20px var(--neon-glow-rgba);
+}
+
+.paira-modal-icon.danger {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    color: var(--danger);
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+}
+
+.paira-modal-icon.warning {
+    background: var(--warning-bg);
+    border-color: var(--warning);
+    color: var(--warning);
+    box-shadow: 0 0 20px rgba(241, 196, 15, 0.4);
+}
+
+.paira-modal-icon.success {
+    background: var(--success-bg);
+    border-color: var(--success);
+    color: var(--success);
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+}
+
+.paira-modal-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 0.6rem 0;
+    line-height: 1.3;
+}
+
+.paira-modal-body {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 1.75rem;
+}
+
+.paira-modal-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+}
+
+.paira-modal-actions .btn {
+    flex: 1;
+    padding: 12px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    margin: 0;
+}
+
+/* Micro pulse for timer warning */
+@keyframes timerUrgent {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 5px var(--danger); }
+    50% { transform: scale(1.1); text-shadow: 0 0 18px var(--danger); }
+}
+
+.timer-pulse-urgent {
+    animation: timerUrgent 0.6s infinite ease-in-out !important;
+    color: var(--danger) !important;
+}
+
+/* Common Room Code & Icon Button Helpers */
+.paira-icon-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--btn-secondary-bg);
+    border: 1px solid var(--btn-secondary-border);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.paira-icon-btn:hover {
+    background: var(--btn-secondary-hover);
+    border-color: var(--neon-purple);
+    transform: scale(1.05);
+}
+
+.paira-icon-btn:active {
+    transform: scale(0.95);
+}
+
+

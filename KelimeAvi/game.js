@@ -80,7 +80,7 @@ class KelimeAviGameEngine {
         }
     }
 
-    startGame(settings) {
+    startGame(settings = {}) {
         if (!this.isHost) return false;
         const playerIds = Object.keys(this.state.players).filter(id => !this.state.players[id].disconnected);
         if (playerIds.length < 3) return false;
@@ -283,15 +283,13 @@ class KelimeAviGameEngine {
                 wordPeerMap[cleanWord].push(peerId);
             }
 
-            // Find match (word chosen by >= 2 masums)
+            // Find match (word chosen by >= 2 masums, prioritize highest consensus)
             let matchedWord = null;
             let matchedPeers = [];
-            for (let [w, count] of Object.entries(wordCounts)) {
-                if (count >= 2) {
-                    matchedWord = w;
-                    matchedPeers = wordPeerMap[w];
-                    break;
-                }
+            const sortedMatches = Object.entries(wordCounts).filter(([w, c]) => c >= 2).sort((a, b) => b[1] - a[1]);
+            if (sortedMatches.length > 0) {
+                matchedWord = sortedMatches[0][0];
+                matchedPeers = wordPeerMap[matchedWord] || [];
             }
 
             if (matchedWord) {
@@ -464,6 +462,56 @@ class KelimeAviView {
     }
 
     bindEvents() {
+        document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Lobiden Ayrıl",
+                message: "Lobiden ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Kal",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
+            const confirmed = await window.pairaConfirm({
+                title: "Oyundan Ayrıl",
+                message: "Devam eden oyundan ayrılmak istediğinize emin misiniz?",
+                confirmText: "Ayrıl",
+                cancelText: "Oyuna Dön",
+                confirmType: "danger"
+            });
+            if (confirmed) window.location.href = 'index.html';
+        });
+
+        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
+            const code = document.getElementById('display-room-code')?.dataset.code;
+            if (code) {
+                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            }
+        });
+
+        const toggleCodeBtn = document.getElementById('btn-toggle-code');
+        if (toggleCodeBtn) {
+            toggleCodeBtn.addEventListener('click', () => {
+                const display = document.getElementById('display-room-code');
+                const eyeOpen = document.getElementById('icon-eye-open');
+                const eyeClosed = document.getElementById('icon-eye-closed');
+                const code = display ? display.dataset.code : '';
+                
+                if (display && display.textContent.includes('•')) {
+                    display.textContent = code;
+                    eyeOpen?.classList.remove('hidden');
+                    eyeClosed?.classList.add('hidden');
+                } else if (display) {
+                    display.textContent = '••••••••';
+                    eyeOpen?.classList.add('hidden');
+                    eyeClosed?.classList.remove('hidden');
+                }
+                if (window.PairaAudio) window.PairaAudio.play('pop');
+            });
+        }
+
         document.getElementById('btn-start-game')?.addEventListener('click', () => {
             const settings = {
                 turnDuration: document.getElementById('turn-duration')?.value,
