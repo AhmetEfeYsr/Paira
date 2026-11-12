@@ -11,7 +11,7 @@
 }
 
 .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%; margin-top: 1rem; }
-.choice-btn { touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.choice-btn { touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 600px) {
     .choices-grid { grid-template-columns: 1fr !important; gap: 0.6rem !important; }

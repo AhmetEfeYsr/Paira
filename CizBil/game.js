@@ -22,10 +22,27 @@ class CizBilGameEngine {
         this.onSound = null;
 
         this.turnTimeout = null;
+        this.wordChoiceTimeout = null;
+        this.roundEndTimeout = null;
         this.localTurnEndTime = 0;
         this.renderFrame = null;
+        this.bgTimerInterval = null;
         this.lastTickSec = -1;
+        this.lastReportedSec = -1;
         this.fuzzyMatcher = new window.FuzzyMatcher();
+    }
+
+    stopTimers() {
+        clearTimeout(this.turnTimeout);
+        clearTimeout(this.wordChoiceTimeout);
+        clearTimeout(this.roundEndTimeout);
+        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
+        if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
+        this.turnTimeout = null;
+        this.wordChoiceTimeout = null;
+        this.roundEndTimeout = null;
+        this.renderFrame = null;
+        this.bgTimerInterval = null;
     }
 
     setState(newState) {
@@ -40,29 +57,39 @@ class CizBilGameEngine {
 
     removePlayer(id) {
         delete this.state.players[id];
+        if (Array.isArray(this.state.guessedCorrectly)) {
+            this.state.guessedCorrectly = this.state.guessedCorrectly.filter(gid => gid !== id);
+        }
         this.setState({ players: this.state.players });
 
-        if (this.isHost && this.state.status === 'playing') {
+        if (this.isHost && (this.state.status === 'playing' || this.state.status === 'round_end')) {
             if (Object.keys(this.state.players).length < 2) {
                 this.endGame();
-            } else if (this.state.currentDrawer === id) {
-                this.checkWinOrNextRound(); // Drawer left, skip turn
-            } else {
-                this.checkAllGuessed();
+            } else if (this.state.status === 'playing') {
+                if (this.state.currentDrawer === id) {
+                    this.checkWinOrNextRound(); // Drawer left, skip turn
+                } else {
+                    this.checkAllGuessed();
+                }
             }
         }
     }
 
     startGame(settings = {}) {
-        if (!this.isHost) return;
+        if (!this.isHost) return false;
         if (Object.keys(this.state.players).length < 2) return false;
 
-        this.state.targetScore = parseInt(settings.targetScore) || 50;
-        this.state.turnDuration = parseInt(settings.turnDuration) || 60;
+        this.stopTimers();
+        this.state.targetScore = Math.max(10, parseInt(settings.targetScore) || 50);
+        this.state.turnDuration = Math.max(15, parseInt(settings.turnDuration) || 60);
+        this.state.currentDrawer = null;
         
-        if (window.cizbilWords) {
+        if (window.cizbilWords && window.cizbilWords.length > 0) {
             this.state.wordsLeft = [...window.cizbilWords];
-            this.state.wordsLeft.sort(() => Math.random() - 0.5);
+            for (let i = this.state.wordsLeft.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.state.wordsLeft[i], this.state.wordsLeft[j]] = [this.state.wordsLeft[j], this.state.wordsLeft[i]];
+            }
         } else {
             this.state.wordsLeft = ["ELMA", "ARMUT", "ARABA", "TELEFON", "EV"];
         }
@@ -76,7 +103,7 @@ class CizBilGameEngine {
 
     startRound() {
         if (!this.isHost) return;
-        clearTimeout(this.wordChoiceTimeout);
+        this.stopTimers();
 
         const activePlayers = Object.keys(this.state.players);
         if (activePlayers.length < 2) {
@@ -90,12 +117,17 @@ class CizBilGameEngine {
         this._timerShortened = false; // Reset timer shortened flag for new round
         this.state.guessedCorrectly = [];
         this.state.revealWord = null;
+        this.state.status = 'playing';
 
         if (this.state.wordsLeft.length < 2) {
-             if (window.cizbilWords) {
-                 this.state.wordsLeft = [...window.cizbilWords].sort(() => Math.random() - 0.5);
+             if (window.cizbilWords && window.cizbilWords.length > 0) {
+                 this.state.wordsLeft = [...window.cizbilWords];
+                 for (let i = this.state.wordsLeft.length - 1; i > 0; i--) {
+                     const j = Math.floor(Math.random() * (i + 1));
+                     [this.state.wordsLeft[i], this.state.wordsLeft[j]] = [this.state.wordsLeft[j], this.state.wordsLeft[i]];
+                 }
              } else {
-                 this.state.wordsLeft = ["YEDEK1", "YEDEK2"];
+                 this.state.wordsLeft = ["ELMA", "ARABA"];
              }
         }
 
@@ -106,6 +138,7 @@ class CizBilGameEngine {
         this.state.choices = [word1, word2];
         
         this.setState(this.state);
+        if (this.onTimerTick) this.onTimerTick(this.state.turnDuration);
 
         // FIX: Auto-choose word if drawer doesn't pick in 15 seconds
         this.wordChoiceTimeout = setTimeout(() => {
@@ -116,14 +149,16 @@ class CizBilGameEngine {
     }
 
     officialStartRound(chosenWord) {
-        if (!this.isHost) return;
+        if (!this.isHost || !this.state.choices) return;
         clearTimeout(this.wordChoiceTimeout);
         
-        this.state.currentWord = chosenWord;
+        const validWord = this.state.choices.includes(chosenWord) ? chosenWord : this.state.choices[0];
+        this.state.currentWord = validWord;
         this.state.choices = null;
         
         this.localTurnEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
         this.lastTickSec = -1;
+        this.lastReportedSec = -1;
         
         this.setState(this.state);
         this.startRenderTimer();
@@ -140,10 +175,15 @@ class CizBilGameEngine {
         const cleanTarget = target.toLocaleLowerCase('tr-TR').trim();
         if (cleanGuess === cleanTarget) return true;
 
+        const normGuess = window.normalizeTurkishChars ? window.normalizeTurkishChars(cleanGuess) : cleanGuess;
+        const normTarget = window.normalizeTurkishChars ? window.normalizeTurkishChars(cleanTarget) : cleanTarget;
+        if (normGuess === normTarget) return true;
+
         if (this.fuzzyMatcher) {
-            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, 1.2); // Standard drawing match tolerance
+            const tolerance = normTarget.length <= 3 ? 0 : (normTarget.length === 4 ? 0.5 : 1.2);
+            return this.fuzzyMatcher.isMatch(normGuess, normTarget, tolerance);
         }
-        return cleanGuess === cleanTarget;
+        return false;
     }
 
     handleGuess(senderId, text) {
@@ -186,18 +226,22 @@ class CizBilGameEngine {
             this.checkWinOrNextRound();
         } else if (this.state.guessedCorrectly.length === 1 && activeGuessersCount > 1 && !this._timerShortened) {
             this._timerShortened = true;
-            clearTimeout(this.turnTimeout);
-            this.localTurnEndTime = window.PairaTime.now() + 10000;
-            this.setState(this.state);
-            this.turnTimeout = setTimeout(() => {
-                this.checkWinOrNextRound();
-            }, 10000);
+            const remainingMs = this.localTurnEndTime - window.PairaTime.now();
+            if (remainingMs > 10000) {
+                clearTimeout(this.turnTimeout);
+                this.localTurnEndTime = window.PairaTime.now() + 10000;
+                this.lastReportedSec = -1;
+                this.setState(this.state);
+                this.turnTimeout = setTimeout(() => {
+                    this.checkWinOrNextRound();
+                }, 10000);
+            }
         }
     }
 
     checkWinOrNextRound() {
         if (!this.isHost) return;
-        clearTimeout(this.turnTimeout);
+        this.stopTimers();
 
         let winner = null;
         Object.values(this.state.players).forEach(p => {
@@ -212,13 +256,14 @@ class CizBilGameEngine {
             this.state.status = 'round_end';
             this.state.revealWord = this.state.currentWord;
             this.setState(this.state);
-            setTimeout(() => {
-                if(this.state.status !== 'ended') this.startRound();
+            this.roundEndTimeout = setTimeout(() => {
+                if (this.state.status === 'round_end') this.startRound();
             }, 4000);
         }
     }
 
     endGame() {
+        this.stopTimers();
         this.state.status = 'ended';
         this.state.revealWord = this.state.currentWord;
         this.setState(this.state);
@@ -226,7 +271,13 @@ class CizBilGameEngine {
     }
 
     backToLobby() {
+        this.stopTimers();
         this.state.status = 'lobby';
+        this.state.currentDrawer = null;
+        this.state.currentWord = '';
+        this.state.choices = null;
+        this.state.revealWord = null;
+        this.state.guessedCorrectly = [];
         Object.keys(this.state.players).forEach(pId => this.state.players[pId].score = 0);
         this.setState(this.state);
     }
@@ -241,7 +292,10 @@ class CizBilGameEngine {
             const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
             const secs = Math.ceil(left / 1000);
             
-            if (this.onTimerTick) this.onTimerTick(secs);
+            if (secs !== this.lastReportedSec) {
+                this.lastReportedSec = secs;
+                if (this.onTimerTick) this.onTimerTick(secs);
+            }
 
             if (secs <= 5 && secs > 0 && this.lastTickSec !== secs) {
                 if (this.onSound) this.onSound('tick');
@@ -298,6 +352,11 @@ class CizBilView {
     }
 
     bindEvents() {
+        const doLeave = () => {
+            if (this.callbacks.onLeaveRoom) this.callbacks.onLeaveRoom();
+            else window.location.href = 'index.html';
+        };
+
         document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
             const confirmed = await window.pairaConfirm({
                 title: "Lobiden Ayrıl",
@@ -306,7 +365,7 @@ class CizBilView {
                 cancelText: "Kal",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) doLeave();
         });
 
         document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -317,7 +376,7 @@ class CizBilView {
                 cancelText: "Oyuna Dön",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) doLeave();
         });
 
         document.getElementById('btn-leave')?.addEventListener('click', async () => {
@@ -328,36 +387,8 @@ class CizBilView {
                 cancelText: "Kal",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) doLeave();
         });
-
-        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-            const code = document.getElementById('display-room-code')?.dataset.code;
-            if (code) {
-                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
-            }
-        });
-
-        const toggleCodeBtn = document.getElementById('btn-toggle-code');
-        if (toggleCodeBtn) {
-            toggleCodeBtn.addEventListener('click', () => {
-                const display = document.getElementById('display-room-code');
-                const eyeOpen = document.getElementById('icon-eye-open');
-                const eyeClosed = document.getElementById('icon-eye-closed');
-                const code = display ? display.dataset.code : '';
-                
-                if (display && display.textContent.includes('•')) {
-                    display.textContent = code;
-                    eyeOpen?.classList.remove('hidden');
-                    eyeClosed?.classList.add('hidden');
-                } else if (display) {
-                    display.textContent = '••••••••';
-                    eyeOpen?.classList.add('hidden');
-                    eyeClosed?.classList.remove('hidden');
-                }
-                if (window.PairaAudio) window.PairaAudio.play('pop');
-            });
-        }
 
         document.getElementById('btn-start-game')?.addEventListener('click', () => {
             const settings = {
@@ -402,6 +433,9 @@ class CizBilView {
             } else {
                 overlay.style.display = 'block';
             }
+            if (this.drawingBoard && (this.drawingBoard.canvas.width === 0 || this.drawingBoard.canvas.height === 0)) {
+                this.drawingBoard.resize();
+            }
             return;
         }
         this.isUIInitialized = true;
@@ -418,23 +452,40 @@ class CizBilView {
         });
 
         const overlay = document.getElementById('canvas-overlay');
+        if (currentDrawer === this.myId) {
+            overlay.style.display = 'none';
+        } else {
+            overlay.style.display = 'block';
+        }
         overlay.addEventListener('mousedown', (e) => { e.stopPropagation(); }, true);
         overlay.addEventListener('touchstart', (e) => { e.stopPropagation(); }, {passive: false, capture: true});
 
         const bindInteraction = (el, handler) => {
+            if (!el) return;
             el.addEventListener('pointerdown', (e) => { e.preventDefault(); handler(e); });
-            el.addEventListener('click', (e) => { e.preventDefault(); handler(e); });
+            el.addEventListener('click', (e) => { e.preventDefault(); if (e.detail !== 0) return; handler(e); });
             el.style.touchAction = 'none';
         };
 
-        document.querySelectorAll('.color-swatch').forEach(swatch => {
+        document.querySelectorAll('.color-swatch:not(.custom-color-btn)').forEach(swatch => {
             bindInteraction(swatch, (e) => {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 const target = e.target.closest('.color-swatch');
                 target.classList.add('active');
                 this.drawingBoard.setColor(target.dataset.color);
-                if (target.dataset.color === '#ffffff') this.drawingBoard.setTool('eraser');
-                else this.drawingBoard.setTool('brush');
+                if (target.dataset.color === '#ffffff') {
+                    this.drawingBoard.setTool('eraser');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                } else {
+                    const currentToolBtn = document.querySelector('.tool-btn.active');
+                    if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                        this.drawingBoard.setTool('brush');
+                        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                        document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+                    } else {
+                        this.drawingBoard.setTool(currentToolBtn.dataset.tool);
+                    }
+                }
             });
         });
 
@@ -453,6 +504,12 @@ class CizBilView {
                 const target = e.target.closest('.tool-btn');
                 target.classList.add('active');
                 this.drawingBoard.setTool(target.dataset.tool);
+                if (target.dataset.tool !== 'eraser') {
+                    const activeSwatch = document.querySelector('.color-swatch.active');
+                    if (activeSwatch && activeSwatch.dataset.color === '#ffffff') {
+                        document.querySelector('.color-swatch[data-color="#000000"]')?.click();
+                    }
+                }
             });
         });
 
@@ -478,7 +535,12 @@ class CizBilView {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 customColorBtn.classList.add('active');
                 this.drawingBoard.setColor(newColor);
-                this.drawingBoard.setTool('brush');
+                const currentToolBtn = document.querySelector('.tool-btn.active');
+                if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                    this.drawingBoard.setTool('brush');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+                }
             });
             customColorInput.addEventListener('pointerdown', e => {
                 e.stopPropagation();
@@ -486,7 +548,12 @@ class CizBilView {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 customColorBtn.classList.add('active');
                 this.drawingBoard.setColor(newColor);
-                this.drawingBoard.setTool('brush');
+                const currentToolBtn = document.querySelector('.tool-btn.active');
+                if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                    this.drawingBoard.setTool('brush');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+                }
             });
             customColorInput.addEventListener('click', e => e.stopPropagation());
         }
@@ -525,19 +592,31 @@ class CizBilView {
     }
 
     updateUI(state, isHost) {
+        const prevStatus = this._lastStatus;
+        this._lastStatus = state.status;
+
         if (state.status === 'lobby') {
             window.showScreen('lobby-screen');
+            if (prevStatus && prevStatus !== 'lobby') {
+                const container = document.getElementById('messages-container');
+                if (container) container.innerHTML = '';
+            }
         } else if (state.status === 'playing' || state.status === 'round_end') {
             window.showScreen('game-screen');
             this.updateGameUI(state);
         } else if (state.status === 'ended') {
             window.showScreen('winner-screen');
-            this.updateWinnerUI(state);
+            this.updateWinnerUI(state, isHost);
         }
     }
 
     updateGameUI(state) {
         this.initCanvas(state.currentDrawer);
+        if (this.drawingBoard) {
+            const canDraw = (state.status === 'playing' && state.currentDrawer === this.myId && !state.choices);
+            this.drawingBoard.readOnly = !canDraw;
+            this.drawingBoard.updateCursor();
+        }
         
         const drawerName = state.players[state.currentDrawer]?.name || '...';
         document.getElementById('current-drawer').textContent = drawerName;
@@ -591,11 +670,15 @@ class CizBilView {
                 wordEl.textContent = state.currentWord;
             }
         } else {
-            msgEl.textContent = 'Tahmin Et!';
+            const alreadyGuessed = Array.isArray(state.guessedCorrectly) && state.guessedCorrectly.includes(this.myId);
+            msgEl.textContent = alreadyGuessed ? 'Doğru Bildin! 🎉' : 'Tahmin Et!';
             document.getElementById('toolbar').style.display = 'none';
             document.getElementById('canvas-overlay').style.display = 'block';
             // Enable chat for guessers
-            if (chatInput) { chatInput.disabled = false; chatInput.placeholder = 'Tahmin yaz...'; }
+            if (chatInput) {
+                chatInput.disabled = false;
+                chatInput.placeholder = alreadyGuessed ? 'Doğru bildin! Sohbet edebilirsin...' : 'Tahmin yaz...';
+            }
             if (btnSendChat) btnSendChat.disabled = false;
             document.getElementById('word-choice-overlay').style.display = 'none';
 
@@ -608,7 +691,7 @@ class CizBilView {
         }
     }
 
-    updateWinnerUI(state) {
+    updateWinnerUI(state, isHost) {
         const finalScores = document.getElementById('final-scores');
         finalScores.innerHTML = '';
         const sorted = Object.values(state.players).sort((a,b) => b.score - a.score);
@@ -622,6 +705,19 @@ class CizBilView {
             div.innerHTML = `<span>${index + 1}. ${window.escapeHtml(p.name)}</span> <strong style="color:var(--neon-purple);">${p.score} Puan</strong>`;
             finalScores.appendChild(div);
         });
+
+        const btnBack = document.getElementById('btn-back-to-lobby');
+        if (btnBack) {
+            if (isHost) {
+                btnBack.disabled = false;
+                btnBack.classList.remove('disabled');
+                btnBack.textContent = 'Lobiye Dön';
+            } else {
+                btnBack.disabled = true;
+                btnBack.classList.add('disabled');
+                btnBack.textContent = 'Kurucunun Lobiye Dönmesi Bekleniyor...';
+            }
+        }
     }
 
     updateTimer(secs) {

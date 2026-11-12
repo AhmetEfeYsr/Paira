@@ -21,10 +21,21 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
             onKickPlayer: (id) => this.kickPlayer(id)
         });
 
+        let inPeerReady = false;
         this.onPeerReady = (id) => {
-            this.view.setMyId(id);
-            const codeToSet = this.isHostNode ? id : this.roomCode;
-            this.lobbyUI.setRoomCode(codeToSet);
+            if (inPeerReady) return;
+            inPeerReady = true;
+            try {
+                super._handlePeerReady(id);
+                this.view.setMyId(id);
+                const codeToSet = this.isHostNode ? id : this.roomCode;
+                this.lobbyUI.setRoomCode(codeToSet);
+                if (this.isHostNode && this.engine && this.engine.state) {
+                    this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+                }
+            } finally {
+                inPeerReady = false;
+            }
         };
 
         if (this.isHostNode) {
@@ -59,7 +70,7 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
                 this.view.updateTimer(secs);
                 if (lastSyncSec !== secs) {
                     lastSyncSec = secs;
-                    if (secs % 5 === 0 || secs <= 5) {
+                    if (secs === this.engine.state.turnDuration || secs % 5 === 0 || secs <= 5) {
                         const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
                         this.broadcast('SYNC_TIME', { durationLeft });
                     }
@@ -71,6 +82,10 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
                 this.broadcast('PLAY_SOUND', { sound });
             };
         }
+
+        window.addEventListener('beforeunload', () => {
+            this.leaveRoom();
+        });
     }
 
     handleStateSync(data) {

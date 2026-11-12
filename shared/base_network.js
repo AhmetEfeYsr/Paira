@@ -13,13 +13,13 @@ class BaseGameNetwork extends window.PeerNetworkManager {
      */
     constructor(options = {}) {
         const isHost = sessionStorage.getItem('isHost') === 'true';
-        
+
         super({
             isHost: isHost,
-            onPeerReady: (id) => this._handlePeerReady(id),
+            onPeerReady: options.onPeerReady || null,
             onConnection: (peerId, conn) => this._handleConnection(peerId, conn),
             onDataReceived: (action, payload, senderId) => this._handleDataReceived(action, payload, senderId),
-            onDisconnection: (peerId) => this._handleDisconnection(peerId),
+            onDisconnection: options.onDisconnection || null,
             onError: (err) => this._handleError(err)
         });
 
@@ -28,10 +28,15 @@ class BaseGameNetwork extends window.PeerNetworkManager {
         this.isHostNode = isHost;
         this.myId = null;
 
-        this.onStateSync = options.onStateSync || null;
-        this.onPlayerJoin = options.onPlayerJoin || null;
-        this.onPlayerLeave = options.onPlayerLeave || null;
-        this.onAction = options.onAction || null;
+        this.onStateSync = options.onStateSync || this.onStateSync || null;
+        this.onPlayerJoin = options.onPlayerJoin || this.onPlayerJoin || null;
+        this.onPlayerLeave = options.onPlayerLeave || this.onPlayerLeave || null;
+        this.onAction = options.onAction || this.onAction || null;
+
+        this._joinedPeers = new Set();
+        this._isLeaving = false;
+        this._inHandlePeerReady = false;
+        this._joinInterval = null;
     }
 
     /**
@@ -89,18 +94,28 @@ class BaseGameNetwork extends window.PeerNetworkManager {
     }
 
     _handlePeerReady(id) {
-        const oldId = this.myId || sessionStorage.getItem('lastMyId');
-        this.myId = id;
-        sessionStorage.setItem('myId', id);
-        sessionStorage.setItem('lastMyId', id);
-        
-        if (typeof this.onPeerReady === 'function' && this.onPeerReady !== this._handlePeerReady) {
-            try { this.onPeerReady(id); } catch(e) { console.error("onPeerReady callback error:", e); }
-        }
+        if (this._inHandlePeerReady) return;
+        this._inHandlePeerReady = true;
+        try {
+            const oldId = this.myId || sessionStorage.getItem('lastMyId');
+            this.myId = id;
+            sessionStorage.setItem('myId', id);
+            sessionStorage.setItem('lastMyId', id);
+            if (this.isHostNode) {
+                this.roomCode = id;
+                sessionStorage.setItem('roomCode', id);
+            }
 
-        // Let the game know we are ready with actual PeerJS ID
-        if (this.onPlayerJoin && this.isHostNode) {
-            this.onPlayerJoin(id, { name: this.myName, isHost: true, oldId: oldId });
+            if (typeof this.onPeerReady === 'function' && this.onPeerReady !== this._handlePeerReady) {
+                try { this.onPeerReady(id); } catch(e) { console.error("onPeerReady callback error:", e); }
+            }
+
+            // Let the game know we are ready with actual PeerJS ID
+            if (this.onPlayerJoin && this.isHostNode) {
+                this.onPlayerJoin(id, { name: this.myName, isHost: true, oldId: oldId });
+            }
+        } finally {
+            this._inHandlePeerReady = false;
         }
     }
 
@@ -113,7 +128,10 @@ class BaseGameNetwork extends window.PeerNetworkManager {
 
     _handleDataReceived(action, payload, senderId) {
         if (action === 'JOIN' && this.isHostNode) {
-            if (this.onPlayerJoin) this.onPlayerJoin(senderId, payload);
+            if (!this._joinedPeers.has(senderId)) {
+                this._joinedPeers.add(senderId);
+                if (this.onPlayerJoin) this.onPlayerJoin(senderId, payload);
+            }
             // Immediately send ACK back so client knows host registered them
             this.sendToPeer(senderId, 'JOIN_ACK', { success: true });
             if (this.broadcastState) {
@@ -125,7 +143,7 @@ class BaseGameNetwork extends window.PeerNetworkManager {
             if (this._joinInterval) clearInterval(this._joinInterval);
         }
         else if (action === 'LEAVE' && this.isHostNode) {
-            if (this.onPlayerLeave) this.onPlayerLeave(senderId);
+            this._handleDisconnection(senderId);
         }
         else if (action === 'SYNC' && !this.isHostNode) {
             this._joinHandshakeComplete = true;
@@ -133,10 +151,12 @@ class BaseGameNetwork extends window.PeerNetworkManager {
             if (this.onStateSync) this.onStateSync(payload);
         }
         else if (action === 'KICKED' && !this.isHostNode) {
+            this._isLeaving = true;
             if (window.showToast) window.showToast("Odadan atıldınız.", "error");
             setTimeout(() => this.leaveRoom(), 2000);
         }
         else if (action === 'HOST_LEAVE' && !this.isHostNode) {
+            this._isLeaving = true;
             if (window.showToast) window.showToast("Kurucu odadan ayrıldı.", "warning");
             setTimeout(() => this.leaveRoom(), 2000);
         }
@@ -146,11 +166,14 @@ class BaseGameNetwork extends window.PeerNetworkManager {
     }
 
     _handleDisconnection(peerId) {
+        const hadConnection = Boolean(this.connections[peerId]) || (this._joinedPeers && this._joinedPeers.has(peerId));
+        if (this._joinedPeers) this._joinedPeers.delete(peerId);
         super._handleDisconnection(peerId);
-        
+
         if (this.isHostNode) {
-            if (this.onPlayerLeave) this.onPlayerLeave(peerId);
-        } else if (peerId === this.roomCode) {
+            if (hadConnection && this.onPlayerLeave) this.onPlayerLeave(peerId);
+        } else if (peerId === this.roomCode && !this._isLeaving) {
+            this._isLeaving = true;
             if (window.showToast) window.showToast("Kurucu ile bağlantı koptu, lobiye dönülüyor...", "error");
             setTimeout(() => this.leaveRoom(), 2000);
         }
@@ -172,6 +195,8 @@ class BaseGameNetwork extends window.PeerNetworkManager {
      */
     broadcastState(state) {
         if (!this.isHostNode) return;
+        // Argümansız çağrılarda (ör. JOIN sonrası) boş SYNC göndermeyi engelle
+        if (state === undefined || state === null) return;
         this.broadcast('SYNC', state);
     }
 
@@ -192,6 +217,11 @@ class BaseGameNetwork extends window.PeerNetworkManager {
      * Handles completely disconnecting and returning to index.
      */
     leaveRoom() {
+        this._isLeaving = true;
+        if (this._joinInterval) {
+            clearInterval(this._joinInterval);
+            this._joinInterval = null;
+        }
         if (this.isHostNode) {
             this.broadcast('HOST_LEAVE');
         } else if (this.roomCode) {

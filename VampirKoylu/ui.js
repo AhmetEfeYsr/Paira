@@ -67,7 +67,10 @@ function setupUI() {
             cancelText: "Kal",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) {
+            if (network && typeof network.leaveRoom === 'function') network.leaveRoom();
+            else window.location.href = 'index.html';
+        }
     });
 
     document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -78,7 +81,10 @@ function setupUI() {
             cancelText: "Oyuna Dön",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) {
+            if (network && typeof network.leaveRoom === 'function') network.leaveRoom();
+            else window.location.href = 'index.html';
+        }
     });
 
     els.lobby.btnToggleCode.addEventListener('click', () => {
@@ -194,12 +200,17 @@ function setupUI() {
     });
 }
 
+let _lastRenderedPhaseKey = null;
+let _actionSubmittedForPhase = null;
+
 function showWaitingActionPanel() {
+    _actionSubmittedForPhase = _lastRenderedPhaseKey;
     els.game.actionTitle.textContent = "Diğer oyuncular bekleniyor...";
     els.game.actionPlayers.style.display = 'none';
     els.game.btnSkip.classList.add('hidden');
     els.game.btnConfirm.classList.add('hidden');
     // Ensure the panel is centered and visible
+    els.game.actionPanel.classList.remove('hidden');
     els.game.actionPanel.style.left = '50%';
     els.game.actionPanel.style.top = '50%';
     els.game.actionPanel.style.display = 'flex';
@@ -473,9 +484,20 @@ function switchScreen(screenId) {
 }
 
 function updateUIForState() {
-    if (gameState.status === 'LOBBY') switchScreen('lobby-screen');
-    else if (gameState.status === 'END') { switchScreen('score-screen'); renderEndGame(); }
-    else { switchScreen('game-screen'); renderGameScreen(); }
+    if (gameState.status === 'LOBBY') {
+        _lastRenderedPhaseKey = null;
+        _actionSubmittedForPhase = null;
+        switchScreen('lobby-screen');
+        if (network && network.players) updateLobbyPlayersList(network.players);
+    } else if (gameState.status === 'END') {
+        _lastRenderedPhaseKey = null;
+        _actionSubmittedForPhase = null;
+        switchScreen('score-screen');
+        renderEndGame();
+    } else {
+        switchScreen('game-screen');
+        renderGameScreen();
+    }
 }
 
 function renderRolesHUD() {
@@ -543,7 +565,16 @@ function showRoleModal(roleName, roleDesc) {
 function renderGameScreen() {
     renderRolesHUD();
 
-    els.game.phase.textContent = gameState.status === 'NIGHT' ? 'Gece' : (gameState.status.includes('DAY') ? 'Gündüz' : (gameState.status === 'VOTING' ? 'Oylama' : 'Animasyon'));
+    const phaseNames = {
+        'NIGHT': 'Gece',
+        'NIGHT_ANIMATION': 'Gece Sonuçları',
+        'DAY_DISCUSSION': 'Gündüz Tartışması',
+        'VOTING': 'Oylama',
+        'DEFENSE': 'Savunma',
+        'JUDGEMENT': 'Yargılama',
+        'DAY_ANIMATION': 'İdam'
+    };
+    els.game.phase.textContent = phaseNames[gameState.status] || 'Gündüz';
     els.game.day.textContent = gameState.dayCount;
     
     const myPlayer = gameState.players[myId];
@@ -554,7 +585,7 @@ function renderGameScreen() {
         let roleText = rDef?.name || myPlayer.role;
         if (rDef && rDef.maxUses) {
             let used = myPlayer.usedAbility ? 0 : 1;
-            roleText += ` (Mermi: ${used}/${rDef.maxUses})`;
+            roleText += ` (Hak: ${used}/${rDef.maxUses})`;
         }
         els.game.myRole.textContent = roleText;
         
@@ -569,7 +600,7 @@ function renderGameScreen() {
         els.game.myRole.textContent = 'Seyirci';
     }
     
-    if(myPlayer && myPlayer.will) {
+    if(myPlayer && myPlayer.will && document.activeElement !== els.game.willNotes) {
         els.game.willNotes.value = myPlayer.will;
     }
     
@@ -584,10 +615,37 @@ function renderGameScreen() {
         els.game.animOverlay.classList.add('hidden');
     }
     
-    if (!myPlayer || !myPlayer.isAlive || gameState.status.includes('ANIMATION')) {
+    if (!myPlayer || !myPlayer.isAlive || gameState.status.includes('ANIMATION') || gameState.status === 'DEFENSE') {
         els.game.actionPanel.classList.add('hidden');
         return;
     }
+
+    // Gündüz aksiyonu (Şerif/İntikamcı) kullanıldıysa paneli gizle
+    if (gameState.status === 'DAY_DISCUSSION') {
+        if (!rDef || !rDef.hasDayAction ||
+            (myPlayer.role === 'SERIF' && myPlayer.usedAbility) ||
+            (myPlayer.role === 'INTIKAMCI' && (gameState.dayCount > 1 || myPlayer.intikamciTarget))) {
+            els.game.actionPanel.classList.add('hidden');
+            return;
+        }
+    }
+
+    // Yargılamada savunmadaki kişi oy kullanamaz
+    if (gameState.status === 'JUDGEMENT' && myId === gameState.defensePlayerId) {
+        els.game.actionPanel.classList.add('hidden');
+        return;
+    }
+
+    const phaseKey = `${gameState.status}_${gameState.dayCount}_${gameState.defensePlayerId || ''}`;
+    if (phaseKey === _lastRenderedPhaseKey) {
+        // Aynı faz içindeyiz (ör. sohbet mesajı geldi); oyuncunun mevcut seçimini veya bekleme ekranını bozma
+        if (_actionSubmittedForPhase === phaseKey) {
+            return;
+        }
+        return;
+    }
+    _lastRenderedPhaseKey = phaseKey;
+    myPendingAction = null;
     
     els.game.actionPanel.classList.remove('hidden');
     els.game.btnSkip.classList.add('hidden');
@@ -606,29 +664,27 @@ function renderGameScreen() {
             let isDedektif = myPlayer.role === 'DEDEKTIF' || (myPlayer.role === 'DELI' && fakeRole === 'DEDEKTIF');
             els.game.actionTitle.textContent = isDedektif ? 'Gece Aksiyonu: 2 Hedef Seç' : 'Gece Aksiyonu: Hedef Seç';
             let excludeSelfForVamp = ROLES[myPlayer.role]?.team === 'VAMPIR';
-            renderActionList(excludeSelfForVamp, isDedektif ? 2 : 1); 
+            let excludedIds = [];
+            if (myPlayer.role === 'DOKTOR') {
+                if (myPlayer.lastHealed) excludedIds.push(myPlayer.lastHealed);
+                if (myPlayer.selfHealCount >= 1) excludedIds.push(myId);
+            }
+            renderActionList(excludeSelfForVamp, isDedektif ? 2 : 1, excludedIds); 
             els.game.btnSkip.classList.remove('hidden'); 
         } else {
             els.game.actionPanel.classList.add('hidden');
         }
     } else if (gameState.status === 'DAY_DISCUSSION') {
-        if (rDef && rDef.hasDayAction) {
-            if (myPlayer.role === 'INTIKAMCI' && (gameState.dayCount > 1 || myPlayer.intikamciTarget)) {
-                els.game.actionPanel.classList.add('hidden');
-            } else {
-                els.game.actionTitle.textContent = 'Gündüz Aksiyonu: Hedef Seç (Opsiyonel)';
-                renderActionList(true);
-                els.game.btnSkip.classList.remove('hidden');
-            }
-        } else {
-            els.game.actionPanel.classList.add('hidden');
-        }
+        els.game.actionTitle.textContent = 'Gündüz Aksiyonu: Hedef Seç (Opsiyonel)';
+        renderActionList(true);
+        els.game.btnSkip.classList.remove('hidden');
     } else if (gameState.status === 'VOTING') {
         els.game.actionTitle.textContent = 'Kimi oylayacaksın?';
         els.game.btnSkip.classList.remove('hidden');
         renderActionList(true); 
     } else if (gameState.status === 'JUDGEMENT') {
-        els.game.actionTitle.textContent = gameState.players[gameState.defensePlayerId].name + ' asılsın mı?';
+        const defPlayer = gameState.players[gameState.defensePlayerId];
+        els.game.actionTitle.textContent = (defPlayer ? defPlayer.name : 'Sanık') + ' asılsın mı?';
         els.game.btnSkip.classList.remove('hidden');
         
         // Custom UI for Judgement
@@ -658,7 +714,7 @@ let _currentMaxSelect = 1;
 let _currentSelectedIds = [];
 let _validActionTargets = [];
 
-function renderActionList(excludeSelf, maxSelect = 1) {
+function renderActionList(excludeSelf, maxSelect = 1, excludedIds = []) {
     _currentMaxSelect = maxSelect;
     _currentSelectedIds = [];
     _validActionTargets = [];
@@ -671,6 +727,7 @@ function renderActionList(excludeSelf, maxSelect = 1) {
     pIds.forEach(id => {
         const p = gameState.players[id];
         if (excludeSelf && id === myId) return;
+        if (excludedIds && excludedIds.includes(id)) return;
         if (p.isAlive) {
             _validActionTargets.push(id);
         }
@@ -709,6 +766,7 @@ window.onPlayerSelected = (id) => {
 
     if (id === 'guilty' || id === 'innocent') {
         submitAction(id);
+        showWaitingActionPanel();
         return;
     }
 
@@ -756,7 +814,7 @@ window.onPlayerSelected = (id) => {
         if (_currentSelectedIds.length === _currentMaxSelect) {
             submitAction(_currentSelectedIds);
             _currentSelectedIds = [];
-            els.game.actionPanel.style.display = 'none';
+            showWaitingActionPanel();
             if(window.gameScene) {
                 Object.values(window.gameScene.playerModels).forEach(p => p.setHighlight(false));
             }

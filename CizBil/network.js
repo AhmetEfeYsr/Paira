@@ -22,12 +22,9 @@ class CizBilNetwork extends BaseGameNetwork {
             onKickPlayer: (id) => this.kickPlayer(id)
         });
 
-        this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.view.setMyId(id);
-            const codeToSet = this.isHostNode ? id : this.roomCode;
-            this.lobbyUI.setRoomCode(codeToSet);
-        };
+        if (initialCode && this.isHostNode) {
+            this.view.setMyId(initialCode);
+        }
 
         window.addEventListener('beforeunload', () => {
             this.leaveRoom();
@@ -62,7 +59,7 @@ class CizBilNetwork extends BaseGameNetwork {
 
             this.engine.onTimerTick = (secs) => {
                 this.view.updateTimer(secs);
-                if (secs % 5 === 0 || secs <= 5) {
+                if (secs === this.engine.state.turnDuration || secs === 10 || secs % 5 === 0 || secs <= 5) {
                     const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
                     this.broadcast('SYNC_TIME', { durationLeft });
                 }
@@ -73,6 +70,13 @@ class CizBilNetwork extends BaseGameNetwork {
                 this.broadcast('PLAY_SOUND', { sound });
             };
         }
+    }
+
+    _handlePeerReady(id) {
+        super._handlePeerReady(id);
+        this.view.setMyId(id);
+        const codeToSet = this.isHostNode ? id : this.roomCode;
+        this.lobbyUI.setRoomCode(codeToSet);
     }
 
     broadcastCensoredState() {
@@ -107,6 +111,10 @@ class CizBilNetwork extends BaseGameNetwork {
                 if (this.engine.state.currentDrawer === player.oldId) {
                     this.engine.state.currentDrawer = id;
                 }
+                if (Array.isArray(this.engine.state.guessedCorrectly)) {
+                    const gIdx = this.engine.state.guessedCorrectly.indexOf(player.oldId);
+                    if (gIdx !== -1) this.engine.state.guessedCorrectly[gIdx] = id;
+                }
             }
             this.engine.addPlayer(id, player.name, player.isHost || false);
             if (existingScore > 0 && this.engine.state.players[id]) {
@@ -135,7 +143,7 @@ class CizBilNetwork extends BaseGameNetwork {
             const chatMsgText = isCorrect ? '***' : payload.text;
             const chatMsg = { name, text: chatMsgText, isCorrect };
             
-            const isHostAuthorized = (this.myId === this.engine.state.currentDrawer) || (this.engine.state.correctGuessers && this.engine.state.correctGuessers.includes(this.myId));
+            const isHostAuthorized = (this.myId === this.engine.state.currentDrawer) || (Array.isArray(this.engine.state.guessedCorrectly) && this.engine.state.guessedCorrectly.includes(this.myId));
             const hostDisplayText = (isCorrect && !isHostAuthorized) ? '***' : payload.text;
             this.view.addChatMessage(name, hostDisplayText, isCorrect);
             if (isCorrect && window.PairaAudio) window.PairaAudio.play('correct');
@@ -151,7 +159,11 @@ class CizBilNetwork extends BaseGameNetwork {
 
     _handleDataReceived(action, payload, senderId) {
         if (action === 'SYNC' && !this.isHostNode) {
+            const wasEmptyChoices = !this.engine.state.choices;
             this.engine.state = payload; // Update client engine state silently
+            if (payload.status === 'playing' && payload.currentWord === '' && wasEmptyChoices) {
+                this.view.resetCanvasLocal();
+            }
             this.view.updateUI(payload, this.isHostNode);
             this.lobbyUI.renderPlayers(payload.players, this.myId);
             return;
@@ -161,6 +173,7 @@ class CizBilNetwork extends BaseGameNetwork {
         
         if (action === 'SYNC_TIME' && !this.isHostNode) {
             this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
+            this.engine.lastReportedSec = -1;
             this.engine.startRenderTimer();
         }
         else if (action === 'PLAY_SOUND' && !this.isHostNode) {
@@ -256,6 +269,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         onBackToLobby: () => {
             if (isHost) engine.backToLobby();
+        },
+        onLeaveRoom: () => {
+            network.leaveRoom();
         }
     });
 
@@ -278,15 +294,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         hostSettings?.classList.add('hidden');
         hostSettings.style.display = 'none';
         clientWaiting?.classList.remove('hidden');
-    }
-
-    const btnLeave = document.getElementById('btn-leave');
-    if (btnLeave) {
-        btnLeave.addEventListener('click', () => {
-            if (confirm("Oyundan ayrılmak istediğinize emin misiniz?")) {
-                network.leaveRoom();
-            }
-        });
     }
     
     network.autoInit().catch(err => console.error("Network init failed", err));

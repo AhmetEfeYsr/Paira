@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Paira Bağnam | Geliştirici Notları</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
+    
+    <style>
+        .about-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 5vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .about-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            text-shadow: 0 0 10px var(--neon-glow-rgba);
+        }
+        .about-container h2 {
+            color: var(--lilac);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .about-container p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.98rem;
+        }
+        .about-container blockquote {
+            background: var(--input-bg);
+            border-left: 4px solid var(--neon-purple);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 4px 12px 12px 4px;
+            font-style: italic;
+            color: var(--lilac);
+        }
+        .about-container strong {
+            color: var(--text-main);
+        }
+        .about-container ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-muted);
+        }
+        .about-container ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .about-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-purple);
+            font-size: 0.95rem;
+        }
+        .about-container pre {
+            background: var(--input-bg);
+            border: var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+        }
+        .about-container pre code {
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .back-link:hover {
+            color: var(--lilac);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="about-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Geri Dön / Back to Game
+            </a>
+            
+            <h1>Geliştirici Notları: Bağnam</h1>
+            
+            <h2>Giriş ve Anlamsal Kelime Uzayı</h2>
+            <p><strong>Paira Bağnam</strong>, Türkçe kelimeler arasındaki anlamsal (semantik) yakınlıkları yüksek boyutlu kelime vektörleri (Word Embeddings) üzerinden hesaplayarak oyunculara sunan günlük ve sonsuz modlu bir kelime bulmaca oyunudur. Klasik harf eşleştirme oyunlarının aksine Bağnam'da kelimelerin yazılış benzerliği değil, bağlamsal ve kavramsal ilişkileri ölçülür.</p>
+            <p>Veri hazırlık aşamasında binlerce Türkçe kelime kök ve gövdesi, büyük ölçekli Türkçe metin derlemleri üzerinde eğitilmiş vektör uzayında temsil edilir. Her hedef kelime için sözlükteki diğer tüm kelimelerle olan <strong>Kosinüs Benzerliği (Cosine Similarity)</strong> hesaplanır ve en yakın kelimeden (Sıra #1: Hedef Kelime) en uzak kelimeye doğru sıralanır.</p>
+            
+            <h2>Hibrit Veri Mimarisi (Firebase RTDB &amp; Cloudflare R2)</h2>
+            <p>İstemci tarafında devasa vektör matrislerini indirmeden milisaniyeler içinde tahmin sorgusu yapabilmek için iki katmanlı bir veri mimarisi uygulanmıştır:</p>
+            <ul>
+                <li><strong>Günlük ve Arşiv Modu (Firebase Realtime Database):</strong> Her günün (<code>YYYY-MM-DD</code>) kelime sıralaması <code>gunluk_oyun/{tarih}/{kelime}.json</code> uç noktalarında anahtar-değer çifti (<code>{ r: sıra, s: skor }</code>) olarak tutulur. Böylece oyuncu bir tahmin yaptığında tüm sözlük indirilmez; yalnızca sorgulanan kelimenin verisi (~50 byte) çekilir ve gizli kelime ağ trafiğinden sızdırılmaz.</li>
+                <li><strong>Sonsuz Mod (Cloudflare R2 CDN):</strong> Oyuncuların günün kelimesi dışında sınırsız pratik yapabilmesi için önceden derlenmiş paketler <code>db.pairaaa.com</code> üzerinden JSON olarak belleğe yüklenir ve sıfır gecikmeyle yerel olarak sorgulanır.</li>
+                <li><strong>Zaman Senkronizasyonu:</strong> Günlük kelime geçişleri Türkiye saati (UTC+3) baz alınarak <code>PairaTime</code> sunucu zaman senkronizasyonu ile hesaplanır; böylece cihaz saati hatalı olan kullanıcılarda dahi doğru günün bulmacası yüklenir.</li>
+            </ul>
+
+            <h2>Eş Sesli Kelimeler (Homonyms) ve Türkçe Normalizasyon</h2>
+            <p>Türkçede yazılışı aynı fakat anlamı tamamen farklı olan eş sesli kelimeler (örneğin <em>yüz</em>, <em>yaz</em>, <em>kır</em>, <em>çay</em>) anlamsal uzayda birden fazla vektöre sahiptir. Bağnam bu durumu şu algoritmayla çözer:</p>
+            <ul>
+                <li><strong>Varyant Sorgulama:</strong> Veri tabanında eş sesli kelimelerin farklı anlamları <code>kelime_1</code>, <code>kelime_2</code> ... <code>kelime_5</code> şeklinde indekslenir. Oyuncu bir kelime girdiğinde istemci bu varyantları paralel olarak sorgular ve hedef kelimeye en yakın olan (en yüksek benzerlik skoruna sahip) anlamı otomatik olarak seçer.</li>
+                <li><strong>Türkçe Karakter ve Unicode Normalizasyonu:</strong> <code>tr-TR</code> yerel ayarlarına duyarlı küçültme (<code>İ → i</code>, <code>I → ı</code>) ve Unicode NFC normalizasyonu uygulanır. Kullanıcının girdiği tam Türkçe kelime veritabanında öncelikli olarak aranır; yalnızca bulunamadığı durumda şapkalı veya ASCII karşılıklarına (<code>normalizeTurkishChars</code>) geri dönüş (fallback) yapılır. Bu sayede <em>köy/koy</em>, <em>tür/tur</em>, <em>taş/tas</em> gibi farklı Türkçe kelimelerin birbirini ezmesi engellenir.</li>
+            </ul>
+
+            <h2>Kademeli İpucu (Progressive Hint) Algoritması</h2>
+            <p>Oyuncunun takıldığı noktalarda oyunu doğrudan bitirmeden rehberlik eden 20 aşamalı bir ipucu merdiveni (<code>[5000, 4000, ..., 50, 30, 20, 10, 5, 2]</code>) tasarlanmıştır:</p>
+            <ul>
+                <li>Sistem oyuncunun mevcut en yakın tahminini analiz eder ve henüz ulaşılmamış ilk eşik noktasını (<code>targetN</code>) belirler.</li>
+                <li><strong>1. Dokunuş (Tanım):</strong> Seçilen sıradaki kelimenin kendisini vermek yerine önce TDK/sözlük tanımını (<code>hint-{N}-tanim</code>) gösterir ve oyuncuyu düşünmeye teşvik eder.</li>
+                <li><strong>2. Dokunuş (Kelime):</strong> Oyuncu tanıma rağmen kelimeyi bulamazsa ikinci ipucu isteğinde o sıradaki kelimeyi (<code>hint-{N}-kelime</code>) açıklar. İpucu yardımıyla bulunan kelimeler tahmin geçmişinde <code>💡</code> rozetiyle işaretlenir.</li>
+            </ul>
+
+            <h2>Durum Koruma (Persistence) ve Dinamik Görselleştirme</h2>
+            <p>Tahmin listesi her yeni girişte sıraya göre yeniden dizilir ve benzerlik skoruna bağlı doğrusal olmayan (<code>score^0.7</code>) HSL renk dönüşümüyle kırmızıdan (uzak) yeşile (yakın) dinamik olarak boyanır. Oyun durumu, kullanılan ipuçları ve günlük seri (streak) istatistikleri <code>localStorage</code> üzerinde tarih bazlı anahtarlarla otomatik kaydedilir; sayfa yenilense bile oyuncu kaldığı yerden devam edebilir.</p>
+
+            <blockquote>
+                Bu teknik dokümantasyon, Paira Bağnam'ın doğal dil işleme (NLP) tabanlı veri yapısını ve istemci mimarisini açıklamak amacıyla geliştirici ekibi için hazırlanmıştır.
+            </blockquote>
+        </div>
+    </main>
+</body>
+</html>

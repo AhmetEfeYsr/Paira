@@ -94,7 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelText: "Kal",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) {
+            network.disconnect();
+            window.location.href = 'index.html';
+        }
     });
 
     document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -105,18 +108,23 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelText: "Oyuna Dön",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) {
+            network.disconnect();
+            window.location.href = 'index.html';
+        }
     });
 
     document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
         const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
         checkboxes.forEach(cb => cb.checked = true);
+        broadcastConfig();
         if (window.PairaAudio) window.PairaAudio.play('pop');
     });
 
     document.getElementById('btn-clear-cats')?.addEventListener('click', () => {
         const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
         checkboxes.forEach(cb => cb.checked = false);
+        broadcastConfig();
         if (window.PairaAudio) window.PairaAudio.play('pop');
     });
 
@@ -193,7 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Network Integration ---
     const network = new NetworkManager(
         (senderId, data) => handleNetworkData(senderId, data),
-        (player) => updatePlayerList(),
+        (player) => {
+            updatePlayerList();
+            if (isHost && player && player.id !== network.myId) {
+                broadcastConfig();
+            }
+        },
         (player) => {
             updatePlayerList();
             handlePlayerDisconnect(player.id);
@@ -944,8 +957,8 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
             }
             else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
-                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } });
-                if (response.ok) {
+                const response = await fetchWithTimeout(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
                         const normWord = normalizeForSearch(word);
@@ -965,14 +978,23 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
             }
             else if (catId === 'yazar') {
                 const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
-                const response = await fetch(url);
-                if (response.ok) {
+                const response = await fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
                     const data = await response.json();
                     if (data.docs) {
                         result = data.docs.some(doc => doc.name.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower));
                     }
                 }
                 if (!result) result = await checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat'], requiredLetterLower);
+            }
+            else if (catId === 'marka') {
+                result = await checkWikipedia(word, ['marka', 'şirket', 'holding', 'üretici', 'kuruluş'], requiredLetterLower);
+            }
+            else if (catId === 'oyun') {
+                result = await checkWikipedia(word, ['oyun', 'video oyunu', 'oyunu', 'game'], requiredLetterLower);
+            }
+            else if (catId === 'unlu') {
+                result = await checkWikipedia(word, ['ünlü', 'oyuncu', 'sanatçı', 'sunucu', 'fenomen', 'şarkıcı', 'futbolcu'], requiredLetterLower);
             }
             else if (catId === 'hastalik') {
                 result = await checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], requiredLetterLower);
@@ -1021,6 +1043,18 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
     async function processAnswersAndGoToVoting() {
         if (!isHost) return;
 
+        // Ensure all active players have an answers object and remove any disconnected players
+        for (const pId of Object.keys(network.players)) {
+            if (!gameState.playerAnswers[pId]) {
+                gameState.playerAnswers[pId] = {};
+            }
+        }
+        for (const pId of Object.keys(gameState.playerAnswers)) {
+            if (!network.players[pId]) {
+                delete gameState.playerAnswers[pId];
+            }
+        }
+
         if (ui.finishStatusText) ui.finishStatusText.textContent = 'Cevaplar kontrol ediliyor...';
 
         const results = {}; // categoryId -> [ {playerId, word, suggestedScore} ]
@@ -1059,7 +1093,7 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
 
                         if (!inDict) {
                             let apiValid = false;
-                            if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'hastalik', 'spor'].includes(cat.id)) {
+                            if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'marka', 'oyun', 'unlu', 'hastalik', 'spor'].includes(cat.id)) {
                                 apiValid = await validateViaApi(cat.id, word, letterLower);
                             }
 
@@ -1418,7 +1452,7 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
         if (finishedVoters.has(senderId)) return; // Prevent double-counting
 
         finishedVoters.add(senderId);
-        const totalPlayers = Math.max(Object.keys(gameState.playerAnswers).length, 1);
+        const totalPlayers = Math.max(Object.keys(network.players).length, 1);
         if (finishedVoters.size >= totalPlayers) {
             resolveVotesAndScore();
         }
@@ -1469,8 +1503,8 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
                 if (tiedValues.length === 1) {
                     finalVote = tiedValues[0];
                 } else {
-                    // Prefer 5 if tied, otherwise pick the lower value
-                    finalVote = tiedValues.includes(5) ? 5 : Math.max(...tiedValues);
+                    // Prefer 5 on any tie (including 10 vs 0 tie)
+                    finalVote = 5;
                 }
 
                 if (finalScores[targetPlayerId]) {
@@ -1600,6 +1634,9 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
     };
 
     function backToLobby() {
+        clearInterval(currentTimer);
+        isRoundOver = false;
+        finishedPlayers.clear();
         gameState.status = 'LOBBY';
         gameState.round = 1;
         gameState.playerAnswers = {};

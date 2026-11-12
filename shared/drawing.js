@@ -66,10 +66,13 @@ class AdvancedDrawingBoard {
 
         this.initEvents();
         this.resize();
-        this.saveState();
         this.updateCursor();
 
         window.addEventListener('resize', () => this.resize());
+        if (typeof ResizeObserver !== 'undefined' && this.canvas && this.canvas.parentElement) {
+            this._resizeObserver = new ResizeObserver(() => this.resize());
+            this._resizeObserver.observe(this.canvas.parentElement);
+        }
 
         // Keyboard Shortcuts for easy drawing (Ctrl+Z, B, E, F)
         document.addEventListener('keydown', (e) => {
@@ -91,27 +94,35 @@ class AdvancedDrawingBoard {
 
     /** Resizes the canvas to match its parent container. */
     resize() {
-        if (!this.canvas.parentElement) return;
+        if (!this.canvas || !this.canvas.parentElement) return;
 
         const rect = this.canvas.parentElement.getBoundingClientRect();
 
-        let oldImg = null;
         let oldWidth = this.canvas.width;
         let oldHeight = this.canvas.height;
-        if (oldWidth > 0 && oldHeight > 0) {
-            oldImg = this.ctx.getImageData(0, 0, oldWidth, oldHeight);
-        }
 
         const targetRatio = 16 / 9;
-        // Default to taking full width
         let finalWidth = rect.width;
         let finalHeight = finalWidth / targetRatio;
 
-        // If parent has a specific height (like in fullscreen) and it's less than our calculated height,
-        // we scale based on height instead.
-        if (rect.height > 0 && finalHeight > rect.height) {
+        if (finalWidth <= 0) {
+            if (oldWidth > 0 && oldHeight > 0 && this.history.length > 0) {
+                return;
+            }
+            finalWidth = 800;
+            finalHeight = 450;
+        } else if (rect.height > 0 && finalHeight > rect.height) {
+            // If parent has a specific height (like in fullscreen) and it's less than our calculated height,
+            // we scale based on height instead.
             finalHeight = rect.height;
             finalWidth = finalHeight * targetRatio;
+        }
+
+        finalWidth = Math.max(1, Math.round(finalWidth));
+        finalHeight = Math.max(1, Math.round(finalHeight));
+
+        if (oldWidth === finalWidth && oldHeight === finalHeight && this.history.length > 0) {
+            return;
         }
 
         const oldHistory = [...this.history];
@@ -409,6 +420,7 @@ class AdvancedDrawingBoard {
     }
 
     saveState() {
+        if (!this.canvas || this.canvas.width <= 0 || this.canvas.height <= 0) return;
         this.historyStep++;
         if (this.historyStep < this.history.length) {
             this.history.length = this.historyStep;
@@ -471,8 +483,10 @@ class AdvancedDrawingBoard {
      * @param {string} fillColorHex
      */
     floodFill(startX, startY, fillColorHex) {
+        if (!this.canvas || this.canvas.width <= 0 || this.canvas.height <= 0) return;
         startX = Math.floor(startX);
         startY = Math.floor(startY);
+        if (startX < 0 || startY < 0 || startX >= this.canvas.width || startY >= this.canvas.height) return;
 
         const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
         const data = imageData.data;

@@ -87,3 +87,118 @@
     font-size: 0.9rem;
     margin-left: 5px;
 }
+
+/* Voting Screen Styles */
+.vote-category-block {
+    background: var(--card-bg);
+    border: var(--glass-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.vote-category-title {
+    margin: 0 0 1rem 0;
+    color: var(--lilac);
+    font-size: 1.15rem;
+    border-bottom: 1px solid var(--btn-secondary-border);
+    padding-bottom: 0.5rem;
+}
+
+.vote-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--input-bg);
+    border-radius: 12px;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.vote-item:last-child {
+    margin-bottom: 0;
+}
+
+.vote-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.vote-player {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.vote-word {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+    word-break: break-word;
+}
+
+.vote-counts-display {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.vote-count-pill {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.vote-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.vote-btn {
+    min-width: 48px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--btn-secondary-border);
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.vote-btn:hover {
+    border-color: var(--neon-purple);
+}
+
+.vote-btn[data-val="10"].selected {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.vote-btn[data-val="5"].selected {
+    background: var(--warning);
+    border-color: var(--warning);
+    color: #111;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.vote-btn[data-val="0"].selected {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+

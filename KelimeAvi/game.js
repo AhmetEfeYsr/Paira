@@ -36,6 +36,27 @@ class KelimeAviGameEngine {
         this.renderFrame = null;
         this.lastTickSec = -1;
         this.countdownInterval = null;
+        this.roundTransitionTimeout = null;
+        this.nextEbeTimeout = null;
+    }
+
+    _clearAllTimers() {
+        if (this.renderFrame) {
+            cancelAnimationFrame(this.renderFrame);
+            this.renderFrame = null;
+        }
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+            this.countdownInterval = null;
+        }
+        if (this.roundTransitionTimeout) {
+            clearTimeout(this.roundTransitionTimeout);
+            this.roundTransitionTimeout = null;
+        }
+        if (this.nextEbeTimeout) {
+            clearTimeout(this.nextEbeTimeout);
+            this.nextEbeTimeout = null;
+        }
     }
 
     setState(newState) {
@@ -59,18 +80,16 @@ class KelimeAviGameEngine {
             if (this.state.players[id]) {
                 this.state.players[id].disconnected = true;
             }
+            delete this.state.submittedWords[id];
             
             const activeCount = Object.keys(this.state.players).filter(pid => !this.state.players[pid].disconnected).length;
             if (activeCount < 3) {
-                this.endRoundPrematurely("Oyuncu sayısı 3'ün altına düştüğü için oyun lobiye döndürüldü.");
-                setTimeout(() => {
-                    this.backToLobby();
-                }, 4000);
+                this.endRoundPrematurely("Oyuncu sayısı 3'ün altına düştüğü için oyun lobiye döndürüldü.", true);
                 return;
             }
 
             if (this.state.currentEbe === id) {
-                this.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.");
+                this.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.", false, true);
             } else {
                 this.setState({ players: this.state.players });
             }
@@ -127,8 +146,7 @@ class KelimeAviGameEngine {
         this.state.failedAttempts = 0;
         this.state.status = 'ebe_word_select';
 
-        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
-        if (this.countdownInterval) clearInterval(this.countdownInterval);
+        this._clearAllTimers();
 
         const ebePlayer = this.state.players[this.state.currentEbe];
         const ebeName = ebePlayer ? ebePlayer.name : 'Bilinmeyen';
@@ -141,10 +159,10 @@ class KelimeAviGameEngine {
     }
 
     handleEbeTargetWord(peerId, word) {
-        if (!this.isHost || (this.state.status !== 'ebe_word_select' && this.state.status !== 'playing')) return;
+        if (!this.isHost || this.state.status !== 'ebe_word_select') return;
         if (peerId !== this.state.currentEbe) return;
 
-        const normWord = word.trim().toLocaleUpperCase('tr-TR');
+        const normWord = (word || '').trim().toLocaleUpperCase('tr-TR');
         if (normWord.length < 2) return;
 
         this.state.targetWord = normWord;
@@ -155,6 +173,7 @@ class KelimeAviGameEngine {
         this.state.status = 'playing';
         
         this.localEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
+        this.lastTickSec = -1;
 
         this.setState(this.state);
         this.startRenderTimer();
@@ -166,33 +185,33 @@ class KelimeAviGameEngine {
 
     handleMasumSubmission(peerId, word) {
         if (peerId === this.state.currentEbe) return;
-        if (this.state.status !== 'playing') return;
+        if (this.state.status !== 'playing' && this.state.status !== 'countdown') return;
         if (!this.state.targetWord) return;
 
-        const cleanWord = word.trim().toLocaleUpperCase('tr-TR');
+        const cleanWord = (word || '').trim().toLocaleUpperCase('tr-TR');
+        if (!cleanWord) {
+            delete this.state.submittedWords[peerId];
+            return;
+        }
         const cleanTarget = this.state.targetWord.trim().toLocaleUpperCase('tr-TR');
         const revealedPrefix = cleanTarget.substring(0, this.state.revealedLetters);
 
         // Enforce that masum submitted word MUST start with the currently revealed letters
-        if (!cleanWord.startsWith(revealedPrefix)) return;
+        if (!cleanWord.startsWith(revealedPrefix)) {
+            delete this.state.submittedWords[peerId];
+            return;
+        }
 
         this.state.submittedWords[peerId] = cleanWord;
-        if (this.isHost) {
-            this.setState(this.state);
-        }
     }
 
     handleEbeGuesses(peerId, guesses) {
         if (peerId !== this.state.currentEbe) return;
-        if (this.state.status !== 'playing') return;
+        if (this.state.status !== 'playing' && this.state.status !== 'countdown') return;
 
-        this.state.ebeGuesses = guesses
-            .map(g => g.trim().toLocaleUpperCase('tr-TR'))
+        this.state.ebeGuesses = (Array.isArray(guesses) ? guesses : [])
+            .map(g => (g || '').trim().toLocaleUpperCase('tr-TR'))
             .filter(g => g.length > 0);
-            
-        if (this.isHost) {
-            this.setState(this.state);
-        }
     }
 
     handleTriggerMatch(peerId) {
@@ -344,12 +363,14 @@ class KelimeAviGameEngine {
         this.setState(this.state);
         if (this.onShowResult) this.onShowResult(resultMsg);
 
-        setTimeout(() => {
+        if (this.roundTransitionTimeout) clearTimeout(this.roundTransitionTimeout);
+        this.roundTransitionTimeout = setTimeout(() => {
             if (isWordOver) {
                 this.state.round++;
                 if (this.state.round > this.state.totalRounds) {
                     if (this.onShowResult) this.onShowResult(`Bu Ebe için toplam ${this.state.totalRounds} tur tamamlandı! Yeni Ebe'ye geçiliyor...`);
-                    setTimeout(() => this.advanceToNextEbe(), 3000);
+                    if (this.nextEbeTimeout) clearTimeout(this.nextEbeTimeout);
+                    this.nextEbeTimeout = setTimeout(() => this.advanceToNextEbe(), 3000);
                 } else {
                     this.startNextWordForSameEbe();
                 }
@@ -364,8 +385,12 @@ class KelimeAviGameEngine {
         this.state.ebeGuesses = [];
         this.state.status = 'playing';
         this.localEndTime = window.PairaTime.now() + (this.state.turnDuration * 1000);
+        this.lastTickSec = -1;
         this.setState(this.state);
         this.startRenderTimer();
+        if (this.onTimerTick) {
+            this.onTimerTick(this.state.turnDuration);
+        }
     }
 
     startNextWordForSameEbe() {
@@ -377,8 +402,7 @@ class KelimeAviGameEngine {
         this.state.failedAttempts = 0;
         this.state.status = 'ebe_word_select';
 
-        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
-        if (this.countdownInterval) clearInterval(this.countdownInterval);
+        this._clearAllTimers();
 
         const ebePlayer = this.state.players[this.state.currentEbe];
         const ebeName = ebePlayer ? ebePlayer.name : 'Bilinmeyen';
@@ -395,19 +419,27 @@ class KelimeAviGameEngine {
         this.startTurnForEbe();
     }
 
-    endRoundPrematurely(reasonMsg) {
+    endRoundPrematurely(reasonMsg, returnToLobby = false, ebeDisconnected = false) {
         if (!this.isHost) return;
+        this._clearAllTimers();
         this.state.status = 'evaluating';
         this.setState(this.state);
         if (this.onShowResult) this.onShowResult(reasonMsg);
-        setTimeout(() => {
-            this.advanceToNextEbe();
+        this.roundTransitionTimeout = setTimeout(() => {
+            if (returnToLobby) {
+                this.backToLobby();
+            } else if (ebeDisconnected) {
+                // Current ebe was marked disconnected and removed from active playerIds,
+                // so the next ebe is already at this.state.ebeIndex
+                this.startTurnForEbe();
+            } else {
+                this.advanceToNextEbe();
+            }
         }, 4000);
     }
 
     backToLobby() {
-        if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
-        if (this.countdownInterval) clearInterval(this.countdownInterval);
+        this._clearAllTimers();
 
         this.state.status = 'lobby';
         Object.keys(this.state.players).forEach(pId => {
@@ -470,7 +502,10 @@ class KelimeAviView {
                 cancelText: "Kal",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) {
+                if (window.gameNetwork) window.gameNetwork.leaveRoom();
+                else window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -481,36 +516,11 @@ class KelimeAviView {
                 cancelText: "Oyuna Dön",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
-        });
-
-        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-            const code = document.getElementById('display-room-code')?.dataset.code;
-            if (code) {
-                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+            if (confirmed) {
+                if (window.gameNetwork) window.gameNetwork.leaveRoom();
+                else window.location.href = 'index.html';
             }
         });
-
-        const toggleCodeBtn = document.getElementById('btn-toggle-code');
-        if (toggleCodeBtn) {
-            toggleCodeBtn.addEventListener('click', () => {
-                const display = document.getElementById('display-room-code');
-                const eyeOpen = document.getElementById('icon-eye-open');
-                const eyeClosed = document.getElementById('icon-eye-closed');
-                const code = display ? display.dataset.code : '';
-                
-                if (display && display.textContent.includes('•')) {
-                    display.textContent = code;
-                    eyeOpen?.classList.remove('hidden');
-                    eyeClosed?.classList.add('hidden');
-                } else if (display) {
-                    display.textContent = '••••••••';
-                    eyeOpen?.classList.add('hidden');
-                    eyeClosed?.classList.remove('hidden');
-                }
-                if (window.PairaAudio) window.PairaAudio.play('pop');
-            });
-        }
 
         document.getElementById('btn-start-game')?.addEventListener('click', () => {
             const settings = {
@@ -575,18 +585,25 @@ class KelimeAviView {
 
             btnTriggerMatch.addEventListener('click', () => {
                 const word = masumInput.value.trim();
-                if (word.length > 0) {
-                    if (!checkPrefix(word, true)) return;
-                    this.callbacks.onSubmitMasum(word);
+                if (!word) {
+                    if (window.showToast) window.showToast("Eşleşmeyi başlatmak için önce kelimenizi yazın!", "warning");
+                    return;
                 }
+                if (!checkPrefix(word, true)) return;
+                this.callbacks.onSubmitMasum(word);
                 this.callbacks.onTriggerMatch();
             });
 
             masumInput.addEventListener('input', () => {
                 const word = masumInput.value.trim();
                 if (word.length > 0) {
-                    if (!checkPrefix(word, false)) return;
+                    if (!checkPrefix(word, false)) {
+                        this.callbacks.onSubmitMasum('');
+                        return;
+                    }
                     this.callbacks.onSubmitMasum(word);
+                } else {
+                    this.callbacks.onSubmitMasum('');
                 }
             });
         }
@@ -603,9 +620,7 @@ class KelimeAviView {
                     document.getElementById('ebe-guess-5')?.value.trim()
                 ].filter(g => g && g.length > 0);
 
-                if (guesses.length > 0) {
-                    this.callbacks.onSubmitEbe(guesses);
-                }
+                this.callbacks.onSubmitEbe(guesses);
             };
             btnSubmitEbe.addEventListener('click', () => {
                 submitEbe();
@@ -640,7 +655,7 @@ class KelimeAviView {
 
         const ebePlayer = state.players ? state.players[state.currentEbe] : null;
         const ebeName = ebePlayer ? ebePlayer.name : 'Bilinmeyen';
-        const totalPlayers = state.players ? Object.keys(state.players).length : 0;
+        const totalPlayers = state.players ? Object.values(state.players).filter(p => !p.disconnected).length : 0;
         const currentEbeNum = (state.ebeIndex !== undefined ? state.ebeIndex : 0) + 1;
 
         const roundInd = document.getElementById('round-indicator');
@@ -699,8 +714,8 @@ class KelimeAviView {
 
         ebeTargetArea?.classList.add('hidden');
 
-        // Clear input fields when a new step/round or revealed letter changes
-        const currentPlayingStepKey = `${state.round}_${state.currentEbe}_${state.revealedLetters}`;
+        // Clear input fields when a new step/round, revealed letter, or failed attempt changes
+        const currentPlayingStepKey = `${state.round}_${state.currentEbe}_${state.revealedLetters}_${state.failedAttempts || 0}`;
         if (state.status === 'playing' && this._lastPlayingStepKey !== currentPlayingStepKey) {
             this._lastPlayingStepKey = currentPlayingStepKey;
             const masumInput = document.getElementById('masum-word-input');

@@ -1,5 +1,5 @@
 // ÇizimZinciri/network.js
-import { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState } from './game.js';
+import { initGameUI, updateGameStateUI, startTimer, stopTimer, renderAlbumState, resetGameUIState } from './game.js';
 
 export let isHost = false;
 export let myId = null;
@@ -34,6 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('pointerdown', initAudioOnce, { once: true });
     document.addEventListener('keydown', initAudioOnce, { once: true });
 
+    const doLeave = () => {
+        if (networkManager) networkManager.leaveRoom();
+        else window.location.href = 'index.html';
+    };
+
     document.getElementById('btn-leave-lobby')?.addEventListener('click', async () => {
         const confirmed = await window.pairaConfirm({
             title: "Lobiden Ayrıl",
@@ -42,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelText: "Kal",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) doLeave();
     });
 
     document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -53,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelText: "Oyuna Dön",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) doLeave();
     });
 
     document.getElementById('btn-leave')?.addEventListener('click', async () => {
@@ -64,36 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelText: "Kal",
             confirmType: "danger"
         });
-        if (confirmed) window.location.href = 'index.html';
+        if (confirmed) doLeave();
     });
-
-    document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-        const code = document.getElementById('display-room-code')?.dataset.code;
-        if (code) {
-            window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
-        }
-    });
-
-    const toggleCodeBtn = document.getElementById('btn-toggle-code');
-    if (toggleCodeBtn) {
-        toggleCodeBtn.addEventListener('click', () => {
-            const display = document.getElementById('display-room-code');
-            const eyeOpen = document.getElementById('icon-eye-open');
-            const eyeClosed = document.getElementById('icon-eye-closed');
-            const code = display ? display.dataset.code : '';
-            
-            if (display && display.textContent.includes('•')) {
-                display.textContent = code;
-                eyeOpen?.classList.remove('hidden');
-                eyeClosed?.classList.add('hidden');
-            } else if (display) {
-                display.textContent = '••••••••';
-                eyeOpen?.classList.add('hidden');
-                eyeClosed?.classList.remove('hidden');
-            }
-            if (window.PairaAudio) window.PairaAudio.play('pop');
-        });
-    }
 
     initLobby();
 });
@@ -129,11 +106,21 @@ function initLobby() {
     networkManager = new window.BaseGameNetwork({
         onStateSync: (statePayload) => {
             Object.assign(networkState, statePayload);
-            if (networkState.state === 'LOBBY') updateLobbyUI();
-            else handlePlayingState({ action: 'SYNC_STATE' });
+            if (networkState.state === 'LOBBY') {
+                stopTimer();
+                resetGameUIState();
+                if (typeof window.showScreen === 'function') window.showScreen('lobby-screen');
+                updateLobbyUI();
+            } else {
+                handlePlayingState({ action: 'SYNC_STATE' });
+            }
         },
         onPlayerJoin: (senderId, payload) => {
             if (isHost) {
+                if (payload.isHost) {
+                    myId = senderId;
+                    networkState.hostId = senderId;
+                }
                 if (payload.oldId && payload.oldId !== senderId && networkState.players[payload.oldId]) {
                     delete networkState.players[payload.oldId];
                     if (networkState.assignments && networkState.assignments[payload.oldId]) {
@@ -145,7 +132,7 @@ function initLobby() {
                         delete networkState.completedTasks[payload.oldId];
                     }
                 }
-                networkState.players[senderId] = { id: senderId, name: payload.name, isHost: senderId === myId };
+                networkState.players[senderId] = { id: senderId, name: payload.name, isHost: Boolean(payload.isHost || senderId === myId) };
                 broadcastState();
             }
         },
@@ -163,6 +150,7 @@ function initLobby() {
                         if (allCompleted) {
                             clearTimeout(turnTimeout);
                             passBooksAndNextRound();
+                            return;
                         }
                     }
                     broadcastState();
@@ -190,10 +178,6 @@ function initLobby() {
     }).catch((err) => {
         console.error("Network init error:", err);
         if (window.showToast) window.showToast("Bağlantı kurulamadı.", "error");
-    });
-
-    document.getElementById('btn-leave').addEventListener('click', () => {
-        networkManager.leaveRoom();
     });
 
     window.addEventListener('beforeunload', () => {
@@ -227,7 +211,8 @@ function handleNetworkData(action, payload, senderId) {
                 clearTimeout(turnTimeout);
                 passBooksAndNextRound();
             } else {
-                broadcastState({ action: 'PLAYER_WAITING', playerId: senderId });
+                networkManager.broadcast('PLAYER_WAITING', { playerId: senderId });
+                handlePlayingState({ action: 'PLAYER_WAITING', playerId: senderId });
             }
         } else if (action === 'ALBUM_NEXT') {
             if (networkState.albumSequence && networkState.albumSequence.length > 0) {
@@ -256,8 +241,11 @@ function handleNetworkData(action, payload, senderId) {
 export function broadcastState(lastAction = null) {
     if (!isHost) return;
 
-    if (networkState.state === 'LOBBY' || networkState.state === 'ALBUM') {
+    if (networkState.state === 'LOBBY') {
         networkManager.broadcastState(networkState);
+    } else if (networkState.state === 'ALBUM') {
+        const albumPayload = { ...networkState, stories: {} };
+        networkManager.broadcastState(albumPayload);
     } else {
         Object.keys(networkState.players).forEach(peerId => {
             if (peerId !== networkState.hostId) {
@@ -319,9 +307,10 @@ async function startGame() {
         return;
     }
 
-    networkState.turnDuration = parseInt(document.getElementById('turn-duration').value) || 60;
-    networkState.maxRounds = Math.min(parseInt(document.getElementById('round-count').value) || 3, pCount);
+    networkState.turnDuration = Math.max(15, parseInt(document.getElementById('turn-duration').value) || 60);
+    networkState.maxRounds = Math.min(Math.max(1, parseInt(document.getElementById('round-count').value) || 3), pCount);
     networkState.roundCount = 1;
+    resetGameUIState();
 
     const pKeys = Object.keys(networkState.players);
     networkState.stories = {};
@@ -431,10 +420,14 @@ function handlePlayingState(lastAction) {
         return;
     }
 
-    document.getElementById('lobby-screen').classList.remove('active');
-    document.getElementById('lobby-screen').classList.add('hidden');
-    document.getElementById('game-screen').classList.add('active');
-    document.getElementById('game-screen').classList.remove('hidden');
+    if (typeof window.showScreen === 'function') {
+        window.showScreen('game-screen');
+    } else {
+        document.getElementById('lobby-screen').classList.remove('active');
+        document.getElementById('lobby-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('game-screen').classList.remove('hidden');
+    }
 
     initGameUI(networkState, myId);
     updateGameStateUI(networkState, myId);
@@ -451,35 +444,46 @@ function handlePlayingState(lastAction) {
 
 export function returnToLobby() {
     if (!isHost) return;
+    clearTimeout(turnTimeout);
+    stopTimer();
+    resetGameUIState();
     networkState.state = 'LOBBY';
-    networkState.currentRound = 0;
+    networkState.roundCount = 1;
     networkState.stories = {};
     networkState.assignments = {};
     networkState.completedTasks = {};
     networkState.albumSequence = [];
-    networkState.currentAlbumIndex = 0;
+    networkState.albumIndex = -1;
     broadcastState();
     if (typeof window.showScreen === 'function') window.showScreen('lobby-screen');
     updateLobbyUI();
 }
 
 export function showAlbumScreen() {
-    document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active');
-        s.classList.add('hidden');
-    });
-    document.getElementById('album-screen').classList.add('active');
-    document.getElementById('album-screen').classList.remove('hidden');
+    if (typeof window.showScreen === 'function') {
+        window.showScreen('album-screen');
+    } else {
+        document.querySelectorAll('.view-state').forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('hidden');
+        });
+        document.getElementById('album-screen').classList.add('active');
+        document.getElementById('album-screen').classList.remove('hidden');
+    }
 
     stopTimer();
 
     if (isHost) {
         document.getElementById('btn-next-story').style.display = 'inline-block';
+        document.getElementById('btn-back-to-lobby').style.display = 'none';
         document.getElementById('btn-next-story').onclick = () => {
             broadcastAction({ type: 'ALBUM_NEXT' });
         };
         document.getElementById('btn-back-to-lobby').onclick = () => {
             returnToLobby();
         };
+    } else {
+        document.getElementById('btn-next-story').style.display = 'none';
+        document.getElementById('btn-back-to-lobby').style.display = 'none';
     }
 }

@@ -164,6 +164,30 @@ class RenderEngine {
                     this.ctx.fillRect(x, y, tileSize, tileSize);
                     this.ctx.fillStyle = '#60a5fa';
                     this.ctx.fillRect(x, y + wave, tileSize, 4);
+                } else if (tile === 4) {
+                    // Green Acid Pool Tile (Danger for ALL players)
+                    const wave = Math.sin(this.animTimer * 1.3 + c) * 3;
+                    this.ctx.fillStyle = '#059669';
+                    this.ctx.fillRect(x, y, tileSize, tileSize);
+                    this.ctx.fillStyle = '#34d399';
+                    this.ctx.fillRect(x, y + wave, tileSize, 5);
+                    this.ctx.fillStyle = '#a7f3d0';
+                    this.ctx.fillRect(x + ((c * 7 + Math.floor(this.animTimer * 4)) % 22) + 4, y + 8, 3, 3);
+                } else if (tile === 5) {
+                    // Climbable Vine (Sarmaşık - Doğa elementi tırmanabilir)
+                    this.ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+                    this.ctx.fillRect(x + 8, y, tileSize - 16, tileSize);
+                    this.ctx.strokeStyle = '#10b981';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + tileSize / 2 - 3, y);
+                    this.ctx.lineTo(x + tileSize / 2 + 3, y + tileSize / 2);
+                    this.ctx.lineTo(x + tileSize / 2 - 3, y + tileSize);
+                    this.ctx.stroke();
+                    // Yapraklar
+                    this.ctx.fillStyle = '#34d399';
+                    this.ctx.fillRect(x + 6, y + 6, 6, 4);
+                    this.ctx.fillRect(x + tileSize - 12, y + 18, 6, 4);
                 } else if (tile === 6) {
                     // Updraft/Wind Corridor
                     this.ctx.fillStyle = 'rgba(250, 204, 21, 0.12)';
@@ -247,18 +271,50 @@ class RenderEngine {
                 this.ctx.moveTo(ent.x, ent.y); this.ctx.lineTo(ent.x + ent.w, ent.y + ent.h);
                 this.ctx.moveTo(ent.x + ent.w, ent.y); this.ctx.lineTo(ent.x, ent.y + ent.h);
                 this.ctx.stroke();
-            } else if (ent.type === 'electric_panel' || ent.type === 'button') {
-                this.ctx.fillStyle = ent.active ? '#a855f7' : '#334155';
+            } else if (ent.type === 'tahta_duvar') {
+                this.ctx.fillStyle = '#78350f';
                 this.ctx.fillRect(ent.x, ent.y, ent.w, ent.h);
-                this.ctx.strokeStyle = ent.active ? '#c084fc' : '#64748b';
+                this.ctx.strokeStyle = '#451a03';
                 this.ctx.lineWidth = 2;
                 this.ctx.strokeRect(ent.x, ent.y, ent.w, ent.h);
+            } else if (ent.type === 'seesaw') {
+                const pivotX = ent.pivotX || (ent.x + ent.w / 2);
+                const pivotY = ent.pivotY || (ent.y + ent.h / 2);
+                const angle = ent.angle || 0;
 
-                if (ent.active) {
+                this.ctx.save();
+                this.ctx.translate(pivotX, pivotY);
+                this.ctx.rotate(angle);
+                this.ctx.fillStyle = '#cbd5e1';
+                this.ctx.fillRect(-ent.w / 2, -ent.h / 2, ent.w, ent.h);
+                this.ctx.strokeStyle = '#64748b';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(-ent.w / 2, -ent.h / 2, ent.w, ent.h);
+                this.ctx.restore();
+
+                // Pivot üçgeni
+                this.ctx.fillStyle = '#64748b';
+                this.ctx.beginPath();
+                this.ctx.moveTo(pivotX, pivotY);
+                this.ctx.lineTo(pivotX - 10, pivotY + 15);
+                this.ctx.lineTo(pivotX + 10, pivotY + 15);
+                this.ctx.closePath();
+                this.ctx.fill();
+            } else if (ent.type === 'electric_panel' || ent.type === 'button') {
+                const isActive = !!(ent.active || ent.props?.pressed);
+                this.ctx.fillStyle = isActive ? '#a855f7' : (ent.props?.requiresWeight ? '#f59e0b' : '#ec4899');
+                const drawY = isActive ? ent.y + ent.h / 2 : ent.y;
+                const drawH = isActive ? ent.h / 2 : ent.h;
+                this.ctx.fillRect(ent.x, drawY, ent.w, drawH);
+                this.ctx.strokeStyle = isActive ? '#c084fc' : '#ffffff';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(ent.x, drawY, ent.w, drawH);
+
+                if (isActive) {
                     this.ctx.shadowColor = '#a855f7';
                     this.ctx.shadowBlur = 10;
                     this.ctx.fillStyle = '#f0abfc';
-                    this.ctx.fillRect(ent.x + ent.w / 2 - 4, ent.y + ent.h / 2 - 4, 8, 8);
+                    this.ctx.fillRect(ent.x + ent.w / 2 - 4, drawY + drawH / 2 - 2, 8, 4);
                     this.ctx.shadowBlur = 0;
                 }
             } else if (ent.type === 'electric_door' || ent.type === 'door') {
@@ -267,10 +323,15 @@ class RenderEngine {
                     this.ctx.fillRect(ent.x, ent.y, ent.w, ent.h);
                     this.ctx.strokeStyle = '#94a3b8';
                     this.ctx.strokeRect(ent.x, ent.y, ent.w, ent.h);
+                } else {
+                    this.ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+                    this.ctx.setLineDash([4, 4]);
+                    this.ctx.strokeRect(ent.x, ent.y, ent.w, ent.h);
+                    this.ctx.setLineDash([]);
                 }
             } else if (ent.type === 'exit') {
                 // Spinning Portal Exit Gate
-                const roleColors = { ates: '#ef4444', su: '#3b82f6', hava: '#facc15', elektrik: '#a855f7' };
+                const roleColors = { ates: '#ef4444', su: '#3b82f6', doga: '#10b981', hava: '#facc15', elektrik: '#a855f7' };
                 const mainColor = roleColors[ent.props?.role] || '#10b981';
 
                 this.ctx.shadowColor = mainColor;
@@ -319,6 +380,11 @@ class RenderEngine {
                     hintText = '💧 Su: [Shift] veya [Aşağı] ile Boruya Gir!';
                     hintColor = '#3b82f6';
                 }
+            } else if (p.role === 'doga') {
+                if (levelManager.grid[row] && levelManager.grid[row][col] === 5) {
+                    hintText = '🌿 Doğa: [W / Yukarı] ile Sarmaşığa Tırman!';
+                    hintColor = '#10b981';
+                }
             } else if (p.role === 'hava') {
                 if (levelManager.grid[row] && levelManager.grid[row][col] === 6) {
                     hintText = '💨 Hava: [O] veya [Zıpla] ile Rüzgarda Süzül!';
@@ -327,7 +393,8 @@ class RenderEngine {
             } else if (p.role === 'elektrik') {
                 if (levelManager.entities) {
                     levelManager.entities.forEach(ent => {
-                        if ((ent.type === 'electric_panel' || ent.type === 'button') && window.PhysicsEngine.intersects(p.getRect(), ent)) {
+                        const hit = typeof p.intersects === 'function' ? p.intersects(ent) : (window.PhysicsEngine && window.PhysicsEngine.intersects(p.getRect(), ent));
+                        if ((ent.type === 'electric_panel' || ent.type === 'button') && hit) {
                             hintText = '⚡ Elektrik: [Numpad 0] Şalteri Aktif Et!';
                             hintColor = '#a855f7';
                         }
@@ -447,6 +514,41 @@ class RenderEngine {
             this.ctx.arc(eyeX + (p.dir === 1 ? 1 : -1), cy, 2, 0, Math.PI * 2);
             this.ctx.arc(eyeX + 8 + (p.dir === 1 ? 1 : -1), cy, 2, 0, Math.PI * 2);
             this.ctx.fill();
+        } else if (p.role === 'doga') {
+            // 🌿 Doğa Karakteri: Zümrüt Yeşili Doğa Ruhu
+            this.ctx.shadowColor = '#10b981';
+            this.ctx.shadowBlur = 18;
+
+            const grad = this.ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, radius + 4);
+            grad.addColorStop(0, '#6ee7b7');
+            grad.addColorStop(0.5, '#10b981');
+            grad.addColorStop(1, '#047857');
+            this.ctx.fillStyle = grad;
+
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Baş üstü yaprak filizi
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillStyle = '#34d399';
+            this.ctx.beginPath();
+            this.ctx.ellipse(cx + 4, p.y - 4, 6, 3, -Math.PI / 6, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Gözler
+            this.ctx.fillStyle = '#ffffff';
+            const eyeX = p.dir === 1 ? cx + 2 : cx - 10;
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX, cy - 2, 4, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8, cy - 2, 4, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.ctx.fillStyle = '#0f172a';
+            this.ctx.beginPath();
+            this.ctx.arc(eyeX + (p.dir === 1 ? 1 : -1), cy - 2, 2, 0, Math.PI * 2);
+            this.ctx.arc(eyeX + 8 + (p.dir === 1 ? 1 : -1), cy - 2, 2, 0, Math.PI * 2);
+            this.ctx.fill();
         } else if (p.role === 'hava') {
             // 💨 Hava Karakteri: Rüzgar Spirit
             this.ctx.shadowColor = '#facc15';
@@ -522,38 +624,45 @@ class RenderEngine {
     }
 
     drawHUD(players) {
-        const roles = [
-            { id: 'ates', name: '🔥 P1: Ateş', color: '#ef4444' },
-            { id: 'su', name: '💧 P2: Su', color: '#3b82f6' },
-            { id: 'hava', name: '💨 P3: Hava', color: '#facc15' },
-            { id: 'elektrik', name: '⚡ P4: Elektrik', color: '#a855f7' }
-        ];
+        const roleMeta = {
+            su: { name: '💧 Su', color: '#3b82f6' },
+            ates: { name: '🔥 Ateş', color: '#ef4444' },
+            doga: { name: '🌿 Doğa', color: '#10b981' },
+            hava: { name: '💨 Hava', color: '#facc15' },
+            elektrik: { name: '⚡ Elektrik', color: '#a855f7' }
+        };
 
-        let startX = 20;
-        roles.forEach((r) => {
-            const player = players.find(p => p && p.role === r.id);
+        const activeList = players.filter(Boolean);
+        if (activeList.length === 0) return;
+
+        const boxW = 130;
+        const gap = 10;
+        const totalW = activeList.length * boxW + (activeList.length - 1) * gap;
+        let startX = Math.max(260, this.canvas.width - totalW - 20);
+
+        activeList.forEach((player, idx) => {
+            const meta = roleMeta[player.role] || { name: player.role.toUpperCase(), color: '#a855f7' };
             this.ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            this.ctx.fillRect(startX, 15, 125, 34);
-            this.ctx.strokeStyle = r.color;
+            this.ctx.fillRect(startX, 15, boxW, 36);
+            this.ctx.strokeStyle = meta.color;
             this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(startX, 15, 125, 34);
+            this.ctx.strokeRect(startX, 15, boxW, 36);
 
-            this.ctx.fillStyle = r.color;
+            this.ctx.fillStyle = meta.color;
             this.ctx.font = 'bold 11px sans-serif';
             this.ctx.textAlign = 'left';
-            const statusText = player ? (player.dead ? '💀 ÖLDÜ' : player.finished ? '✅ TAMAM' : '⚡ AKTİF') : 'OFFLINE';
-            this.ctx.fillText(r.name, startX + 8, 30);
+            const statusText = player.dead ? '💀 ÖLDÜ' : player.finished ? '✅ KAPIDA' : '⚡ AKTİF';
+            this.ctx.fillText(`P${idx + 1}: ${meta.name}`, startX + 8, 30);
             this.ctx.fillStyle = '#94a3b8';
             this.ctx.font = '10px sans-serif';
-            this.ctx.fillText(statusText, startX + 8, 43);
+            this.ctx.fillText(statusText, startX + 8, 44);
 
-            startX += 135;
+            startX += boxW + gap;
         });
         this.ctx.lineWidth = 1;
     }
 
     drawControlsLegend() {
-        // Bottom on-screen keybindings legend for 4 players
         const legendY = this.canvas.height - 45;
         const legendWidth = Math.min(this.canvas.width - 40, 1000);
         const legendX = (this.canvas.width - legendWidth) / 2;
@@ -564,13 +673,13 @@ class RenderEngine {
         this.ctx.strokeRect(legendX, legendY, legendWidth, 38);
 
         const keys = [
-            { text: '🔥 P1 Ateş: WASD + Space + [F]', color: '#ef4444' },
-            { text: '💧 P2 Su: Oklar + [Shift]', color: '#3b82f6' },
-            { text: '💨 P3 Hava: IJKL + [U] + [O]', color: '#facc15' },
-            { text: '⚡ P4 Elektrik: Numpad 8456 + [0]', color: '#a855f7' }
+            { text: '🔥 Ateş: [F / Space] Tahta Duvarı Yak', color: '#ef4444' },
+            { text: '💧 Su: [Shift / Aşağı] Borudan Geç', color: '#3b82f6' },
+            { text: '🌿 Doğa: [W / Yukarı] Sarmaşığa Tırman', color: '#10b981' },
+            { text: '💨 Hava: [Space / F] Rüzgarda Süzül', color: '#facc15' }
         ];
 
-        const itemWidth = legendWidth / 4;
+        const itemWidth = legendWidth / keys.length;
         keys.forEach((k, idx) => {
             this.ctx.fillStyle = k.color;
             this.ctx.font = 'bold 11px sans-serif';

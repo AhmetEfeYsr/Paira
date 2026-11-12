@@ -16,7 +16,7 @@ const ROLES = {
     
     VAMPIR: { icon: '🧛‍♂️', name: 'Sıradan Vampir', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Her gece diğer vampirlerle birlikte bir kurban seçersin.' },
     DRACULA: { icon: '🦇', name: 'Dracula', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin ama İzci ve Dedektif seni köylü olarak görür.' },
-    VAMPIR_IZCISI: { icon: '🐺', name: 'Vampir İzcisi', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin. Tuzaklara ve polis bloğuna bağışıksın.' },
+    VAMPIR_IZCISI: { icon: '🐺', name: 'Vampir İzcisi', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin. Her gece seçtiğin kişinin rolünü öğrenirsin. Tuzaklara ve polis bloğuna bağışıksın.' },
     PROFESYONEL: { icon: '🎯', name: 'Profesyonel', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, maxUses: 1, desc: 'Vampirsin. Hedefin doktor korumasını bile deler (1 kullanım).' },
     ZEHIRLI: { icon: '🧪', name: 'Zehirli', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, maxUses: 1, desc: 'Vampirsin. Bir kişiyi zehirlersin; ertesi gece tedavi edilmezse ölür (1 kullanım).' },
     

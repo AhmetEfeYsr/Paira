@@ -50,18 +50,18 @@ class PairaSharedUI {
         const logos = document.querySelectorAll('.game-icon img, .game-logo-container img');
         logos.forEach(img => {
             const src = img.getAttribute('src');
-            if (src && src.includes('logolar/')) {
+            if (!img.dataset.logoBase && src && src.includes('logolar/')) {
                 const parts = src.split('/');
                 const filename = parts[parts.length - 1];
-                const base = filename.split('_')[0].split('.')[0];
-                const replaceStr = src.includes('../logolar') ? '../logolar' : 'logolar';
-                
-                // AVIF system implementation: Try to load AVIF first, if it fails or by default use AVIF
-                // We use generated_logos folder for the high-end logos
+                img.dataset.logoBase = filename.split('_')[0].split('.')[0];
+                img.dataset.logoDir = src.includes('../logolar') ? '../logolar' : 'logolar';
+            }
+
+            const base = img.dataset.logoBase;
+            const replaceStr = img.dataset.logoDir;
+            if (base && replaceStr) {
                 const newSrc = `${replaceStr}/generated_logos/${base}_${themeName}.avif`;
-                img.setAttribute('src', newSrc);
-                
-                // Fallback to base AVIF if themed AVIF doesn't exist, and to main_logo if base doesn't exist either
+
                 img.onerror = () => {
                     const themedSuffix = `${base}_${themeName}.avif`;
                     const baseSuffix = `${base}.avif`;
@@ -74,6 +74,14 @@ class PairaSharedUI {
                         img.onerror = null;
                     }
                 };
+
+                if (img.getAttribute('src') === newSrc) {
+                    if (img.complete && img.naturalWidth === 0) {
+                        img.onerror();
+                    }
+                } else {
+                    img.setAttribute('src', newSrc);
+                }
             }
         });
     }
@@ -133,7 +141,9 @@ class PairaSharedUI {
                 ${topNavHTML}
             </div>
         `;
-        document.body.insertAdjacentHTML('afterbegin', navWrapperHTML);
+        if (!document.querySelector('.paira-global-nav')) {
+            document.body.insertAdjacentHTML('afterbegin', navWrapperHTML);
+        }
 
         if (!isGamePage) {
             const footerHTML = `
@@ -160,15 +170,17 @@ class PairaSharedUI {
             }
         }
 
-        const cookieHTML = `
-        <div id="cookieBanner" class="cookie-banner">
-            <div class="cookie-text">
-                Deneyiminizi iyileştirmek için çerezleri kullanıyoruz. Paira'da eğlenceye devam ederek <a href="${basePath}kullanim-kosullari.html">Kullanım Koşulları ve Gizlilik Politikamızı</a> kabul etmiş sayılırsınız.
+        if (!document.getElementById('cookieBanner')) {
+            const cookieHTML = `
+            <div id="cookieBanner" class="cookie-banner">
+                <div class="cookie-text">
+                    Deneyiminizi iyileştirmek için çerezleri kullanıyoruz. Paira'da eğlenceye devam ederek <a href="${basePath}kullanim-kosullari.html">Kullanım Koşulları ve Gizlilik Politikamızı</a> kabul etmiş sayılırsınız.
+                </div>
+                <button class="cookie-btn" onclick="window.pairaUI.acceptCookies()">Anladım</button>
             </div>
-            <button class="cookie-btn" onclick="window.pairaUI.acceptCookies()">Anladım</button>
-        </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', cookieHTML);
+            `;
+            document.body.insertAdjacentHTML('beforeend', cookieHTML);
+        }
 
         if (!localStorage.getItem('paira_cookies_accepted')) {
             setTimeout(() => {
@@ -384,7 +396,35 @@ window.PairaAudio = {
         }
     },
     play(type) {
+        if (!this.ctx) {
+            this.init();
+        }
         if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+
+        const now = this.ctx.currentTime;
+
+        if (type === 'celebrate') {
+            // Arpeggio chords
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const noteOsc = this.ctx.createOscillator();
+                const noteGain = this.ctx.createGain();
+                noteOsc.type = 'triangle';
+                noteOsc.frequency.setValueAtTime(freq, now + (i * 0.09));
+                noteGain.gain.setValueAtTime(0.0, now + (i * 0.09));
+                noteGain.gain.linearRampToValueAtTime(0.12, now + (i * 0.09) + 0.02);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.09) + 0.35);
+                noteOsc.connect(noteGain);
+                noteGain.connect(this.ctx.destination);
+                noteOsc.start(now + (i * 0.09));
+                noteOsc.stop(now + (i * 0.09) + 0.35);
+            });
+            return;
+        }
+
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
 
@@ -395,8 +435,6 @@ window.PairaAudio = {
         osc.connect(filter);
         filter.connect(gainNode);
         gainNode.connect(this.ctx.destination);
-
-        const now = this.ctx.currentTime;
 
         if (type === 'correct') {
             osc.type = 'sine';
@@ -427,6 +465,8 @@ window.PairaAudio = {
             osc.frequency.exponentialRampToValueAtTime(220, now + 0.5);
             gainNode.gain.setValueAtTime(0.0, now);
             gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
         } else if (type === 'pass') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, now);
@@ -442,22 +482,8 @@ window.PairaAudio = {
             gainNode.gain.linearRampToValueAtTime(0.08, now + 0.01);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
             osc.start(now); osc.stop(now + 0.06);
-        } else if (type === 'celebrate') {
-            // Arpeggio chords
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, i) => {
-                const noteOsc = this.ctx.createOscillator();
-                const noteGain = this.ctx.createGain();
-                noteOsc.type = 'triangle';
-                noteOsc.frequency.setValueAtTime(freq, now + (i * 0.09));
-                noteGain.gain.setValueAtTime(0.0, now + (i * 0.09));
-                noteGain.gain.linearRampToValueAtTime(0.12, now + (i * 0.09) + 0.02);
-                noteGain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.09) + 0.35);
-                noteOsc.connect(noteGain);
-                noteGain.connect(this.ctx.destination);
-                noteOsc.start(now + (i * 0.09));
-                noteOsc.stop(now + (i * 0.09) + 0.35);
-            });
+        } else {
+            gainNode.disconnect();
         }
     }
 };
@@ -506,7 +532,16 @@ window.pairaConfirm = function(options = {}) {
         overlay.offsetHeight;
         overlay.classList.add('active');
 
+        const keyHandler = (e) => {
+            if (e.key === 'Escape') {
+                close(false);
+            } else if (e.key === 'Enter') {
+                close(true);
+            }
+        };
+
         const close = (result) => {
+            document.removeEventListener('keydown', keyHandler);
             if (window.PairaAudio) window.PairaAudio.play('pop');
             overlay.classList.remove('active');
             setTimeout(() => overlay.remove(), 260);
@@ -524,15 +559,6 @@ window.pairaConfirm = function(options = {}) {
             if (e.target === overlay) close(false);
         });
 
-        const keyHandler = (e) => {
-            if (e.key === 'Escape') {
-                document.removeEventListener('keydown', keyHandler);
-                close(false);
-            } else if (e.key === 'Enter') {
-                document.removeEventListener('keydown', keyHandler);
-                close(true);
-            }
-        };
         document.addEventListener('keydown', keyHandler);
     });
 };
@@ -573,7 +599,14 @@ window.pairaAlert = function(options = {}) {
         overlay.offsetHeight;
         overlay.classList.add('active');
 
+        const keyHandler = (e) => {
+            if (e.key === 'Escape' || e.key === 'Enter') {
+                close();
+            }
+        };
+
         const close = () => {
+            document.removeEventListener('keydown', keyHandler);
             if (window.PairaAudio) window.PairaAudio.play('pop');
             overlay.classList.remove('active');
             setTimeout(() => overlay.remove(), 260);
@@ -586,6 +619,7 @@ window.pairaAlert = function(options = {}) {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) close();
         });
+        document.addEventListener('keydown', keyHandler);
     });
 };
 

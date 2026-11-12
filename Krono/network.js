@@ -35,6 +35,8 @@ class KronoNetwork extends BaseGameNetwork {
         // Hide room code UI
         const roomContainer = document.getElementById('room-code-container');
         if (roomContainer) roomContainer.style.display = 'none';
+        const copyBtn = document.getElementById('btn-copy-room');
+        if (copyBtn) copyBtn.style.display = 'none';
         
         // Start lobby update
         this.game.updateLobbyUI();
@@ -52,32 +54,38 @@ class KronoNetwork extends BaseGameNetwork {
         this.lobbyUI = new SharedLobbyUI({
             roomCode: initialCode,
             isHost: this.isHostNode,
-            onKickPlayer: (id) => this.kickPlayer(id),
-            onRoomStart: () => {
-                this.startGame();
-            }
+            onKickPlayer: (id) => this.kickPlayer(id)
         });
 
+        let inPeerReady = false;
         this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.game.myId = id;
-            if (this.isHostNode) {
-                const hostPlayer = Object.values(this.game.players).find(p => p.isHost);
-                if (hostPlayer) hostPlayer.id = id;
-                this.game.updateLobbyUI();
-            } else {
-                this.game.players = [{
-                    id: id,
-                    name: this.myName,
-                    score: 0,
-                    isHost: false,
-                    status: 'ready'
-                }];
-                this.game.updateLobbyUI();
-            }
+            if (inPeerReady) return;
+            inPeerReady = true;
+            try {
+                super._handlePeerReady(id);
+                this.game.myId = id;
+                if (this.isHostNode) {
+                    const hostPlayer = this.game.players.find(p => p.isHost);
+                    if (hostPlayer) hostPlayer.id = id;
+                    this.game.updateLobbyUI();
+                } else {
+                    if (!this.game.players.some(p => p.id === id)) {
+                        this.game.players = [{
+                            id: id,
+                            name: this.myName,
+                            score: 0,
+                            isHost: false,
+                            status: 'ready'
+                        }];
+                    }
+                    this.game.updateLobbyUI();
+                }
 
-            const codeToSet = this.isHostNode ? id : this.roomCode;
-            this.lobbyUI.setRoomCode(codeToSet);
+                const codeToSet = this.isHostNode ? id : this.roomCode;
+                this.lobbyUI.setRoomCode(codeToSet);
+            } finally {
+                inPeerReady = false;
+            }
         };
 
         window.addEventListener('beforeunload', () => {
@@ -117,15 +125,24 @@ class KronoNetwork extends BaseGameNetwork {
 
     handlePlayerJoin(id, player) {
         if (this.isHostNode) {
+            if (player.oldId && player.oldId !== id) {
+                const oldIdx = this.game.players.findIndex(p => p.id === player.oldId);
+                if (oldIdx !== -1) {
+                    this.game.players[oldIdx].id = id;
+                }
+            }
             const existing = this.game.players.find(p => p.id === id);
             if (!existing) {
                 this.game.players.push({
                     id: id,
                     name: player.name,
                     score: 0,
-                    isHost: false,
+                    isHost: Boolean(player.isHost),
                     status: 'ready'
                 });
+            } else {
+                existing.name = player.name;
+                existing.isHost = Boolean(player.isHost);
             }
             this.game.updateLobbyUI();
 
@@ -134,7 +151,7 @@ class KronoNetwork extends BaseGameNetwork {
                 document.getElementById('btn-start-game')?.classList.remove('disabled');
             }
 
-            // Sync settings and current player list to the new player
+            // Sync settings and current player list to all players
             this.broadcast('SYNC_LOBBY', {
                 players: this.game.players,
                 settings: this.game.settings
@@ -145,12 +162,22 @@ class KronoNetwork extends BaseGameNetwork {
     handlePlayerLeave(id) {
         this.game.players = this.game.players.filter(p => p.id !== id);
         this.game.updateLobbyUI();
+        if (this.isHostNode) {
+            this.broadcast('SYNC_LOBBY', {
+                players: this.game.players,
+                settings: this.game.settings
+            });
+        }
         
         if (this.game.gameState !== 'LOBBY') {
-            this.game.showToast("Rakip ayrıldı. Oyun bitti.", "warning");
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 3000);
+            if (this.game.players.length < 2 && !this.isSolo) {
+                this.game.showToast("Rakip ayrıldı. Oyun bitti.", "warning");
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+            } else {
+                this.game.checkRoundCompletionAfterLeave(id);
+            }
         } else if (this.isHostNode && this.game.players.length < 2 && !this.isSolo) {
             document.getElementById('btn-start-game')?.classList.add('disabled');
         }
@@ -178,6 +205,9 @@ class KronoNetwork extends BaseGameNetwork {
                 this.game.startRound(payload.gameData);
                 break;
             case 'SCORE_UPDATE':
+                if (this.isHostNode && senderId !== this.myId) {
+                    this.broadcast('SCORE_UPDATE', payload, senderId);
+                }
                 const p = this.game.players.find(pl => pl.id === payload.playerId);
                 if (p) {
                     p.score = payload.score;
@@ -185,6 +215,9 @@ class KronoNetwork extends BaseGameNetwork {
                 }
                 break;
             case 'OPPONENT_FINISHED':
+                if (this.isHostNode && senderId !== this.myId) {
+                    this.broadcast('OPPONENT_FINISHED', payload, senderId);
+                }
                 this.game.onOpponentFinished(payload.playerId, payload.timeSpent, payload.correctCount);
                 break;
             case 'ROUND_OVER':
@@ -211,6 +244,10 @@ class KronoNetwork extends BaseGameNetwork {
     send(data) {
         if (this.isSolo) return;
         const { type, ...payload } = data;
-        this.sendGameAction(type, payload);
+        if (this.isHostNode) {
+            this.broadcast(type, payload);
+        } else {
+            this.sendToPeer(this.roomCode, type, payload);
+        }
     }
 }

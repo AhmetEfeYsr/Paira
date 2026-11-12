@@ -8,8 +8,8 @@ let hostId = null;
 let connections = {};
 let isCodeVisible = false;
 
-// Element rolleri sabit sıra: 1. Ateş, 2. Su, 3. Hava, 4. Elektrik
-const ELEMENT_ROLES = ['ates', 'su', 'hava', 'elektrik'];
+// Element rolleri sabit sıra: 1. Su, 2. Ateş, 3. Doğa, 4. Hava
+const ELEMENT_ROLES = ['su', 'ates', 'doga', 'hava'];
 
 function getRoomCode() {
     if (typeof window.generateRoomCode === 'function') return window.generateRoomCode();
@@ -53,31 +53,6 @@ function setupUserRole() {
 document.addEventListener('DOMContentLoaded', () => {
     // Session bazlı rolü kur
     setupUserRole();
-
-    // Lobi Kodu Göster/Gizle ve Kopyala
-    const btnToggleCode = document.getElementById('btn-toggle-code');
-    if (btnToggleCode) {
-        btnToggleCode.addEventListener('click', () => {
-            isCodeVisible = !isCodeVisible;
-            const codeDisplay = document.getElementById('display-room-code');
-            btnToggleCode.innerText = isCodeVisible ? '🙈' : '👁️';
-            if (codeDisplay) {
-                codeDisplay.innerText = isCodeVisible ? (codeDisplay.dataset.code || '') : '••••••••';
-            }
-        });
-    }
-
-    const btnCopyRoom = document.getElementById('btn-copy-room');
-    if(btnCopyRoom) {
-        btnCopyRoom.addEventListener('click', () => {
-            const codeToCopy = document.getElementById('display-room-code')?.dataset?.code;
-            if (codeToCopy) {
-                navigator.clipboard.writeText(codeToCopy)
-                    .then(() => showToast("Oda kodu kopyalandı!", "success"))
-                    .catch(() => showToast("Kopyalanamadı", "error"));
-            }
-        });
-    }
 });
 
 

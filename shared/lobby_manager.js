@@ -35,18 +35,36 @@ class SharedLobbyUI {
 
     _bindEvents() {
         if (this.elements.btnToggleCode) {
-            this.elements.btnToggleCode.addEventListener('click', () => {
+            const newToggleBtn = this.elements.btnToggleCode.cloneNode(true);
+            this.elements.btnToggleCode.replaceWith(newToggleBtn);
+            this.elements.btnToggleCode = newToggleBtn;
+            this.elements.iconEyeOpen = document.getElementById('icon-eye-open');
+            this.elements.iconEyeClosed = document.getElementById('icon-eye-closed');
+
+            this.elements.btnToggleCode.addEventListener('click', (e) => {
+                e.stopImmediatePropagation();
                 this.isCodeVisible = !this.isCodeVisible;
                 this._updateRoomCodeDisplay();
+                if (window.PairaAudio) window.PairaAudio.play('pop');
             });
         }
 
         if (this.elements.btnCopyRoom) {
-            this.elements.btnCopyRoom.addEventListener('click', () => {
-                if (this.roomCode) {
-                    navigator.clipboard.writeText(this.roomCode).then(() => {
-                        if (window.showToast) window.showToast('Oda kodu kopyalandı!', 'success');
-                    }).catch(() => console.error('Kopyalama başarısız'));
+            const newCopyBtn = this.elements.btnCopyRoom.cloneNode(true);
+            this.elements.btnCopyRoom.replaceWith(newCopyBtn);
+            this.elements.btnCopyRoom = newCopyBtn;
+
+            this.elements.btnCopyRoom.addEventListener('click', (e) => {
+                e.stopImmediatePropagation();
+                const codeToCopy = this.roomCode || (this.elements.displayRoomCode && this.elements.displayRoomCode.dataset.code) || '';
+                if (codeToCopy) {
+                    if (window.copyToClipboard) {
+                        window.copyToClipboard(codeToCopy, 'Oda kodu kopyalandı!');
+                    } else {
+                        navigator.clipboard.writeText(codeToCopy).then(() => {
+                            if (window.showToast) window.showToast('Oda kodu kopyalandı!', 'success');
+                        }).catch(() => console.error('Kopyalama başarısız'));
+                    }
                 }
             });
         }

@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
-    <title>Hızlı İsim Şehir | Paira Games - Online Kelime Yarışı</title>
+    <title>Paira Hızlı İsim Şehir | Online Kelime Yarışı</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="../shared/shared.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="../shared/shared.css">
@@ -17,8 +17,8 @@
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
 
-    <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
-    <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
+    <meta property="og:image" content="https://pairaaa.com/main_logo.avif">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
@@ -98,6 +98,7 @@
                     </div>
                     <h3>Bekleniyor...</h3>
                     <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu (<strong id="host-name-display">...</strong>) ayarları yapıyor.</p>
+                    <div id="client-cats-preview" style="margin-top: 15px; color: var(--text-muted); font-size: 0.9rem;"></div>
                 </section>
             </div>
         </section>
@@ -157,7 +158,7 @@
             </div>
             
             <!-- VOTING OVERLAY -->
-            <div id="voting-overlay" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; border-radius: 20px;">
+            <div id="voting-overlay" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; border-radius: 20px;">
                 <h2 style="color: white; margin-bottom: 10px;">İtiraz Oylaması</h2>
                 <p id="voting-text" style="color: #ddd; font-size: 1.1rem; margin-bottom: 20px; max-width: 90%; word-break: break-word;">...</p>
                 <div id="voting-buttons" style="display: flex; gap: 15px;">
@@ -213,7 +214,7 @@
         
         <p>Bu modda, klasik oyunun aksine tüm oyuncular aynı anda yazmaz. Her turda bir oyuncuya sıra gelir ve sistem o oyuncu için bir harf ile bir kategori belirler (Örneğin: 'B harfi ile başlayan Şehir'). Amacınız, kısıtlı süreniz dolmadan doğru kelimeyi yazıp göndermektir. Diğer oyuncular sizin verdiğiniz cevabı izler ve gerekirse itiraz ederek oylama başlatabilirler.</p>
         
-        <p>Puanlama sisteminde ise önemli bir detay var: Bulduğunuz kelime ne kadar uzunsa o kadar çok puan kazanırsınız! Sadece hızlı olmak yetmez, army zamanda yaratıcı ve uzun kelimeler bulmak size şampiyonluğu getirebilir. İster arkadaşlarınla istersen de dünyanın dört bir yanından oyuncularla kapış. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden bu amansız yarışa hemen katıl!</p>
+        <p>Puanlama sisteminde ise önemli bir detay var: Bulduğunuz kelime ne kadar uzunsa o kadar çok puan kazanırsınız! Sadece hızlı olmak yetmez, aynı zamanda yaratıcı ve uzun kelimeler bulmak size şampiyonluğu getirebilir. İster arkadaşlarınla istersen de dünyanın dört bir yanından oyuncularla kapış. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden bu amansız yarışa hemen katıl!</p>
     </div>
 
     <script src="../shared/peer_manager.js?v=1.0.2"></script>

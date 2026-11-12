@@ -21,13 +21,20 @@ class KelimeAviNetwork extends BaseGameNetwork {
             onKickPlayer: (id) => this.kickPlayer(id)
         });
 
+        let inPeerReady = false;
         this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.view.setMyId(id);
-            const codeToSet = this.isHostNode ? id : this.roomCode;
-            this.lobbyUI.setRoomCode(codeToSet);
-            if (this.isHostNode && this.engine && this.engine.state) {
-                this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            if (inPeerReady) return;
+            inPeerReady = true;
+            try {
+                super._handlePeerReady(id);
+                this.view.setMyId(id);
+                const codeToSet = this.isHostNode ? id : this.roomCode;
+                this.lobbyUI.setRoomCode(codeToSet);
+                if (this.isHostNode && this.engine && this.engine.state) {
+                    this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+                }
+            } finally {
+                inPeerReady = false;
             }
         };
 
@@ -36,7 +43,7 @@ class KelimeAviNetwork extends BaseGameNetwork {
                 const isHostEbe = (this.myId === state.currentEbe);
                 const hostState = JSON.parse(JSON.stringify(state));
 
-                if (!isHostEbe && hostState.status === 'playing' && hostState.targetWord) {
+                if (!isHostEbe && (hostState.status === 'playing' || hostState.status === 'countdown') && hostState.targetWord) {
                     hostState.targetWord = hostState.targetWord.substring(0, hostState.revealedLetters);
                 }
 
@@ -61,11 +68,15 @@ class KelimeAviNetwork extends BaseGameNetwork {
                 this.broadcastCensoredState();
             };
 
+            let lastSyncSec = -1;
             this.engine.onTimerTick = (secs) => {
                 this.view.updateTimer(secs);
-                if (secs % 5 === 0 || secs <= 5) {
-                    const durationLeft = Math.max(0, this.engine.localEndTime - window.PairaTime.now());
-                    this.broadcast('SYNC_TIME', { durationLeft });
+                if (lastSyncSec !== secs) {
+                    lastSyncSec = secs;
+                    if (secs === this.engine.state.turnDuration || secs % 5 === 0 || secs <= 5) {
+                        const durationLeft = Math.max(0, this.engine.localEndTime - window.PairaTime.now());
+                        this.broadcast('SYNC_TIME', { durationLeft });
+                    }
                 }
             };
             
@@ -93,8 +104,12 @@ class KelimeAviNetwork extends BaseGameNetwork {
             const safeState = JSON.parse(JSON.stringify(fullState));
             safeState.targetWordLength = fullState.targetWord ? fullState.targetWord.length : 0;
             
-            if (!isEbe && safeState.status === 'playing' && safeState.targetWord) {
+            if (!isEbe && (safeState.status === 'playing' || safeState.status === 'countdown') && safeState.targetWord) {
                 safeState.targetWord = safeState.targetWord.substring(0, safeState.revealedLetters);
+            }
+            if (safeState.status === 'playing' || safeState.status === 'countdown') {
+                safeState.submittedWords = {};
+                safeState.ebeGuesses = [];
             }
             
             this.sendToPeer(peerId, 'SYNC', safeState);

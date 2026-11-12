@@ -26,6 +26,8 @@ class ChatListener {
         this.ws = null; // fallback reference
         this.isStopped = false;
         this.reconnectTimeout = null;
+        this.twitchReconnectTimeout = null;
+        this.kickReconnectTimeout = null;
         this.twitchReconnectDelay = 3000;
         this.kickReconnectDelay = 3000;
 
@@ -53,6 +55,14 @@ class ChatListener {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
+        if (this.twitchReconnectTimeout) {
+            clearTimeout(this.twitchReconnectTimeout);
+            this.twitchReconnectTimeout = null;
+        }
+        if (this.kickReconnectTimeout) {
+            clearTimeout(this.kickReconnectTimeout);
+            this.kickReconnectTimeout = null;
+        }
         if (this.twitchPingInterval) {
             clearInterval(this.twitchPingInterval);
             this.twitchPingInterval = null;
@@ -62,15 +72,15 @@ class ChatListener {
             this.kickPingInterval = null;
         }
         if (this.twitchWs) {
-            this.twitchWs.close();
+            try { this.twitchWs.close(); } catch (e) {}
             this.twitchWs = null;
         }
         if (this.kickWs) {
-            this.kickWs.close();
+            try { this.kickWs.close(); } catch (e) {}
             this.kickWs = null;
         }
         if (this.ws) {
-            this.ws.close();
+            try { this.ws.close(); } catch (e) {}
             this.ws = null;
         }
     }
@@ -104,7 +114,11 @@ class ChatListener {
     }
 
     startTwitch(targetChannel = this.twitchChannel) {
-        if (!targetChannel) return;
+        if (!targetChannel || this.isStopped) return;
+        if (this.twitchWs) {
+            try { this.twitchWs.onclose = null; this.twitchWs.close(); } catch (e) {}
+            this.twitchWs = null;
+        }
         const cleanChannel = targetChannel.trim().toLowerCase().replace(/^#/, '');
         console.log(`[Twitch] Connecting to ${cleanChannel} chat...`);
         const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
@@ -139,7 +153,7 @@ class ChatListener {
                 if (message.startsWith('PING')) {
                     ws.send('PONG :tmi.twitch.tv');
                 } else if (message.includes('PRIVMSG')) {
-                    const usernameMatch = message.match(/display-name=([^;]+)/) || message.match(/:(.*?)!/);
+                    const usernameMatch = message.match(/display-name=([^;\s]+)/) || message.match(/:([^!\s]+)![^@\s]+@/);
                     let username = usernameMatch ? usernameMatch[1] : 'Unknown';
                     if (!username || username === 'Unknown') {
                         const fallbackMatch = message.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv/);
@@ -147,7 +161,7 @@ class ChatListener {
                     }
 
                     const contentMatch = message.match(/PRIVMSG #[^:]+:(.+)/);
-                    const content = contentMatch ? contentMatch[1].trim() : '';
+                    const content = contentMatch ? contentMatch[1].replace(/^\u0001ACTION\s+|\u0001$/g, '').trim() : '';
 
                     if (content && this.onMessage) {
                         const prefix = (this.platform === 'both' || this.platform === 'crossplatform') ? '[Twitch] ' : '';
@@ -173,7 +187,8 @@ class ChatListener {
                 }
                 const delay = this.twitchReconnectDelay;
                 this.twitchReconnectDelay = Math.min(30000, this.twitchReconnectDelay * 1.5);
-                this.reconnectTimeout = setTimeout(() => {
+                if (this.twitchReconnectTimeout) clearTimeout(this.twitchReconnectTimeout);
+                this.twitchReconnectTimeout = setTimeout(() => {
                     if (!this.isStopped) {
                         console.log('[Twitch] Reconnecting...');
                         this.startTwitch(targetChannel);
@@ -281,20 +296,28 @@ class ChatListener {
 
         try {
             const result = await Promise.any(targets.map(target => fetchTarget(target)));
+            if (this.isStopped) return;
             console.log(`[Kick] Resolved Chatroom ID: ${result.chatroomId}, Key: ${result.pusherKey}, Cluster: ${result.pusherCluster}`);
             this.connectToKickPusher(result.pusherKey, result.pusherCluster, result.chatroomId, cleanChannel);
         } catch (e) {
+            if (this.isStopped) return;
             this.handleError(`[Kick] "${cleanChannel}" için Kick kanal bilgileri alınamadı. Lütfen kanal adını kontrol edin.`);
         }
     }
 
     connectToKickPusher(key, cluster, chatroomId, targetChannel = this.kickChannel) {
+        if (this.isStopped) return;
+        if (this.kickWs) {
+            try { this.kickWs.onclose = null; this.kickWs.close(); } catch (e) {}
+            this.kickWs = null;
+        }
         const pusherUrl = `wss://ws-${cluster}.pusher.com/app/${key}?protocol=7&client=js&version=8.3.0&flash=false`;
         const ws = new WebSocket(pusherUrl);
         this.kickWs = ws;
 
         ws.onopen = () => {
             console.log(`[Kick] Connected to Pusher for ${targetChannel} (Chatroom ID: ${chatroomId}).`);
+            this.kickReconnectDelay = 3000;
             this.updateStatusConnected();
             const subscribeMsg = JSON.stringify({
                 event: 'pusher:subscribe',
@@ -345,12 +368,15 @@ class ChatListener {
                     status.textContent = '• Kick Yeniden Bağlanıyor...';
                     status.style.color = 'var(--warning)';
                 }
-                this.reconnectTimeout = setTimeout(() => {
+                const delay = this.kickReconnectDelay;
+                this.kickReconnectDelay = Math.min(30000, this.kickReconnectDelay * 1.5);
+                if (this.kickReconnectTimeout) clearTimeout(this.kickReconnectTimeout);
+                this.kickReconnectTimeout = setTimeout(() => {
                     if (!this.isStopped) {
                         console.log('[Kick] Reconnecting...');
                         this.startKick(targetChannel);
                     }
-                }, 3000);
+                }, delay);
             }
         };
     }

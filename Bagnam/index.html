@@ -5,7 +5,7 @@
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Bağnam | Paira Bağnam - Günlük Anlamsal Kelime Bulmaca</title>
+    <title>Paira Bağnam | Günlük Anlamsal Kelime Bulmaca</title>
     <meta name="description"
         content="Her gün yeni bir gizli kelime! Bağnam ile kelimelerin anlamsal yakınlıklarını ölçerek hedefi bulmaya çalışın. Yapay zeka destekli kelime oyunu deneyimi.">
     <meta name="keywords"
@@ -48,7 +48,7 @@
     }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <link rel="stylesheet" href="../shared/shared.css">
@@ -65,31 +65,41 @@
         <section id="login-screen" class="view-state active"
             style="align-items: center; justify-content: flex-start; padding-top: 5vh; min-height: 100%;">
             <div class="hero-content">
-                <div class="game-logo-container"><img src="../logolar/bagnam.avif" alt="Bagnam Logo"></div>
+                <div class="game-logo-container" style="position: relative; display: inline-block;">
+                    <img src="../logolar/bagnam.avif" alt="Bagnam Logo">
+                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg></a>
+                </div>
                 <h1 class="gradient-text">Bağnam</h1>
-                <p class="seo-description">Her gün yenilenen **günün gizli kelimesini** bulmak için mantığını kullan!
+                <p class="seo-description">Her gün yenilenen <strong>günün gizli kelimesini</strong> bulmak için mantığını kullan!
                     Tahminlerin anlamsal olarak hedefe ne kadar yakınsa, o kadar hızlı 1 numaraya ulaşırsın.</p>
             </div>
 
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
                 <button id="btn-start" class="btn btn-primary btn-block"
-                    style="display: block; width: 100%; text-align: center; margin: 0 auto; padding: 16px; font-size: 1.2rem; margin-bottom: 12px;">Günün
+                    style="display: block; width: 100%; text-align: center; margin: 0 auto 12px auto; padding: 16px; font-size: 1.2rem;">Günün
                     Kelimesini Oyna</button>
                 <button id="btn-endless" class="btn btn-primary btn-block"
-                    style="display: block; width: 100%; text-align: center; margin: 0 auto; padding: 16px; font-size: 1.2rem; margin-bottom: 12px;">Sonsuz
+                    style="display: block; width: 100%; text-align: center; margin: 0 auto 12px auto; padding: 16px; font-size: 1.2rem;">Sonsuz
                     Mod Oyna</button>
+                <button id="btn-login-stats" class="btn btn-secondary btn-block"
+                    style="display: block; width: 100%; text-align: center; margin: 0 auto 12px auto; padding: 12px; font-size: 1rem;">📊 İstatistiklerim</button>
 
                 <div class="past-games-container"
                     style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--lilac-muted); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
                     <label for="past-date-picker"
                         style="font-size: 0.9rem; color: var(--text-muted); text-align: center;">Veya geçmiş bir tarihi
                         oynayın:</label>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: stretch;">
                         <input type="date" id="past-date-picker"
-                            style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--lilac-muted); background: var(--input-bg); color: var(--text-main); color-scheme: dark;">
+                            style="flex: 1; padding: 8px 12px; margin-bottom: 0; border-radius: 8px; border: 1px solid var(--lilac-muted); background: var(--input-bg); color: var(--text-main); color-scheme: dark;">
                         <button id="btn-play-past" class="btn btn-secondary"
-                            style="padding: 8px 16px; white-space: nowrap;">Oyna</button>
+                            style="padding: 8px 16px; margin-bottom: 0; white-space: nowrap;">Oyna</button>
                     </div>
                 </div>
 
@@ -130,8 +140,8 @@
             style="padding: 0; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="game-topbar">
                 <div class="score-board"
-                    style="display: flex; justify-content: space-between; align-items: center; width: 95%; max-width: 950px; margin: 0 auto;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    style="display: flex; justify-content: space-between; align-items: center; width: 95%; max-width: 950px; margin: 0 auto; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <button id="btn-back" class="topbar-btn back-btn" title="Geri Dön"><svg
                                 xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -139,12 +149,16 @@
                                 <line x1="19" y1="12" x2="5" y2="12"></line>
                                 <polyline points="12 19 5 12 12 5"></polyline>
                             </svg></button>
-                        <span>Tahmin Sayısı: <span id="guess-count" class="timer">0</span></span>
+                        <div class="topbar-status-info">
+                            <span id="game-mode-badge" class="mode-badge">Günlük</span>
+                            <span class="guess-counter-label">Tahmin: <strong id="guess-count" class="guess-counter">0</strong></span>
+                        </div>
                     </div>
                     <div class="topbar-actions">
+                        <button id="btn-stats" class="topbar-btn stats-btn" title="İstatistikler">📊</button>
                         <button id="btn-hint" class="topbar-btn hint-btn" title="İpucu Al">💡</button>
                         <button id="btn-last-hint" class="topbar-btn last-hint-btn hidden"
-                            title="Son ipucunu tekrar göster">👁</button>
+                            title="Alınan ipuçlarını göster">👁</button>
                         <button id="btn-giveup" class="topbar-btn giveup-btn" title="Pes Et">🏳️</button>
                     </div>
                 </div>
@@ -153,9 +167,11 @@
             <div class="play-area"
                 style="max-width: 950px; width: 95%; margin: 0 auto; padding: 1rem; display: flex; flex-direction: column; flex: 1;">
                 <!-- Input Area with Clear button -->
-                <div class="guess-input-wrapper" style="position: relative;">
-                    <input type="text" id="word-input" placeholder="Bir kelime girin..." autocomplete="off">
-                    <button id="btn-clear-input" class="input-clear-btn hidden" title="Temizle" type="button">&times;</button>
+                <div class="guess-input-wrapper">
+                    <div class="input-field-wrap">
+                        <input type="text" id="word-input" placeholder="Bir kelime girin..." autocomplete="off" spellcheck="false">
+                        <button id="btn-clear-input" class="input-clear-btn hidden" title="Temizle" type="button">&times;</button>
+                    </div>
                     <button id="btn-guess" class="btn btn-primary">Tahmin Et</button>
                 </div>
 
@@ -179,9 +195,10 @@
                 <!-- Feedback / Success Message -->
                 <div id="success-message" class="hidden success-banner">
                     <h2 style="margin:0;">Tebrikler! 🎉</h2>
-                    <p>Günün kelimesini <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p>
+                    <p>Gizli kelimeyi <strong><span id="final-guess-count">X</span></strong> tahminde buldunuz.</p>
                     <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
-                        <button id="btn-share-result" class="btn btn-primary btn-sm">📋 Sonucu Kopyala & Paylaş</button>
+                        <button id="btn-share-result" class="btn btn-primary btn-sm">📋 Sonucu Kopyala &amp; Paylaş</button>
+                        <button id="btn-next-endless" class="btn btn-secondary btn-sm hidden">🔄 Yeni Kelime</button>
                     </div>
                 </div>
 
@@ -204,15 +221,50 @@
         <div class="paira-modal-card">
             <div class="paira-modal-icon success">🎉</div>
             <h3 class="paira-modal-title">Harika İş! Kelimeyi Buldun!</h3>
-            <div class="paira-modal-body">
-                <div id="victory-target-word" style="font-size: 1.6rem; font-weight: 800; color: var(--neon-purple); margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">HEDEF</div>
-                <p style="margin-bottom: 0.5rem;">Gizli kelimeye <strong><span id="modal-guess-count">0</span></strong> tahminde ulaştın!</p>
-                <div id="modal-hint-stat" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"></div>
-                <div id="victory-emoji-preview" style="background: var(--code-bg); padding: 10px; border-radius: 10px; font-size: 1.1rem; line-height: 1.4; margin-bottom: 1rem; user-select: all;"></div>
+            <div class="paira-modal-body" style="width: 100%;">
+                <div id="victory-target-word" style="font-size: 1.6rem; font-weight: 800; color: var(--neon-purple); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 1px;">HEDEF</div>
+                <p style="margin-bottom: 0.4rem;">Gizli kelimeye <strong><span id="modal-guess-count">0</span></strong> tahminde ulaştın!</p>
+                <div id="modal-hint-stat" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.9rem;"></div>
+                <div id="victory-emoji-preview" style="background: var(--code-bg); padding: 10px; border-radius: 10px; font-size: 0.95rem; line-height: 1.45; margin-bottom: 0.5rem; user-select: all; white-space: pre-line;"></div>
             </div>
             <div class="paira-modal-actions" style="flex-direction: column; width: 100%;">
-                <button id="btn-modal-share" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.05rem;">📋 Sonucu Kopyala & Paylaş</button>
+                <button id="btn-modal-share" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.05rem;">📋 Sonucu Kopyala &amp; Paylaş</button>
+                <button id="btn-modal-next-endless" class="btn btn-secondary btn-block hidden" style="padding: 12px;">🔄 Yeni Kelime (Sonsuz Mod)</button>
                 <button id="btn-modal-close" class="btn btn-secondary btn-block" style="padding: 10px;">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATISTICS MODAL -->
+    <div id="stats-modal" class="paira-modal-overlay">
+        <div class="paira-modal-card">
+            <div class="paira-modal-icon">📊</div>
+            <h3 class="paira-modal-title">Bağnam İstatistiklerim</h3>
+            <div class="paira-modal-body" style="width: 100%; margin-bottom: 1.25rem;">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span id="stat-played" class="stat-val">0</span>
+                        <span class="stat-lbl">Oynanan</span>
+                    </div>
+                    <div class="stat-box">
+                        <span id="stat-win-rate" class="stat-val">0%</span>
+                        <span class="stat-lbl">Kazanma</span>
+                    </div>
+                    <div class="stat-box">
+                        <span id="stat-current-streak" class="stat-val">0</span>
+                        <span class="stat-lbl">Günlük Seri 🔥</span>
+                    </div>
+                    <div class="stat-box">
+                        <span id="stat-max-streak" class="stat-val">0</span>
+                        <span class="stat-lbl">En İyi Seri 🏆</span>
+                    </div>
+                </div>
+                <div class="stat-avg-row">
+                    Ortalama Tahmin Sayısı (Kazanılan): <strong id="stat-avg-guesses">-</strong>
+                </div>
+            </div>
+            <div class="paira-modal-actions" style="width: 100%;">
+                <button id="btn-stats-close" class="btn btn-secondary btn-block" style="padding: 10px;">Kapat</button>
             </div>
         </div>
     </div>

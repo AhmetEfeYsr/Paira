@@ -4,7 +4,7 @@
 <head>
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira Gartic | Twitch ve Kick İçin İnteraktif Çizim Oyunu</title>
 
     <!-- SEO & Social Meta Tags -->
@@ -53,6 +53,7 @@
 
 <body>
     <div class="glass-bg"></div>
+    <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar"
         style="overflow: visible !important; max-height: none !important;">
@@ -68,7 +69,7 @@
                             <polyline points="8 6 2 12 8 18"></polyline>
                         </svg></a></div>
                 <h1 class="gradient-text">Chat ÇizBil</h1>
-                <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! **Paira Gartic** (ÇizBil)
+                <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! <strong>Paira Gartic</strong> (ÇizBil)
                     ile siz çizin, sohbetinizdeki (chat) herkes aynı anda tahmin etsin. En hızlı kim bilecek?</p>
             </div>
 
@@ -135,9 +136,19 @@
     <!-- Scripts -->
 
     <script>
-        document.getElementById('btn-start').addEventListener('click', () => {
-            const channel = document.getElementById('channel-input').value.trim();
-            const platform = document.getElementById('platform-select').value;
+        const channelInput = document.getElementById('channel-input');
+        const platformSelect = document.getElementById('platform-select');
+
+        const savedChannel = localStorage.getItem('gartic_channel');
+        const savedPlatform = localStorage.getItem('gartic_platform');
+        if (savedChannel && channelInput) channelInput.value = savedChannel;
+        if (savedPlatform && platformSelect) platformSelect.value = savedPlatform;
+
+        const startGartic = () => {
+            if (window.PairaAudio) window.PairaAudio.init();
+            const rawChannel = channelInput.value.trim();
+            const channel = rawChannel.replace(/^(https?:\/\/)?(www\.)?(twitch\.tv|kick\.com)\//i, '').replace(/^[@#]/, '').split('/')[0].trim();
+            const platform = platformSelect.value;
             const status = document.getElementById('login-status');
 
             if (!channel) {
@@ -145,16 +156,24 @@
                 status.className = 'status-msg error error-shake';
                 if (window.showToast) window.showToast('Lütfen bir kanal adı girin!', 'error');
 
-                // Shake the input too
-                const input = document.getElementById('channel-input');
-                input.classList.add('error-shake');
-                setTimeout(() => input.classList.remove('error-shake'), 400);
+                channelInput.classList.add('error-shake');
+                setTimeout(() => channelInput.classList.remove('error-shake'), 400);
                 return;
             }
 
+            localStorage.setItem('gartic_channel', channel);
+            localStorage.setItem('gartic_platform', platform);
             sessionStorage.setItem('cizbil_channel', channel);
             sessionStorage.setItem('cizbil_platform', platform);
             window.location.href = 'game.html';
+        };
+
+        document.getElementById('btn-start').addEventListener('click', startGartic);
+        channelInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                startGartic();
+            }
         });
     </script>
 </body>

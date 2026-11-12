@@ -23,9 +23,17 @@ let drawingBoard;
 const fuzzyMatcher = new window.FuzzyMatcher();
 
 const isMatch = (guess, target) => {
-    const nGuess = window.normalizeTurkishChars(guess);
-    const nTarget = window.normalizeTurkishChars(target);
-    return fuzzyMatcher.isMatch(nGuess, nTarget, 1.2);
+    if (!guess || !target) return false;
+    const cleanGuess = guess.trim().toLocaleLowerCase('tr-TR');
+    const cleanTarget = target.trim().toLocaleLowerCase('tr-TR');
+    if (cleanGuess === cleanTarget) return true;
+
+    const nGuess = window.normalizeTurkishChars(cleanGuess);
+    const nTarget = window.normalizeTurkishChars(cleanTarget);
+    if (nGuess === nTarget) return true;
+
+    const tolerance = nTarget.length <= 3 ? 0 : (nTarget.length === 4 ? 0.5 : 1.2);
+    return fuzzyMatcher.isMatch(nGuess, nTarget, tolerance);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,8 +61,9 @@ function initCanvas() {
 
     // Toolbar logic
     const bindInteraction = (el, handler) => {
+        if (!el) return;
         el.addEventListener('pointerdown', (e) => { e.preventDefault(); handler(e); });
-        el.addEventListener('click', (e) => { e.preventDefault(); handler(e); });
+        el.addEventListener('click', (e) => { e.preventDefault(); if (e.detail !== 0) return; handler(e); });
         el.style.touchAction = 'none';
     };
 
@@ -133,7 +142,12 @@ function initCanvas() {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
             customColorBtn.classList.add('active');
             drawingBoard.setColor(newColor);
-            drawingBoard.setTool('brush');
+            const currentToolBtn = document.querySelector('.tool-btn.active');
+            if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                drawingBoard.setTool('brush');
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+            }
         });
         customColorInput.addEventListener('change', (e) => {
             if (window.showToast) window.showToast("Özel renk seçildi", "info");
@@ -145,7 +159,12 @@ function initCanvas() {
             document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
             customColorBtn.classList.add('active');
             drawingBoard.setColor(newColor);
-            drawingBoard.setTool('brush');
+            const currentToolBtn = document.querySelector('.tool-btn.active');
+            if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                drawingBoard.setTool('brush');
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+            }
         });
         customColorInput.addEventListener('click', e => e.stopPropagation());
     }
@@ -227,9 +246,18 @@ async function initGame() {
         presentWordChoices();
     });
     document.getElementById('btn-next').addEventListener('click', presentWordChoices);
-    document.getElementById('btn-leave').addEventListener('click', () => {
-        if (chatListener) chatListener.stop();
-        window.location.href = 'index.html';
+    document.getElementById('btn-leave').addEventListener('click', async () => {
+        const confirmed = window.pairaConfirm ? await window.pairaConfirm({
+            title: "Oyundan Ayrıl",
+            message: "Oyundan ayrılmak istediğinize emin misiniz? Liderlik tablosu sıfırlanacaktır.",
+            confirmText: "Ayrıl",
+            cancelText: "Kal",
+            confirmType: "danger"
+        }) : true;
+        if (confirmed) {
+            if (chatListener) chatListener.stop();
+            window.location.href = 'index.html';
+        }
     });
 
     // Setup word choice handlers
@@ -265,6 +293,8 @@ function presentWordChoices() {
     document.getElementById('btn-skip').style.display = 'none';
 
     if (drawingBoard) {
+        drawingBoard.readOnly = true;
+        drawingBoard.updateCursor();
         drawingBoard.resetHistory();
     }
 }
@@ -281,15 +311,18 @@ function startWord(selectedWord) {
     if (counterEl) counterEl.textContent = `Kelime #${wordCount}`;
 
     state.isPaused = false;
+    if (drawingBoard) {
+        drawingBoard.readOnly = false;
+        drawingBoard.updateCursor();
+    }
     document.getElementById('btn-next').style.display = 'none';
     document.getElementById('btn-skip').style.display = 'inline-flex';
     if (window.showToast) window.showToast("Yeni kelime seçildi, çizime başlayabilirsiniz!", "info");
 }
 
 function handleChatMessage(username, message) {
-    if (state.isPaused || !currentWord) return;
-
     const chatFeed = document.getElementById('chat-feed');
+    if (!chatFeed) return;
     const msgDiv = document.createElement('div');
     msgDiv.className = 'chat-msg';
 
@@ -301,7 +334,7 @@ function handleChatMessage(username, message) {
     msgDiv.appendChild(usernameSpan);
     msgDiv.appendChild(textSpan);
 
-    if (isMatch(message, currentWord)) {
+    if (!state.isPaused && currentWord && isMatch(message, currentWord)) {
         msgDiv.classList.add('correct');
         // FIX: Use textContent instead of innerHTML to prevent XSS from chat messages
         textSpan.textContent = `🎉 ${message} (Doğru bildi!)`;
@@ -320,6 +353,10 @@ function handleChatMessage(username, message) {
 
 function handleCorrectGuess(username) {
     state.isPaused = true;
+    if (drawingBoard) {
+        drawingBoard.readOnly = true;
+        drawingBoard.updateCursor();
+    }
 
     if (!state.scores[username]) state.scores[username] = 0;
     state.scores[username] += 1;

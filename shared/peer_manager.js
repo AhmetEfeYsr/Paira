@@ -93,11 +93,11 @@ class PeerNetworkManager {
      */
     constructor(options = {}) {
         this.isHost = options.isHost || false;
-        this.onPeerReady = options.onPeerReady || null;
-        this.onDataReceived = options.onDataReceived || null;
-        this.onConnection = options.onConnection || null;
-        this.onDisconnection = options.onDisconnection || null;
-        this.onError = options.onError || null;
+        this.onPeerReady = options.onPeerReady || this.onPeerReady || null;
+        this.onDataReceived = options.onDataReceived || this.onDataReceived || null;
+        this.onConnection = options.onConnection || this.onConnection || null;
+        this.onDisconnection = options.onDisconnection || this.onDisconnection || null;
+        this.onError = options.onError || this.onError || null;
 
         /** @type {any} The local PeerJS instance */
         this.peer = null;
@@ -155,7 +155,11 @@ class PeerNetworkManager {
             this.peer.on('open', (id) => {
                 this.myId = id;
                 this._startHeartbeat();
-                if (this.onPeerReady) this.onPeerReady(id);
+                if (typeof this._handlePeerReady === 'function') {
+                    this._handlePeerReady(id);
+                } else if (this.onPeerReady) {
+                    this.onPeerReady(id);
+                }
                 resolve(id);
             });
 
@@ -177,8 +181,8 @@ class PeerNetworkManager {
                     this.myId = this.generateId();
                     sessionStorage.setItem('myId', this.myId);
                     this.init(this.myId).then(resolve).catch(reject);
-                } else if (this.onError) {
-                    this.onError(err);
+                } else {
+                    if (this.onError) this.onError(err);
                     reject(err);
                 }
             });

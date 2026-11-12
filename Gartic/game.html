@@ -14,8 +14,8 @@
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
 
-    <meta property="og:image" content="https://pairaaa.com/main_logo.webp">
-    <meta property="twitter:image" content="https://pairaaa.com/main_logo.webp">
+    <meta property="og:image" content="https://pairaaa.com/main_logo.avif">
+    <meta property="twitter:image" content="https://pairaaa.com/main_logo.avif">
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
@@ -65,9 +65,9 @@
                     <div class="color-swatch" style="background: #fd79a8;" data-color="#fd79a8" title="Pembe"></div>
                     <div class="color-swatch" style="background: #8d6e63;" data-color="#8d6e63" title="Kahverengi"></div>
                     <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;" data-color="#ffffff" title="Silgi"></div>
-                    <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);" data-color="#ff0000" title="Özel Renk">
-                        <span>+</span>
-                        <input type="color" class="custom-color-input" value="#ff0000">
+                    <div class="color-swatch custom-color-btn" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); display: flex; align-items: center; justify-content: center; position: relative;" data-color="#ff0000" title="Özel Renk">
+                        <span style="color: white; font-weight: bold; pointer-events: none; text-shadow: 0 0 2px black;">+</span>
+                        <input type="color" class="custom-color-input" value="#ff0000" style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
                     </div>
                 </div>
 

@@ -24,17 +24,6 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
             onRoomStart: () => this.startGame()
         });
 
-        this.onPeerReady = (id) => {
-            super._handlePeerReady(id);
-            this.view.setMyId(id);
-            const codeToSet = this.isHostNode ? id : this.roomCode;
-            this.lobbyUI.setRoomCode(codeToSet);
-        };
-
-        window.addEventListener('beforeunload', () => {
-            this.leaveRoom();
-        });
-
         // Link Engine events to Network Broadcasts (Host only)
         if (this.isHostNode) {
             this.engine.onStateChange = (state) => {
@@ -82,10 +71,11 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
             },
             onBackToLobby: () => {
                 if (this.isHostNode) {
-                    if (this.engine.renderFrame) clearTimeout(this.engine.renderFrame);
+                    this.engine.stopTimer();
                     this.engine.setState({
                         status: 'lobby',
                         board: [],
+                        marks: {},
                         scoreA: 0,
                         scoreB: 0,
                         winnerTeam: null,
@@ -128,6 +118,17 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
         this.autoInit().catch(err => console.error("Network init failed", err));
     }
 
+    _handlePeerReady(id) {
+        super._handlePeerReady(id);
+        this.view.setMyId(id);
+        const codeToSet = this.isHostNode ? id : this.roomCode;
+        if (this.isHostNode) {
+            this.roomCode = id;
+        }
+        this.lobbyUI.setRoomCode(codeToSet);
+        this.view.updateUI(this.engine.state, this.isHostNode);
+    }
+
     startGame() {
         if (this.isHostNode) {
             const players = Object.values(this.engine.state.players);
@@ -155,13 +156,15 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
         if (!payload || !payload.state) return;
         this.engine.setState(payload.state);
         
-        if (payload.durationLeft !== undefined) {
+        if (payload.durationLeft !== undefined && this.engine.state.status === 'playing') {
             this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
             this.engine.startRenderTimer();
+        } else if (this.engine.state.status !== 'playing') {
+            this.engine.stopTimer();
         }
 
         const hostPlayer = this.engine.state.players[this.myId];
-        if (hostPlayer && hostPlayer.role === 'GUESSER') {
+        if (hostPlayer && hostPlayer.role === 'GUESSER' && this.engine.state.status === 'playing') {
             const maskedState = JSON.parse(JSON.stringify(this.engine.state));
             maskedState.board.forEach(cell => {
                 if (!cell.revealed) cell.team = 'HIDDEN';
@@ -176,16 +179,27 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
 
     handlePlayerJoin(id, player) {
         if (this.isHostNode) {
-            if (player.oldId && player.oldId !== id && this.engine.state.players[player.oldId]) {
-                delete this.engine.state.players[player.oldId];
-            }
             const state = this.engine.state;
+            let preservedTeam = null;
+            let preservedRole = null;
+
+            if (player.oldId && player.oldId !== id && state.players[player.oldId]) {
+                preservedTeam = state.players[player.oldId].team;
+                preservedRole = state.players[player.oldId].role;
+                delete state.players[player.oldId];
+            }
+
             if (state.players[id]) {
                 state.players[id].name = player.name;
             } else {
-                const countA = Object.values(state.players).filter(p => p.team === 'A').length;
-                const countB = Object.values(state.players).filter(p => p.team === 'B').length;
-                this.engine.addPlayer(id, player.name, id === this.myId, countA <= countB ? 'A' : 'B', 'GUESSER');
+                const pList = Object.values(state.players);
+                const countA = pList.filter(p => p.team === 'A').length;
+                const countB = pList.filter(p => p.team === 'B').length;
+                const targetTeam = preservedTeam || (countA <= countB ? 'A' : 'B');
+                const teamPlayers = pList.filter(p => p.team === targetTeam);
+                const hasSpymaster = teamPlayers.some(p => p.role === 'SPYMASTER');
+                const targetRole = preservedRole || (hasSpymaster ? 'GUESSER' : 'SPYMASTER');
+                this.engine.addPlayer(id, player.name, id === this.myId, targetTeam, targetRole);
             }
             this.broadcastState(this.engine.state);
         }
@@ -243,7 +257,7 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
 
             const stateCopy = JSON.parse(JSON.stringify(state));
 
-            if (player.role === 'GUESSER') {
+            if (player.role === 'GUESSER' && stateCopy.status === 'playing') {
                 stateCopy.board.forEach(cell => {
                     if (!cell.revealed) cell.team = 'HIDDEN';
                 });
@@ -257,7 +271,7 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
         });
 
         const hostPlayer = this.engine.state.players[this.myId];
-        if (hostPlayer && hostPlayer.role === 'GUESSER') {
+        if (hostPlayer && hostPlayer.role === 'GUESSER' && state.status === 'playing') {
             const maskedState = JSON.parse(JSON.stringify(state));
             maskedState.board.forEach(cell => {
                 if (!cell.revealed) cell.team = 'HIDDEN';

@@ -61,11 +61,33 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
         }
     }
 
+    kickPlayer(id) {
+        if (!this.isHostNode || !id || id === this.myId) return;
+        this.sendToPeer(id, 'KICKED');
+        setTimeout(() => {
+            if (this.connections[id]) {
+                try { this.connections[id].close(); } catch (e) {}
+            }
+            this._handleDisconnection(id);
+        }, 200);
+    }
+
+    updateHostNameDisplay(players) {
+        const hostNameEl = document.getElementById('host-name-display');
+        if (!hostNameEl || !players) return;
+        const hostPlayer = Object.values(players).find(p => p && p.isHost);
+        if (hostPlayer && hostPlayer.name) {
+            hostNameEl.textContent = hostPlayer.name;
+        }
+    }
+
     handleStateSync(data) {
         if (!data || !data.state) return;
         this.engine.state = data.state;
+        this.updateHostNameDisplay(data.state.players);
         
         if (data.state.status === 'LOBBY') {
+            this.lobbyUI.renderPlayers(data.state.players, this.myId);
             this.view.switchScreen('lobby-screen');
         } else if (data.state.status === 'PLAYING' || data.state.status === 'WAITING_APPEAL') {
             this.view.updateGameUI(data.state);
@@ -80,7 +102,11 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
             }
             this.engine.addPlayer(id, player.name, player.isHost || false);
             this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.updateHostNameDisplay(this.engine.state.players);
             this.broadcast('SYNC_PLAYERS', { players: this.engine.state.players });
+            if (id !== this.myId) {
+                this.broadcast('CONFIG_UPDATE', { config: this.engine.config });
+            }
         }
     }
 
@@ -88,6 +114,7 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
         if (this.isHostNode) {
             this.engine.removePlayer(id);
             this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.updateHostNameDisplay(this.engine.state.players);
             this.broadcast('SYNC_PLAYERS', { players: this.engine.state.players });
         }
     }
@@ -113,6 +140,7 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
             if (action === 'SYNC_PLAYERS') {
                 this.engine.state.players = payload.players;
                 this.lobbyUI.renderPlayers(payload.players, this.myId);
+                this.updateHostNameDisplay(payload.players);
             } else if (action === 'CONFIG_UPDATE') {
                 this.engine.config = payload.config;
                 this.view.updateClientConfig(payload.config);
@@ -183,12 +211,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isHost) engine.nextRound();
         },
         onExtendGame: (extraRounds) => {
-            if (isHost) engine.extendGame(extraRounds);
+            if (isHost) {
+                engine.extendGame(extraRounds);
+                network.broadcast('CONFIG_UPDATE', { config: engine.config });
+            }
+        },
+        onChangeLetter: () => {
+            if (isHost) engine.changeLetter();
         },
         onVoteTimeout: () => {
             if (isHost) engine.endVote();
         }
     });
+
+    if (isHost) {
+        engine.config = view.getLocalConfig();
+    }
 
     const network = new HizliIsimSehirNetwork(engine, view);
     window.gameEngine = engine;
@@ -200,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         engine.onStateChange = (state) => {
             if (state.status === 'LOBBY') {
                 if (network.lobbyUI) network.lobbyUI.renderPlayers(state.players, network.myId);
+                view.switchScreen('lobby-screen');
             } else {
                 view.updateGameUI(state);
             }

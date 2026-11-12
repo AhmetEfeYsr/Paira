@@ -39,8 +39,8 @@ class KatiplikGame {
         
         textInput.addEventListener('keydown', (e) => {
             if (this.isFinished) return;
-            // Prevent default space behavior for immediate visual feedback on desktop
-            if (e.code === 'Space' || e.key === ' ') {
+            // Prevent default space/enter behavior for immediate visual feedback on desktop
+            if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
                 e.preventDefault();
                 this._spaceHandledByKeydown = true;
                 this.handleWordCompletion(textInput.value.trim());
@@ -84,16 +84,10 @@ class KatiplikGame {
             }
         });
 
-        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-            const code = document.getElementById('display-room-code')?.textContent;
-            if (code && code !== '----') {
-                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
-            }
-        });
-
         document.getElementById('display-room-code')?.addEventListener('click', () => {
-            const code = document.getElementById('display-room-code')?.textContent;
-            if (code && code !== '----') {
+            const el = document.getElementById('display-room-code');
+            const code = el?.dataset?.code || el?.textContent;
+            if (code && code !== '----' && !code.includes('•')) {
                 window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
             }
         });
@@ -286,11 +280,16 @@ class KatiplikGame {
 
     normalizeWord(text) {
         if (!text) return "";
-        let result = text;
+        let result = text
+            .replace(/[’‘´`]/g, "'")
+            .replace(/[“”]/g, '"')
+            .replace(/[–—]/g, '-');
         
         if (this.imlaMode === 'imlasiz') {
             result = result.replace(/[^\p{L}\p{N}]/gu, '');
             result = result.toLocaleLowerCase('tr-TR');
+            const circumflexMap = { 'â': 'a', 'î': 'i', 'û': 'u' };
+            result = result.replace(/[âîû]/g, char => circumflexMap[char] || char);
         }
         
         if (this.kbMode === 'en') {
@@ -341,6 +340,10 @@ class KatiplikGame {
             wordSpan.classList.add('error');
         } else {
             wordSpan.classList.remove('error');
+            if (this.currentWordIndex === this.words.length - 1 && normInput && normInput === normExpected) {
+                this.handleWordCompletion(inputVal);
+                return;
+            }
         }
         
         this.calculateWPM();
@@ -404,7 +407,7 @@ class KatiplikGame {
         
         const timeElapsed = (window.PairaTime.now() - this.startTime) / 60000; // minutes
         
-        if (timeElapsed < 0.05) return 0;
+        if (timeElapsed < 0.005) return 0;
         
         // Calculate correct characters in progress for current word to prevent WPM dropping mid-word
         let currentWordCorrectChars = 0;

@@ -7,12 +7,16 @@ class NetworkManager extends window.PeerNetworkManager {
         super({
             onPeerReady: (id) => {
                 console.log('Peer connected with ID:', id);
-                const roomCodeToSet = this.isHost ? id : this.roomCode;
+                const cleanRoomCode = this.isHost ? id.replace(/^isimsehir-host-/, '') : this.roomCode;
+                this.roomCode = cleanRoomCode;
                 const displayEl = document.getElementById('display-room-code');
                 if (displayEl) {
-                    displayEl.dataset.code = roomCodeToSet;
+                    displayEl.dataset.code = cleanRoomCode;
+                    if (!displayEl.textContent.includes('•')) {
+                        displayEl.textContent = cleanRoomCode;
+                    }
                 }
-                sessionStorage.setItem('roomCode', roomCodeToSet);
+                sessionStorage.setItem('roomCode', cleanRoomCode);
 
                 this.players[this.myId] = {
                     id: this.myId,
@@ -86,9 +90,17 @@ class NetworkManager extends window.PeerNetworkManager {
         return code;
     }
 
+    generateId() {
+        if (this.isHost) {
+            this.roomCode = window.generateRoomCode ? window.generateRoomCode() : super.generateId();
+            return `isimsehir-host-${this.roomCode}`;
+        }
+        return `isimsehir-client-${this.generateClientId()}`;
+    }
+
     init(isHost, roomCode, username) {
         this.isHost = isHost === 'true' || isHost === true;
-        this.roomCode = roomCode;
+        this.roomCode = String(roomCode || '').replace(/^isimsehir-host-/, '');
         this.username = username;
         const requestedId = this.isHost ? `isimsehir-host-${this.roomCode}` : `isimsehir-client-${this.generateClientId()}`;
         
@@ -156,7 +168,7 @@ class NetworkManager extends window.PeerNetworkManager {
             this.sendTo(senderId, {
                 type: 'TIME_PONG',
                 clientTime: data.clientTime,
-                hostTime: Date.now()
+                hostTime: window.PairaTime ? window.PairaTime.now() : Date.now()
             });
             return;
         }
@@ -167,6 +179,9 @@ class NetworkManager extends window.PeerNetworkManager {
             const hostTimeAtArrival = data.hostTime + latency;
             if (window.PairaTime) {
                 window.PairaTime.offset = hostTimeAtArrival - now;
+                window.PairaTime.syncServerTime = hostTimeAtArrival;
+                window.PairaTime.syncPerformanceTime = performance.now();
+                window.PairaTime.isSynced = true;
             }
             return;
         }

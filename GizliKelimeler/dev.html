@@ -4,11 +4,13 @@
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Gizli Kelimeler Geliştirici Notları / Dev Notes | Paira Games</title>
+    <title>Paira Gizli Kelimeler | Geliştirici Notları</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
     
     <style>
         .about-container {
@@ -134,7 +136,7 @@
             </ul>
 
             <h2>Rol Tabanlı Güvenli Bilgi Maskeleme (Security & Anti-Cheat)</h2>
-            <p>Codenames tarzı oyunların doğası gereği, Tahminci (Guesser) rolündeki oyuncuların hangi kartın hangi renkte (takımda) olduğunu veya suikastçının konumunu görmemesi gerekir. Gizli Kelimeler, istemci taraflı hileleri (Inspect Element ile HTML/JS durumunu okuma vb.) tamamen önlemek için benzersiz bir **rol tabanlı veri maskeleme** mekanizması kullanır:</p>
+            <p>Codenames tarzı oyunların doğası gereği, Tahminci (Guesser) rolündeki oyuncuların hangi kartın hangi renkte (takımda) olduğunu veya suikastçının konumunu görmemesi gerekir. Gizli Kelimeler, istemci taraflı hileleri (Inspect Element ile HTML/JS durumunu okuma vb.) tamamen önlemek için benzersiz bir <strong>rol tabanlı veri maskeleme</strong> mekanizması kullanır:</p>
             <blockquote>
                 Host, oyun durumunu (state) istemcilere gönderen <code>broadcastState</code> fonksiyonunda, her bir peer'ın rolünü tek tek kontrol eder. Eğer hedef oyuncunun rolü <code>GUESSER</code> ise, oyun durumunun kopyasını oluşturarak henüz açılmamış (revealed: false) tüm kartların takım bilgisini <code>HIDDEN</code> olarak değiştirir. Bu sayede tahmincilerin tarayıcı belleğine rakip veya suikastçı kartlarının gerçek renk bilgisi asla ulaşmaz.
             </blockquote>

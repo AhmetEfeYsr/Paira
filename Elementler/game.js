@@ -392,11 +392,17 @@ class GameManager {
 
         // Oyuncuları Ekle
         const myId = NetworkManager.getMyId();
+        const playerIds = Object.keys(this.state.players);
+        const spawnKeys = mapData.spawns ? Object.keys(mapData.spawns) : [];
         for(let id in this.state.players) {
             const p = this.state.players[id];
-            // mapData.spawns objesinde { su: {x,y}, ates: {x,y} } şeklinde olmalı
-            const spawn = mapData.spawns[p.role] || { x: 50, y: 50 };
-            this.engine.addPlayer(id, p.role, p.name, spawn.x, spawn.y, id === myId);
+            // 1 kişilik haritalarda haritanın tanımlı element rolünü kullan (ör. map_1_1 'ates', map_1_2+ 'su')
+            let effectiveRole = p.role;
+            if (playerIds.length === 1 && spawnKeys.length === 1 && !mapData.spawns[p.role]) {
+                effectiveRole = spawnKeys[0];
+            }
+            const spawn = (mapData.spawns && mapData.spawns[effectiveRole]) || (spawnKeys.length > 0 ? mapData.spawns[spawnKeys[0]] : { x: 50, y: 50 });
+            this.engine.addPlayer(id, effectiveRole, p.name, spawn.x, spawn.y, id === myId);
         }
 
         // FPS/Scoreboard Update
@@ -464,12 +470,13 @@ class GameManager {
             if(!p.finished) allFinished = false;
 
             for (let r of rects) {
-                if(!this.checkOverlap(p, r)) continue;
-
-                // 1. ATEŞ YAKMASI (Tahta Duvar)
+                // 1. ATEŞ YAKMASI (Tahta Duvar - solid çarpışma kenarında da algılaması için genişletilmiş kutu)
                 if (r.type === 'tahta_duvar' && p.role === 'ates' && (p.input?.action || p.input?.jump)) {
-                    this.executeActionLocally('DESTROY_RECT', { rx: r.x, ry: r.y });
-                    NetworkManager.sendGameAction('DESTROY_RECT', { rx: r.x, ry: r.y });
+                    const expandedP = { x: p.x - 8, y: p.y - 8, w: p.w + 16, h: p.h + 16 };
+                    if (this.checkOverlap(expandedP, r)) {
+                        this.executeActionLocally('DESTROY_RECT', { rx: r.x, ry: r.y });
+                        NetworkManager.sendGameAction('DESTROY_RECT', { rx: r.x, ry: r.y });
+                    }
                 }
             }
         }
@@ -550,9 +557,12 @@ class GameManager {
 
     // Host tarafı ölüm yönetimi
     handleDeath() {
-        this.state.deaths++;
-        NetworkManager.sendGameAction('RESTART_LEVEL', { addDeath: true });
-        this.executeActionLocally('RESTART_LEVEL', { addDeath: true });
+        if (NetworkManager.isHost()) {
+            NetworkManager.sendGameAction('RESTART_LEVEL', { addDeath: true });
+            this.executeActionLocally('RESTART_LEVEL', { addDeath: true });
+        } else {
+            NetworkManager.sendGameAction('PLAYER_DEATH', { role: 'restart' });
+        }
     }
 
     // Aksiyonların tüm clientlarda (sunucu dahil) işlenmesi
@@ -574,24 +584,34 @@ class GameManager {
         if(!this.engine && action !== 'RETURN_LOBBY') return;
 
         if (action === 'DESTROY_RECT') {
-            // İlgili rect'i diziden çıkar
+            // İlgili rect'i diziden çıkar ve grid'i güncelle
             const idx = this.engine.rects.findIndex(r => r.x === payload.rx && r.y === payload.ry && r.type === 'tahta_duvar');
             if(idx > -1) this.engine.rects.splice(idx, 1);
+            if (this.engine.currentGrid) {
+                const cIdx = Math.floor(payload.rx / 32);
+                const rIdx = Math.floor(payload.ry / 32);
+                if (this.engine.currentGrid[rIdx] && this.engine.currentGrid[rIdx][cIdx] === 7) {
+                    this.engine.currentGrid[rIdx][cIdx] = 0;
+                }
+            }
         }
         else if (action === 'TOGGLE_BUTTON') {
             const btn = this.engine.rects.find(r => r.x === payload.rx && r.y === payload.ry && r.type === 'button');
             if(btn) {
                 btn.props.pressed = payload.state;
                 if(payload.permanent) btn.props.pressed = true;
+                btn.active = btn.props.pressed;
             }
 
-            // Kapıyı bul
-            const door = this.engine.rects.find(r => r.type === 'door' && r.props.id === payload.targetId);
-            if(door) {
-                // state = true ise kapı açılır (open=true)
-                door.props.open = payload.state;
-                if(payload.permanent) door.props.open = true;
-            }
+            // Aynı hedefe bağlı herhangi bir buton basılı mı?
+            const anyPressed = this.engine.rects.some(r => r.type === 'button' && r.props?.targetId === payload.targetId && (r.props?.pressed || r.active));
+
+            // İlgili tüm kapıları bul ve güncelle
+            this.engine.rects.forEach(r => {
+                if (r.type === 'door' && r.props?.id === payload.targetId) {
+                    r.props.open = payload.permanent ? true : anyPressed;
+                }
+            });
         }
         else if (action === 'MARK_FINISH_DOOR') {
             const door = this.engine.rects.find(r => r.type === 'exit' && r.props.role === payload.role);

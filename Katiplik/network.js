@@ -1,6 +1,7 @@
 class KatiplikNetwork extends BaseGameNetwork {
     constructor(game) {
         super({
+            onPlayerJoin: (peerId, payload) => this.handlePlayerJoin(peerId, payload),
             onAction: (actionType, payload, senderId) => this.onMessageReceived({ type: actionType, ...payload }),
             onPlayerLeave: (peerId) => {
                 window.showToast("Rakip ayrıldı", "warning");
@@ -13,6 +14,14 @@ class KatiplikNetwork extends BaseGameNetwork {
             roomCode: this.roomCode || this.myId,
             isHost: this.isHostNode
         });
+        this.lobbyUI.isCodeVisible = true;
+        this.lobbyUI._updateRoomCodeDisplay();
+
+        this.onPeerReady = (id) => {
+            super._handlePeerReady(id);
+            const codeToSet = this.isHostNode ? id : this.roomCode;
+            this.lobbyUI.setRoomCode(codeToSet);
+        };
 
         window.addEventListener('beforeunload', () => {
             this.leaveRoom();
@@ -25,8 +34,8 @@ class KatiplikNetwork extends BaseGameNetwork {
         this.lobbyUI.setRoomCode(roomCode);
 
         this.autoInit().then(() => {
-            this.myId = this.myId; // this.myId is set inside base autoInit
             if (isHost) {
+                this.lobbyUI.setRoomCode(this.myId);
                 this.updateLobbyPlayers();
             } else {
                 this.onConnectionEstablished();
@@ -37,8 +46,13 @@ class KatiplikNetwork extends BaseGameNetwork {
         });
     }
 
-    onPlayerJoin(peerId, payload) {
+    handlePlayerJoin(peerId, payload) {
         if (this.isHostNode && peerId !== this.myId) {
+            if (payload && payload.name) {
+                this.game.opponentName = payload.name;
+                const p2NameEl = document.getElementById('p2-name');
+                if (p2NameEl) p2NameEl.textContent = payload.name;
+            }
             this.updateLobbyPlayers();
             this.onConnectionEstablished();
         }
@@ -46,10 +60,12 @@ class KatiplikNetwork extends BaseGameNetwork {
 
     updateLobbyPlayers() {
         const players = {};
-        players[this.myId] = { name: this.myName, isHost: true };
+        if (this.myId) {
+            players[this.myId] = { name: this.myName, isHost: this.isHostNode };
+        }
         
         Object.keys(this.connections).forEach(peerId => {
-            players[peerId] = { name: this.game.opponentName || 'Rakip', isHost: false };
+            players[peerId] = { name: this.game.opponentName || 'Rakip', isHost: !this.isHostNode };
         });
         this.lobbyUI.renderPlayers(players, this.myId);
     }
@@ -64,7 +80,9 @@ class KatiplikNetwork extends BaseGameNetwork {
         this.updateLobbyPlayers();
 
         if (this.game.isHost) {
-            this.game.opponentName = 'Rakip';
+            if (!this.game.opponentName) {
+                this.game.opponentName = 'Rakip';
+            }
             
             setTimeout(() => {
                 this.sendMessage({
@@ -73,7 +91,15 @@ class KatiplikNetwork extends BaseGameNetwork {
                 });
                 
                 this.game.loadCategories();
-            }, 500);
+            }, 300);
+        } else {
+            this.game.loadCategories();
+            setTimeout(() => {
+                this.sendMessage({
+                    type: 'player_info',
+                    name: this.game.playerName
+                });
+            }, 300);
         }
     }
 

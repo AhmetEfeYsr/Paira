@@ -67,6 +67,7 @@ class GizliKelimelerEngine {
     }
 
     switchTeam(id) {
+        if (this.state.status !== 'lobby') return;
         if (this.state.players[id]) {
             this.state.players[id].team = this.state.players[id].team === 'A' ? 'B' : 'A';
             this.setState({ players: this.state.players });
@@ -74,6 +75,7 @@ class GizliKelimelerEngine {
     }
 
     shuffleTeams() {
+        if (this.state.status !== 'lobby') return;
         const pKeys = Object.keys(this.state.players);
         if (pKeys.length === 0) return;
 
@@ -82,14 +84,25 @@ class GizliKelimelerEngine {
             [pKeys[i], pKeys[j]] = [pKeys[j], pKeys[i]];
         }
 
+        let hasSpyA = false;
+        let hasSpyB = false;
         pKeys.forEach((id, index) => {
-            this.state.players[id].team = (index % 2 === 0) ? 'A' : 'B';
+            const team = (index % 2 === 0) ? 'A' : 'B';
+            this.state.players[id].team = team;
+            if (team === 'A') {
+                this.state.players[id].role = hasSpyA ? 'GUESSER' : 'SPYMASTER';
+                hasSpyA = true;
+            } else {
+                this.state.players[id].role = hasSpyB ? 'GUESSER' : 'SPYMASTER';
+                hasSpyB = true;
+            }
         });
 
         this.setState({ players: this.state.players });
     }
 
     switchRole(id) {
+        if (this.state.status !== 'lobby') return;
         if (this.state.players[id]) {
             this.state.players[id].role = this.state.players[id].role === 'SPYMASTER' ? 'GUESSER' : 'SPYMASTER';
             this.setState({ players: this.state.players });
@@ -98,7 +111,8 @@ class GizliKelimelerEngine {
 
     setWords(words) {
         if (words && words.length >= 36) {
-            this.allWords = words.map(w => w.ana_kelime.toLocaleUpperCase('tr-TR'));
+            const unique = [...new Set(words.map(w => w && w.ana_kelime ? w.ana_kelime.toLocaleUpperCase('tr-TR').trim() : '').filter(Boolean))];
+            this.allWords = unique.length >= 36 ? unique : this.fallbackWords;
         } else {
             this.allWords = this.fallbackWords;
         }
@@ -223,19 +237,23 @@ class GizliKelimelerEngine {
 
         if (actionType === 'SUBMIT_CLUE' && this.state.phase === 'CLUE' && p.team === this.state.turnTeam && p.role === 'SPYMASTER') {
             const count = parseInt(payload.count);
-            if (!payload.word || isNaN(count) || count < 1) return;
+            const cleanWord = payload.word ? payload.word.trim().toLocaleUpperCase('tr-TR') : '';
+            if (!cleanWord || isNaN(count) || count < 1) return;
+            if (this.state.board.some(c => !c.revealed && c.word.toLocaleUpperCase('tr-TR') === cleanWord)) return;
 
             this.state.currentClue = {
-                word: payload.word.toLocaleUpperCase('tr-TR'),
+                word: cleanWord,
                 count: count,
                 remaining: count + 1
             };
             this.state.phase = 'GUESS';
-            this.setState(this.state);
+            this.startTimer();
             if(this.onSound) this.onSound('tick');
         }
-        else if (actionType === 'MARK_WORD' && this.state.phase === 'GUESS' && p.role === 'GUESSER') {
+        else if (actionType === 'MARK_WORD' && this.state.phase === 'GUESS' && p.team === this.state.turnTeam && p.role === 'GUESSER') {
             const cellIdx = payload.index;
+            const cell = this.state.board[cellIdx];
+            if (!cell || cell.revealed) return;
             if (!this.state.marks) this.state.marks = {};
             if (!this.state.marks[cellIdx]) this.state.marks[cellIdx] = [];
 
@@ -254,6 +272,9 @@ class GizliKelimelerEngine {
             if (!cell || cell.revealed) return;
 
             cell.revealed = true;
+            if (this.state.marks && this.state.marks[cellIdx]) {
+                delete this.state.marks[cellIdx];
+            }
 
             if (cell.team === 'ASSASSIN') {
                 if (this.onSound) this.onSound('timeup'); // Game over sound
@@ -328,14 +349,22 @@ class GizliKelimelerView {
         document.getElementById('btn-switch-team')?.addEventListener('click', () => this.callbacks.onSwitchTeam());
         document.getElementById('btn-shuffle-teams')?.addEventListener('click', () => this.callbacks.onShuffleTeams());
         document.getElementById('btn-switch-role')?.addEventListener('click', () => this.callbacks.onSwitchRole());
-        document.getElementById('btn-start-game')?.addEventListener('click', () => this.callbacks.onStartGame());
 
         const submitClue = () => {
             const word = document.getElementById('clue-word').value.trim();
             const countStr = document.getElementById('clue-count').value;
             const count = parseInt(countStr);
             if(!word || isNaN(count) || count < 1) {
-                this.showToast("Lütfen geçerli bir ipucu ve 1'den büyük bir sayı giriniz!", "warning");
+                this.showToast("Lütfen geçerli bir ipucu ve en az 1 sayısı giriniz!", "warning");
+                return;
+            }
+            if (/\s/.test(word)) {
+                this.showToast("İpucu tek bir kelime olmalıdır!", "warning");
+                return;
+            }
+            const upperWord = word.toLocaleUpperCase('tr-TR');
+            if (this.currentBoard && this.currentBoard.some(c => !c.revealed && c.word.toLocaleUpperCase('tr-TR') === upperWord)) {
+                this.showToast("Tahtada açık olmayan bir kelimeyi ipucu olarak veremezsiniz!", "warning");
                 return;
             }
             this.callbacks.onSubmitClue(word, count);
@@ -389,63 +418,7 @@ class GizliKelimelerView {
     }
 
     updateUI(state, isHost) {
-        const playerCount = Object.keys(state.players).length;
-        document.getElementById('player-count').innerText = playerCount;
-
-        const btnStart = document.getElementById('btn-start-game');
-        if (btnStart) {
-            if (playerCount >= 2) btnStart.classList.remove('disabled');
-            else btnStart.classList.add('disabled');
-        }
-
-        const pList = document.getElementById('players-list');
-        if (pList) {
-            pList.innerHTML = '';
-            Object.values(state.players).forEach(p => {
-                const li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.alignItems = 'center';
-
-                const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const infoSpan = document.createElement('div');
-                infoSpan.style.display = 'flex';
-                infoSpan.style.flexDirection = 'column';
-                infoSpan.style.gap = '4px';
-                
-                const roleStr = p.role === 'SPYMASTER' ? 'Ajan' : 'Tahminci';
-                const teamColorVar = p.team === 'A' ? 'var(--team-a-color)' : 'var(--team-b-color)';
-                const teamBgVar = p.team === 'A' ? 'var(--team-a-bg)' : 'var(--team-b-bg)';
-                const roleColor = p.role === 'SPYMASTER' ? 'var(--warning)' : 'var(--success)';
-                const roleBg = p.role === 'SPYMASTER' ? 'var(--warning-bg)' : 'var(--success-bg)';
-                
-                infoSpan.innerHTML = `
-                    <span style="font-weight:500; font-size:1rem; display:flex; align-items:center; gap:4px;">
-                        ${p.isHost ? '<span title="Kurucu">👑</span>' : ''}
-                        ${safeName} 
-                        ${p.id === this.myId ? '<span style="opacity:0.6; font-size:0.8em;">(Sen)</span>' : ''}
-                    </span>
-                    <div style="display:flex; gap:6px;">
-                        <span style="background:${teamBgVar}; color:${teamColorVar}; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; border: 1px solid ${teamColorVar};">Takım ${p.team}</span>
-                        <span style="background:${roleBg}; color:${roleColor}; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; border: 1px solid ${roleColor};">${roleStr}</span>
-                    </div>
-                `;
-                li.appendChild(infoSpan);
-
-                if (isHost && p.id !== this.myId && state.status !== 'playing') {
-                    const kickBtn = document.createElement('button');
-                    kickBtn.className = 'btn btn-danger btn-icon';
-                    kickBtn.style.padding = '4px 8px';
-                    kickBtn.style.marginLeft = '8px';
-                    kickBtn.title = "Oyuncuyu At";
-                    kickBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-                    kickBtn.onclick = () => this.callbacks.onKickPlayer(p.id);
-                    li.appendChild(kickBtn);
-                }
-                pList.appendChild(li);
-            });
-        }
-
+        this.currentBoard = state.board || [];
         if (state.status === 'lobby') {
             this.showScreen('lobby-screen');
         } else if (state.status === 'playing') {
@@ -453,7 +426,7 @@ class GizliKelimelerView {
             this.updateGameUI(state);
         } else if (state.status === 'ended') {
             this.showScreen('winner-screen');
-            this.updateWinnerUI(state);
+            this.updateWinnerUI(state, isHost);
         }
     }
 
@@ -582,7 +555,7 @@ class GizliKelimelerView {
         });
     }
 
-    updateWinnerUI(state) {
+    updateWinnerUI(state, isHost = false) {
         let msg = `Takım ${state.winnerTeam} Kazandı!`;
         const winnerMsgEl = document.getElementById('winner-message');
         winnerMsgEl.innerText = msg;
@@ -592,10 +565,26 @@ class GizliKelimelerView {
         document.getElementById('final-score-b').innerText = state.scoreB;
 
         const btnBack = document.getElementById('btn-back-lobby');
-        if (state.players[this.myId]?.isHost) {
-            btnBack.classList.remove('hidden');
-        } else {
-            btnBack.classList.add('hidden');
+        if (btnBack) {
+            if (isHost || state.players[this.myId]?.isHost) {
+                btnBack.classList.remove('hidden');
+                const waitMsg = document.getElementById('client-wait-lobby-msg');
+                if (waitMsg) waitMsg.classList.add('hidden');
+            } else {
+                btnBack.classList.add('hidden');
+                let waitMsg = document.getElementById('client-wait-lobby-msg');
+                if (!waitMsg) {
+                    waitMsg = document.createElement('div');
+                    waitMsg.id = 'client-wait-lobby-msg';
+                    waitMsg.style.marginTop = '1.5rem';
+                    waitMsg.style.color = 'var(--text-muted)';
+                    waitMsg.style.fontSize = '1.1rem';
+                    waitMsg.style.fontWeight = '500';
+                    btnBack.parentNode.appendChild(waitMsg);
+                }
+                waitMsg.innerText = "Kurucunun lobiye dönmesi bekleniyor...";
+                waitMsg.classList.remove('hidden');
+            }
         }
     }
 

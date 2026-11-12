@@ -3,43 +3,73 @@
 import { broadcastAction, isHost } from './network.js';
 
 let drawingBoard;
+let isUIEventsBound = false;
 let timerInterval;
+let lastRenderedRound = -1;
+let lastRenderedState = null;
+let lastTimerRound = -1;
 
-export function initGameUI(networkState, myId) {
-    // Only init board once
+export function resetGameUIState() {
+    lastRenderedRound = -1;
+    lastRenderedState = null;
+    lastTimerRound = -1;
+}
+
+function ensureDrawingBoard() {
+    const canvasElement = document.getElementById('drawing-board');
+    if (!canvasElement) return null;
+
     if (!drawingBoard) {
-        const canvasElement = document.getElementById('drawing-board');
         drawingBoard = new window.AdvancedDrawingBoard(canvasElement, {
             defaultColor: '#000000',
             defaultSize: 8,
-            readOnly: false // Players must draw
+            readOnly: false
         });
+    } else if (drawingBoard.canvas.width === 0 || drawingBoard.canvas.height === 0) {
+        drawingBoard.resize();
+    }
+    return drawingBoard;
+}
+
+export function initGameUI(networkState, myId) {
+    // Only bind UI events once
+    if (!isUIEventsBound) {
+        isUIEventsBound = true;
 
         // Tools Setup
         const bindInteraction = (el, handler) => {
+            if (!el) return;
             el.addEventListener('pointerdown', (e) => { e.preventDefault(); handler(e); });
-            el.addEventListener('click', (e) => { e.preventDefault(); handler(e); });
+            el.addEventListener('click', (e) => { e.preventDefault(); if (e.detail !== 0) return; handler(e); });
             el.style.touchAction = 'none';
         };
 
         document.querySelectorAll('.color-swatch:not(.custom-color-btn)').forEach(swatch => {
             bindInteraction(swatch, (e) => {
+                if (!drawingBoard) return;
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 const target = e.target.closest('.color-swatch');
                 target.classList.add('active');
                 drawingBoard.setColor(target.dataset.color);
                 if (target.dataset.color === '#ffffff') {
                     drawingBoard.setTool('eraser');
-                } else {
-                    drawingBoard.setTool('brush');
                     document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelector('.tool-btn[data-tool="brush"]').classList.add('active');
+                } else {
+                    const currentToolBtn = document.querySelector('.tool-btn.active');
+                    if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                        drawingBoard.setTool('brush');
+                        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                        document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+                    } else {
+                        drawingBoard.setTool(currentToolBtn.dataset.tool);
+                    }
                 }
             });
         });
 
         document.querySelectorAll('.size-btn').forEach(btn => {
             bindInteraction(btn, (e) => {
+                if (!drawingBoard) return;
                 document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
                 const target = e.target.closest('.size-btn');
                 target.classList.add('active');
@@ -49,6 +79,7 @@ export function initGameUI(networkState, myId) {
 
         document.querySelectorAll('.tool-btn').forEach(btn => {
             bindInteraction(btn, (e) => {
+                if (!drawingBoard) return;
                 document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 const target = e.target.closest('.tool-btn');
                 target.classList.add('active');
@@ -57,20 +88,20 @@ export function initGameUI(networkState, myId) {
                 if (target.dataset.tool !== 'eraser') {
                     const activeSwatch = document.querySelector('.color-swatch.active');
                     if (activeSwatch && activeSwatch.dataset.color === '#ffffff') {
-                        document.querySelector('.color-swatch[data-color="#000000"]').click();
+                        document.querySelector('.color-swatch[data-color="#000000"]')?.click();
                     }
                 }
             });
         });
 
         bindInteraction(document.getElementById('btn-clear'), () => {
-            drawingBoard.clear(false);
+            if (drawingBoard) drawingBoard.clear(false);
         });
 
         const btnUndo = document.getElementById('btn-undo');
         if (btnUndo) {
             bindInteraction(btnUndo, () => {
-                drawingBoard.undo(false);
+                if (drawingBoard) drawingBoard.undo(false);
             });
         }
 
@@ -78,6 +109,7 @@ export function initGameUI(networkState, myId) {
         const customColorBtn = document.querySelector('.custom-color-btn');
         if (customColorInput && customColorBtn) {
             customColorInput.addEventListener('input', (e) => {
+                if (!drawingBoard) return;
                 const newColor = e.target.value;
                 customColorBtn.dataset.color = newColor;
                 customColorBtn.style.background = newColor;
@@ -85,16 +117,27 @@ export function initGameUI(networkState, myId) {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 customColorBtn.classList.add('active');
                 drawingBoard.setColor(newColor);
-                drawingBoard.setTool('brush');
+                const currentToolBtn = document.querySelector('.tool-btn.active');
+                if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                    drawingBoard.setTool('brush');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+                }
             });
             customColorInput.addEventListener('pointerdown', e => {
                 e.stopPropagation();
+                if (!drawingBoard) return;
                 // Proactively set the current custom color in case they just click and dismiss
                 const newColor = customColorInput.value;
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
                 customColorBtn.classList.add('active');
                 drawingBoard.setColor(newColor);
-                drawingBoard.setTool('brush');
+                const currentToolBtn = document.querySelector('.tool-btn.active');
+                if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
+                    drawingBoard.setTool('brush');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
+                }
             });
             customColorInput.addEventListener('click', e => e.stopPropagation());
         }
@@ -129,12 +172,17 @@ export function updateGameStateUI(networkState, myId) {
     
     const state = networkState.state;
     const isCompleted = networkState.completedTasks[myId];
+    const isNewPhase = (lastRenderedRound !== networkState.roundCount || lastRenderedState !== state);
 
     document.getElementById('prompt-container').style.display = 'none';
     document.getElementById('draw-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'none';
 
     if (isCompleted) {
+        if (drawingBoard) {
+            drawingBoard.readOnly = true;
+            drawingBoard.updateCursor();
+        }
         document.getElementById('wait-container').style.display = 'flex';
         return;
     }
@@ -144,9 +192,21 @@ export function updateGameStateUI(networkState, myId) {
     const lastEntry = storyHistory.length > 0 ? storyHistory[storyHistory.length - 1] : null;
 
     if (state === 'WRITE') {
+        if (drawingBoard) {
+            drawingBoard.readOnly = true;
+            drawingBoard.updateCursor();
+        }
         document.getElementById('prompt-container').style.display = 'flex';
         document.getElementById('task-title').textContent = 'Ne Çizildiğini Tahmin Et / Yaz!';
-        document.getElementById('prompt-input').value = '';
+        if (isNewPhase) {
+            const promptInput = document.getElementById('prompt-input');
+            const charCounter = document.getElementById('char-counter');
+            if (promptInput) promptInput.value = '';
+            if (charCounter) {
+                charCounter.textContent = '0/60';
+                charCounter.style.color = 'var(--text-muted)';
+            }
+        }
 
         if (lastEntry && lastEntry.type === 'draw') {
             document.getElementById('previous-drawing-container').style.display = 'block';
@@ -160,7 +220,14 @@ export function updateGameStateUI(networkState, myId) {
     } else if (state === 'DRAW') {
         document.getElementById('draw-container').style.display = 'flex';
         document.getElementById('task-title').textContent = 'Aşağıdakini Çiz!';
-        drawingBoard.resetHistory();
+        const board = ensureDrawingBoard();
+        if (board) {
+            board.readOnly = false;
+            board.updateCursor();
+            if (isNewPhase) {
+                board.resetHistory();
+            }
+        }
 
         if (lastEntry && lastEntry.type === 'text') {
             document.getElementById('word-to-draw').textContent = lastEntry.content;
@@ -168,6 +235,9 @@ export function updateGameStateUI(networkState, myId) {
             document.getElementById('word-to-draw').textContent = "SERBEST ÇİZİM!"; // Fallback
         }
     }
+
+    lastRenderedRound = networkState.roundCount;
+    lastRenderedState = state;
 }
 
 function submitPrompt(networkState, myId) {
@@ -188,7 +258,8 @@ function submitPrompt(networkState, myId) {
 }
 
 function submitDrawing(networkState, myId) {
-    const dataURL = drawingBoard.getDataURL();
+    const board = ensureDrawingBoard();
+    const dataURL = board ? board.getDataURL() : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
     document.getElementById('draw-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
@@ -199,6 +270,9 @@ function submitDrawing(networkState, myId) {
 }
 
 export function startTimer(duration, networkState, myId) {
+    if (lastTimerRound === networkState.roundCount) return;
+    lastTimerRound = networkState.roundCount;
+
     clearInterval(timerInterval);
     const endTime = window.PairaTime.now() + (duration * 1000);
     const display = document.getElementById('timer-display');
@@ -246,7 +320,7 @@ export function startTimer(duration, networkState, myId) {
 
 function submitPromptFallback(networkState, myId) {
     const input = document.getElementById('prompt-input');
-    let text = input.value.trim();
+    let text = input ? input.value.trim() : '';
     if (!text) {
         if (window.cizbilWords && window.cizbilWords.length > 0) {
             text = window.cizbilWords[Math.floor(Math.random() * window.cizbilWords.length)];
@@ -258,7 +332,8 @@ function submitPromptFallback(networkState, myId) {
 }
 
 function submitDrawingFallback(networkState, myId) {
-    const dataURL = drawingBoard.getDataURL();
+    const board = ensureDrawingBoard();
+    const dataURL = board ? board.getDataURL() : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
 

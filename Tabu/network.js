@@ -67,6 +67,7 @@ class TabuNetworkManager extends BaseGameNetwork {
             },
             onBackToLobby: () => {
                 if (this.isHostNode) {
+                    this.engine.stopTimer();
                     this.engine.setState({ status: 'lobby' });
                 }
             },
@@ -154,11 +155,7 @@ class TabuNetworkManager extends BaseGameNetwork {
         const p = this.engine.state.players[peerId];
         if (p) {
             window.showToast(`${p.name} ayrıldı.`, "info");
-            const isCurrentTurn = (this.engine.state.turnId === peerId && this.engine.state.status === 'playing');
             this.engine.removePlayer(peerId);
-            if (isCurrentTurn) {
-                this.engine.endTurn();
-            }
             this.broadcastState();
         }
     }
@@ -198,11 +195,14 @@ class TabuNetworkManager extends BaseGameNetwork {
         }
         else if (actionType === 'ACTION') {
             const aType = payload.actionType;
-            const isAuthorized = (senderId === this.engine.state.turnId) || (senderId === this.myId);
-            if (isAuthorized) {
-                if (aType === 'NARRATOR_READY') this.engine.beginTimer();
-                else if (aType === 'TOGGLE_PAUSE') this.engine.togglePause();
-                else this.engine.processAction(aType);
+            const isTurnPlayer = (senderId === this.engine.state.turnId);
+            const isHostOrTurn = isTurnPlayer || (senderId === this.myId);
+            if (aType === 'NARRATOR_READY' && isTurnPlayer) {
+                this.engine.beginTimer();
+            } else if (aType === 'TOGGLE_PAUSE' && isHostOrTurn) {
+                this.engine.togglePause();
+            } else if (isTurnPlayer) {
+                this.engine.processAction(aType);
             }
         }
         else if (actionType === 'CHAT') {
@@ -278,8 +278,12 @@ class TabuNetworkManager extends BaseGameNetwork {
     }
 
     sendAction(actionType) {
-
-        if (this.engine.state.turnId !== this.myId && actionType !== 'TOGGLE_PAUSE' && actionType !== 'NARRATOR_READY') return;
+        const isMyTurn = (this.engine.state.turnId === this.myId);
+        if (actionType === 'TOGGLE_PAUSE') {
+            if (!isMyTurn && !this.isHostNode) return;
+        } else if (!isMyTurn) {
+            return;
+        }
         this.sendGameAction('ACTION', { actionType });
     }
 
@@ -287,8 +291,10 @@ class TabuNetworkManager extends BaseGameNetwork {
         if (this.isHostNode && id !== this.myId) {
             this.sendToPeer(id, 'KICKED');
             setTimeout(() => {
+                if (this.connections[id]) {
+                    try { this.connections[id].close(); } catch (e) {}
+                }
                 this._handleDisconnection(id); // Force drop
-                window.showToast("Oyuncu atıldı.", "info");
             }, 500);
         }
     }
@@ -296,16 +302,19 @@ class TabuNetworkManager extends BaseGameNetwork {
     startGame() {
         if (this.isHostNode) {
             const duration = document.getElementById('turn-duration')?.value || 60;
-            const passLimit = document.getElementById('pass-limit')?.value || 3;
-            const penalty = document.getElementById('taboo-penalty')?.value || 1;
+            const passLimit = document.getElementById('pass-limit')?.value ?? 3;
+            const penalty = document.getElementById('taboo-penalty')?.value ?? 1;
             const rounds = document.getElementById('round-count')?.value || 3;
             
             const categoryCheckboxes = document.querySelectorAll('#category-selection input[type="checkbox"]:checked');
             let category = Array.from(categoryCheckboxes).map(cb => cb.value);
             if(category.length === 0) category = ['Hepsi'];
 
-            const minDifficulty = parseInt(document.getElementById('min-difficulty')?.value) || 1;
-            const maxDifficulty = parseInt(document.getElementById('max-difficulty')?.value) || 100;
+            let minDifficulty = parseInt(document.getElementById('min-difficulty')?.value) || 1;
+            let maxDifficulty = parseInt(document.getElementById('max-difficulty')?.value) || 100;
+            if (minDifficulty > maxDifficulty) {
+                [minDifficulty, maxDifficulty] = [maxDifficulty, minDifficulty];
+            }
 
             this.engine.startGame({ duration, passLimit, category, penalty, rounds, minDifficulty, maxDifficulty });
             this.broadcastState();
@@ -340,6 +349,11 @@ class TabuNetworkManager extends BaseGameNetwork {
                 } else if (e.target.checked) {
                     const hepsi = container.querySelector('input[value="Hepsi"]');
                     if(hepsi) hepsi.checked = false;
+                }
+                const anyChecked = Array.from(checkboxes).some(c => c.checked);
+                if (!anyChecked) {
+                    const hepsi = container.querySelector('input[value="Hepsi"]');
+                    if (hepsi) hepsi.checked = true;
                 }
             });
         });

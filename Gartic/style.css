@@ -1,8 +1,12 @@
 /* Gartic/style.css */
 
-.cizbil-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg-deep); }
-.game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; position: relative; }
-.sidebar { flex: 1; min-width: 300px; max-width: 350px; background: var(--card-bg); border-left: 1px solid var(--lilac-muted); display: flex; flex-direction: column; padding: 1rem; box-shadow: -5px 0 20px var(--input-bg); z-index: 10; backdrop-filter: blur(10px); }
+.cizbil-layout { display: flex; height: calc(100vh - 80px); min-height: 550px; width: 100%; max-width: 1400px; border-radius: clamp(12px, 2vw, 20px); border: var(--glass-border); box-shadow: var(--glass-shadow); overflow: hidden; background: var(--bg-panel); }
+.game-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; position: relative; min-width: 0; }
+.sidebar { flex: 1; min-width: 280px; max-width: 350px; background: var(--card-bg); border-left: 1px solid var(--lilac-muted); display: flex; flex-direction: column; padding: 1rem; box-shadow: -5px 0 20px var(--input-bg); z-index: 10; backdrop-filter: blur(10px); }
+
+.custom-color-btn { display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.custom-color-btn span { color: white; font-weight: bold; pointer-events: none; text-shadow: 0 0 2px black; }
+.custom-color-input { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; margin: 0; padding: 0; }
 
 .header-bar { width: 100%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
 .word-display { font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon-glow-rgba); background: var(--card-bg); padding: 0.5rem 2rem; border-radius: 1rem; border: 1px solid var(--lilac-muted); box-shadow: var(--glass-shadow); backdrop-filter: blur(10px); z-index: 998; }
@@ -70,12 +74,19 @@
 }
 
 @media (max-width: 900px) {
-    .cizbil-layout { flex-direction: column; height: 100vh; overflow-y: auto; overflow-x: hidden; }
-    .game-area { flex: none; height: auto; min-height: 60vh; padding: 0.5rem; }
-    .sidebar { max-width: 100%; height: 40vh; flex: none; border-left: none; border-top: 1px solid var(--lilac-muted); }
+    .cizbil-layout { flex-direction: column; height: auto; min-height: calc(100vh - 70px); overflow-y: visible; overflow-x: hidden; }
+    .game-area { flex: none; height: auto; min-height: 55vh; padding: 0.5rem; }
+    .sidebar { min-width: 0; max-width: 100%; height: 42vh; flex: none; border-left: none; border-top: 1px solid var(--lilac-muted); }
     .leaderboard { height: auto; max-height: 120px; border-top: 1px solid var(--lilac-muted); padding-top: 0.5rem; }
     .leaderboard-list { max-height: 80px; }
     .word-display { font-size: 1.2rem; padding: 0.4rem 1rem; position: static !important; width: 100%; text-align: center; margin-bottom: 0.5rem; }
+}
+
+body.fullscreen-active .sidebar {
+    background: var(--modal-bg);
+    border-radius: 12px;
+    border: 1px solid var(--lilac-muted);
+    padding: 0.75rem;
 }
 
 @keyframes drawCorrect {

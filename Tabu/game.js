@@ -56,17 +56,26 @@ class TabuGameEngine {
     }
 
     removePlayer(id) {
+        const wasCurrentTurn = (this.state.turnId === id && this.state.status === 'playing');
         delete this.state.players[id];
         if (this.state.status === 'playing') {
-            this.state.turnOrder = this.generateTurnOrder();
-            if (this.state.turnIndex >= this.state.turnOrder.length) {
-                this.state.turnIndex = 0;
+            const pList = Object.values(this.state.players);
+            const countA = pList.filter(p => p.team === 'A').length;
+            const countB = pList.filter(p => p.team === 'B').length;
+            if (countA === 0 || countB === 0) {
+                this.endGame();
+                return;
+            }
+            if (wasCurrentTurn) {
+                this.endTurn();
+                return;
             }
         }
         this.setState({ players: this.state.players });
     }
 
     switchTeam(id) {
+        if (this.state.status !== 'lobby') return;
         if (this.state.players[id]) {
             this.state.players[id].team = this.state.players[id].team === 'A' ? 'B' : 'A';
             this.setState({ players: this.state.players });
@@ -74,6 +83,7 @@ class TabuGameEngine {
     }
 
     shuffleTeams() {
+        if (this.state.status !== 'lobby') return;
         const pKeys = Object.keys(this.state.players);
         if (pKeys.length === 0) return;
 
@@ -216,6 +226,7 @@ class TabuGameEngine {
         this.state.passesLeft = this.state.passLimit;
 
         clearTimeout(this.turnTimeout);
+        this.startRenderTimer();
         this.setState(this.state);
     }
 
@@ -372,7 +383,23 @@ class TabuGameEngine {
         }
     }
 
+    stopTimer() {
+        if (this.renderFrame) {
+            cancelAnimationFrame(this.renderFrame);
+            this.renderFrame = null;
+        }
+        if (this.bgTimerInterval) {
+            clearInterval(this.bgTimerInterval);
+            this.bgTimerInterval = null;
+        }
+        if (this.turnTimeout) {
+            clearTimeout(this.turnTimeout);
+            this.turnTimeout = null;
+        }
+    }
+
     endGame() {
+        this.stopTimer();
         this.state.status = 'ended';
         this.setState(this.state);
     }
@@ -436,19 +463,27 @@ class TabuView {
 
         document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
             const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
-            checkboxes.forEach(cb => cb.checked = true);
+            checkboxes.forEach(cb => {
+                cb.checked = (cb.value !== 'Hepsi');
+            });
             if (window.PairaAudio) window.PairaAudio.play('pop');
         });
 
         document.getElementById('btn-clear-cats')?.addEventListener('click', () => {
             const checkboxes = document.querySelectorAll('#category-selection input[type="checkbox"]');
-            checkboxes.forEach(cb => cb.checked = false);
+            checkboxes.forEach(cb => {
+                cb.checked = (cb.value === 'Hepsi');
+            });
             if (window.PairaAudio) window.PairaAudio.play('pop');
         });
 
         // Keyboard shortcuts for quick narrating (Arrows, D/T/P, 1/2/3, Enter/Space)
         document.addEventListener('keydown', (e) => {
-            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+            const gameScreen = document.getElementById('game-screen');
+            const narratorActions = document.getElementById('narrator-actions');
+            if (!gameScreen || gameScreen.classList.contains('hidden')) return;
+            if (!narratorActions || narratorActions.classList.contains('hidden')) return;
             
             if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === '1') {
                 e.preventDefault();
@@ -477,21 +512,22 @@ class TabuView {
             window.showScreen('lobby-screen');
         } else if (state.status === 'playing') {
             window.showScreen('game-screen');
-            this.updateGameUI(state);
+            this.updateGameUI(state, isHost);
         } else if (state.status === 'ended') {
             window.showScreen('winner-screen');
             this.updateWinnerUI(state, isHost);
         }
     }
 
-    updateGameUI(state) {
+    updateGameUI(state, isHost = false) {
         document.getElementById('round-indicator').innerText = `Tur ${Math.min(state.round, state.totalRounds)} / ${state.totalRounds}`;
         document.getElementById('score-a').innerText = state.scoreA;
         document.getElementById('score-b').innerText = state.scoreB;
 
+        const amINarrator = state.turnId === this.myId;
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) {
-            btnPause.classList.toggle('hidden', state.isWaitingForReady);
+            btnPause.classList.toggle('hidden', state.isWaitingForReady || (!amINarrator && !isHost));
             if (state.isPaused) {
                 document.getElementById('icon-pause')?.classList.add('hidden');
                 document.getElementById('icon-play')?.classList.remove('hidden');
@@ -511,10 +547,9 @@ class TabuView {
             return;
         }
 
-        document.getElementById('turn-name').innerText = `${window.escapeHtml(tPlayer.name)} (T-${tPlayer.team})`;
+        document.getElementById('turn-name').innerText = `${tPlayer.name} (T-${tPlayer.team})`;
 
         const myTeam = state.players[this.myId]?.team;
-        const amINarrator = state.turnId === this.myId;
         const isOpponent = myTeam !== tPlayer.team;
 
         document.getElementById('pass-text').innerText = `Pas (${state.passesLeft})`;
@@ -539,7 +574,7 @@ class TabuView {
                 gameStatusMessage.className = "status-badge guesser-mode";
             } else {
                 startTurnContainer.classList.add('hidden');
-                gameStatusMessage.innerText = `${window.escapeHtml(tPlayer.name)} hazırlanıyor...`;
+                gameStatusMessage.innerText = `${tPlayer.name} hazırlanıyor...`;
                 gameStatusMessage.className = "status-badge";
             }
         } else {

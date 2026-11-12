@@ -7,15 +7,15 @@ class HizliIsimSehirGameEngine {
         this.state = {
             status: 'LOBBY',
             round: 1,
+            totalRounds: 3,
             letter: '',
             currentCategory: null,
             currentPlayerIndex: 0,
             players: {},
             playerAnswers: {},
             endTime: null,
-            appealTimeout: null,
             pendingNextTurn: null,
-            votes: { yes: 0, no: 0, votedPlayers: new Set() }
+            votes: { yes: 0, no: 0 }
         };
         this.config = {
             rounds: 3,
@@ -32,6 +32,8 @@ class HizliIsimSehirGameEngine {
         this.onVoteStart = null;
         this.onVoteResult = null;
         this.turnTransitionTimeout = null;
+        this.appealTimeout = null;
+        this.votedPlayers = new Set();
     }
 
     setState(newState) {
@@ -40,7 +42,7 @@ class HizliIsimSehirGameEngine {
     }
 
     addPlayer(id, name, isHost) {
-        this.state.players[id] = { id, name, isHost, score: 0 };
+        this.state.players[id] = { id, name, isHost, score: 0, roundScore: 0 };
         this.setState({ players: this.state.players });
     }
 
@@ -54,9 +56,9 @@ class HizliIsimSehirGameEngine {
             clearTimeout(this.turnTransitionTimeout);
             this.turnTransitionTimeout = null;
         }
-        if (this.state.appealTimeout) {
-            clearTimeout(this.state.appealTimeout);
-            this.state.appealTimeout = null;
+        if (this.appealTimeout) {
+            clearTimeout(this.appealTimeout);
+            this.appealTimeout = null;
         }
         
         if (index !== -1 && index < this.state.currentPlayerIndex) {
@@ -65,12 +67,13 @@ class HizliIsimSehirGameEngine {
             if (this.state.status === 'PLAYING' || this.state.status === 'WAITING_APPEAL' || this.state.status === 'VOTING') {
                 this.state.status = 'PLAYING';
                 this.state.pendingNextTurn = null;
-                this.state.votes = { yes: 0, no: 0, votedPlayers: new Set() };
+                this.state.votes = { yes: 0, no: 0 };
+                this.votedPlayers = new Set();
                 const totalPlayers = Object.keys(this.state.players).length;
                 if (this.state.currentPlayerIndex >= totalPlayers) {
                     this.state.status = 'SCOREBOARD';
                     this.setState({ players: this.state.players });
-                    if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores(null, 0));
+                    if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores());
                     return;
                 } else {
                     this.startNextTurn(this.state.round, this.state.currentPlayerIndex);
@@ -88,17 +91,35 @@ class HizliIsimSehirGameEngine {
         return this.alphabet[array[0] % this.alphabet.length];
     }
 
+    changeLetter() {
+        if (!this.isHost || this.state.status !== 'PLAYING') return;
+        let newLetter = this.getRandomLetter();
+        if (this.alphabet.length > 1) {
+            while (newLetter === this.state.letter) {
+                newLetter = this.getRandomLetter();
+            }
+        }
+        this.state.letter = newLetter;
+        this.setState(this.state);
+    }
+
     startGame(config = {}) {
         if (!this.isHost) return;
         this.config = Object.assign({
-            roundCount: 3,
-            categories: this.defaultCategories || ['İsim', 'Şehir', 'Hayvan', 'Bitki'],
+            rounds: 3,
+            categories: [
+                { id: 'isim', name: 'İsim' },
+                { id: 'sehir', name: 'Şehir' },
+                { id: 'hayvan', name: 'Hayvan' },
+                { id: 'bitki', name: 'Bitki' }
+            ],
             endCondition: 'time',
-            endValue: 45
+            endValue: 15
         }, config);
         
         for (const pId in this.state.players) {
             this.state.players[pId].score = 0;
+            this.state.players[pId].roundScore = 0;
         }
 
         this.startNextTurn(1, 0);
@@ -110,11 +131,22 @@ class HizliIsimSehirGameEngine {
             clearTimeout(this.turnTransitionTimeout);
             this.turnTransitionTimeout = null;
         }
+        if (this.appealTimeout) {
+            clearTimeout(this.appealTimeout);
+            this.appealTimeout = null;
+        }
         
+        if (playerIndex === 0) {
+            for (const pId in this.state.players) {
+                this.state.players[pId].roundScore = 0;
+            }
+        }
+
         const letter = this.getRandomLetter();
         const category = this.config.categories[Math.floor(Math.random() * this.config.categories.length)];
         
         this.state.round = round;
+        this.state.totalRounds = this.config.rounds;
         this.state.currentPlayerIndex = playerIndex;
         this.state.letter = letter;
         this.state.currentCategory = category;
@@ -168,7 +200,7 @@ class HizliIsimSehirGameEngine {
                     const normTitle = window.normalizeTurkishChars(title).trim();
                     const normSnippet = window.normalizeTurkishChars(snippet).trim();
                     
-                    if (normLetter && !normTitle.startsWith(normLetter)) {
+                    if (requiredLetterLower && !title.startsWith(requiredLetterLower)) {
                         continue;
                     }
                     
@@ -206,7 +238,9 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             }, 2500);
             if (!response || !response.ok) return { valid: false, reason: "" };
             const data = await response.json();
-            const result = JSON.parse(data.text);
+            let text = data.text || "";
+            text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+            const result = JSON.parse(text);
             return { valid: !!result.valid, reason: result.reason || "" };
         } catch (e) {
             return { valid: false, reason: "" };
@@ -219,7 +253,6 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (this.apiCache[cacheKey] !== undefined) return this.apiCache[cacheKey];
 
         let result = false;
-        const normLetter = window.normalizeTurkishChars(requiredLetterLower || '').trim();
 
         try {
             if (catId === 'sehir') {
@@ -230,8 +263,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                     result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
                     if (result) {
                         const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
-                        const normName = window.normalizeTurkishChars(nameLower).trim();
-                        if (normLetter && !normName.startsWith(normLetter)) result = false;
+                        if (requiredLetterLower && !nameLower.startsWith(requiredLetterLower)) result = false;
                     }
                 }
                 if (!result) result = await this.checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredLetterLower);
@@ -244,8 +276,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                     result = Array.isArray(data) && data.length > 0;
                     if (result) {
                         const trName = data[0].translations?.tur?.common?.toLocaleLowerCase('tr-TR') || '';
-                        const normName = window.normalizeTurkishChars(trName).trim();
-                        if (normLetter && normName && !normName.startsWith(normLetter)) {
+                        if (requiredLetterLower && trName && !trName.startsWith(requiredLetterLower)) {
                             result = false;
                         }
                     }
@@ -260,13 +291,27 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                     if (data.results) {
                         const match = data.results.find(item => {
                             const name = (item.trackName || item.collectionName || '').toLocaleLowerCase('tr-TR');
-                            const normName = window.normalizeTurkishChars(name).trim();
-                            return normLetter ? normName.startsWith(normLetter) : true;
+                            return requiredLetterLower ? name.startsWith(requiredLetterLower) : true;
                         });
                         result = !!match;
                     }
                 }
                 if (!result) result = await this.checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel', 'yapım', 'sezon'], requiredLetterLower);
+            }
+            else if (catId === 'muzik') {
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
+                const response = await this.fetchWithTimeout(url, {}, 2500);
+                if (response && response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        const match = data.results.find(item =>
+                            ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') &&
+                            (item.trackName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower) || item.artistName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower))
+                        );
+                        result = !!match;
+                    }
+                }
+                if (!result) result = await this.checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], requiredLetterLower);
             }
             else if (catId === 'sarkici') {
                 const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
@@ -397,8 +442,16 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
                 }
 
                 // If not in local dictionary, try timeout-protected API validation (max 2.5s)
-                if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'sarkici', 'yazar', 'marka', 'oyun', 'unlu', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
+                if (!isValidInDict && ['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'marka', 'oyun', 'unlu', 'hastalik', 'spor'].includes(this.state.currentCategory.id)) {
                     isValidInDict = await this.validateViaApi(this.state.currentCategory.id, word, letterLower);
+                }
+
+                if (!isValidInDict) {
+                    const llmRes = await this.validateViaLlm(this.state.currentCategory.name, word, this.state.letter);
+                    if (llmRes && llmRes.valid) {
+                        isValidInDict = true;
+                        llmReason = llmRes.reason;
+                    }
                 }
             }
 
@@ -409,6 +462,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
 
         if (!this.state.players[playerId]) return;
         this.state.players[playerId].score += score;
+        this.state.players[playerId].roundScore = (this.state.players[playerId].roundScore || 0) + score;
         const canAppeal = (score === 0 && word.length > 0);
 
         if (this.onTurnResult) this.onTurnResult({ word, score, playerId, canAppeal, llmReason });
@@ -417,8 +471,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             this.state.status = 'WAITING_APPEAL';
             this.state.pendingNextTurn = { playerId, word, score, category: this.state.currentCategory };
             this.setState(this.state);
-            if (this.state.appealTimeout) clearTimeout(this.state.appealTimeout);
-            this.state.appealTimeout = setTimeout(() => {
+            if (this.appealTimeout) clearTimeout(this.appealTimeout);
+            this.appealTimeout = setTimeout(() => {
                 if (this.state.status === 'WAITING_APPEAL') {
                     // Log unappealed rejected word to Cloudflare
                     this.logWordToCloudflare(word, this.state.currentCategory.id, this.state.currentCategory.name, 'REJECTED', this.state.letter);
@@ -436,10 +490,11 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
     handleAppeal(playerId) {
         if (!this.isHost || this.state.status !== 'WAITING_APPEAL') return;
         if (this.state.pendingNextTurn && this.state.pendingNextTurn.playerId === playerId) {
-            clearTimeout(this.state.appealTimeout);
-            this.state.appealTimeout = null;
+            clearTimeout(this.appealTimeout);
+            this.appealTimeout = null;
             this.state.status = 'VOTING';
-            this.state.votes = { yes: 0, no: 0, votedPlayers: new Set() };
+            this.state.votes = { yes: 0, no: 0 };
+            this.votedPlayers = new Set();
             this.setState(this.state);
             if (this.onVoteStart) this.onVoteStart(this.state.pendingNextTurn.word, this.state.pendingNextTurn.category.name);
         }
@@ -447,12 +502,12 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
 
     handleVote(playerId, voteStr) {
         if (!this.isHost || this.state.status !== 'VOTING') return;
-        if (!this.state.votes.votedPlayers.has(playerId)) {
-            this.state.votes.votedPlayers.add(playerId);
+        if (!this.votedPlayers.has(playerId)) {
+            this.votedPlayers.add(playerId);
             if (voteStr === 'yes') this.state.votes.yes++;
             else this.state.votes.no++;
             
-            if (this.state.votes.votedPlayers.size >= Object.keys(this.state.players).length) {
+            if (this.votedPlayers.size >= Object.keys(this.state.players).length) {
                 this.endVote();
             }
         }
@@ -472,7 +527,10 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         let score = 0;
         if (isAccepted) {
             score = word.length;
-            this.state.players[playerId].score += score;
+            if (this.state.players[playerId]) {
+                this.state.players[playerId].score += score;
+                this.state.players[playerId].roundScore = (this.state.players[playerId].roundScore || 0) + score;
+            }
             // Log voted accepted word to Cloudflare Worker
             this.logWordToCloudflare(word, category.id, category.name, 'VOTED_ACCEPTED', this.state.letter);
         } else {
@@ -488,13 +546,13 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         }, 2000);
     }
 
-    getFinalScores(roundPlayerId, roundScore) {
+    getFinalScores() {
         const scores = {};
         for (const pId in this.state.players) {
             scores[pId] = {
                 id: pId,
                 name: this.state.players[pId].name,
-                roundScore: (pId === roundPlayerId) ? roundScore : 0,
+                roundScore: this.state.players[pId].roundScore || 0,
                 totalScore: this.state.players[pId].score
             };
         }
@@ -510,7 +568,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         if (this.state.currentPlayerIndex >= totalPlayers) {
             this.state.status = 'SCOREBOARD';
             this.setState(this.state);
-            if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores(null, 0));
+            if (this.onScoreUpdate) this.onScoreUpdate(this.getFinalScores());
         } else {
             this.startNextTurn(this.state.round, this.state.currentPlayerIndex);
         }
@@ -523,6 +581,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             this.state.round = 1;
             for (const pId in this.state.players) {
                 this.state.players[pId].score = 0;
+                this.state.players[pId].roundScore = 0;
             }
             this.setState(this.state);
         } else {
@@ -533,6 +592,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
     extendGame(extraRounds) {
         if (!this.isHost) return;
         this.config.rounds += extraRounds;
+        this.state.totalRounds = this.config.rounds;
+        this.nextRound();
     }
 }
 
@@ -546,6 +607,7 @@ class HizliIsimSehirView {
         this.currentTimer = null;
         this.voteTimer = null;
         this.autoNextRoundTimer = null;
+        this.appealInterval = null;
         
         this.defaultCategories = [
             { id: 'isim', name: 'İsim' },
@@ -558,6 +620,7 @@ class HizliIsimSehirView {
             { id: 'yiyecek', name: 'Yiyecek' },
             { id: 'renk', name: 'Renk' },
             { id: 'film_dizi', name: 'Film/Dizi' },
+            { id: 'muzik', name: 'Müzik' },
             { id: 'sarkici', name: 'Şarkıcı' },
             { id: 'yazar', name: 'Yazar' },
             { id: 'marka', name: 'Marka' },
@@ -631,7 +694,10 @@ class HizliIsimSehirView {
                 cancelText: "Kal",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) {
+                if (window.gameNetwork) window.gameNetwork.leaveRoom();
+                else window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -642,7 +708,10 @@ class HizliIsimSehirView {
                 cancelText: "Oyuna Dön",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) {
+                if (window.gameNetwork) window.gameNetwork.leaveRoom();
+                else window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
@@ -659,36 +728,19 @@ class HizliIsimSehirView {
             if (window.PairaAudio) window.PairaAudio.play('pop');
         });
 
-        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-            const code = document.getElementById('display-room-code')?.dataset.code;
-            if (code) {
-                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
+        document.getElementById('setting-rounds')?.addEventListener('change', () => this.callbacks.onConfigUpdate(this.getLocalConfig()));
+        document.getElementById('setting-end-value')?.addEventListener('change', () => this.callbacks.onConfigUpdate(this.getLocalConfig()));
+
+        document.getElementById('custom-cat-input')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btn-add-custom-cat')?.click();
             }
         });
 
-        const toggleCodeBtn = document.getElementById('btn-toggle-code');
-        if (toggleCodeBtn) {
-            toggleCodeBtn.addEventListener('click', () => {
-                const display = document.getElementById('display-room-code');
-                const eyeOpen = document.getElementById('icon-eye-open');
-                const eyeClosed = document.getElementById('icon-eye-closed');
-                const code = display ? display.dataset.code : '';
-                
-                if (display && display.textContent.includes('•')) {
-                    display.textContent = code;
-                    eyeOpen?.classList.remove('hidden');
-                    eyeClosed?.classList.add('hidden');
-                } else if (display) {
-                    display.textContent = '••••••••';
-                    eyeOpen?.classList.add('hidden');
-                    eyeClosed?.classList.remove('hidden');
-                }
-                if (window.PairaAudio) window.PairaAudio.play('pop');
-            });
-        }
-
-        document.getElementById('setting-rounds')?.addEventListener('change', () => this.callbacks.onConfigUpdate(this.getLocalConfig()));
-        document.getElementById('setting-end-value')?.addEventListener('change', () => this.callbacks.onConfigUpdate(this.getLocalConfig()));
+        document.getElementById('btn-change-letter')?.addEventListener('click', () => {
+            if (this.callbacks.onChangeLetter) this.callbacks.onChangeLetter();
+        });
 
         document.getElementById('btn-add-custom-cat')?.addEventListener('click', () => {
             const input = document.getElementById('custom-cat-input');
@@ -815,6 +867,11 @@ class HizliIsimSehirView {
         const currentPlayer = playersArr[state.currentPlayerIndex];
         const isMyTurn = currentPlayer && currentPlayer.id === this.myId;
 
+        const curRoundEl = document.getElementById('current-round');
+        const totRoundsEl = document.getElementById('total-rounds');
+        if (curRoundEl) curRoundEl.textContent = state.round || 1;
+        if (totRoundsEl) totRoundsEl.textContent = state.totalRounds || 3;
+
         document.getElementById('current-letter').textContent = state.letter || '';
         document.getElementById('current-category-name').textContent = (state.currentCategory && state.currentCategory.name) ? state.currentCategory.name : '';
 
@@ -825,7 +882,7 @@ class HizliIsimSehirView {
                 turnInd.style.color = "var(--lilac)";
                 turnInd.style.fontWeight = "bold";
             } else {
-                turnInd.textContent = `Sıra: ${currentPlayer ? window.escapeHtml(currentPlayer.name) : 'Bekleniyor'}`;
+                turnInd.textContent = `Sıra: ${currentPlayer ? currentPlayer.name : 'Bekleniyor'}`;
                 turnInd.style.color = "var(--text-main)";
                 turnInd.style.fontWeight = "normal";
             }
@@ -837,11 +894,19 @@ class HizliIsimSehirView {
         const input = document.getElementById('compact-game-input');
         if (input) {
             input.value = '';
-            input.dataset.catId = state.currentCategory.id;
+            input.dataset.catId = state.currentCategory ? state.currentCategory.id : '';
             input.disabled = !isMyTurn;
             input.oninput = (e) => {
-                if (e.target.value.length > 0) {
-                    e.target.value = e.target.value.charAt(0).toLocaleUpperCase('tr-TR') + e.target.value.slice(1);
+                const val = e.target.value;
+                if (val.length > 0) {
+                    const firstChar = val.charAt(0);
+                    const upperFirst = firstChar.toLocaleUpperCase('tr-TR');
+                    if (firstChar !== upperFirst) {
+                        const start = e.target.selectionStart;
+                        const end = e.target.selectionEnd;
+                        e.target.value = upperFirst + val.slice(1);
+                        e.target.setSelectionRange(start, end);
+                    }
                 }
             };
             if (isMyTurn) setTimeout(() => input.focus(), 100);
@@ -894,16 +959,25 @@ class HizliIsimSehirView {
         
         const appealArea = document.getElementById('appeal-area');
         const btnAppeal = document.getElementById('btn-appeal');
+        if (this.appealInterval) {
+            clearInterval(this.appealInterval);
+            this.appealInterval = null;
+        }
         if (appealArea && btnAppeal) {
             if (canAppeal && playerId === this.myId) {
                 appealArea.classList.remove('hidden');
                 let secs = 3;
                 btnAppeal.textContent = `İtiraz Et (${secs})`;
                 btnAppeal.disabled = false;
-                const ival = setInterval(() => {
+                this.appealInterval = setInterval(() => {
                     secs--;
-                    if (secs <= 0) { clearInterval(ival); appealArea.classList.add('hidden'); }
-                    else if (!btnAppeal.disabled) btnAppeal.textContent = `İtiraz Et (${secs})`;
+                    if (secs <= 0) {
+                        clearInterval(this.appealInterval);
+                        this.appealInterval = null;
+                        appealArea.classList.add('hidden');
+                    } else if (!btnAppeal.disabled) {
+                        btnAppeal.textContent = `İtiraz Et (${secs})`;
+                    }
                 }, 1000);
             } else {
                 appealArea.classList.add('hidden');
@@ -912,6 +986,11 @@ class HizliIsimSehirView {
     }
 
     showVotingUI(word, categoryName) {
+        if (this.appealInterval) {
+            clearInterval(this.appealInterval);
+            this.appealInterval = null;
+        }
+        document.getElementById('appeal-area')?.classList.add('hidden');
         document.getElementById('voting-overlay')?.classList.remove('hidden');
         document.getElementById('voting-text').innerHTML = `<strong>${window.escapeHtml(categoryName)}</strong> kategorisi için <strong>"${window.escapeHtml(word)}"</strong> kelimesi kabul edilsin mi?`;
         document.getElementById('vote-yes-count').textContent = '0';
@@ -978,7 +1057,7 @@ class HizliIsimSehirView {
             if (btn) {
                 btn.classList.remove('hidden');
                 clearInterval(this.autoNextRoundTimer);
-                if (currentRound > totalRounds) {
+                if (currentRound >= totalRounds) {
                     btn.textContent = 'Lobiye Dön';
                     if (ext) ext.classList.remove('hidden');
                 } else {

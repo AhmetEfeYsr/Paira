@@ -29,9 +29,25 @@ class BilgiYarismasiGameEngine {
 
         this.localTurnEndTime = 0;
         this.turnTimeout = null;
+        this.roundEndTimeout = null;
         this.renderFrame = null;
         this.isRoundEnding = false;
         this.lastTickSec = -1;
+    }
+
+    _clearAllTimers() {
+        if (this.turnTimeout) {
+            clearInterval(this.turnTimeout);
+            this.turnTimeout = null;
+        }
+        if (this.roundEndTimeout) {
+            clearTimeout(this.roundEndTimeout);
+            this.roundEndTimeout = null;
+        }
+        if (this.renderFrame) {
+            cancelAnimationFrame(this.renderFrame);
+            this.renderFrame = null;
+        }
     }
 
     setState(newState) {
@@ -40,16 +56,29 @@ class BilgiYarismasiGameEngine {
     }
 
     addPlayer(id, name, isHost) {
-        this.state.players[id] = { id, name, isHost, score: 0 };
+        if (!this.state.players[id]) {
+            this.state.players[id] = { id, name, isHost, score: 0 };
+        } else {
+            this.state.players[id].name = name;
+            this.state.players[id].isHost = isHost;
+        }
         this.setState({ players: this.state.players });
     }
 
     removePlayer(id) {
         delete this.state.players[id];
+        delete this.state.answersInRound[id];
         this.setState({ players: this.state.players });
         
-        if (this.isHost && this.state.status === 'playing' && this.checkAllPlayersAnswered()) {
-             this.endRoundEarly();
+        if (this.isHost && this.state.status === 'playing') {
+            if (Object.keys(this.state.players).length < 2) {
+                if (window.showToast) window.showToast("Diğer oyuncular ayrıldığı için oyun lobiye döndürüldü.", "warning");
+                this.backToLobby();
+                return;
+            }
+            if (this.checkAllPlayersAnswered()) {
+                this.endRoundEarly();
+            }
         }
     }
 
@@ -198,9 +227,9 @@ class BilgiYarismasiGameEngine {
 
     checkAllPlayersAnswered() {
         if (!this.isHost) return false;
-        const expectedPlayersCount = Object.keys(this.state.players).length;
-        const answeredPlayersCount = Object.keys(this.state.answersInRound).length;
-        return answeredPlayersCount >= expectedPlayersCount;
+        const playerIds = Object.keys(this.state.players);
+        if (playerIds.length === 0) return false;
+        return playerIds.every(pid => this.state.answersInRound[pid] !== undefined);
     }
 
     endRoundEarly() {
@@ -216,7 +245,9 @@ class BilgiYarismasiGameEngine {
         
         this.setState(this.state); 
 
-        setTimeout(() => {
+        if (this.roundEndTimeout) clearTimeout(this.roundEndTimeout);
+        this.roundEndTimeout = setTimeout(() => {
+            this.roundEndTimeout = null;
             this.isRoundEnding = false;
             this.state.round++;
             if (this.state.round > this.state.totalRounds) {
@@ -228,12 +259,18 @@ class BilgiYarismasiGameEngine {
     }
 
     endGame() {
+        this._clearAllTimers();
+        this.isRoundEnding = false;
         this.state.status = 'finished';
         this.setState(this.state);
     }
 
     backToLobby() {
+        this._clearAllTimers();
+        this.isRoundEnding = false;
         this.state.status = 'lobby';
+        this.state.currentQuestion = null;
+        this.state.answersInRound = {};
         Object.keys(this.state.players).forEach(pId => this.state.players[pId].score = 0);
         this.state.round = 1;
         this.setState(this.state);
@@ -290,7 +327,10 @@ class BilgiYarismasiView {
                 cancelText: "Kal",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) {
+                if (window.gameNetwork) window.gameNetwork.leaveRoom();
+                else window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-leave-game')?.addEventListener('click', async () => {
@@ -301,7 +341,10 @@ class BilgiYarismasiView {
                 cancelText: "Oyuna Dön",
                 confirmType: "danger"
             });
-            if (confirmed) window.location.href = 'index.html';
+            if (confirmed) {
+                if (window.gameNetwork) window.gameNetwork.leaveRoom();
+                else window.location.href = 'index.html';
+            }
         });
 
         document.getElementById('btn-select-all-cats')?.addEventListener('click', () => {
@@ -315,34 +358,6 @@ class BilgiYarismasiView {
             checkboxes.forEach(cb => cb.checked = false);
             if (window.PairaAudio) window.PairaAudio.play('pop');
         });
-
-        document.getElementById('btn-copy-room')?.addEventListener('click', () => {
-            const code = document.getElementById('display-room-code')?.dataset.code;
-            if (code) {
-                window.copyToClipboard(code, "Oda kodu panoya kopyalandı!");
-            }
-        });
-
-        const toggleCodeBtn = document.getElementById('btn-toggle-code');
-        if (toggleCodeBtn) {
-            toggleCodeBtn.addEventListener('click', () => {
-                const display = document.getElementById('display-room-code');
-                const eyeOpen = document.getElementById('icon-eye-open');
-                const eyeClosed = document.getElementById('icon-eye-closed');
-                const code = display ? display.dataset.code : '';
-                
-                if (display && display.textContent.includes('•')) {
-                    display.textContent = code;
-                    eyeOpen?.classList.remove('hidden');
-                    eyeClosed?.classList.add('hidden');
-                } else if (display) {
-                    display.textContent = '••••••••';
-                    eyeOpen?.classList.add('hidden');
-                    eyeClosed?.classList.remove('hidden');
-                }
-                if (window.PairaAudio) window.PairaAudio.play('pop');
-            });
-        }
 
         document.getElementById('btn-start-game')?.addEventListener('click', () => {
             const settings = {
@@ -416,7 +431,9 @@ class BilgiYarismasiView {
             qMain.innerText = state.currentQuestion.question_text;
 
             const mediaContainer = document.getElementById('media-container');
-            if (mediaContainer) {
+            const mediaKey = `${state.round}_${state.currentQuestion.question_text}`;
+            if (mediaContainer && this._lastMediaKey !== mediaKey) {
+                this._lastMediaKey = mediaKey;
                 mediaContainer.innerHTML = '';
                 if (state.currentQuestion.gorsel_url) {
                     const img = document.createElement('img');
@@ -441,8 +458,20 @@ class BilgiYarismasiView {
             const myAnswer = state.answersInRound[this.myId];
 
             if (state.currentQuestion.reveal_answer) {
-                 qMsg.innerText = "Doğru cevaplar gösteriliyor...";
-                 qMsg.className = "status-badge";
+                if (myAnswer) {
+                    qMsg.innerText = myAnswer.isCorrect
+                        ? `Doğru Cevap! (+${myAnswer.pointsEarned} Puan)`
+                        : `Yanlış Cevap! (${myAnswer.pointsEarned < 0 ? myAnswer.pointsEarned : 0} Puan)`;
+                } else {
+                    qMsg.innerText = "Süre Doldu! Cevap vermedin.";
+                }
+                qMsg.className = "status-badge";
+                if (this._lastRevealKey !== mediaKey) {
+                    this._lastRevealKey = mediaKey;
+                    if (window.PairaAudio) {
+                        window.PairaAudio.play(myAnswer && myAnswer.isCorrect ? 'correct' : 'wrong');
+                    }
+                }
             } else if (myAnswer) {
                 qMsg.innerText = "Cevabın Kaydedildi! Diğer oyuncular bekleniyor...";
                 qMsg.className = "status-badge";
@@ -490,11 +519,9 @@ class BilgiYarismasiView {
 
                         this.callbacks.onAnswer(idx);
 
-                        btn.removeEventListener('pointerdown', handleChoice);
                         btn.removeEventListener('click', handleChoice);
                     };
 
-                    btn.addEventListener('pointerdown', handleChoice);
                     btn.addEventListener('click', handleChoice);
                 }
 
@@ -527,6 +554,12 @@ class BilgiYarismasiView {
             li.innerHTML = `<span>${idx + 1}. ${window.escapeHtml(p.name)} ${p.id === this.myId ? '(Sen)' : ''}</span> <span>${p.score} Puan</span>`;
             ul.appendChild(li);
         });
+
+        const btnBack = document.getElementById('btn-back-to-lobby');
+        if (btnBack) {
+            const isLocalHost = sessionStorage.getItem('isHost') === 'true';
+            btnBack.style.display = isLocalHost ? 'block' : 'none';
+        }
     }
 
     updateTimer(secs) {

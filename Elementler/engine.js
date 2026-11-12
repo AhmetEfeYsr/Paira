@@ -109,7 +109,7 @@ class Seesaw extends Rect {
                     // Nesnenin Y pozisyonunu tahterevalli yüzeyine it (basit fizik)
                     // Yüzeyin o noktadaki Y si:
                     const surfaceY = this.pivotY + Math.tan(this.angle) * distFromCenter;
-                    if (e.y + e.h > surfaceY - this.h/2) {
+                    if (e.vy >= 0 && e.y + e.h > surfaceY - this.h/2) {
                         e.y = surfaceY - this.h/2 - e.h;
                         if(e.type === 'player') e.grounded = true;
                         if(e.type === 'box') e.grounded = true;
@@ -150,6 +150,8 @@ class PlayerEntity extends Rect {
         this.grounded = false;
         this.climbing = false;
         this.flying = false;
+        this.inPipe = false;
+        this.pipeTarget = null;
         this.dead = false;
         this.finished = false;
 
@@ -181,6 +183,7 @@ class PlayerEntity extends Rect {
         switch(role) {
             case 'ates': return '#ef4444'; // Red
             case 'su': return '#3b82f6'; // Blue
+            case 'doga': return '#10b981'; // Emerald Green
             case 'hava': return '#facc15'; // Yellow
             case 'elektrik': return '#a855f7'; // Neon Purple
             default: return '#ffffff';
@@ -190,21 +193,40 @@ class PlayerEntity extends Rect {
     update(dt, levelRects) {
         if (this.dead || this.finished) return;
 
+        if (this.inPipe && this.pipeTarget) {
+            const dx = this.pipeTarget.x - this.x;
+            const dy = this.pipeTarget.y - this.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 8) {
+                this.x = this.pipeTarget.x;
+                this.y = this.pipeTarget.y;
+                this.inPipe = false;
+                this.pipeTarget = null;
+                this.vx = 0;
+                this.vy = 0;
+            } else {
+                const pipeSpeed = 380;
+                this.x += (dx / dist) * pipeSpeed * dt;
+                this.y += (dy / dist) * pipeSpeed * dt;
+                return;
+            }
+        }
+
         // --- GİRDİ UYGULAMASI ---
         if (this.climbing) {
             this.vy = 0;
             this.vx = 0;
             if (this.input.up) this.vy = -150;
             if (this.input.down) this.vy = 150;
-            if (this.input.left) this.vx = -150;
-            if (this.input.right) this.vx = 150;
+            if (this.input.left) { this.vx = -150; this.dir = -1; }
+            if (this.input.right) { this.vx = 150; this.dir = 1; }
             if (this.input.jump) { this.climbing = false; this.vy = this.jumpForce * 0.8; }
         } else if (this.flying) {
             // Hava eventi (Updraft / Fırtına)
             this.vy -= 1800 * dt; // Yukarı ivme
             if (this.vy < -300) this.vy = -300; // Limit
-            if (this.input.left) this.vx = -this.speed;
-            else if (this.input.right) this.vx = this.speed;
+            if (this.input.left) { this.vx = -this.speed; this.dir = -1; }
+            else if (this.input.right) { this.vx = this.speed; this.dir = 1; }
             else this.vx *= this.friction;
         } else {
             // Normal Hareket
@@ -215,8 +237,13 @@ class PlayerEntity extends Rect {
             // Yerçekimi
             this.vy += this.gravity * dt;
 
+            // Hava süzülmesi
+            if (this.role === 'hava' && (this.input.action || this.input.jump) && this.vy > 80) {
+                this.vy = 80;
+            }
+
             // Zıplama
-            if (this.input.jump && this.grounded) {
+            if ((this.input.jump || this.input.up) && this.grounded) {
                 this.vy = this.jumpForce;
                 this.grounded = false;
             }
@@ -242,7 +269,8 @@ class PlayerEntity extends Rect {
 
         // Trigger Elemental Powers
         if (window.ElementPowers) {
-            const tempLm = { grid: null, entities: levelRects, tileSize: 32 };
+            const currentGrid = (window.gameApp && window.gameApp.engine) ? window.gameApp.engine.currentGrid : null;
+            const tempLm = { grid: currentGrid, entities: levelRects, tileSize: 32 };
             if (this.role === 'ates' && (this.input.action || this.input.jump)) {
                 window.ElementPowers.triggerFireBurn(this, tempLm);
             } else if (this.role === 'su' && (this.input.action || this.input.down)) {
@@ -323,9 +351,9 @@ class PlayerEntity extends Rect {
 
             // ÖLÜMCÜL SIVILAR
             if (r.type.startsWith('danger_')) {
-                const dangerType = r.type.split('_')[1]; // danger_ates -> ates
-                if (dangerType !== this.role) {
-                    this.die(); // Kendi rengi olmayan sıvıya düştü
+                const dangerType = r.type.split('_')[1]; // danger_ates -> ates, danger_doga -> asit (herkesi öldürür)
+                if (dangerType === 'doga' || dangerType !== this.role) {
+                    this.die(); // Asit havuzu veya kendi rengi olmayan sıvıya düştü
                 }
             }
 
@@ -338,7 +366,7 @@ class PlayerEntity extends Rect {
 
             // FIRTINA (Hava elementi uçabilir)
             if (r.type === 'firtina') {
-                if (this.role === 'hava' && this.input.jump) {
+                if (this.role === 'hava' && (this.input.jump || this.input.action || this.input.up)) {
                     overUpdraft = true;
                 }
             }
@@ -459,7 +487,12 @@ class GameEngine {
         this.camera.mw = this.mapW;
         this.camera.mh = this.mapH;
 
-        this.currentGrid = typeof mapData.grid === 'function' ? mapData.grid() : mapData.grid;
+        const rawGrid = typeof mapData.grid === 'function' ? mapData.grid() : mapData.grid;
+        this.currentGrid = rawGrid ? rawGrid.map(row => [...row]) : [];
+        if (this.renderEngine && this.renderEngine.camera) {
+            this.renderEngine.camera.mw = this.mapW;
+            this.renderEngine.camera.mh = this.mapH;
+        }
 
         // Grid to Rects (32x32 tiles)
         const TILE = 32;
@@ -482,29 +515,24 @@ class GameEngine {
         // Entities (Doors, Switches, Exit gates)
         if(mapData.entities) {
             mapData.entities.forEach(e => {
+                const clonedProps = e.props ? JSON.parse(JSON.stringify(e.props)) : {};
                 if (e.type === 'box') {
-                    const box = new PushableBox(e.x, e.y, e.w, e.h, e.props || {});
+                    const box = new PushableBox(e.x, e.y, e.w, e.h, clonedProps);
                     this.rects.push(box);
                     this.dynamicEntities.push(box);
                 } else if (e.type === 'seesaw') {
-                    const seesaw = new Seesaw(e.x, e.y, e.w, e.h, e.props || {});
+                    const seesaw = new Seesaw(e.x, e.y, e.w, e.h, clonedProps);
                     this.rects.push(seesaw);
                     this.dynamicEntities.push(seesaw);
                 } else {
-                    this.rects.push(new Rect(e.x, e.y, e.w, e.h, e.type, e.props));
+                    this.rects.push(new Rect(e.x, e.y, e.w, e.h, e.type, clonedProps));
                 }
             });
         }
     }
 
     addPlayer(id, role, name, sx, sy, isLocal) {
-        let p;
-        if (role === 'ates' && window.FirePlayer) p = new window.FirePlayer(id, name, sx, sy);
-        else if (role === 'su' && window.WaterPlayer) p = new window.WaterPlayer(id, name, sx, sy);
-        else if (role === 'hava' && window.AirPlayer) p = new window.AirPlayer(id, name, sx, sy);
-        else if (role === 'elektrik' && window.ElectricityPlayer) p = new window.ElectricityPlayer(id, name, sx, sy);
-        else p = new PlayerEntity(id, role, name, sx, sy);
-
+        const p = new PlayerEntity(id, role, name, sx, sy);
         p.isLocal = isLocal;
         if(isLocal) this.localPlayerId = id;
         this.players[id] = p;
@@ -550,19 +578,24 @@ class GameEngine {
             });
         }
 
-        // Update Dynamic Entities (Boxes, Seesaws)
+        // Update Dynamic Boxes first
         for (let entity of this.dynamicEntities) {
             if (entity.type === 'box') {
                 entity.update(dt, this.rects);
-            } else if (entity.type === 'seesaw') {
-                const allDynamic = [...Object.values(this.players), ...this.dynamicEntities.filter(e => e.type === 'box')];
-                entity.update(dt, allDynamic);
             }
         }
 
-        // Update Physics
+        // Update Players Physics
         for (let id in this.players) {
             this.players[id].update(dt, this.rects);
+        }
+
+        // Update Seesaws after players & boxes so grounded state on seesaw is preserved
+        for (let entity of this.dynamicEntities) {
+            if (entity.type === 'seesaw') {
+                const allDynamic = [...Object.values(this.players), ...this.dynamicEntities.filter(e => e.type === 'box')];
+                entity.update(dt, allDynamic);
+            }
         }
 
         // Camera follow

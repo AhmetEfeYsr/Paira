@@ -2,10 +2,12 @@
 
 :root {
     --team-a-color: #3b82f6;
+    --team-a-bg: rgba(59, 130, 246, 0.15);
     --team-a-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     --team-a-glow: rgba(59, 130, 246, 0.4);
 
     --team-b-color: #ef4444;
+    --team-b-bg: rgba(239, 68, 68, 0.15);
     --team-b-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
     --team-b-glow: rgba(239, 68, 68, 0.4);
 
