@@ -382,6 +382,15 @@ async function initGame(selectedDateStr = null, isEndless = false) {
         }
 
         if (savedState) {
+            const savedNum = parseInt(savedState.targetDate, 10);
+            if (!isNaN(savedNum) && !availableIds.includes(savedNum)) {
+                // Eski kayıt silinmişse (250 sınırı rotasyonu), temizleyip yeni kelime seç
+                localStorage.removeItem("bagnam_state_endless");
+                savedState = null;
+            }
+        }
+
+        if (savedState) {
             targetDate = savedState.targetDate;
             showToast("Sonsuz Mod (Kaldığın Yerden) yükleniyor...", "info");
         } else {
