@@ -1,173 +1,105 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <script src="../shared/shared.js"></script>
+    <script src="../shared/shared.js?v=2.0.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira ChatTabu | Geliştirici Notları</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../shared/shared.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared/shared.css?v=2.0.0">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
-    
     <style>
-        .about-container {
+        .devnotes-container {
             max-width: 900px;
             width: 100%;
             margin: 2rem auto;
-            padding: clamp(1rem, 5vw, 2rem);
+            padding: clamp(1rem, 4vw, 2rem);
             color: var(--text-main);
             background: var(--card-bg);
             border: var(--glass-border);
             border-radius: 16px;
             box-shadow: var(--glass-shadow);
             overflow-wrap: break-word;
-            word-wrap: break-word;
         }
-        .about-container h1 {
+        .devnotes-container h1 {
             color: var(--neon-purple);
             text-align: center;
-            margin-bottom: 2rem;
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
-            text-shadow: 0 0 10px var(--neon-glow-rgba);
+            margin-bottom: 1.5rem;
+            font-size: clamp(1.8rem, 4vw, 2.4rem);
         }
-        .about-container h2 {
+        .devnotes-container h2 {
             color: var(--lilac);
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            font-size: clamp(1.15rem, 2.5vw, 1.4rem);
             border-left: 3px solid var(--neon-purple);
             padding-left: 10px;
         }
-        .about-container p {
+        .devnotes-container p, .devnotes-container li {
             color: var(--text-muted);
-            line-height: 1.8;
-            margin-bottom: 1.2rem;
-            font-size: 0.98rem;
+            line-height: 1.75;
+            font-size: 0.96rem;
         }
-        .about-container blockquote {
-            background: var(--input-bg);
-            border-left: 4px solid var(--neon-purple);
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 4px 12px 12px 4px;
-            font-style: italic;
-            color: var(--lilac);
+        .devnotes-container ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
         }
-        .about-container strong {
-            color: var(--text-main);
-        }
-        .about-container ul {
-            list-style-type: disc;
-            padding-left: 2rem;
-            margin-bottom: 1.2rem;
-            color: var(--text-muted);
-        }
-        .about-container ul li {
-            margin-bottom: 0.5rem;
-            line-height: 1.6;
-        }
-        .about-container code {
+        .devnotes-container li { margin-bottom: 0.45rem; }
+        .devnotes-container strong { color: var(--text-main); }
+        .devnotes-container code {
             font-family: monospace;
             background: var(--input-bg);
             padding: 2px 6px;
             border-radius: 4px;
-            color: var(--neon-purple);
-            font-size: 0.95rem;
-        }
-        .about-container pre {
-            background: var(--input-bg);
-            border: var(--glass-border);
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 1.2rem 0;
-        }
-        .about-container pre code {
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
+            color: var(--lilac);
             font-size: 0.9rem;
         }
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: var(--neon-purple);
+            color: var(--lilac);
             text-decoration: none;
             font-weight: 600;
-            margin-bottom: 2rem;
-            transition: color 0.2s, transform 0.2s;
+            margin-bottom: 1.5rem;
         }
-        .back-link:hover {
-            color: var(--lilac);
-            transform: translateX(-4px);
-        }
+        .back-link:hover { color: var(--neon-purple); }
     </style>
 </head>
 <body>
     <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
-        <div class="about-container">
+        <div class="devnotes-container">
             <a href="index.html" class="back-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Lobby
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Oyuna Dön
             </a>
-            
+
             <h1>Geliştirici Notları: Chat Tabu</h1>
-            
-            <h2>Giriş ve Mimari Yaklaşım</h2>
-            <p><strong>Paira Chat Tabu</strong>, Twitch ve Kick canlı yayıncılarının kendi izleyici kitleleriyle (chat) etkileşime girmesini sağlayan, tamamen istemci tarafında (Client-Side) çalışan interaktif bir tabu oyunudur. Geleneksel tabu oyunlarının aksine, tahminler klavyeden değil, izleyicilerin canlı chat mesajlarından otomatik olarak süzülür.</p>
-            <p>Uygulama, verileri saklamak için merkezi bir sunucu ya da veritabanı (Database) barındırmaz. Kurulum gerektirmeden çalışan bu sunucusuz yapı, yerel WebSocket bağlantıları ve WebRTC protokolü yardımıyla pürüzsüz bir oyun deneyimi sunar.</p>
 
-            <h2>Canlı Yayın Chat Entegrasyonu (WebSocket & IRC)</h2>
-            <p>Kick ve Twitch platformlarından akan canlı sohbet mesajları, <code>ChatListener</code> modülü aracılığıyla gerçek zamanlı olarak dinlenir:</p>
-            <ul>
-                <li><strong>Twitch Entegrasyonu:</strong> Twitch IRC WebSocket kanallarına (<code>wss://irc-ws.chat.twitch.tv:443</code>) bağlanarak standart IRC protokolü üzerinden ilgili kanalın sohbet mesajları yakalanır.</li>
-                <li><strong>Kick Entegrasyonu:</strong> Kick API'leri ve WebSocket altyapısı kullanılarak odadaki canlı chat akışı anlık olarak takip edilir.</li>
-            </ul>
-            <p>Yayıncı sohbeti dinlemeye başladığında, chate yazılan her bir mesaj saniyeler içinde oyun istemcisi tarafından ayrıştırılır ve işleme alınır.</p>
+            <h2>Genel Bakış</h2>
+            <p><strong>Chat Tabu</strong>, Twitch ve Kick yayıncılarının kendi canlı sohbetleriyle (Tek Yayıncı) veya birden fazla yayıncının aynı odada (Çoklu Yayıncı) oynayabildiği interaktif bir tabu oyunudur. Tahminler doğrudan canlı yayın sohbet akışından okunur.</p>
 
-            <h2>FuzzyMatcher ile Kelime Eşleştirme Algoritması</h2>
-            <p>İzleyicilerin klavye hatalarını, Türkçe karakter uyumsuzluklarını ve küçük yazım farklarını telafi etmek amacıyla istemci tarafında gelişmiş bir <code>FuzzyMatcher</code> (Bulanık Eşleştirme) algoritması koşulur:</p>
+            <h2>Teknik Mimari</h2>
             <ul>
-                <li>Kullanıcı tahmini ve hedef kelime öncelikle küçük harfe dönüştürülür (<code>toLocaleLowerCase('tr-TR')</code>) ve gereksiz boşluklardan arındırılır.</li>
-                <li><code>FuzzyMatcher</code>, kelimeler arasındaki benzerlik oranını ve Levenshtein mesafesini hesaplayarak yazım hatalarını tolere eder.</li>
-                <li>Chat Tabu'da tabu tolerans seviyesi katı (strict) tutularak (<code>tolerance: 1.0</code>) haksız puan kazanımlarının önüne geçilir, ancak harf hataları ve Türkçe karakter duyarlılıkları esnekleştirilerek doğru tahminlerin kaçırılmaması sağlanır.</li>
-                <li>Doğru tahmin algılandığı anda oyun motoru chate yazan izleyiciyi tespit eder, puanını günceller ve arayüzde doğru bildiğine dair görsel efekti (başarı animasyonu ve ses efekti) tetikler.</li>
+                <li><strong>Twitch IRC Bağlantısı (<code>../shared/chat.js</code>):</strong> <code>ChatListener</code> modülü Twitch IRC WebSocket sunucusuna (<code>wss://irc-ws.chat.twitch.tv:443</code>) anonim <code>justinfan</code> kullanıcısı olarak bağlanır, <code>PRIVMSG</code> satırlarını ayrıştırır ve 30 saniyelik <code>PING/PONG</code> döngüsüyle bağlantıyı canlı tutar.</li>
+                <li><strong>Kick Pusher ve Cloudflare Worker:</strong> Kick kanalının <code>chatroomId</code>, Pusher <code>key</code> ve <code>cluster</code> bilgileri öncelikle Cloudflare Worker proxy'si (yedek olarak CORS proxy'leri) üzerinden alınır. Ardından <code>wss://ws-{cluster}.pusher.com/app/{key}</code> adresinde <code>chatrooms.{id}.v2</code> kanalına abone olunarak <code>ChatMessageEvent</code> mesajları dinlenir. İkili modda (<code>both</code>) her iki platform aynı anda paralel dinlenir.</li>
+                <li><strong>Çok Oyunculu P2P Senkronizasyon (<code>network.js</code>):</strong> Çoklu yayıncı odaları <code>paira-chattabu-{ROOMCODE}</code> PeerJS ID'siyle Host-Client topolojisinde kurulur (en fazla 10 yayıncı). <code>CLIENT_INFO</code> yeniden bağlanmalarında mevcut skor korunur ve sonradan katılanlara canlı oyun durumu (<code>SYNC_STATE</code>) doğrudan aktarılır.</li>
             </ul>
 
-            <h2>P2P Ağ Topolojisi (Host-Client Modeli)</h2>
-            <p>Tek oyunculu (klasik) modun yanı sıra, chate karşı chatin yarıştığı veya iki yayıncının karşı karşıya geldiği çok oyunculu modlarda <strong>WebRTC (PeerJS)</strong> tabanlı bir <strong>Host-Client (Kurucu-Katılımcı)</strong> topolojisi devrededir:</p>
+            <h2>Oyun Mekanikleri</h2>
             <ul>
-                <li><strong>Host (Yayıncı Kurucu Node):</strong> Odayı ilk oluşturan yayıncı, oyunun durum yöneticisi (Host) olur. Kelimelerin belirlenmesi, sürelerin kontrolü ve doğru yanıtların tescillenmesi Host'un tarayıcısında yürütülür.</li>
-                <li><strong>Client (Rakip Peer):</strong> Oda koduyla bağlanan rakip yayıncı veya oyuncu, Host ile doğrudan bir <code>RTCDataChannel</code> bağlantısı açar.</li>
-                <li><strong>Sinyalleşme (Signaling):</strong> Kurucu ve katılımcının IP/Port bilgilerini paylaşabilmesi amacıyla PeerJS sinyalleşme sunucusu kullanılır. P2P tünel açıldıktan sonra veri alışverişi doğrudan tarayıcılar arasında sıfır gecikmeyle sürdürülür.</li>
+                <li><strong>Türkçe Normalizasyon ve Uzunluk Bazlı Eşleştirme:</strong> <code>isMatch()</code> içinde hem tahmin hem hedef kelime <code>normalizeTurkishChars()</code> ile normalize edilir. 4 harf ve altı kelimelerde tolerans <code>0</code> (birebir eşleşme), 5–7 harfte <code>0.8</code>, daha uzun kelimelerde <code>1.2</code> <code>FuzzyMatcher</code> toleransı uygulanır.</li>
+                <li><strong>Skor ve Süre Uzatma:</strong> Doğru tahminde puan her zaman tahmini yazan izleyiciye (<code>scores[username]</code>) ve o turdaki aktif anlatıcıya (<code>turnId</code>) yazılır. Kart değişimi öncesi 2 saniyelik bekleme süresi boyunca tur zamanlayıcısı <code>+2000ms</code> uzatılır.</li>
+                <li><strong>İkili Liderlik Tablosu ve Bulanıklaştırma:</strong> Sol paneldeki liderlik tablosu hem yayıncı skorlarını hem de en çok bilen chat izleyicilerini ayrı listeler. Kart başlığındaki göz butonu (<code>#btn-toggle-visibility</code>) kelime ve yasaklıları yayın sırasında bulanıklaştırıp gizleyebilir; oyun bittiğinde veya yeniden başladığında görünürlük sıfırlanır.</li>
             </ul>
 
-            <h2>Gerçek Zamanlı Veri Senkronizasyonu (Data Sync)</h2>
-            <p>Oyun boyunca gerçekleşen tüm aksiyonlar <code>RTCDataChannel</code> paketleri ile uçtan uca senkronize edilir:</p>
+            <h2>Sürüm Notları</h2>
             <ul>
-                <li><code>SYNC_STATE</code>: Host, her kelime değişiminde veya puan güncellemesinde oyun durumunu milisaniyelik zaman damgaları (<code>hostNow</code>) ile birlikte istemciye gönderir.</li>
-                <li><code>GUESSED_CORRECTLY</code>: Bir chat kullanıcısı doğru tahmin yaptığında, bu durum tüm istemcilerde aynı anda duyurulur ve puan tablosu güncellenir.</li>
-                <li><code>CHAT_MSG</code>: Alınan sohbet mesajları, tarafların ekranlarındaki sanal chat paneline senkronize bir şekilde yansıtılır.</li>
-                <li><code>TABOO_PRESSED</code> / <code>SKIP_WORD</code>: Anlatıcının yasaklı kelime kullanması veya pas geçmesi durumunda gönderilen sinyallerdir.</li>
+                <li><strong>v2.0.0:</strong> <code>isMatch()</code> Türkçe karakter normalizasyonu ve uzunluk bazlı toleransa güncellendi, doğru tahminde puanın aktif anlatıcıya (<code>turnId</code>) yazılması ve sürenin <code>+2000ms</code> uzatılması eklendi, geç katılanlar ve yeniden bağlanmalar için skor/durum senkronizasyonu eklendi, çoklu oyunculu başlangıç için en az 2 yayıncı şartı getirildi ve lobi oda kodu gizle/kopyala kontrolleri eklendi.</li>
+                <li><strong>v1.0.2:</strong> İlk sürüm; Tek Yayıncı ve Çoklu Yayıncı modları, Twitch IRC + Kick Pusher dinleyicisi ve kelime bulanıklaştırma eklendi.</li>
             </ul>
-
-            <h2>Oda Mantığı ve Oturum Yönetimi</h2>
-            <p>Her oyun oturumu 6 haneli benzersiz bir oda koduyla yönetilir:</p>
-            <ul>
-                <li><strong>Oda Kodu:</strong> `paira-chattabu-[ROOMCODE]` formatında bir Peer ID üretilerek tarafların birbirini bulması sağlanır.</li>
-                <li><strong>Bağlantı Kesintileri:</strong> <code>onPlayerLeft</code> olayı ile rakibin odadan düşmesi durumunda oyun otomatik olarak duraklatılır ve durum kurtarma aşamasına geçilerek oturumun kilitlenmesi engellenir.</li>
-            </ul>
-
-            <h2>Güvenlik ve Veri Gizliliği</h2>
-            <p>Chat Tabu, WebRTC protokolünün sağladığı <strong>uçtan uca şifreli (End-to-End Encrypted - DTLS/SRTP)</strong> veri kanallarını kullanır. Yayıncıların veya izleyicilerin hiçbir sohbet verisi ya da IP adresi herhangi bir sunucuya kaydedilmez. Tüm işlemler doğrudan tarayıcı belleğinde gerçekleştiği için veri güvenliği ve hız maksimum seviyede tutulur.</p>
-
-            <blockquote>
-                Bu teknik dokümantasyon, tarayıcı tabanlı eş zamanlı oyun geliştirme meraklıları ve platformun altyapısını merak eden geliştiriciler için Ahmet Efe Yaşar tarafından hazırlanmıştır.
-            </blockquote>
         </div>
     </main>
 </body>

@@ -32,7 +32,8 @@
 
 .game-input-wrapper input:focus {
     border-color: var(--neon-purple);
-    background: var(--glass-shadow);
+    background: var(--item-hover-bg);
+    box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.25);
     outline: none;
 }
 

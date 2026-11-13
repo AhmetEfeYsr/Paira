@@ -584,8 +584,12 @@ function renderGameScreen() {
         rDef = ROLES[myPlayer.role];
         let roleText = rDef?.name || myPlayer.role;
         if (rDef && rDef.maxUses) {
-            let used = myPlayer.usedAbility ? 0 : 1;
-            roleText += ` (Hak: ${used}/${rDef.maxUses})`;
+            let remaining = myPlayer.usedAbility ? 0 : rDef.maxUses;
+            if ((myPlayer.role === 'ZEHIRLI' || myPlayer.role === 'PROFESYONEL') && gameState.dayCount === 1 && !myPlayer.usedAbility) {
+                roleText += ` (1. Gece: Normal Vampir | Hak: ${remaining}/${rDef.maxUses})`;
+            } else {
+                roleText += ` (Hak: ${remaining}/${rDef.maxUses})`;
+            }
         }
         els.game.myRole.textContent = roleText;
         
@@ -624,7 +628,7 @@ function renderGameScreen() {
     if (gameState.status === 'DAY_DISCUSSION') {
         if (!rDef || !rDef.hasDayAction ||
             (myPlayer.role === 'SERIF' && myPlayer.usedAbility) ||
-            (myPlayer.role === 'INTIKAMCI' && (gameState.dayCount > 1 || myPlayer.intikamciTarget))) {
+            (myPlayer.role === 'INTIKAMCI' && (myPlayer.intikamciTarget || (gameState.dayCount > 1 && !myPlayer.hirsizStole)))) {
             els.game.actionPanel.classList.add('hidden');
             return;
         }
@@ -662,7 +666,19 @@ function renderGameScreen() {
             }
             let fakeRole = myPlayer.fakeRole;
             let isDedektif = myPlayer.role === 'DEDEKTIF' || (myPlayer.role === 'DELI' && fakeRole === 'DEDEKTIF');
-            els.game.actionTitle.textContent = isDedektif ? 'Gece Aksiyonu: 2 Hedef Seç' : 'Gece Aksiyonu: Hedef Seç';
+            if (myPlayer.role === 'ZEHIRLI' || myPlayer.role === 'PROFESYONEL') {
+                if (gameState.dayCount === 1) {
+                    els.game.actionTitle.textContent = 'Gece Aksiyonu: Normal Vampir Hedefi (Özel yetenek 2. gecede)';
+                } else if (!myPlayer.usedAbility) {
+                    els.game.actionTitle.textContent = myPlayer.role === 'ZEHIRLI'
+                        ? 'Gece Aksiyonu: Zehirleme Hedefi (1 Hak)'
+                        : 'Gece Aksiyonu: Zırh Delici Saldırı (1 Hak)';
+                } else {
+                    els.game.actionTitle.textContent = 'Gece Aksiyonu: Normal Vampir Hedefi';
+                }
+            } else {
+                els.game.actionTitle.textContent = isDedektif ? 'Gece Aksiyonu: 2 Hedef Seç' : 'Gece Aksiyonu: Hedef Seç';
+            }
             let excludeSelfForVamp = ROLES[myPlayer.role]?.team === 'VAMPIR';
             let excludedIds = [];
             if (myPlayer.role === 'DOKTOR') {
@@ -770,11 +786,25 @@ window.onPlayerSelected = (id) => {
         return;
     }
 
-    if(window.gameScene) {
+    if (window.gameScene) {
         const coords = window.gameScene.getPlayerScreenCoords(id);
-        if (coords) {
-            els.game.actionPanel.style.left = coords.x + 'px';
-            els.game.actionPanel.style.top = coords.y + 'px';
+        if (coords && Number.isFinite(coords.x) && Number.isFinite(coords.y)) {
+            const panel = els.game.actionPanel;
+            const margin = 16;
+            const panelWidth = panel.offsetWidth || 260;
+            const panelHeight = panel.offsetHeight || 180;
+            const halfW = panelWidth / 2;
+            const minX = margin + halfW;
+            const maxX = Math.max(minX, window.innerWidth - margin - halfW);
+            const minY = margin + panelHeight;
+            const maxY = Math.max(minY, window.innerHeight - margin);
+
+            const clampedX = Math.min(Math.max(coords.x, minX), maxX);
+            const clampedY = Math.min(Math.max(coords.y, minY), maxY);
+            const parentRect = panel.offsetParent ? panel.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+
+            panel.style.left = (clampedX - parentRect.left) + 'px';
+            panel.style.top = (clampedY - parentRect.top) + 'px';
         }
     }
 
@@ -846,11 +876,17 @@ function renderLogs() {
 function addPrivateLog(msg) {
     const isAtBottom = els.game.privateLogs.scrollHeight - els.game.privateLogs.scrollTop - els.game.privateLogs.clientHeight < 50;
 
-    if(els.game.privateLogs.innerHTML.includes('Henüz özel bir bilgi almadınız')) {
+    if (els.game.privateLogs.innerHTML.includes('Henüz özel bir bilgi almadınız')) {
         els.game.privateLogs.innerHTML = '';
     }
     const d = document.createElement('div');
-    d.textContent = '• ' + msg;
+    if (typeof msg === 'string' && msg.startsWith('!')) {
+        d.style.color = 'var(--danger)';
+        d.style.fontWeight = '600';
+        d.textContent = '• ' + msg.substring(1);
+    } else {
+        d.textContent = '• ' + msg;
+    }
     els.game.privateLogs.appendChild(d);
     
     if (isAtBottom) {

@@ -8,6 +8,7 @@ class HizliIsimSehirGameEngine {
             status: 'LOBBY',
             round: 1,
             totalRounds: 3,
+            turnId: 0,
             letter: '',
             currentCategory: null,
             currentPlayerIndex: 0,
@@ -64,7 +65,7 @@ class HizliIsimSehirGameEngine {
         if (index !== -1 && index < this.state.currentPlayerIndex) {
             this.state.currentPlayerIndex--;
         } else if (index !== -1 && index === this.state.currentPlayerIndex) {
-            if (this.state.status === 'PLAYING' || this.state.status === 'WAITING_APPEAL' || this.state.status === 'VOTING') {
+            if (this.state.status === 'PLAYING' || this.state.status === 'WAITING_APPEAL' || this.state.status === 'VOTING' || this.state.status === 'VOTE_RESULT') {
                 this.state.status = 'PLAYING';
                 this.state.pendingNextTurn = null;
                 this.state.votes = { yes: 0, no: 0 };
@@ -79,6 +80,14 @@ class HizliIsimSehirGameEngine {
                     this.startNextTurn(this.state.round, this.state.currentPlayerIndex);
                     return;
                 }
+            }
+        } else if (this.state.status === 'VOTING') {
+            this.votedPlayers.delete(id);
+            const appealingId = this.state.pendingNextTurn ? this.state.pendingNextTurn.playerId : null;
+            const eligibleVoters = Object.keys(this.state.players).filter(pid => pid !== appealingId).length;
+            if (eligibleVoters === 0 || this.votedPlayers.size >= eligibleVoters) {
+                this.endVote();
+                return;
             }
         }
         
@@ -147,6 +156,7 @@ class HizliIsimSehirGameEngine {
         
         this.state.round = round;
         this.state.totalRounds = this.config.rounds;
+        this.state.turnId = (this.state.turnId || 0) + 1;
         this.state.currentPlayerIndex = playerIndex;
         this.state.letter = letter;
         this.state.currentCategory = category;
@@ -154,6 +164,15 @@ class HizliIsimSehirGameEngine {
         this.state.playerAnswers = {};
         
         this.setState(this.state);
+    }
+
+    foldCircumflexLower(str) {
+        return String(str || '')
+            .trim()
+            .toLocaleLowerCase('tr-TR')
+            .replace(/â/g, 'a')
+            .replace(/î/g, 'i')
+            .replace(/û/g, 'u');
     }
 
     async fetchWithTimeout(resource, options = {}, timeoutMs = 2500) {
@@ -184,28 +203,36 @@ class HizliIsimSehirGameEngine {
     }
 
     async checkWikipedia(word, keywords, requiredLetterLower) {
-        const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+        const cleanWord = (word || '').trim();
+        if (cleanWord.length < 2) return false;
+        const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanWord)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
             const wikiRes = await this.fetchWithTimeout(wikiUrl, {}, 2500);
             if (!wikiRes || !wikiRes.ok) return false;
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search) {
-                const lowerWord = word.toLocaleLowerCase('tr-TR');
+                const lowerWord = this.foldCircumflexLower(cleanWord);
                 const normWord = window.normalizeTurkishChars(lowerWord).trim();
-                const normLetter = window.normalizeTurkishChars(requiredLetterLower || '').trim();
+                const requiredFolded = requiredLetterLower ? this.foldCircumflexLower(requiredLetterLower) : '';
                 
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
+                    const foldedTitle = this.foldCircumflexLower(item.title);
                     const normTitle = window.normalizeTurkishChars(title).trim();
                     const normSnippet = window.normalizeTurkishChars(snippet).trim();
                     
-                    if (requiredLetterLower && !title.startsWith(requiredLetterLower)) {
+                    if (requiredFolded && !foldedTitle.startsWith(requiredFolded)) {
                         continue;
                     }
                     
-                    const titleWords = normTitle.split(/[\s,()\-.:]+/);
-                    if (title === lowerWord || normTitle === normWord || titleWords.includes(normWord)) {
+                    const titleWords = normTitle.split(/[\s,()\-.:;"'/]+/).filter(Boolean);
+                    const inputWords = normWord.split(/[\s,()\-.:;"'/]+/).filter(Boolean);
+                    const isTitleMatch = foldedTitle === lowerWord ||
+                        normTitle === normWord ||
+                        (inputWords.length === 1 ? titleWords.includes(normWord) : normTitle.includes(normWord));
+
+                    if (isTitleMatch) {
                         if (keywords.length === 0 || keywords.some(kw => {
                             const normKw = window.normalizeTurkishChars(kw).trim();
                             return snippet.includes(kw) || title.includes(kw) || normSnippet.includes(normKw) || normTitle.includes(normKw);
@@ -248,117 +275,138 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
     }
 
     async validateViaApi(catId, word, requiredLetterLower) {
-        if (!word) return false;
-        const cacheKey = `${catId}_${word}_${requiredLetterLower}`;
+        const cleanWord = (word || '').trim();
+        if (cleanWord.replace(/\s+/g, '').length < 2) return false;
+        const reqLower = requiredLetterLower ? this.foldCircumflexLower(requiredLetterLower) : '';
+        const wordLower = this.foldCircumflexLower(cleanWord);
+        const normWord = window.normalizeTurkishChars(cleanWord).trim();
+        const cacheKey = `${catId}_${wordLower}_${reqLower}`;
         if (this.apiCache[cacheKey] !== undefined) return this.apiCache[cacheKey];
 
         let result = false;
 
         try {
             if (catId === 'sehir') {
-                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanWord)}&format=json&addressdetails=1&limit=3&accept-language=tr`;
                 const response = await this.fetchWithTimeout(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
-                    result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
-                    if (result) {
-                        const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
-                        if (requiredLetterLower && !nameLower.startsWith(requiredLetterLower)) result = false;
+                    if (Array.isArray(data)) {
+                        result = data.some(item => {
+                            const isValidPlace = ['city', 'administrative', 'town', 'province', 'state'].includes(item.type || item.addresstype);
+                            if (!isValidPlace || !item.name) return false;
+                            const nameLower = this.foldCircumflexLower(item.name);
+                            const normName = window.normalizeTurkishChars(nameLower).trim();
+                            const nameMatch = nameLower === wordLower || normName === normWord || nameLower.includes(wordLower) || normName.includes(normWord);
+                            return nameMatch && (!reqLower || nameLower.startsWith(reqLower));
+                        });
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(cleanWord, ['şehir', 'ilçe', 'kasaba', 'başkent'], reqLower);
             }
             else if (catId === 'ulke') {
-                const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
+                const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(cleanWord)}`;
                 const response = await this.fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
-                    result = Array.isArray(data) && data.length > 0;
-                    if (result) {
-                        const trName = data[0].translations?.tur?.common?.toLocaleLowerCase('tr-TR') || '';
-                        if (requiredLetterLower && trName && !trName.startsWith(requiredLetterLower)) {
-                            result = false;
-                        }
+                    if (Array.isArray(data) && data.length > 0) {
+                        result = data.some(item => {
+                            const trName = this.foldCircumflexLower(item.translations?.tur?.common || item.name?.common || '');
+                            if (!trName) return false;
+                            const normTr = window.normalizeTurkishChars(trName).trim();
+                            const nameMatch = trName === wordLower || normTr === normWord || trName.includes(wordLower) || normTr.includes(normWord);
+                            return nameMatch && (!reqLower || trName.startsWith(reqLower));
+                        });
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['ülke', 'cumhuriyet', 'devlet'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(cleanWord, ['ülke', 'cumhuriyet', 'devlet'], reqLower);
             }
             else if (catId === 'film_dizi') {
-                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanWord)}&country=tr&limit=5`;
                 const response = await this.fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
                         const match = data.results.find(item => {
-                            const name = (item.trackName || item.collectionName || '').toLocaleLowerCase('tr-TR');
-                            return requiredLetterLower ? name.startsWith(requiredLetterLower) : true;
+                            const name = this.foldCircumflexLower(item.trackName || item.collectionName || '');
+                            if (!name) return false;
+                            const normName = window.normalizeTurkishChars(name).trim();
+                            const nameMatch = name === wordLower || normName === normWord || name.includes(wordLower) || normName.includes(normWord);
+                            return nameMatch && (!reqLower || name.startsWith(reqLower));
                         });
                         result = !!match;
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel', 'yapım', 'sezon'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(cleanWord, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel', 'yapım', 'sezon'], reqLower);
             }
             else if (catId === 'muzik') {
-                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanWord)}&entity=musicArtist,song&country=tr&limit=5`;
                 const response = await this.fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
-                        const match = data.results.find(item =>
-                            ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') &&
-                            (item.trackName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower) || item.artistName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower))
-                        );
+                        const match = data.results.find(item => {
+                            if (!((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist')) return false;
+                            const tName = this.foldCircumflexLower(item.trackName || '');
+                            const aName = this.foldCircumflexLower(item.artistName || '');
+                            const tMatch = tName && (tName.includes(wordLower) || window.normalizeTurkishChars(tName).includes(normWord)) && (!reqLower || tName.startsWith(reqLower));
+                            const aMatch = aName && (aName.includes(wordLower) || window.normalizeTurkishChars(aName).includes(normWord)) && (!reqLower || aName.startsWith(reqLower));
+                            return tMatch || aMatch;
+                        });
                         result = !!match;
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(cleanWord, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], reqLower);
             }
             else if (catId === 'sarkici') {
-                const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
+                const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(cleanWord)}&fmt=json`;
                 const response = await this.fetchWithTimeout(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
-                        const normWord = window.normalizeTurkishChars(word).trim();
                         result = data.artists.some(artist => {
-                            const artistName = artist.name.toLocaleLowerCase('tr-TR');
+                            const artistName = this.foldCircumflexLower(artist.name || '');
                             const normArtistName = window.normalizeTurkishChars(artistName).trim();
-                            const matchesName = artistName.includes(word.toLocaleLowerCase('tr-TR')) || normArtistName.includes(normWord) ||
-                                (artist.aliases && artist.aliases.some(a => {
-                                    const aliasName = a.name.toLocaleLowerCase('tr-TR');
-                                    return aliasName.includes(word.toLocaleLowerCase('tr-TR')) || window.normalizeTurkishChars(aliasName).trim().includes(normWord);
-                                }));
-                            return matchesName && artistName.startsWith(requiredLetterLower);
+                            const mainMatch = (artistName.includes(wordLower) || normArtistName.includes(normWord)) && (!reqLower || artistName.startsWith(reqLower));
+                            const aliasMatch = Array.isArray(artist.aliases) && artist.aliases.some(a => {
+                                const aliasName = this.foldCircumflexLower(a.name || '');
+                                return (aliasName.includes(wordLower) || window.normalizeTurkishChars(aliasName).trim().includes(normWord)) && (!reqLower || aliasName.startsWith(reqLower));
+                            });
+                            return mainMatch || aliasMatch;
                         });
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(cleanWord, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist'], reqLower);
             }
             else if (catId === 'yazar') {
-                const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
+                const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(cleanWord)}`;
                 const response = await this.fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.docs) {
-                        result = data.docs.some(doc => doc.name.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower));
+                        result = data.docs.some(doc => {
+                            const docName = this.foldCircumflexLower(doc.name || '');
+                            const normDoc = window.normalizeTurkishChars(docName).trim();
+                            return (docName.includes(wordLower) || normDoc.includes(normWord)) && (!reqLower || docName.startsWith(reqLower));
+                        });
                     }
                 }
-                if (!result) result = await this.checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat'], requiredLetterLower);
+                if (!result) result = await this.checkWikipedia(cleanWord, ['yazar', 'şair', 'roman', 'edebiyat'], reqLower);
             }
             else if (catId === 'marka') {
-                result = await this.checkWikipedia(word, ['marka', 'şirket', 'holding', 'üretici', 'kuruluş'], requiredLetterLower);
+                result = await this.checkWikipedia(cleanWord, ['marka', 'şirket', 'holding', 'üretici', 'kuruluş'], reqLower);
             }
             else if (catId === 'oyun') {
-                result = await this.checkWikipedia(word, ['oyun', 'video oyunu', 'oyunu', 'game'], requiredLetterLower);
+                result = await this.checkWikipedia(cleanWord, ['oyun', 'video oyunu', 'oyunu', 'game'], reqLower);
             }
             else if (catId === 'unlu') {
-                result = await this.checkWikipedia(word, ['ünlü', 'oyuncu', 'sanatçı', 'sunucu', 'fenomen'], requiredLetterLower);
+                result = await this.checkWikipedia(cleanWord, ['ünlü', 'oyuncu', 'sanatçı', 'sunucu', 'fenomen'], reqLower);
             }
             else if (catId === 'hastalik') {
-                result = await this.checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], requiredLetterLower);
+                result = await this.checkWikipedia(cleanWord, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], reqLower);
             }
             else if (catId === 'spor') {
-                result = await this.checkWikipedia(word, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat'], requiredLetterLower);
+                result = await this.checkWikipedia(cleanWord, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat'], reqLower);
             }
         } catch (e) {
             result = false;
@@ -411,28 +459,29 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         let word = answers[this.state.currentCategory.id] || "";
         word = word.trim().toLocaleLowerCase('tr-TR');
         
+        const foldedWord = this.foldCircumflexLower(word);
         const normWord = window.normalizeTurkishChars(word).trim();
-        const letterLower = this.state.letter.toLocaleLowerCase('tr-TR');
-        const normLetter = window.normalizeTurkishChars(this.state.letter).trim();
+        const letterLower = this.foldCircumflexLower(this.state.letter);
+        const cleanLen = word.replace(/\s+/g, '').length;
 
         let score = 0;
         let llmReason = "";
 
-        if (word.length > 0 && normWord.startsWith(normLetter)) {
+        if (cleanLen >= 2 && foldedWord.startsWith(letterLower)) {
             const isCustomCat = this.state.currentCategory.id.startsWith('custom_');
             let isValidInDict = false;
 
             if (isCustomCat) {
-                isValidInDict = word.startsWith(letterLower);
+                isValidInDict = foldedWord.startsWith(letterLower);
             } else {
                 const dictObj = await this.loadDictionary(this.state.currentCategory.id);
                 if (dictObj) {
-                    if (dictObj.dict.has(word) && word.startsWith(letterLower)) {
+                    if (dictObj.dict.has(word) && foldedWord.startsWith(letterLower)) {
                         isValidInDict = true;
                     } else if (dictObj.normDict.has(normWord)) {
                         const originals = dictObj.normDict.get(normWord);
                         for (const ow of originals) {
-                            if (ow.startsWith(letterLower)) {
+                            if (this.foldCircumflexLower(ow).startsWith(letterLower)) {
                                 isValidInDict = true;
                                 word = ow; // Update to original correct spelling
                                 break;
@@ -456,7 +505,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             }
 
             if (isValidInDict) {
-                score = word.length;
+                score = word.replace(/\s+/g, '').length;
             }
         }
 
@@ -494,20 +543,24 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             this.appealTimeout = null;
             this.state.status = 'VOTING';
             this.state.votes = { yes: 0, no: 0 };
+            this.state.appealingPlayerId = playerId;
             this.votedPlayers = new Set();
             this.setState(this.state);
-            if (this.onVoteStart) this.onVoteStart(this.state.pendingNextTurn.word, this.state.pendingNextTurn.category.name);
+            if (this.onVoteStart) this.onVoteStart(this.state.pendingNextTurn.word, this.state.pendingNextTurn.category.name, playerId);
         }
     }
 
     handleVote(playerId, voteStr) {
         if (!this.isHost || this.state.status !== 'VOTING') return;
+        const appealerId = this.state.pendingNextTurn ? this.state.pendingNextTurn.playerId : this.state.appealingPlayerId;
+        if (appealerId && playerId === appealerId) return; // Appealing player cannot vote on own appeal
         if (!this.votedPlayers.has(playerId)) {
             this.votedPlayers.add(playerId);
             if (voteStr === 'yes') this.state.votes.yes++;
             else this.state.votes.no++;
             
-            if (this.votedPlayers.size >= Object.keys(this.state.players).length) {
+            const eligibleVoters = Object.keys(this.state.players).filter(pid => pid !== appealerId);
+            if (eligibleVoters.length === 0 || this.votedPlayers.size >= eligibleVoters.length) {
                 this.endVote();
             }
         }
@@ -515,8 +568,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
 
     endVote() {
         if (!this.isHost || this.state.status !== 'VOTING') return;
-        this.state.status = 'PLAYING';
-        this.setState(this.state);
+        this.state.status = 'VOTE_RESULT';
         
         const { yes, no } = this.state.votes;
         const totalVotes = yes + no;
@@ -526,7 +578,7 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
         
         let score = 0;
         if (isAccepted) {
-            score = word.length;
+            score = word.replace(/\s+/g, '').length;
             if (this.state.players[playerId]) {
                 this.state.players[playerId].score += score;
                 this.state.players[playerId].roundScore = (this.state.players[playerId].roundScore || 0) + score;
@@ -537,6 +589,8 @@ Yanıtını şu JSON formatında ver: {"valid": boolean, "reason": "kısa açık
             // Log voted rejected word to Cloudflare Worker
             this.logWordToCloudflare(word, category.id, category.name, 'REJECTED', this.state.letter);
         }
+
+        this.setState(this.state);
         
         if (this.onVoteResult) this.onVoteResult({ isAccepted, word, score, playerId });
         
@@ -775,20 +829,7 @@ class HizliIsimSehirView {
         });
 
         document.getElementById('btn-finish-turn')?.addEventListener('click', () => {
-            const btn = document.getElementById('btn-finish-turn');
-            if (btn.disabled) return;
-            btn.disabled = true;
-            btn.classList.remove('pulse');
-            document.getElementById('finish-status-text').textContent = 'Cevap gönderildi...';
-            
-            const input = document.getElementById('compact-game-input');
-            if (input) input.disabled = true;
-            
-            const answers = {};
-            if (input && input.dataset.catId) {
-                answers[input.dataset.catId] = input.value.trim();
-            }
-            this.callbacks.onFinishTurn(answers);
+            this.submitCurrentTurn(false);
         });
 
         document.getElementById('compact-game-input')?.addEventListener('keypress', (e) => {
@@ -850,13 +891,45 @@ class HizliIsimSehirView {
             node.style.left = `calc(50% + ${Math.cos(rad) * rx}%)`;
             node.style.top = `calc(50% + ${Math.sin(rad) * ry}%)`;
             
+            const initial = (p.name || '?').trim().charAt(0).toLocaleUpperCase('tr-TR') || '?';
             node.innerHTML = `
-                <div class="node-avatar">👽</div>
+                <div class="node-avatar">${window.escapeHtml(initial)}</div>
                 <div class="node-name">${window.escapeHtml(p.name)}</div>
                 <div class="node-score">${p.score || 0}</div>
             `;
             circle.appendChild(node);
         });
+    }
+
+    submitCurrentTurn(isAutoTimeout = false) {
+        const btn = document.getElementById('btn-finish-turn');
+        const input = document.getElementById('compact-game-input');
+        const statusEl = document.getElementById('finish-status-text');
+        if (!btn || btn.disabled) return;
+
+        const rawVal = input ? input.value.trim() : '';
+        if (!isAutoTimeout && !rawVal) {
+            if (statusEl) {
+                statusEl.textContent = 'Lütfen bir kelime yazın!';
+                statusEl.style.color = 'var(--danger)';
+            }
+            if (input) input.focus();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.classList.remove('pulse');
+        if (statusEl) {
+            statusEl.textContent = 'Cevap gönderildi...';
+            statusEl.style.color = '';
+        }
+        if (input) input.disabled = true;
+
+        const answers = {};
+        if (input && input.dataset.catId) {
+            answers[input.dataset.catId] = rawVal;
+        }
+        this.callbacks.onFinishTurn(answers);
     }
 
     updateGameUI(state) {
@@ -888,35 +961,54 @@ class HizliIsimSehirView {
             }
         }
 
-        document.getElementById('finish-status-text').textContent = '';
-        document.getElementById('appeal-area').classList.add('hidden');
-
         const input = document.getElementById('compact-game-input');
-        if (input) {
-            input.value = '';
-            input.dataset.catId = state.currentCategory ? state.currentCategory.id : '';
-            input.disabled = !isMyTurn;
-            input.oninput = (e) => {
-                const val = e.target.value;
-                if (val.length > 0) {
-                    const firstChar = val.charAt(0);
-                    const upperFirst = firstChar.toLocaleUpperCase('tr-TR');
-                    if (firstChar !== upperFirst) {
-                        const start = e.target.selectionStart;
-                        const end = e.target.selectionEnd;
-                        e.target.value = upperFirst + val.slice(1);
-                        e.target.setSelectionRange(start, end);
-                    }
-                }
-            };
-            if (isMyTurn) setTimeout(() => input.focus(), 100);
-        }
-
         const btnFinish = document.getElementById('btn-finish-turn');
-        if (btnFinish) {
-            btnFinish.disabled = !isMyTurn;
-            if (isMyTurn) btnFinish.classList.add('pulse');
-            else btnFinish.classList.remove('pulse');
+        const statusEl = document.getElementById('finish-status-text');
+        const appealArea = document.getElementById('appeal-area');
+        const turnKey = `${state.turnId !== undefined ? state.turnId : `${state.round}_${state.currentPlayerIndex}_${state.letter}`}_${currentPlayer ? currentPlayer.id : ''}`;
+
+        if (state.status === 'PLAYING') {
+            document.getElementById('voting-overlay')?.classList.add('hidden');
+            if (turnKey !== this._lastTurnKey) {
+                this._lastTurnKey = turnKey;
+                if (statusEl) {
+                    statusEl.textContent = '';
+                    statusEl.style.color = '';
+                }
+                if (appealArea) appealArea.classList.add('hidden');
+
+                if (input) {
+                    input.value = '';
+                    input.dataset.catId = state.currentCategory ? state.currentCategory.id : '';
+                    input.disabled = !isMyTurn;
+                    input.oninput = (e) => {
+                        const val = e.target.value;
+                        if (val.length > 0) {
+                            const firstChar = val.charAt(0);
+                            const upperFirst = firstChar.toLocaleUpperCase('tr-TR');
+                            if (firstChar !== upperFirst) {
+                                const start = e.target.selectionStart;
+                                const end = e.target.selectionEnd;
+                                e.target.value = upperFirst + val.slice(1);
+                                e.target.setSelectionRange(start, end);
+                            }
+                        }
+                    };
+                    if (isMyTurn) setTimeout(() => input.focus(), 100);
+                }
+
+                if (btnFinish) {
+                    btnFinish.disabled = !isMyTurn;
+                    if (isMyTurn) btnFinish.classList.add('pulse');
+                    else btnFinish.classList.remove('pulse');
+                }
+            }
+        } else {
+            if (input) input.disabled = true;
+            if (btnFinish) {
+                btnFinish.disabled = true;
+                btnFinish.classList.remove('pulse');
+            }
         }
     }
 
@@ -985,20 +1077,26 @@ class HizliIsimSehirView {
         }
     }
 
-    showVotingUI(word, categoryName) {
+    showVotingUI(word, categoryName, appealingPlayerId) {
         if (this.appealInterval) {
             clearInterval(this.appealInterval);
             this.appealInterval = null;
         }
+        const isAppealer = Boolean(appealingPlayerId && appealingPlayerId === this.myId);
         document.getElementById('appeal-area')?.classList.add('hidden');
         document.getElementById('voting-overlay')?.classList.remove('hidden');
         document.getElementById('voting-text').innerHTML = `<strong>${window.escapeHtml(categoryName)}</strong> kategorisi için <strong>"${window.escapeHtml(word)}"</strong> kelimesi kabul edilsin mi?`;
         document.getElementById('vote-yes-count').textContent = '0';
         document.getElementById('vote-no-count').textContent = '0';
-        document.getElementById('voting-status-text').textContent = '';
+        const voteStatus = document.getElementById('voting-status-text');
+        if (voteStatus) {
+            voteStatus.textContent = isAppealer ? 'Kendi itirazınız için oy kullanamazsınız.' : '';
+        }
         
-        document.getElementById('btn-vote-yes').disabled = false;
-        document.getElementById('btn-vote-no').disabled = false;
+        const btnYes = document.getElementById('btn-vote-yes');
+        const btnNo = document.getElementById('btn-vote-no');
+        if (btnYes) btnYes.disabled = isAppealer;
+        if (btnNo) btnNo.disabled = isAppealer;
         
         let secs = 10;
         const tel = document.getElementById('voting-timer');

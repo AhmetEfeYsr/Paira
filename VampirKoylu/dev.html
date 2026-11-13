@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira Vampir Köylü | Geliştirici Notları</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../shared/shared.css">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
-    
+
     <style>
         .about-container {
             max-width: 900px;
@@ -41,32 +41,29 @@
             border-left: 3px solid var(--neon-purple);
             padding-left: 10px;
         }
+        .about-container h3 {
+            color: var(--text-main);
+            margin-top: 1.5rem;
+            margin-bottom: 0.6rem;
+            font-size: 1.05rem;
+        }
         .about-container p {
             color: var(--text-muted);
-            line-height: 1.8;
-            margin-bottom: 1.2rem;
-            font-size: 0.98rem;
-        }
-        .about-container blockquote {
-            background: var(--input-bg);
-            border-left: 4px solid var(--neon-purple);
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 4px 12px 12px 4px;
-            font-style: italic;
-            color: var(--lilac);
+            line-height: 1.75;
+            margin-bottom: 1.1rem;
+            font-size: 0.96rem;
         }
         .about-container strong {
             color: var(--text-main);
         }
         .about-container ul {
             list-style-type: disc;
-            padding-left: 2rem;
+            padding-left: 1.75rem;
             margin-bottom: 1.2rem;
             color: var(--text-muted);
         }
         .about-container ul li {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.45rem;
             line-height: 1.6;
         }
         .about-container code {
@@ -75,21 +72,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             color: var(--neon-purple);
-            font-size: 0.95rem;
-        }
-        .about-container pre {
-            background: var(--input-bg);
-            border: var(--glass-border);
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 1.2rem 0;
-        }
-        .about-container pre code {
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
         }
         .back-link {
             display: inline-flex;
@@ -105,6 +88,27 @@
             color: var(--lilac);
             transform: translateX(-4px);
         }
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin: 1rem 0 1.5rem 0;
+        }
+        .role-box {
+            background: var(--input-bg);
+            border: 1px solid var(--btn-secondary-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .role-box h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+        }
+        .role-box ul {
+            margin: 0;
+            padding-left: 1.2rem;
+            font-size: 0.88rem;
+        }
     </style>
 </head>
 <body>
@@ -112,51 +116,87 @@
         <div class="about-container">
             <a href="index.html" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Lobby
+                Lobiye Dön
             </a>
-            
+
             <h1>Geliştirici Notları: Vampir Köylü</h1>
-            
-            <h2>Giriş ve Mimari Yaklaşım</h2>
-            <p><strong>Paira Vampir Köylü</strong>, tarayıcı üzerinden sıfır kurulum ile çok oyunculu olarak oynanabilen, 3D görselleştirme katmanına sahip bir sosyal çıkarım (social deduction) oyunudur. Oyun, herhangi bir merkezi veritabanı (database) veya oyun durumunu yöneten kalıcı bir sunucu barındırmaz. Bunun yerine tamamen tarayıcı tabanlı <strong>WebRTC (Peer-to-Peer)</strong> teknolojisini kullanarak istemciler arası doğrudan veri transferi gerçekleştirir.</p>
-            <p>State (durum) yönetimi ve yetkilendirme, sunucusuz (serverless) mimarinin doğurduğu güvenlik ve senkronizasyon gereksinimlerini karşılamak amacıyla özel bir <strong>Host-Client</strong> koordinasyonu üzerinden yürütülür. Bu altyapı, arkadaş grupları ve Kick yayını izleyicileri için yüksek performanslı ve akıcı bir oyun deneyimi sunar.</p>
 
-            <h2>P2P Ağ Topolojisi (Host-Client Mimarisi)</h2>
-            <p>Oyun, katılımcılar arasında veri iletimini sağlamak üzere WebRTC protokolü üzerinde çalışan bir Host-Client ağ topolojisini benimser:</p>
+            <h2>1. Teknik Mimari (P2P Host-Client)</h2>
+            <p><strong>Vampir Köylü</strong>, merkezi bir oyun sunucusu olmadan tarayıcıda çalışan WebRTC tabanlı bir Host-Client mimarisine sahiptir. Ağ katmanı <code>network.js</code> içinde <code>BaseGameNetwork</code> sınıfından türetilen <code>NetworkManager</code> tarafından yönetilir; eşler arası bağlantı PeerJS (<code>vk-host-{CODE}</code> ve <code>vk-client-{ID}</code>) üzerinden kurulur.</p>
             <ul>
-                <li><strong>Host (Oyun Kurucusu):</strong> Odayı ilk oluşturan oyuncu, oyunun mantıksal motorunu (Game Engine) kendi yerel tarayıcısında barındıran merkezi otorite (Host) haline gelir. Rol dağıtımı, gece/gündüz evrelerinin sürelerinin takibi, oyların sayılması ve elenme senaryolarının karara bağlanması Host'un sorumluluğundadır.</li>
-                <li><strong>Clients (Katılımcı Oyuncular):</strong> Odaya bağlanan diğer tüm eşler (peers), doğrudan Host ile birer <code>RTCDataChannel</code> bağlantısı kurarlar. Katılımcıların kendi aralarında doğrudan veri kanalları açması gerekmez; tüm bilgi dağıtımı Host üzerinden "Star" (yıldız) topolojisine benzer şekilde gerçekleştirilir.</li>
-                <li><strong>Sinyalleşme (Signaling):</strong> Oyuncuların birbirlerini internet üzerinde bulup IP ve port bilgilerini (ICE Adayları) değiş tokuş edebilmesi için bir WebRTC aracı sinyalleşme sunucusu (PeerJS altyapısı) kullanılır. Bağlantı kurulduktan sonra bu aracı sunucu veri aktarımında rol oynamaz.</li>
+                <li><strong>Host Otoritesi (<code>app.js</code>):</strong> Kurucu tarayıcı tüm oyun durumunu (<code>gameState</code>), rol dağılımını, gece/gündüz zamanlayıcılarını, oylamaları ve kazanma koşullarını yönetir.</li>
+                <li><strong>Gizli Durum Filtreleme:</strong> <code>broadcastState()</code> her istemciye gönderilen <code>GAME_STATE</code> paketinden diğer oyuncuların <code>role</code> ve <code>team</code> alanlarını siler (<code>END</code> fazı hariç), ayrıca <code>nightActions</code> ve <code>dayActions</code> verilerini gizler.</li>
+                <li><strong>Paket Tipleri:</strong> <code>JOIN</code>, <code>LEAVE</code>, <code>SYNC_PLAYERS</code>, <code>GAME_STATE</code>, <code>ACTION</code>, <code>PRIVATE_LOG</code>, <code>PRIVATE_LOG_CLEAR</code>, <code>PLAY_ANIMATIONS</code>, <code>HANG_ANIMATION</code>, <code>CHAT_MESSAGE</code>, <code>UPDATE_WILL</code> ve <code>REQUEST_PENDING_ACTIONS</code>.</li>
+                <li><strong>Host Migration:</strong> Kurucu bağlantısı koparsa <code>attemptHostMigration()</code> sıradaki oyuncuyu yeni host olarak atar, odayı yeniden başlatır ve istemcilerin bekleyen aksiyonlarını tekrar toplar.</li>
             </ul>
 
-            <h2>Gerçek Zamanlı Veri Senkronizasyonu (Real-Time Data Sync)</h2>
-            <p>Oyun içindeki rol dağıtımı, evre geçişleri, chat mesajları ve gizli oylamalar gibi tüm dinamik aksiyonlar, <code>RTCDataChannel</code> aracılığıyla gönderilen yapılandırılmış JSON paketleri ile senkronize edilir. Başlıca paket türleri şunlardır:</p>
+            <h2>2. Three.js 3D Sahne ve Kamp Ateşi (<code>scene.js</code>)</h2>
+            <p>Oyun ekranının arka planında Three.js (<code>0.162.0</code>) ile oluşturulmuş 3 boyutlu bir köy meydanı çalışır. Oyuncuların karakter modelleri ve evleri meydandaki kamp ateşinin etrafına yerleşir.</p>
             <ul>
-                <li><code>GAME_STATE</code>: Host, oyun durumunu (hayatta olan oyuncular, aktif evre, oylama durumları) güncellediğinde bu paketi tüm istemcilere broadcast (yayın) eder.</li>
-                <li><code>ACTION</code>: Oyuncuların yaptığı eylemlerdir. Gündüz yapılan oylama seçimi ya da gece Doktor'un iyileştirme hedefi, Vampir'in saldırı seçimi veya Gözcü'nün rol bakma isteği bu paketle doğrudan Host'a gönderilir.</li>
-                <li><code>PRIVATE_LOG</code>: Sadece belirli bir oyuncuya gösterilmesi gereken özel bilgileri (örneğin Gözcü'nün sorguladığı kişinin rol sonucu veya Doktor'un kurtarma başarısı) iletmek için Host tarafından ilgili client'a özel olarak gönderilir.</li>
-                <li><code>PLAY_ANIMATIONS</code> &amp; <code>HANG_ANIMATION</code>: Üç boyutlu sahnede (Three.js/Scene) karakterlerin hareketlerini, saldırılarını ve infaz sahnelerini (yürüme, öldürme vb.) senkronize şekilde oynatmak amacıyla tetikleyici animasyon dizilerini iletir.</li>
-                <li><code>CHAT_MESSAGE</code> &amp; <code>UPDATE_WILL</code>: Sohbet mesajlarını ve elenen oyuncuların arkalarında bırakacakları son vasiyetnameleri (will) senkronize eder. Vampirler gece evresinde kendi aralarında özel chat paketleri ile iletişim kurarlar.</li>
+                <li><strong>Gece/Gündüz ve Seçim:</strong> Gece evresinde ışıklar kararır ve karakterler kendi evlerinin önüne geçer; gündüz meydanda ateşin çevresinde toplanır. Oyuncu ve ev seçimleri raycasting ile algılanır; <code>#action-panel</code> 3D ekran koordinatlarını viewport sınırları içinde tutacak şekilde konumlandırılır.</li>
+                <li><strong>Animasyonlar:</strong> Gece sonuçları hesaplanırken <code>NIGHT_ANIMATION</code> fazında yalnızca ilgili oyuncuya (örneğin Gözcü veya aksiyon sahibi) <code>WALK</code>, <code>KILL</code>, <code>POLICE_BLOCK</code> ve <code>TRAPPED</code> animasyonları gönderilir. Yargılama sonucu idamda <code>HANG_ANIMATION</code> tetiklenir.</li>
+                <li><strong>Oduncu ve Kamp Ateşi Mekaniği:</strong> Oyun başında köylülerden birine gizli <code>isOduncu</code> özelliği atanır. Oduncu hayattayken kamp ateşi yanar; Oduncu öldüğünde <code>campfireActive</code> değeri <code>false</code> olur ve Vampir takımı dışındaki tüm oyuncularda sahnedeki alev grubu söner.</li>
             </ul>
 
-            <h2>Oda Mantığı ve Oturum Yönetimi</h2>
-            <p>Her oyun lobisi, PeerJS ağı üzerinden üretilen 6 karakterli benzersiz bir <strong>Oda Kodu</strong> ile temsil edilir. Oturum süreçleri şu adımları içerir:</p>
+            <h2>3. Roller (20 Rol + 4 Rastgele Slot)</h2>
+            <p>Tüm rol tanımları <code>roles.js</code> dosyasında tutulur. Lobide kurucu rol sayılarını belirleyebilir ve kalan oyuncular otomatik olarak <strong>Köylü</strong> atanır. Ayrıca 4 adet rastgele rol slotu (<code>RASTGELE_HERHANGI</code>, <code>RASTGELE_IYI</code>, <code>RASTGELE_KOTU</code>, <code>RASTGELE_NOTR</code>) bulunur; kurucu İyi/Kötü/Nötr havuzlarından hangi rollerin çıkabileceğini özelleştirebilir.</p>
+
+            <div class="role-grid">
+                <div class="role-box">
+                    <h4 style="color: var(--success);">Köy Takımı (11 Rol)</h4>
+                    <ul>
+                        <li><strong>Köylü:</strong> Pasif rol; tartışma ve oylama ile vampirleri arar.</li>
+                        <li><strong>Doktor:</strong> Gece birini korur; aynı kişiyi üst üste koruyamaz, kendini en fazla 1 kez korur.</li>
+                        <li><strong>İntikamcı:</strong> İlk gün (veya Hırsız ile devraldığında) hedef seçer; asılırsa hedefini de öldürür.</li>
+                        <li><strong>Uyurgezer:</strong> Gece bir eve gider; vampir evine veya saldırı altındaki eve giderse ölür, dışarıdayken Seri Katil saldırısından kaçar.</li>
+                        <li><strong>Gözcü:</strong> İzlediği eve gece giren tüm ziyaretçileri görür.</li>
+                        <li><strong>Dedektif:</strong> Gece 2 hedef seçer, aynı takımda olup olmadıklarını öğrenir.</li>
+                        <li><strong>Şerif:</strong> Gündüz 1 kez birini vurabilir; masum köylüyü vurursa intihar eder.</li>
+                        <li><strong>Tuzakçı:</strong> Bir eve tuzak kurar; o eve gelen aksiyonlar iptal olur.</li>
+                        <li><strong>Polis:</strong> Hedefi takip edip bloklar (Seri Katil ve Vampir İzcisi etkilenmez).</li>
+                        <li><strong>İzci:</strong> Hedefin rolünü öğrenir (Dracula köylü görünür).</li>
+                        <li><strong>Deli:</strong> Başlangıçta rastgele <code>GOZCU</code>, <code>IZCI</code> veya <code>DEDEKTIF</code> arayüzü alır; aldığı bilgiler rastgele bozulur.</li>
+                    </ul>
+                </div>
+
+                <div class="role-box">
+                    <h4 style="color: var(--danger);">Vampir Takımı (5 Rol)</h4>
+                    <ul>
+                        <li><strong>Sıradan Vampir:</strong> Gece ortak vampir oylamasına katılır.</li>
+                        <li><strong>Dracula:</strong> İzci ve Dedektif sorgularında Köy takımından görünür.</li>
+                        <li><strong>Vampir İzcisi:</strong> Gece hedef rolünü öğrenir; tuzaklara ve polis bloğuna bağışıktır. Tek yaşayan vampir kalmadıkça öldürme oylamasına katılmaz.</li>
+                        <li><strong>Profesyonel:</strong> 1. gecede normal vampir oyu kullanır; 2. geceden itibaren 1 kez Doktor korumasını ve Seri Katil bağışıklığını delen saldırı yapar.</li>
+                        <li><strong>Zehirli:</strong> 1. gecede normal vampir oyu kullanır; 2. geceden itibaren 1 kez hedefi zehirler (aynı gece veya sonraki gece Doktor tarafından iyileştirilmezse sonraki gece ölür).</li>
+                    </ul>
+                </div>
+
+                <div class="role-box">
+                    <h4 style="color: #3b82f6;">Tarafsızlar (4 Rol)</h4>
+                    <ul>
+                        <li><strong>Soytarı:</strong> Oylama ve yargılama sonucu asılırsa oyunu tek başına kazanır.</li>
+                        <li><strong>Hırsız:</strong> İlk gece bir hedef seçer; o hedef öldüğünde rolünü, takımını ve ilgili rol durumlarını (<code>Deli</code> sahte rolü, <code>İntikamcı</code> seçim hakkı dahil) devralır.</li>
+                        <li><strong>Kundakçı:</strong> Gece birini benzinle ıslatır; kendini seçtiğinde ıslattığı tüm oyuncuları yakar.</li>
+                        <li><strong>Seri Katil:</strong> Gece birini öldürür; polis bloğuna ve sıradan vampir saldırısına bağışıktır.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>4. Oyun Fazları, Savunma ve Yargılama</h2>
             <ul>
-                <li><strong>Oda Keşfi ve El Sıkışma:</strong> İstemciler oda kodunu girerek PeerJS üzerinden Host'a bağlantı teklifi (SDP Offer) gönderirler. ICE Candidate alışverişi tamamlandıktan sonra veri kanalı üzerinden veri transferi başlar.</li>
-                <li><strong>Güvenli Rol Dağıtımı (Roles Management):</strong> Oyun başladığında roller (Vampir, Köylü, Doktor, Gözcü, Zehirci, vb.) Host üzerinde karıştırılır ve her oyuncuya sadece kendi rolünü içeren hedeflenmiş veri paketi gönderilir. Böylece hiçbir oyuncu tarayıcısının hafızasını (memory) inceleyerek diğer oyuncuların rollerini önceden göremez.</li>
-                <li><strong>Bağlantı Kayıplarının Yönetimi:</strong> Bir oyuncu oyundan düştüğünde, <code>handlePlayerLeave</code> tetiklenir. Host, oyun akışının tıkanmasını önlemek amacıyla ilgili oyuncuyu pasif/ölü durumuna çekebilir veya aktif bir eylem yapması bekleniyorsa tur süresini otomatik olarak sonlandırarak oyunu bir sonraki aşamaya taşır.</li>
+                <li><strong>NIGHT (40 sn):</strong> Polis blokları, Tuzakçı tuzakları, Doktor korumaları, Seri Katil / Vampir / Zehir / Uyurgezer / Kundakçı / Hırsız / İzci / Dedektif / Gözcü çözümlemeleri sırayla işlenir.</li>
+                <li><strong>NIGHT_ANIMATION (9 sn):</strong> Kişisel 3D animasyonlar oynatılır, gece ölümleri ve vasiyetler günlüğe yazılır.</li>
+                <li><strong>DAY_DISCUSSION:</strong> Sohbet, <code>/w isim mesaj</code> fısıltıları ve Şerif/İntikamcı gündüz aksiyonları bu fazda gerçekleşir.</li>
+                <li><strong>VOTING (30 sn) &rarr; DEFENSE (20 sn) &rarr; JUDGEMENT (20 sn):</strong> Oylamada tek başına en yüksek oyu alan sanık 20 saniye boyunca savunma yapar (yalnızca sanık konuşabilir). Ardından diğer canlı oyuncular <code>Suçlu</code> / <code>Masum</code> oyu kullanır; Suçlu oyu fazla çıkarsa <code>DAY_ANIMATION</code> ile idam uygulanır ve vasiyet açıklanır.</li>
             </ul>
 
-            <h2>E-E-A-T ve Güvenlik Standartları</h2>
-            <p>Paira Vampir Köylü, kullanıcı gizliliği ve veri güvenliğini ön planda tutan bir tasarım felsefesine sahiptir:</p>
+            <h2>5. Değişiklik Günlüğü (Changelog)</h2>
             <ul>
-                <li><strong>Uçtan Uca Şifreleme (E2EE):</strong> WebRTC veri kanalları, endüstri standardı olan DTLS (Datagram Transport Layer Security) ile şifrelenir. Oyun içi yazışmalar ve ham oyun verileri aracı hiçbir sunucu tarafından okunamaz veya kaydedilemez.</li>
-                <li><strong>Host Yetki Kontrolü (Serverless Authority):</strong> İstemcilerin hile yapmasını veya geçersiz eylemler göndermesini engellemek için tüm aksiyon paketleri Host tarafında doğrulama süzgecinden geçirilir. Örneğin, bir köylü vampir eylemi gönderirse veya ölü bir oyuncu oy vermeye çalışırsa Host bu eylemi geçersiz sayarak reddeder.</li>
+                <li><strong>Yetki ve Faz Doğrulaması:</strong> <code>handlePlayerAction()</code> fonksiyonuna canlılık, rol bazlı faz izni ve hedef geçerlilik kontrolleri eklendi.</li>
+                <li><strong>Vampir Rol Düzeltmeleri:</strong> <code>VAMPIR_IZCISI</code> tek yaşayan vampir olmadığı sürece öldürme oylamasından ayrıldı. <code>ZEHIRLI</code> ve <code>PROFESYONEL</code> 1. gecede normal vampir saldırısına yönlendirildi, 2. geceden itibaren özel yetenek HUD etiketleri netleştirildi ve blok/tuzak durumunda hak yanması engellendi.</li>
+                <li><strong>Doktor, Uyurgezer ve Kundakçı:</strong> Doktor bloklandığında/tuzağa düştüğünde <code>lastHealed</code> sıfırlanması ve aynı gece zehir tedavisi eklendi. Uyurgezer'in dışarıdayken Seri Katil'den kaçması ve bloklu/tuzaklı vampir saldırısında yan hasar almaması sağlandı. Kundakçı'nın kendini yakma hamlesine tuzak kontrolü eklendi.</li>
+                <li><strong>Deli, Hırsız, Şerif ve Kazanma Koşulları:</strong> 2 hedefli Dedektif/Deli ziyaretlerinde çift animasyon ve yarım tuzak sorunu giderildi. Hırsız'ın <code>DELI</code> ve <code>INTIKAMCI</code> devralma akışı düzeltildi. Şerif gündüz öldürmelerinde vasiyetlerin açıklanması eklendi. <code>checkWin()</code> içinde <code>totalAlive === 0</code> ve köylüsüz tarafsız bitişleri berabere olarak düzenlendi.</li>
+                <li><strong>Arayüz İyileştirmeleri:</strong> Özel günlüklerdeki ham <code>!</code> öneki temizlendi, 3D <code>#action-panel</code> koordinatları ekran sınırlarına sabitlendi ve lobi kural metinleri gerçek rollerle uyumlu hale getirildi.</li>
             </ul>
-
-            <blockquote>
-                Bu teknik dokümantasyon, P2P tabanlı web oyunu mimarileri ile ilgilenen geliştiriciler ve Paira topluluğu üyeleri için Ahmet Efe Yaşar tarafından hazırlanmıştır.
-            </blockquote>
         </div>
     </main>
 </body>

@@ -37,11 +37,11 @@
                         <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                     </button>
-                    <button id="btn-copy-room" class="btn btn-secondary" style="display: flex; gap: 8px; align-items: center;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        Kopyala
-                    </button>
                 </div>
+                <button id="btn-copy-room" class="btn btn-secondary" style="display: flex; gap: 8px; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopyala
+                </button>
             </header>
 
             <div class="lobby-grid">
@@ -80,7 +80,7 @@
                             <input type="number" id="turn-duration" value="90" min="30" max="300" class="game-input">
                         </div>
                     </div>
-                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto disabled" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; letter-spacing: 1px; display: flex; gap: 10px; align-items: center; justify-content: center;">
+                    <button id="btn-start-game" class="btn btn-primary btn-block mt-auto" style="padding: 16px; font-size: 1.15rem; margin-top: 20px; letter-spacing: 1px; display: flex; gap: 10px; align-items: center; justify-content: center;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 3l14 9-14 9V3z"></path></svg>
                         Oyunu Başlat
                     </button>
@@ -126,7 +126,7 @@
                     <!-- CLUE AREA -->
                     <div class="clue-area" id="clue-area">
                         <div id="clue-input-section" class="hidden" style="width: 100%; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                            <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="20" style="margin: 0; min-width: 200px; flex: 1; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
+                            <input type="text" id="clue-word" class="game-input" placeholder="İpucu kelimesi" maxlength="25" style="margin: 0; min-width: 200px; flex: 1; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
                             <input type="number" id="clue-count" class="game-input" placeholder="Sayı" min="1" max="9" style="width: 80px; margin: 0; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--lilac-muted); color: var(--text-main);">
                             <button id="btn-submit-clue" class="btn btn-primary" style="margin: 0; white-space: nowrap; padding: 12px 24px; border-radius: 8px;">Gönder</button>
                         </div>
@@ -169,11 +169,6 @@
             </div>
         </section>
     </main>
-
-    <div class="game-seo-info">
-        <h2>Paira Gizli Kelimeler Hakkında</h2>
-        <p>Gizli Kelimeler, arkadaşlarınızla veya ailenizle oynayabileceğiniz, strateji ve kelime bilgisini bir araya getiren heyecan verici bir çevrimiçi masa oyunudur. Popüler Codenames oyunundan esinlenen bu yapım, oyuncuları iki ana takıma ayırarak zeka dolu bir rekabete davet eder. Oyunda temel amaç, kendi takımınıza ait gizli kelimeleri, rakip takımdan önce bulmaktır. Oyunun başında her takımdan bir kişi 'Ajan' (Spymaster) olarak seçilir, diğer oyuncular ise 'Tahminci' rolünü üstlenir. Oyun tahtası üzerinde rastgele dizilmiş kelimeler bulunur ve her kelimenin kime ait olduğu sadece Ajanlar tarafından bilinir. Ajanlar, takımlarına kendi renklerindeki kelimeleri buldurmak için tek kelimelik bir ipucu ve bu ipucunun kaç kelimeyle bağlantılı olduğunu belirten bir sayı verirler. Örneğin, 'Meyve' ve '2' diyerek tahtadaki 'Elma' ve 'Armut' kelimelerini işaret edebilirler. Tahminciler, aldıkları bu kısıtlı bilgiyle tahtadaki doğru kelimeleri seçmeye çalışırlar. Ancak çok dikkatli olmaları gerekir; çünkü tahtada rakip takımın kelimeleri, tarafsız kelimeler ve seçildiği an oyunu anında kaybettiren bir 'Suikastçı' kelimesi bulunur. Yanlış seçimler sıranın rakibe geçmesine veya oyunun aniden sonlanmasına neden olabilir. Gizli Kelimeler, sadece bir kelime bulma oyunu değil, aynı zamanda derin bir psikolojik ve stratejik mücadeledir. Takım arkadaşlarınızın nasıl düşündüğünü anlamak ve Ajanın verdiği ipuçlarını doğru analiz etmek başarının anahtarıdır. Farklı zorluk seviyeleri, geniş kelime havuzu ve hızlı oynanış yapısıyla Gizli Kelimeler, her yaştan oyuncu için eğlenceli ve öğretici bir deneyim sunar. Şimdi stratejinizi belirleyin, ipuçlarını takip edin ve takımınızı zafere taşıyın!</p>
-    </div>
 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="../shared/peer_manager.js?v=2.0.0"></script>

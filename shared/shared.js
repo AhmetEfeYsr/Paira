@@ -35,53 +35,35 @@ class PairaSharedUI {
     }
 
     initTheme() {
-        const savedTheme = localStorage.getItem('paira_theme') || 'paira';
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.documentElement.setAttribute('data-theme', 'paira');
+        localStorage.setItem('paira_theme', 'paira');
     }
 
-    switchTheme(themeName) {
-        document.documentElement.setAttribute('data-theme', themeName);
-        localStorage.setItem('paira_theme', themeName);
-        this.updateLogos(themeName);
+    switchTheme() {
+        document.documentElement.setAttribute('data-theme', 'paira');
+        localStorage.setItem('paira_theme', 'paira');
+        this.updateLogos('paira');
     }
 
-    updateLogos(themeName) {
+    updateLogos() {
         const basePath = this.getBasePath();
         const logos = document.querySelectorAll('.game-icon img, .game-logo-container img');
         logos.forEach(img => {
-            const src = img.getAttribute('src');
-            if (!img.dataset.logoBase && src && src.includes('logolar/')) {
-                const parts = src.split('/');
-                const filename = parts[parts.length - 1];
-                img.dataset.logoBase = filename.split('_')[0].split('.')[0];
-                img.dataset.logoDir = src.includes('../logolar') ? '../logolar' : 'logolar';
-            }
+            const src = img.getAttribute('src') || '';
+            const isBagnam = src.toLowerCase().includes('bagnam');
+            const targetSrc = isBagnam ? `${basePath}logolar/bagnam.avif` : `${basePath}main_logo.avif`;
 
-            const base = img.dataset.logoBase;
-            const replaceStr = img.dataset.logoDir;
-            if (base && replaceStr) {
-                const newSrc = `${replaceStr}/generated_logos/${base}_${themeName}.avif`;
-
-                img.onerror = () => {
-                    const themedSuffix = `${base}_${themeName}.avif`;
-                    const baseSuffix = `${base}.avif`;
-                    if (img.src.endsWith(themedSuffix)) {
-                        img.src = `${replaceStr}/${baseSuffix}`;
-                    } else if (img.src.endsWith(baseSuffix) && !img.src.endsWith('main_logo.avif')) {
-                        img.onerror = null;
-                        img.src = `${basePath}main_logo.avif`;
-                    } else {
-                        img.onerror = null;
-                    }
-                };
-
-                if (img.getAttribute('src') === newSrc) {
-                    if (img.complete && img.naturalWidth === 0) {
-                        img.onerror();
-                    }
-                } else {
-                    img.setAttribute('src', newSrc);
+            img.onerror = () => {
+                img.onerror = null;
+                if (!img.src.endsWith('main_logo.avif')) {
+                    img.src = `${basePath}main_logo.avif`;
                 }
+            };
+
+            if (src !== targetSrc) {
+                img.setAttribute('src', targetSrc);
+            } else if (img.complete && img.naturalWidth === 0) {
+                img.onerror();
             }
         });
     }
@@ -107,16 +89,6 @@ class PairaSharedUI {
             }
         }
 
-        // Top Navigation (Theme Switcher only, on the right)
-        const savedTheme = localStorage.getItem('paira_theme') || 'paira';
-        let topNavHTML = `
-            <div class="floating-top-nav">
-                <select class="theme-select-btn" onchange="window.pairaUI.switchTheme(this.value)">
-                    <option value="paira" ${savedTheme === 'paira' ? 'selected' : ''}>Paira</option>
-                    <option value="space" ${savedTheme === 'space' ? 'selected' : ''}>Space</option>
-                </select>
-            </div>`;
-
         // Left Navigation (Back Home, on the left)
         const isLegalPage = window.location.href.includes('iletisim.html') || 
                             window.location.href.includes('gizlilik-politikasi.html') || 
@@ -134,14 +106,13 @@ class PairaSharedUI {
             </div>`;
         }
 
-        const navWrapperHTML = `
-            <div class="paira-global-nav">
-                ${leftNavHTML}
-                <div style="flex-grow: 1;"></div>
-                ${topNavHTML}
-            </div>
-        `;
-        if (!document.querySelector('.paira-global-nav')) {
+        if (leftNavHTML && !document.querySelector('.paira-global-nav')) {
+            const navWrapperHTML = `
+                <div class="paira-global-nav">
+                    ${leftNavHTML}
+                    <div style="flex-grow: 1;"></div>
+                </div>
+            `;
             document.body.insertAdjacentHTML('afterbegin', navWrapperHTML);
         }
 

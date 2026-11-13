@@ -17,8 +17,8 @@ const ROLES = {
     VAMPIR: { icon: '🧛‍♂️', name: 'Sıradan Vampir', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Her gece diğer vampirlerle birlikte bir kurban seçersin.' },
     DRACULA: { icon: '🦇', name: 'Dracula', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin ama İzci ve Dedektif seni köylü olarak görür.' },
     VAMPIR_IZCISI: { icon: '🐺', name: 'Vampir İzcisi', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, desc: 'Vampirsin. Her gece seçtiğin kişinin rolünü öğrenirsin. Tuzaklara ve polis bloğuna bağışıksın.' },
-    PROFESYONEL: { icon: '🎯', name: 'Profesyonel', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, maxUses: 1, desc: 'Vampirsin. Hedefin doktor korumasını bile deler (1 kullanım).' },
-    ZEHIRLI: { icon: '🧪', name: 'Zehirli', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, maxUses: 1, desc: 'Vampirsin. Bir kişiyi zehirlersin; ertesi gece tedavi edilmezse ölür (1 kullanım).' },
+    PROFESYONEL: { icon: '🎯', name: 'Profesyonel', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, maxUses: 1, desc: 'Vampirsin. İlk gece normal saldırı yaparsın; 2. geceden itibaren hedefinin doktor korumasını ve seri katil bağışıklığını delen bir saldırı kullanabilirsin (1 kullanım).' },
+    ZEHIRLI: { icon: '🧪', name: 'Zehirli', team: 'VAMPIR', hasNightAction: true, hasDayAction: false, maxUses: 1, desc: 'Vampirsin. İlk gece normal saldırı yaparsın; 2. geceden itibaren bir kişiyi zehirlersin; tedavi edilmezse sonraki gece ölür (1 kullanım).' },
     
     SOYTARI: { icon: '🤡', name: 'Soytarı', team: 'TARAFSIZ', hasNightAction: false, hasDayAction: false, desc: 'Tek amacın oylamada asılmak. Asılırsan kazanırsın!' },
     HIRSIZ: { icon: '🦹', name: 'Hırsız', team: 'TARAFSIZ', hasNightAction: true, hasDayAction: false, desc: 'İlk gece birini seçersin. Hedefin ölürse, onun rolünü ve takımını devralırsın.' },

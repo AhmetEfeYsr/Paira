@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira ÇizimZinciri | Geliştirici Notları</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../shared/shared.css">
     <link rel="stylesheet" href="style.css">
@@ -13,7 +13,7 @@
     <!-- Favicons -->
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
-    
+
     <style>
         .about-container {
             max-width: 900px;
@@ -49,15 +49,6 @@
             margin-bottom: 1.2rem;
             font-size: 0.98rem;
         }
-        .about-container blockquote {
-            background: var(--input-bg);
-            border-left: 4px solid var(--neon-purple);
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 4px 12px 12px 4px;
-            font-style: italic;
-            color: var(--lilac);
-        }
         .about-container strong {
             color: var(--text-main);
         }
@@ -78,20 +69,6 @@
             border-radius: 4px;
             color: var(--neon-purple);
             font-size: 0.95rem;
-        }
-        .about-container pre {
-            background: var(--input-bg);
-            border: var(--glass-border);
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 1.2rem 0;
-        }
-        .about-container pre code {
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
-            font-size: 0.9rem;
         }
         .back-link {
             display: inline-flex;
@@ -114,45 +91,34 @@
         <div class="about-container">
             <a href="index.html" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Lobby
+                Lobiye Dön
             </a>
-            
+
             <h1>Geliştirici Notları: Çizim Zinciri</h1>
-            
-            <h2>Giriş ve Mimari Yaklaşım</h2>
-            <p><strong>Paira Çizim Zinciri</strong>, popüler "kulaktan kulağa çizim" (Gartic Phone benzeri) konseptini tamamen web tarayıcısı üzerine taşıyan, verileri depolamak için herhangi bir uzak veritabanı (Database) veya merkezi sunucu barındırmayan, <strong>P2P (Peer-to-Peer)</strong> bağlantı mimarisine dayalı çok oyunculu bir parti oyunudur. Platformun diğer oyunlarında olduğu gibi, bu oyun da öğrenci geliştirici Ahmet tarafından, topluluğun hızlı, kurulumsuz ve güvenli bir şekilde eğlenebilmesi amacıyla geliştirilmiştir.</p>
-            <p>Oyunda tüm durum (state) yönetimi ve senkronizasyon, sunucusuz mimarinin getirdiği sınırlamaları aşmak adına gelişmiş bir Host-Client yapısıyla tarayıcı düzeyinde koordine edilmektedir.</p>
 
-            <h2>P2P Ağ Topolojisi (Host-Client Modeli)</h2>
-            <p>Çizim Zinciri, sunucu yükünü ve gecikmesini ortadan kaldırmak için <strong>WebRTC (Web Real-Time Communication)</strong> protokolünü temel alan bir ağ mimarisi kullanır:</p>
+            <h2>Teknik Mimari ve PeerJS Parçalama</h2>
+            <p><strong>Paira ÇizimZinciri</strong>, ES modülleri (<code>network.js</code> ve <code>game.js</code>) ile ayrılmış, <strong>Host-Client P2P</strong> mimarisinde çalışan çok oyunculu bir zincirleme çizim ve tahmin oyunudur. İletişim <code>BaseGameNetwork</code> ve <code>PeerNetworkManager</code> üzerinden WebRTC <code>RTCDataChannel</code> bağlantılarıyla sağlanır.</p>
             <ul>
-                <li><strong>Host (Kurucu Node):</strong> Odayı ilk oluşturan oyuncudur. Sunucu rolünü üstlenerek tüm oyun mantığını (Game Loop), turları, süreleri ve "defter atamalarını" kendi yerel tarayıcı hafızasında çalıştırır. Her aşama sonunda oyuncu kitaplarını (stories) kaydırarak yeni eşleşmeleri yönetir ve oyun bittiğinde albümü derleyip tüm istemcilere sunar.</li>
-                <li><strong>Clients (Katılımcı Peer'lar):</strong> Oda kodunu girerek bağlanan diğer oyuncular, doğrudan Host ile peer-to-peer <code>RTCDataChannel</code> bağlantısı kurarlar. Katılımcılar doğrudan Host'a veri aktarır ve Host'tan gelen güncel oyun durumunu (SYNC) alırlar.</li>
-                <li><strong>Sinyalleşme (Signaling):</strong> Oyuncuların birbirlerini internet üzerinde bulup IP ve port bilgilerini (ICE Adayları) değiş tokuş edebilmesi için bir WebRTC aracı sinyalleşme sunucusu (PeerJS altyapısı) kullanılır. Bağlantı kurulduktan sonra bu aracı sunucu tamamen devre dışı kalır.</li>
+                <li><strong>48KB Veri Parçalama (Chunking):</strong> Çizimler Base64 WebP veri URL'si olarak gönderildiğinden büyük yükler WebRTC tamponunu zorlayabilir. <code>PeerNetworkManager.sendToPeer</code>, <code>48 * 1024</code> bayt (48KB) üzerindeki tüm paketleri otomatik olarak <code>__PAIR_CHUNK__</code> parçalarına böler ve alıcı tarafta <code>_handleInboundChunk</code> ile birleştirir.</li>
+                <li><strong>WebP 0.5 Kalite Dışa Aktarma:</strong> <code>AdvancedDrawingBoard.getDataURL()</code> tuvali <code>canvas.toDataURL('image/webp', 0.5)</code> formatında sıkıştırarak PNG'ye kıyasla çok daha küçük veri paketleri üretir.</li>
+                <li><strong>İstemci Bazlı State Filtreleme:</strong> Host, <code>broadcastState</code> sırasında her oyuncuya yalnızca kendi atandığı defterin (<code>assignments[peerId]</code>) son adımını gönderir; diğer defterler ağ üzerinden paylaşılmaz.</li>
             </ul>
 
-            <h2>Gerçek Zamanlı Veri Senkronizasyonu ve Oyun Evreleri</h2>
-            <p>Oyun, birbirini takip eden <strong>Yazı Evreleri (WRITE)</strong> ve <strong>Çizim Evreleri (DRAW)</strong> üzerinden ilerler. Tüm bu süreçler <code>RTCDataChannel</code> paketleriyle anlık olarak yönetilir:</p>
+            <h2>Oyun Mekaniği ve Defter Kaydırma</h2>
             <ul>
-                <li><code>WRITE</code>: Oyuncular oyuna bir başlangıç cümlesi yazarak başlar ya da kendilerine gelen çizimi tahmin etmeye çalışırlar. Yazılan cümleler <code>SUBMIT_TASK</code> paketiyle Host'a gönderilir.</li>
-                <li><code>DRAW</code>: Oyuncular kendilerine atanan cümleyi ekranlarındaki çizim tuvali (<code>AdvancedDrawingBoard</code>) üzerinde çizerler. Çizim tamamlandığında tuval, Base64 formatında PNG veri URL'si (<code>data:image/png;base64,...</code>) olarak dışa aktarılır ve <code>SUBMIT_TASK</code> paketiyle Host'a iletilir.</li>
-                <li><code>ALBUM</code> (Hikaye Zincirinin Sunumu): Tüm turlar tamamlandığında Host, her oyuncunun başlattığı hikaye zincirini (Yazı -> Çizim -> Tahmin -> Çizim...) birleştirir ve <code>ALBUM</code> durumuna geçerek tüm katılımcılara <code>ALBUM_INDEX_UPDATE</code> paketi eşliğinde senkronize bir slayt gösterisi olarak sunar.</li>
+                <li><strong>3+ Oyuncu Gereksinimi ve Tur Sınırı:</strong> Zincirleme eşleşmenin anlamlı ilerlemesi için oyun başlangıcında en az 3 oyuncu gerekir (<code>pCount &lt; 3</code> kontrolü). Seçilen tur sayısı (<code>round-count</code>) aktif oyuncu sayısını aşarsa <code>maxRounds</code> otomatik olarak oyuncu sayısına eşitlenir ve tüm oyunculara bildirim gösterilir.</li>
+                <li><strong>Yazı ve Çizim Evreleri (<code>WRITE</code> / <code>DRAW</code>):</strong> İlk tur <code>WRITE</code> ile başlar, ardından her turda defterler <code>playerOrder</code> sırasına göre kaydırılarak <code>DRAW</code> ve <code>WRITE</code> evreleri dönüşümlü ilerler.</li>
+                <li><strong>Süre Aşımı ve 16:9 WebP Yedeği:</strong> Oyuncu manuel gönderim yaptığında <code>completedTasks[myId]</code> anında <code>true</code> işaretlenir. İstemci tarafında süre dolarsa <code>submitPromptFallback</code> (<code>window.cizbilWords</code> havuzundan rastgele kelimeyle) veya <code>submitDrawingFallback</code> (tuval verisi ya da 16:9 800x450 beyaz WebP yedeğiyle) çalışır ve ekran bekleme görünümüne geçer. Host tarafında ek +6 saniye tolerans sonrası eksik görevler <code>forceSubmitTasks</code> ile tamamlanır.</li>
+                <li><strong>Ayrılma ve Hata Toleransı:</strong> Oyun ortasında bir oyuncu ayrılırsa kalan aktif oyuncular <code>playerOrder</code> üzerinden deterministik biçimde defter kaydırmaya devam eder; aktif oyuncu sayısı 2'nin altına düşerse oyun temiz şekilde sonlandırılır (kayıtlı adım varsa albüme, yoksa lobiye dönülür).</li>
+                <li><strong>Albüm Sunumu:</strong> <code>playerNames</code> haritası ve her adımdaki <code>authorName</code> bilgisi oyuncu ayrılsa bile korunur. Host <code>ALBUM_NEXT</code> komutuyla tüm katılımcıların ekranındaki albümü senkronize ilerletir.</li>
             </ul>
 
-            <h2>Oda Mantığı ve Defter Kaydırma (Book Shifting)</h2>
-            <p>Her oyun odası, tarayıcının WebRTC soket adresi üzerinden aldığı 6 karakterli benzersiz bir <strong>Oda Kodu</strong> (Peer ID) ile temsil edilir. Oturum yönetimi şu şekilde işler:</p>
+            <h2>Değişiklik Günlüğü (Changelog)</h2>
             <ul>
-                <li><strong>Defter Kaydırma (Book Shifting):</strong> Her tur sonunda, her oyuncunun önündeki "defter" (kitap ataması - <code>assignments</code>) bir sonraki oyuncuya kaydırılır (shift edilir). Böylece oyuncular bir önceki turda başka bir oyuncunun yazdığı cümleyi çizer veya çizdiği resmi tahmin eder.</li>
-                <li><strong>Zaman Aşımı ve Otomatik Teslimat:</strong> Süre dolduğunda oyuncu teslimat yapmamışsa, sistem otomatik olarak yazılmayan alanlara yedek kelime/mesaj ekler veya çizim tuvalini boş bir base64 görseli ile otomatik olarak paketleyip Host'a gönderir (<code>submitDrawingFallback</code>/<code>submitPromptFallback</code>).</li>
-                <li><strong>Oturum Kesintileri:</strong> Bir oyuncu internet sorunları nedeniyle odadan düştüğünde, Host durum kontrolü yaparak aktif turdaki eksik görevlerin tamamlanmasını koordine eder ve oyun akışının tıkanmasını engellemek amacıyla turları güvenli bir şekilde devretme adımlarını çalıştırır.</li>
+                <li><strong>v1.2.0:</strong> ES modül çifte yüklenmesini önlemek için <code>network.js</code> ve <code>game.js</code> üzerindeki sürüm sorgusu kaldırıldı; <code>window.networkState</code> ve <code>window.startGame</code> dışa açıldı.</li>
+                <li><strong>v1.1.5:</strong> Albüm sayfalarında ayrılan oyuncuların adlarını korumak için <code>playerNames</code> ve <code>authorName</code> eklendi; aktif oyuncular arasında deterministik defter kaydırma ve &lt;2 oyuncu kaldığında temiz bitiş eklendi.</li>
+                <li><strong>v1.1.0:</strong> Manuel ve fallback gönderimlerde anında <code>completedTasks[myId] = true</code> ve bekleme ekranı geçişi sağlandı; 1x1 GIF yerine 16:9 beyaz WebP yedeği kullanıldı; <code>maxRounds</code> kısıtlamasında toast bildirimi ve <code>KICKED</code> bağlantısı için 300ms gecikme eklendi; <code>.size-btn.active</code> engelleyen satır içi stiller kaldırıldı ve silgi düğmesi eklendi.</li>
             </ul>
-
-            <h2>E-E-A-T & Güvenlik</h2>
-            <p>Platform tamamen istemci tarafında (Client-Side) çalıştığı için kullanıcıların kişisel verileri, IP adresleri, çizdikleri görseller veya oyun içi yazışmaları herhangi bir uzak veritabanında depolanmaz. Tüm veri transferleri WebRTC'nin doğası gereği <strong>uçtan uca şifreli (End-to-End Encrypted - DTLS/SRTP)</strong> kanallar üzerinden gerçekleşir. Bu sayede hem maksimum hız ve minimum gecikme sağlanır hem de veri güvenliği en üst seviyede korunur.</p>
-
-            <blockquote>
-                Bu teknik dokümantasyon, tarayıcı tabanlı eş zamanlı oyun geliştirme meraklıları ve platformun altyapısını merak eden geliştiriciler için Ahmet Efe Yaşar tarafından hazırlanmıştır.
-            </blockquote>
         </div>
     </main>
 </body>

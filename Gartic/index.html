@@ -5,17 +5,17 @@
     <script src="../shared/shared.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Paira Gartic | Twitch ve Kick İçin İnteraktif Çizim Oyunu</title>
+    <title>Paira Chat ÇizBil | Twitch ve Kick Çizim Oyunu</title>
 
     <!-- SEO & Social Meta Tags -->
     <meta name="description"
-        content="Paira Gartic ile yayınınızda izleyicilerinizle interaktif çizim ve tahmin oyunu oynayın! Siz çizin, Twitch veya Kick sohbetiniz anında tahmin etsin.">
+        content="Paira Chat ÇizBil ile yayınınızda izleyicilerinizle çizim ve tahmin oyunu oynayın. Siz çizin, Twitch veya Kick sohbetiniz tahmin etsin.">
     <meta name="keywords"
-        content="paira gartic, gartic oyna, twitch çizim oyunu, kick interaktif oyunlar, yayıncı çizim oyunu, izleyici etkileşim oyunları">
+        content="paira chat cizbil, gartic oyna, twitch çizim oyunu, kick interaktif oyunlar, yayıncı çizim oyunu, izleyici etkileşim oyunları">
 
-    <meta property="og:title" content="Gartic - Yayınınız İçin Eğlenceli Çizim Deneyimi">
+    <meta property="og:title" content="Paira Chat ÇizBil - Yayınınız İçin Çizim ve Tahmin Oyunu">
     <meta property="og:description"
-        content="Sohbetinizle (chat) birlikte oynayabileceğiniz en eğlenceli çizim oyunu. Siz çizin, izleyicileriniz ise doğruyu bulsun!">
+        content="Sohbetinizle birlikte oynayabileceğiniz çizim oyunu. Siz çizin, izleyicileriniz doğruyu bulsun.">
     <meta property="og:type" content="website">
 
     <!-- Schema.org -->
@@ -23,11 +23,11 @@
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "Paira Gartic",
+      "name": "Paira Chat ÇizBil",
       "operatingSystem": "Web Browser",
       "applicationCategory": "GameApplication",
       "genre": "Drawing Game",
-      "description": "Gartic, Twitch ve Kick yayıncılarının izleyicileriyle gerçek zamanlı olarak oynayabileceği, sohbet entegrasyonuna sahip interaktif bir çizim ve tahmin oyunudur.",
+      "description": "Chat ÇizBil, Twitch ve Kick yayıncılarının izleyicileriyle gerçek zamanlı oynayabileceği, sohbet entegrasyonuna sahip bir çizim ve tahmin oyunudur.",
       "author": {
         "@type": "Person",
         "name": "Paira"
@@ -52,7 +52,6 @@
 </head>
 
 <body>
-    <div class="glass-bg"></div>
     <div id="toast-container" class="toast-container"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar"
@@ -61,16 +60,15 @@
             style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
                 <div class="game-logo-container" style="position: relative; display: inline-block;"><img
-                        src="../logolar/cizbil.svg" alt="ÇizBil Logo"><a href="dev.html" class="dev-notes-btn"
-                        title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                        src="../main_logo.avif" alt="Paira Chat ÇizBil Logo"><a href="dev.html" class="dev-notes-btn"
+                        title="Geliştirici Notları"><svg xmlns="http://www.w3.org/2000/svg" width="16"
                             height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                             stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 18 22 12 16 6"></polyline>
                             <polyline points="8 6 2 12 8 18"></polyline>
                         </svg></a></div>
                 <h1 class="gradient-text">Chat ÇizBil</h1>
-                <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! <strong>Paira Gartic</strong> (ÇizBil)
-                    ile siz çizin, sohbetinizdeki (chat) herkes aynı anda tahmin etsin. En hızlı kim bilecek?</p>
+                <p class="seo-description"><strong>Paira Chat ÇizBil</strong> ile siz çizin, Twitch veya Kick sohbetiniz aynı anda tahmin etsin. İlk doğru yazan puanı alır.</p>
             </div>
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
@@ -93,23 +91,23 @@
             </div>
 
             <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
-                <h2>Nasıl Oynanır? 🎨</h2>
+                <h2>Nasıl Oynanır?</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
                         <h3>1. Kanalını Bağla</h3>
-                        <p>Twitch veya Kick kanal ismini girerek saniyeler içinde bağlan.</p>
+                        <p>Twitch veya Kick kanal adını yazarak canlı sohbeti oyuna bağla.</p>
                     </div>
                     <div class="rule-card">
                         <h3>2. Kelimeni Seç</h3>
-                        <p>Sana sunulan kelime seçeneklerinden birini belirle ve çizime başla.</p>
+                        <p>Ekrana gelen iki kelimeden birini seç ve tuvalde çizmeye başla.</p>
                     </div>
                     <div class="rule-card">
                         <h3>3. Sohbet Tahmin Etsin</h3>
-                        <p>İzleyicilerin sohbete tahminlerini yazsın. Sistem doğruyu ilk yazanı otomatik bulur!</p>
+                        <p>İzleyiciler sohbete tahmin yazar; sistem doğru tahmini otomatik algılar.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>4. Puanları Gör</h3>
-                        <p>Doğru bilen izleyiciler liderlik tablosunda yükselsin, yayının eğlencesi artsın.</p>
+                        <h3>4. Sıralamayı Gör</h3>
+                        <p>Doğru bilen izleyiciler 1 puan kazanır ve yayın boyunca liderlik tablosunda listelenir.</p>
                     </div>
                 </div>
             </div>
@@ -117,20 +115,9 @@
     </main>
 
     <div class="game-seo-info">
-        <h2>Paira Gartic Hakkında</h2>
-        <p>Canlı yayınlarında izleyicilerinle olan etkileşimi zirveye taşıyacak bir oyun mu arıyorsun? Karşında
-            <strong>Paira Gartic</strong>! Klasik çizim ve tahmin oyunlarının Twitch ve Kick yayıncıları için özel
-            olarak tasarlanmış bu versiyonunda yayıncı çizer, chat tahmin eder.</p>
-
-        <p>Oyun başladığında sadece senin görebileceğin gizli bir kelime verilir. Görevin, bu kelimeyi dijital tuvale
-            çizerek izleyicilerine anlatmaktır. Çizim esnasında harf veya rakam kullanmak kesinlikle yasaktır! Sen
-            yeteneklerini (ya da yeteneksizliğini) sergilerken, izleyicilerin de sohbet ekranından ne çizdiğini bulmaya
-            çalışır. Sistem chat akışını anlık olarak takip eder ve doğru tahmini yapan ilk izleyiciyi bularak puanını
-            verir.</p>
-
-        <p>Oynamak için herhangi bir kurulum yapmana gerek yok. Sadece kanal adını gir ve chatini oyuna bağla. İster
-            muazzam sanat eserleri yarat, istersen çöp adamlarla chatini krize sok. Yayınlarına yepyeni bir eğlence
-            katacak bu interaktif çizim deneyimine hemen başla!</p>
+        <h2>Paira Chat ÇizBil Hakkında</h2>
+        <p><strong>Paira Chat ÇizBil</strong>, Twitch ve Kick yayıncılarının sohbetleriyle birlikte oynayabileceği tarayıcı tabanlı bir çizim ve tahmin oyunudur.</p>
+        <p>Yayıncı sunulan iki kelimeden birini seçip tuvalde çizerken, gelen sohbet mesajları anlık kontrol edilir. Küçük yazım hataları otomatik tolere edilir ve doğru tahmini ilk yazan izleyiciye puan eklenir.</p>
     </div>
 
     <!-- Scripts -->

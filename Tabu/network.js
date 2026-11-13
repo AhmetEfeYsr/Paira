@@ -29,7 +29,9 @@ class TabuNetworkManager extends BaseGameNetwork {
             this.engine.onStateChange = (state) => this.broadcastState();
             this.engine.onSound = (sound) => {
                 this.playSound(sound);
-                this.broadcast('PLAY_SOUND', { sound });
+                if (sound !== 'tick') {
+                    this.broadcast('PLAY_SOUND', { sound });
+                }
             };
         } else {
             this.engine.onSound = (sound) => this.playSound(sound);
@@ -188,19 +190,34 @@ class TabuNetworkManager extends BaseGameNetwork {
     onActionReceived(actionType, payload, senderId) {
 
         if (actionType === 'SWITCH_TEAM') {
+            if (!this.isHostNode) return;
             this.engine.switchTeam(senderId);
         }
         else if (actionType === 'SHUFFLE_TEAMS') {
+            if (!this.isHostNode) return;
             this.engine.shuffleTeams();
         }
         else if (actionType === 'ACTION') {
-            const aType = payload.actionType;
-            const isTurnPlayer = (senderId === this.engine.state.turnId);
+            if (!this.isHostNode) return;
+            const aType = payload?.actionType;
+            const state = this.engine.state;
+            const isTurnPlayer = (senderId === state.turnId);
             const isHostOrTurn = isTurnPlayer || (senderId === this.myId);
+            const senderPlayer = state.players[senderId];
+            const turnPlayer = state.players[state.turnId];
+            const isOpponent = Boolean(
+                senderPlayer &&
+                turnPlayer &&
+                senderPlayer.team !== turnPlayer.team &&
+                senderId !== state.turnId
+            );
+
             if (aType === 'NARRATOR_READY' && isTurnPlayer) {
                 this.engine.beginTimer();
             } else if (aType === 'TOGGLE_PAUSE' && isHostOrTurn) {
                 this.engine.togglePause();
+            } else if (aType === 'TABOO' && state.status === 'playing' && !state.isWaitingForReady && !state.isPaused && (isTurnPlayer || isOpponent)) {
+                this.engine.processAction('TABOO');
             } else if (isTurnPlayer) {
                 this.engine.processAction(aType);
             }
@@ -228,10 +245,10 @@ class TabuNetworkManager extends BaseGameNetwork {
         Object.keys(this.connections).forEach(peerId => {
             const narratorPlayer = fullStateCopy.players[turnId];
             const peerPlayer = fullStateCopy.players[peerId];
-            const isTeammateOfNarrator = (peerPlayer && narratorPlayer && peerPlayer.team === narratorPlayer.team && peerId !== turnId);
+            const isTeammateOfNarrator = (!peerPlayer || (narratorPlayer && peerPlayer.team === narratorPlayer.team && peerId !== turnId));
             const clientState = JSON.parse(JSON.stringify(fullStateCopy));
             
-            if (isTeammateOfNarrator && currentWord && clientState.status === 'playing') {
+            if ((isTeammateOfNarrator || clientState.isWaitingForReady) && currentWord && clientState.status === 'playing') {
                 clientState.currentWord = {
                     ana_kelime: "???",
                     yasakli_kelimeler: ["???", "???", "???", "???", "???"],
@@ -257,7 +274,7 @@ class TabuNetworkManager extends BaseGameNetwork {
         const isHostTeammate = (hostPlayer && narratorPlayerHost && hostPlayer.team === narratorPlayerHost.team && this.myId !== turnId);
 
         const hostState = JSON.parse(JSON.stringify(fullStateCopy));
-        if (isHostTeammate && currentWord && hostState.status === 'playing') {
+        if ((isHostTeammate || hostState.isWaitingForReady) && currentWord && hostState.status === 'playing') {
             hostState.currentWord = {
                 ana_kelime: "???",
                 yasakli_kelimeler: ["???", "???", "???", "???", "???"],
@@ -278,9 +295,16 @@ class TabuNetworkManager extends BaseGameNetwork {
     }
 
     sendAction(actionType) {
-        const isMyTurn = (this.engine.state.turnId === this.myId);
+        const state = this.engine.state;
+        const isMyTurn = (state.turnId === this.myId);
         if (actionType === 'TOGGLE_PAUSE') {
             if (!isMyTurn && !this.isHostNode) return;
+        } else if (actionType === 'TABOO') {
+            if (state.status !== 'playing' || state.isWaitingForReady || state.isPaused) return;
+            const myPlayer = state.players[this.myId];
+            const turnPlayer = state.players[state.turnId];
+            const isOpponent = Boolean(myPlayer && turnPlayer && myPlayer.team !== turnPlayer.team && !isMyTurn);
+            if (!isMyTurn && !isOpponent) return;
         } else if (!isMyTurn) {
             return;
         }
@@ -301,17 +325,22 @@ class TabuNetworkManager extends BaseGameNetwork {
 
     startGame() {
         if (this.isHostNode) {
-            const duration = document.getElementById('turn-duration')?.value || 60;
-            const passLimit = document.getElementById('pass-limit')?.value ?? 3;
-            const penalty = document.getElementById('taboo-penalty')?.value ?? 1;
-            const rounds = document.getElementById('round-count')?.value || 3;
+            const clamp = (val, min, max, fallback) => {
+                const n = parseInt(val, 10);
+                if (isNaN(n)) return fallback;
+                return Math.min(max, Math.max(min, n));
+            };
+            const duration = clamp(document.getElementById('turn-duration')?.value, 10, 180, 60);
+            const passLimit = clamp(document.getElementById('pass-limit')?.value, 0, 10, 3);
+            const penalty = clamp(document.getElementById('taboo-penalty')?.value, 0, 5, 1);
+            const rounds = clamp(document.getElementById('round-count')?.value, 1, 10, 3);
             
             const categoryCheckboxes = document.querySelectorAll('#category-selection input[type="checkbox"]:checked');
             let category = Array.from(categoryCheckboxes).map(cb => cb.value);
             if(category.length === 0) category = ['Hepsi'];
 
-            let minDifficulty = parseInt(document.getElementById('min-difficulty')?.value) || 1;
-            let maxDifficulty = parseInt(document.getElementById('max-difficulty')?.value) || 100;
+            let minDifficulty = clamp(document.getElementById('min-difficulty')?.value, 1, 100, 1);
+            let maxDifficulty = clamp(document.getElementById('max-difficulty')?.value, 1, 100, 100);
             if (minDifficulty > maxDifficulty) {
                 [minDifficulty, maxDifficulty] = [maxDifficulty, minDifficulty];
             }

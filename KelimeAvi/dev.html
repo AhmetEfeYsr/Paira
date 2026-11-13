@@ -114,55 +114,37 @@
         <div class="about-container">
             <a href="index.html" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Lobby
+                Lobiye Dön
             </a>
             
             <h1>Geliştirici Notları: Kelime Avı</h1>
             
-            <h2>Giriş ve Mimari Yaklaşım</h2>
-            <p><strong>Paira Kelime Avı</strong> (Kelime Kapanı), harf eşleştirme ve gizli ebeyi bulma mekaniklerine dayalı, tamamen tarayıcı tabanlı bir sosyal çıkarım ve kelime oyunudur. Oyun; merkezi bir veritabanı (Database) veya oyun sunucusu barındırmadan, doğrudan <strong>P2P (Peer-to-Peer)</strong> bağlantı mimarisi kullanılarak istemciler arasında koordine edilir. Paira Games platformunun diğer yapımlarında olduğu gibi, bu oyun da arkadaş gruplarının hiçbir kurulum veya üyelik gereksinimi duymadan anında oynayabilmesi için tasarlanmıştır.</p>
-            <p>Tüm oyun akışı, oda kurucusunun (Host) yerel tarayıcısındaki durum makinesi (state machine) ve WebRTC bağlantıları üzerinden gerçek zamanlı yönetilmektedir.</p>
-            
-            <h2>P2P Ağ Topolojisi ve Rol Dağılımı</h2>
-            <p>Kelime Avı'nda oyuncular arasındaki iletişim, WebRTC veri kanalları (<code>RTCDataChannel</code>) kullanılarak <strong>Host-Client (Yönetici-Katılımcı)</strong> topolojisiyle sağlanır:</p>
+            <h2>Mimari ve P2P Ağ Yapısı</h2>
+            <p><strong>Paira Kelime Avı</strong>, <code>BaseGameNetwork</code>, <code>KelimeAviGameEngine</code> ve <code>KelimeAviView</code> sınıfları üzerinde çalışan tarayıcı tabanlı bir <strong>WebRTC (PeerJS)</strong> oyunudur. Oyun durumu, tur zamanlayıcıları ve gizli kelime maskelemesi tamamen Host tarayıcısında yönetilir.</p>
             <ul>
-                <li><strong>Host (Kurucu Düğüm):</strong> Oyunu başlatan tarayıcı, sunucu yetkilerini devralır. Başlangıçta rollerin (Ebe ve Masumlar) atanması, gizli kelimenin (<code>targetWord</code>) belirlenmesi, tur süreleri ve puanlama kuralları Host tarafından yönetilir.</li>
-                <li><strong>Clients (Katılımcı Peer'lar):</strong> Oda koduyla bağlanan istemciler, doğrudan Host'a veri kanalları ile bağlanır. Oyuncular kelime tahminlerini ve ebe rollerindeki tahminleri Host'a gönderir; Host ise tüm bu verileri doğrulayarak senkronize durum paketi olarak tüm odaya geri yayınlar.</li>
-                <li><strong>Signaling (Sinyalleşme):</strong> Peer'ların birbirlerinin IP adreslerini ve portlarını keşfedebilmeleri (ICE Candidate ve SDP teklif/yanıt süreçleri) için PeerJS aracı sinyalleşme sunucusu kullanılır. Bağlantılar sağlandıktan sonra bu sunucu ile iletişim kesilir ve oyun tamamen P2P olarak devam eder.</li>
+                <li><strong>Host-Client Topolojisi:</strong> Host düğümü 6 karakterlik büyük harf oda koduyla PeerJS sinyalleşme sunucusuna kayıt olur. İstemciler doğrudan <code>RTCDataChannel</code> üzerinden Host'a bağlanır; en az 3 aktif oyuncu olmadan oyun başlatılamaz.</li>
+                <li><strong>Rol ve Durum Sansürü (<code>censorStateForViewer</code>):</strong> Host hem kendi arayüzü hem de uzak istemciler için durum paketini role göre filtreler. Oyuncu Ebe değilse <code>playing</code>, <code>countdown</code> ve <code>evaluating</code> aşamalarında <code>targetWord</code> yalnızca <code>revealedLetters</code> kadar açık kısmı içerir; tam kelime ancak tüm harfler açıldığında veya oyun bittiğinde açığa çıkar. Aktif <code>playing</code> / <code>countdown</code> sırasında <code>submittedWords</code> ve <code>ebeGuesses</code> de gizlenir.</li>
+                <li><strong>Ağ Mesajları:</strong> <code>SUBMIT_EBE_TARGET</code>, <code>SUBMIT_MASUM</code>, <code>SUBMIT_EBE</code>, <code>TRIGGER_MATCH</code>, <code>SYNC</code>, <code>SYNC_TIME</code>, <code>SHOW_RESULT</code> ve <code>PLAY_SOUND</code> olayları üzerinden gerçek zamanlı senkronizasyon sağlanır.</li>
             </ul>
             
-            <h2>Gerçek Zamanlı Veri Senkronizasyonu ve Anti-Cheat Altyapısı</h2>
-            <p>Kelime Avı'nda oyun içi senkronizasyon ve veri paketleri aşağıdaki gibi yapılandırılmıştır:</p>
+            <h2>Oyun Mekanikleri ve Eşleşme Kuralları</h2>
             <ul>
-                <li><code>SYNC</code>: Host, oyun durumunu (oyuncu puanları, aktif tur, girilen kelimeler) istemcilere güncel olarak aktarır. <strong>Güvenlik ve hile engelleme (Anti-Cheat) amacıyla</strong>, Host bu paketi gönderirken alıcı istemcinin rolünü kontrol eder. Eğer alıcı oyuncu "Ebe" değilse, gizli kelimenin (<code>targetWord</code>) yalnızca o ana kadar açılmış harflerini (<code>targetWord.substring(0, revealedLetters)</code>) görebilir. Bu sayede masum oyuncuların tarayıcı kodunu manipüle ederek kelimeyi erkenden öğrenmesi engellenir.</li>
-                <li><code>SUBMIT_MASUM</code>: Masum oyuncuların girdikleri kelime ipuçları doğrudan Host'a iletilir. Host, girilen kelimelerin o ana kadar açılmış harf(ler) ile başlayıp başlamadığını doğrular.</li>
-                <li><code>SUBMIT_EBE</code>: Ebe rolündeki oyuncunun masumların eşleşmeye çalıştığı kelimeyi tahmin etmek için yaptığı en fazla 5 kelimelik tahmin listesini Host'a gönderir.</li>
-                <li><code>SYNC_TIME</code>: Host ve istemciler arasındaki süreyi milisaniye düzeyinde senkronize eder.</li>
-                <li><code>PLAY_SOUND</code>: Eş zamanlı olarak oyun içi bildirim ve uyarı seslerini (correct, taboo, pass, tick) tüm oyuncuların tarayıcılarında tetikler.</li>
+                <li><strong>Ebe Kelime Seçimi (45s Zaman Aşımı):</strong> Tur başında Ebe rolündeki oyuncuya hedef kelimeyi girmesi için <code>ebe_word_select</code> aşamasında 45 saniye süre tanınır. Süre dolduğunda Ebe kelime seçmemişse <code>endRoundPrematurely</code> ile sonraki Ebe'ye geçilir.</li>
+                <li><strong>Kesin Normalleştirilmiş Eşleşme ve Uzunluk Kuralı:</strong> Masumların gönderdiği kelimeler <code>trim().toLocaleUpperCase('tr-TR')</code> ile normalize edilir. Kelimenin geçerli sayılması için o ana kadar açılan önek (<code>revealedPrefix</code>) ile başlaması, <strong>açılan harf sayısından kesin olarak daha uzun</strong> olması ve en az 2 harf içermesi gerekir. Eşleşme kontrolünde en az 2 Masumun birebir aynı normalize kelimeyi göndermiş olması aranır.</li>
+                <li><strong>Jackpot Formülü:</strong> Bir veya daha fazla Masum doğrudan hedef kelimeyi (<code>targetWord</code>) bilirse <code>unrevealedLetters = Math.max(1, targetWord.length - revealedLetters)</code> değeri hesaplanır ve her Jackpot bilen oyuncuya <code>Math.max(1, Math.floor(unrevealedLetters / jackpotWinners.length))</code> puan eklenir.</li>
+                <li><strong>Ebe Yakalaması ve 3 Deneme Sınırı:</strong> Masumların eşleştiği kelime Ebe'nin en fazla 5 tahminlik <code>ebeGuesses</code> listesinde varsa Ebe <code>ebeWinPts</code> alır ve tur biter. Ebe yakalayamazsa tüm aktif Masumlara <code>masumWinPts</code>, eşleşenlere ek <code>masumExtraPts</code> verilir ve <code>revealedLetters++</code> açılır. Masumlar art arda <strong>3 kez</strong> eşleşemezse (<code>failedAttempts >= 3</code>) kelime sonlanır.</li>
+                <li><strong>Kopma Yönetimi:</strong> Oyun sırasında ayrılan oyuncu <code>disconnected = true</code> olarak işaretlenir. Ayrılan oyuncu mevcut <code>ebeIndex</code> konumundan önceyse <code>ebeIndex</code> güvenli biçimde kaydırılır; aktif oyuncu sayısı 3'ün altına düşerse oyun lobiye döndürülür.</li>
             </ul>
-            
-            <h2>Puanlama ve Doğrulama Protokolü</h2>
-            <p>Kelime Avı'nda tahmin çiftlerinin ve eşleşmelerin doğrulanması tamamen Host tarafındaki <code>KelimeAviGameEngine</code> üzerinde koordine edilir:</p>
+
+            <h2>Değişiklik Günlüğü (Changelog)</h2>
             <ul>
-                <li><strong>Kelime Eşleşmesi (Fuzzy Match):</strong> Masum oyuncular birbirleriyle aynı kelimede buluşmak için kelime girdiklerinde, Host bir <code>FuzzyMatcher</code> sınıfı kullanarak kelimelerin fonetik/karakter benzerliğini (0.5 eşik değeri) değerlendirir. En az 2 masum oyuncunun benzer bir kelimede eşleşip eşleşmediği doğrulanır.</li>
-                <li><strong>Jackpot Durumu:</strong> Masum oyuncular, ebe tarafından belirlenen ana hedef kelimeyi (<code>targetWord</code>) doğrudan tahmin edip girerlerse "Jackpot" tetiklenir. Bu durumda masumlar ekstra yüksek puan kazanarak turu anında bitirir.</li>
-                <li><strong>Ebe Kazancı:</strong> Eğer masumlar kendi aralarında eşleşirse fakat Ebe bu eşleşen kelimeyi tahmin ettiği 5 seçenekten biriyle bulursa, Ebe turu kazanır ve <code>ebeWinPts</code> puanı alır.</li>
-                <li><strong>Masum Kazancı:</strong> Masumlar kendi aralarında eşleşir ve Ebe bu kelimeyi bulamazsa, masumlar <code>masumWinPts</code> puanı alır ve bir sonraki harf açılır (<code>revealedLetters++</code>).</li>
+                <li>Masum kelimeleri için açılan önekten kesin olarak daha uzun olma ve minimum 2 harf şartı hem istemci hem Host tarafına eklendi.</li>
+                <li><code>targetWord</code> sansürü <code>evaluating</code> ara durumunu da kapsayacak şekilde genişletildi (tam açılma veya oyun sonuna kadar gizli kalır).</li>
+                <li>Oyun ortasında oyuncu ayrılmalarında sonraki Ebe'nin atlanmasını önlemek için <code>ebeIndex</code> düzeltmesi eklendi.</li>
+                <li><code>#countdown-overlay</code>, <code>pointer-events: none</code> ile üstte yüzen ve girdileri engellemeyen bir bildirim şeridine dönüştürüldü.</li>
+                <li><code>ebe_word_select</code> aşamasına 45 saniyelik zaman aşımı ve lobi oyuncu listesi güncellemelerinde 3 kişi altı başlatma kilidi koruması eklendi.</li>
+                <li>Tüm arayüz, meta etiketler ve dokümantasyon "Kelime Avı" adına göre standartlaştırıldı.</li>
             </ul>
-            
-            <h2>Oda Mantığı ve Oturum Kesintileri</h2>
-            <p>Oyun, tarayıcının WebRTC soket adresi üzerinden ürettiği 6 karakterli benzersiz bir Peer ID oda koduna dayanır. Oyuncu katılımları ve olası kopmalar şu şekilde yönetilir:</p>
-            <ul>
-                <li><strong>Oyuncu Bağlantı Kopması:</strong> Oyun sırasında bir oyuncunun bağlantısı koptuğunda, Host <code>removePlayer</code> metoduyla bu oyuncuyu <code>disconnected = true</code> olarak işaretler.</li>
-                <li><strong>Oyun Güvenliği:</strong> Aktif oyuncu sayısı 3'ün altına düşerse, oyun otomatik olarak 5 saniye içinde lobiye geri döndürülür. Eğer kopan oyuncu aktif turdaki "Ebe" ise, tur iptal edilir ve yeni bir tur başlatılır.</li>
-            </ul>
-            
-            <h2>E-E-A-T & Güvenlik</h2>
-            <p>Paira Kelime Avı, veri gizliliğine maksimum önem verecek şekilde tasarlanmıştır. Kullanıcıların isimleri, oyun içi sohbet içerikleri veya girilen kelimeler hiçbir merkezi sunucuya veya log sistemine gönderilmez. Tüm iletişim kanalları WebRTC'nin doğası gereği <strong>uçtan uca şifrelenmiştir (DTLS/SRTP)</strong>. Sunucusuz altyapı sayesinde kullanıcıların verileri yalnızca kendi tarayıcılarında geçici olarak barındırılır.</p>
-            
-            <blockquote>
-                Bu teknik dokümantasyon, P2P tabanlı web oyunu mimarisini incelemek isteyen geliştiriciler ve Paira Games altyapısına ilgi duyanlar için Ahmet Efe Yaşar tarafından hazırlanmıştır.
-            </blockquote>
         </div>
     </main>
 </body>

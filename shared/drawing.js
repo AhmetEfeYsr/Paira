@@ -210,6 +210,9 @@ class AdvancedDrawingBoard {
     setTool(tool) {
         this.currentTool = tool;
         this.updateCursor();
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tool === this.currentTool);
+        });
     }
 
     /**
@@ -435,6 +438,7 @@ class AdvancedDrawingBoard {
 
     /** @param {boolean} [sync=true] */
     undo(sync = true) {
+        if (sync && this.readOnly) return;
         if (this.historyStep > 0) {
             this.historyStep--;
             this.ctx.putImageData(this.history[this.historyStep], 0, 0);
@@ -455,6 +459,7 @@ class AdvancedDrawingBoard {
 
     /** @param {boolean} [sync=true] */
     clear(sync = true) {
+        if (sync && this.readOnly) return;
         this.ctx.fillStyle = "#ffffff";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.saveState();
@@ -497,7 +502,7 @@ class AdvancedDrawingBoard {
         const fillRgba = this.hexToRgba(fillColorHex);
         if (!fillRgba) return;
 
-        if (this.colorsMatchRaw(targetColor, fillRgba)) return;
+        if (this.colorsMatchRaw(targetColor, fillRgba, 0)) return;
 
         const fillData = [fillRgba.r, fillRgba.g, fillRgba.b, fillRgba.a];
         const stack = [[startX, startY]];

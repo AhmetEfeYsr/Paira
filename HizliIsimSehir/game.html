@@ -158,15 +158,17 @@
             </div>
             
             <!-- VOTING OVERLAY -->
-            <div id="voting-overlay" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; border-radius: 20px;">
-                <h2 style="color: white; margin-bottom: 10px;">İtiraz Oylaması</h2>
-                <p id="voting-text" style="color: #ddd; font-size: 1.1rem; margin-bottom: 20px; max-width: 90%; word-break: break-word;">...</p>
-                <div id="voting-buttons" style="display: flex; gap: 15px;">
-                    <button id="btn-vote-yes" class="btn btn-primary" style="background-color: var(--success); min-width: 100px; border: none;">Kabul Et (<span id="vote-yes-count">0</span>)</button>
-                    <button id="btn-vote-no" class="btn btn-primary" style="background-color: var(--danger); min-width: 100px; border: none;">Reddet (<span id="vote-no-count">0</span>)</button>
+            <div id="voting-overlay" class="hidden">
+                <div class="voting-card">
+                    <h2>İtiraz Oylaması</h2>
+                    <p id="voting-text">...</p>
+                    <div id="voting-buttons">
+                        <button id="btn-vote-yes" class="btn btn-primary">Kabul Et (<span id="vote-yes-count">0</span>)</button>
+                        <button id="btn-vote-no" class="btn btn-primary">Reddet (<span id="vote-no-count">0</span>)</button>
+                    </div>
+                    <p id="voting-timer">Süre: 10</p>
+                    <p id="voting-status-text"></p>
                 </div>
-                <p id="voting-timer" style="color: white; margin-top: 15px; font-size: 1.1rem;">Süre: 10</p>
-                <p id="voting-status-text" style="color: var(--text-muted); margin-top: 10px; font-size: 0.9rem;"></p>
             </div>
         </section>
 
@@ -207,15 +209,6 @@
         </section>
 
     </main>
-
-    <div class="game-seo-info">
-        <h2>Paira Hızlı İsim Şehir Hakkında</h2>
-        <p>Kağıt kalemle oynadığımız o klasik isim şehir oyunu artık çok daha tempolu ve rekabetçi! <strong>Paira Hızlı İsim Şehir</strong>, sırayla yarıştığınız, genel kültürünüzü ve klavye hızınızı aynı anda test eden dinamik bir kelime oyunudur.</p>
-        
-        <p>Bu modda, klasik oyunun aksine tüm oyuncular aynı anda yazmaz. Her turda bir oyuncuya sıra gelir ve sistem o oyuncu için bir harf ile bir kategori belirler (Örneğin: 'B harfi ile başlayan Şehir'). Amacınız, kısıtlı süreniz dolmadan doğru kelimeyi yazıp göndermektir. Diğer oyuncular sizin verdiğiniz cevabı izler ve gerekirse itiraz ederek oylama başlatabilirler.</p>
-        
-        <p>Puanlama sisteminde ise önemli bir detay var: Bulduğunuz kelime ne kadar uzunsa o kadar çok puan kazanırsınız! Sadece hızlı olmak yetmez, aynı zamanda yaratıcı ve uzun kelimeler bulmak size şampiyonluğu getirebilir. İster arkadaşlarınla istersen de dünyanın dört bir yanından oyuncularla kapış. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden bu amansız yarışa hemen katıl!</p>
-    </div>
 
     <script src="../shared/peer_manager.js?v=1.0.2"></script>
     <script src="../shared/base_network.js?v=1.0.2"></script>

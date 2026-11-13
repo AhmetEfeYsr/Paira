@@ -114,46 +114,33 @@
         <div class="about-container">
             <a href="index.html" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Lobby
+                Oyuna Dön
             </a>
-            
+
             <h1>Geliştirici Notları: Bilgi Yarışması</h1>
-            
-            <h2>Giriş ve Mimari Yaklaşım</h2>
-            <p><strong>Paira Bilgi Yarışması</strong>, tamamen tarayıcı tabanlı çalışan, verileri depolamak için merkezi bir veritabanı (Database) veya aracı oyun sunucusu barındırmayan, <strong>P2P (Peer-to-Peer)</strong> bağlantı mimarisine dayalı çok oyunculu bir genel kültür ve trivia oyunudur. Oyun, arkadaş gruplarının herhangi bir indirme veya kayıt işlemi yapmadan, doğrudan web tarayıcıları üzerinden sıfır gecikme ile yarışabilmesini sağlamak amacıyla geliştirilmiştir.</p>
-            <p>Tüm oyun durumu (state) yönetimi, sunucusuz mimarinin getirdiği sınırlamaları aşmak ve pürüzsüz bir oyun akışı sunmak adına tarayıcı düzeyinde koordine edilen Host-Client yapısıyla yönetilmektedir.</p>
 
-            <h2>P2P Ağ Topolojisi ve Oda Keşfi</h2>
-            <p>Geleneksel istemci-sunucu yapısı yerine, oyunda <strong>WebRTC (Web Real-Time Communication)</strong> protokolü üzerinde yükselen bir <strong>Host-Client (Kurucu-Katılımcı)</strong> ağ topolojisi kullanılır:</p>
+            <h2>Teknik Mimari</h2>
+            <p><strong>Bilgi Yarışması</strong>, oyun mantığını yöneten <code>BilgiYarismasiGameEngine</code>, arayüzü güncelleyen <code>BilgiYarismasiView</code> ve ağ katmanını sağlayan <code>BilgiYarismasiNetwork</code> (<code>BaseGameNetwork</code> alt sınıfı) sınıflarından oluşur.</p>
             <ul>
-                <li><strong>Host (Kurucu Node):</strong> Oyunu başlatan kullanıcı yerel tarayıcısında sunucu (Host) rolünü üstlenir. Soru havuzunun yönetiminden, sürelerin başlatılmasından, cevapların toplanmasından ve anlık liderlik sıralamasının dağıtılmasından sorumludur.</li>
-                <li><strong>Clients (Katılımcı Peer'lar):</strong> 6 haneli oda kodunu girerek odaya bağlanan oyuncular, doğrudan Host ile peer-to-peer <code>RTCDataChannel</code> bağlantısı kurarlar. Katılımcıların kendi aralarında doğrudan veri kanalı açmasına gerek kalmaz; tüm bilgi akışı Host üzerinden senkronize edilir.</li>
-                <li><strong>Sinyalleşme (Signaling):</strong> Oyuncuların birbirlerini internet üzerinde bulup IP ve port bilgilerini (ICE Adayları) değiş tokuş edebilmesi için bir WebRTC aracı sinyalleşme sunucusu (PeerJS) kullanılır. Bağlantı kurulduktan sonra bu aracı sunucu tamamen devre dışı kalır ve veri akışı doğrudan cihazlar arasında akar.</li>
+                <li><strong>Çok Oyunculu (Host-Client P2P):</strong> Kurucu tarayıcısı yetkili düğüm (host) olarak çalışır; soru seçimini, süre kontrolünü ve puan hesabını yürütür. İstemciler PeerJS (WebRTC DataChannel) üzerinden kurucuya bağlanır, yalnızca kendi seçimlerini <code>ANSWER</code> paketiyle gönderir ve kurucudan <code>SYNC</code> ile durum güncellemelerini alır.</li>
+                <li><strong>Solo Mod:</strong> <code>isSolo</code> veya <code>?mode=solo</code> ile başlatıldığında PeerJS bağlantısı açılmaz; motor yerel <code>solo-player</code> kaydıyla doğrudan tarayıcı içinde çalışır.</li>
+                <li><strong>Zaman Senkronizasyonu:</strong> Kurucu, tur süresini <code>SYNC_TIME</code> paketleriyle istemcilere aktarır. İstemci tarafındaki geri sayım <code>requestAnimationFrame</code> ile çalışır ve tur açıldığında (<code>reveal_answer: true</code>) otomatik olarak durur.</li>
             </ul>
 
-            <h2>Gerçek Zamanlı Veri Senkronizasyonu (Data Synchronization)</h2>
-            <p>Bilgi Yarışması'nda oyun akışının sorunsuz ilerlemesi için birçok kritik veri paketinin milisaniye düzeyinde senkronize edilmesi gerekir. Bu süreç, <code>RTCDataChannel</code> üzerinden iletilen şu paket tipleriyle koordine edilir:</p>
+            <h2>Oyun Mekanikleri</h2>
             <ul>
-                <li><strong>Soru ve Şıkların Dağıtılması:</strong> Host, soru havuzundan seçilen güncel soruyu, cevap şıklarını ve sorunun aktif süresini tüm istemcilere eş zamanlı olarak gönderir.</li>
-                <li><strong>Hız Bazlı Puanlama ve Cevap Toplama:</strong> İstemciler bir şıkkı işaretlediğinde, cevap bilgisi ve tıklama zaman damgası Host'a gönderilir. Host, sorunun başlangıç zamanı ile cevabın geldiği zaman arasındaki farkı hesaplayarak <strong>hız bazlı puanlama</strong> yapar (soruya daha hızlı doğru cevap veren oyuncu daha yüksek puan alır).</li>
-                <li><strong>Zamanlayıcı Senkronizasyonu:</strong> Her sorunun kalan süresi, Host tarafından başlatılan bir geri sayım ile yönetilir. Ağ gecikmelerinden kaynaklanabilecek kaymaları önlemek için istemcilerdeki zamanlayıcılar Host'tan gelen zaman paketleriyle sürekli güncellenir.</li>
-                <li><strong>Liderlik Sıralaması:</strong> Her sorunun tamamlanmasının ardından veya anlık olarak Host, güncel puan durumunu ve liderlik tablosunu hesaplayarak tüm katılımcılara yayınlar (broadcast).</li>
+                <li><strong>Soru Filtreleme ve Karıştırma:</strong> <code>tr.json</code> soru havuzu seçilen kategoriler ve zorluk aralığına göre filtrelenir. Eşleşen soru sayısı 0 ise oyun başlatılmaz ve kullanıcı uyarılır. Sorular ve şıklar LCG tabanlı deterministik tohumlu karıştırma (<code>seededShuffle</code>) ile sıralanır.</li>
+                <li><strong>Cevap ve Bilgi Notu Gizleme:</strong> Kurucu, tur bitene veya tüm oyuncular yanıtlayana kadar istemcilere gönderilen <code>SYNC</code> paketinde <code>correct_answer_index</code>, <code>fun_fact</code> ve <code>answersInRound</code> içindeki <code>choiceIndex</code>/<code>isCorrect</code>/<code>pointsEarned</code> alanlarını maskeler. Tur açıldığında bu alanlar açılır ve varsa <code>fun_fact</code> kartı görüntülenir.</li>
+                <li><strong>Yerinde DOM Güncelleme:</strong> Soru içinde başka bir oyuncu yanıt verdiğinde <code>.choice-btn</code> düğmeleri yeniden oluşturulmaz; mevcut düğmelerin sınıfları yerinde güncellenir.</li>
+                <li><strong>Puanlama:</strong> Doğru cevapta kalan saniye kadar puan eklenir (istemciden gelen süre kurucu süresiyle doğrulanır). Yanlış cevap cezası açıksa yanlış cevapta -5 puan uygulanır (toplam puan 0'ın altına düşmez).</li>
             </ul>
 
-            <h2>Oda Mantığı ve Oturum Yönetimi</h2>
-            <p>Oyun odaları, PeerJS altyapısı tarafından atanan 6 karakterli benzersiz bir <strong>Oda Kodu</strong> (Peer ID) ile yönetilir:</p>
+            <h2>Değişiklik Günlüğü (Changelog)</h2>
             <ul>
-                <li><strong>Bağlantı Kurulumu:</strong> Katılımcı oda kodunu girdiğinde SDP (Session Description Protocol) ve ICE Candidate alışverişi başlar ve güvenli bir veri kanalı açılır.</li>
-                <li><strong>Soru Havuzu Yönetimi:</strong> Host, oyun ayarlarında seçilen soru paketlerini (<code>tr.json</code> dosyasındaki kategorilere göre) belleğe yükler. Oyun sırasında soruların sırası ve kategorileri Host tarafından kontrol edilir ve dağıtılır.</li>
-                <li><strong>Hata Toleransı (Resilience):</strong> Bağlantı kesintileri veya bir oyuncunun oyundan düşmesi durumunda, Host'un <code>handlePlayerLeave</code> mekanizması tetiklenir. İlgili oyuncunun puanları saklı tutulur veya oyun akışının tıkanmaması için aktif tur güncellenir.</li>
+                <li><strong>v1.2:</strong> Solo mod (<code>#btn-solo</code> ve <code>?mode=solo</code>) desteği eklendi; 0 soru üreten kategori/zorluk filtrelerinde uyarı doğrulaması eklendi.</li>
+                <li><strong>v1.1:</strong> Tur açılışı öncesi <code>answersInRound</code> ve <code>fun_fact</code> verileri istemci paketlerinden maskelendi; tur açıldıktan sonra <code>fun_fact</code> gösterimi eklendi.</li>
+                <li><strong>v1.0:</strong> <code>.choice-btn</code> düğmeleri için yerinde DOM güncelleme ve <code>reveal_answer</code> sırasında istemci geri sayımını durdurma düzeltmeleri yapıldı.</li>
             </ul>
-
-            <h2>E-E-A-T & Güvenlik</h2>
-            <p>Uygulama tamamen istemci tarafında (Client-Side) çalıştığı için kullanıcıların kişisel verileri, IP adresleri veya oyun içi yazışmaları herhangi bir uzak sunucuda veya veritabanında depolanmaz. Tüm veri transferleri WebRTC'nin doğası gereği <strong>uçtan uca şifreli (End-to-End Encrypted - DTLS/SRTP)</strong> kanallar üzerinden doğrudan cihazlar arasında gerçekleşir. Bu yaklaşım hem maksimum hız ve sıfır sunucu maliyeti sağlar, hem de veri gizliliğini en üst düzeyde korur.</p>
-
-            <blockquote>
-                Bu teknik dokümantasyon, tarayıcı tabanlı eş zamanlı oyun geliştirme meraklıları ve platformun altyapısını merak eden geliştiriciler için Ahmet Efe Yaşar tarafından hazırlanmıştır.
-            </blockquote>
         </div>
     </main>
 </body>

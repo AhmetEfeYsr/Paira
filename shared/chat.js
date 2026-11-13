@@ -87,7 +87,7 @@ class ChatListener {
 
     updateStatusConnected() {
         this.isConnected = true;
-        const status = document.getElementById('chat-status');
+        const status = document.getElementById('chat-status') || document.getElementById('status-badge');
         if (status) {
             if (this.platform === 'both' || this.platform === 'crossplatform') {
                 status.textContent = '• Twitch & Kick Bağlı';
@@ -100,7 +100,7 @@ class ChatListener {
 
     handleError(errorMsg) {
         console.error(errorMsg);
-        const status = document.getElementById('chat-status');
+        const status = document.getElementById('chat-status') || document.getElementById('status-badge');
         if (status) {
             status.textContent = '• Bağlantı Hatası';
             status.style.color = 'var(--danger)';
@@ -180,7 +180,7 @@ class ChatListener {
             if (this.onClose) this.onClose();
 
             if (!this.isStopped) {
-                const status = document.getElementById('chat-status');
+                const status = document.getElementById('chat-status') || document.getElementById('status-badge');
                 if (status) {
                     status.textContent = `• Twitch Yeniden Bağlanıyor (${Math.round(this.twitchReconnectDelay/1000)}sn)...`;
                     status.style.color = 'var(--warning)';
@@ -363,7 +363,7 @@ class ChatListener {
             if (this.onClose) this.onClose();
 
             if (!this.isStopped) {
-                const status = document.getElementById('chat-status');
+                const status = document.getElementById('chat-status') || document.getElementById('status-badge');
                 if (status) {
                     status.textContent = '• Kick Yeniden Bağlanıyor...';
                     status.style.color = 'var(--warning)';

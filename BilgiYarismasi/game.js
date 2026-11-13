@@ -2,8 +2,10 @@
  * BilgiYarismasiGameEngine - Core game logic
  */
 class BilgiYarismasiGameEngine {
-    constructor(isHost = true) {
+    constructor(isHost = true, isSolo = false) {
         this.isHost = isHost;
+        this.isSolo = isSolo;
+        this.lastStartError = null;
         this.state = {
             status: 'lobby',
             players: {},
@@ -51,7 +53,19 @@ class BilgiYarismasiGameEngine {
     }
 
     setState(newState) {
+        const prevRound = this.state.round;
         this.state = { ...this.state, ...newState };
+        if (!this.isHost) {
+            if (this.state.round !== prevRound) {
+                this.lastTickSec = -1;
+            }
+            if (this.state.status !== 'playing' || this.state.currentQuestion?.reveal_answer) {
+                if (this.renderFrame) {
+                    cancelAnimationFrame(this.renderFrame);
+                    this.renderFrame = null;
+                }
+            }
+        }
         if (this.onStateChange) this.onStateChange(this.state);
     }
 
@@ -71,7 +85,7 @@ class BilgiYarismasiGameEngine {
         this.setState({ players: this.state.players });
         
         if (this.isHost && this.state.status === 'playing') {
-            if (Object.keys(this.state.players).length < 2) {
+            if (!this.isSolo && Object.keys(this.state.players).length < 2) {
                 if (window.showToast) window.showToast("Diğer oyuncular ayrıldığı için oyun lobiye döndürüldü.", "warning");
                 this.backToLobby();
                 return;
@@ -96,8 +110,12 @@ class BilgiYarismasiGameEngine {
     }
 
     startGame(settings = {}) {
-        if (!this.isHost) return;
-        if (Object.keys(this.state.players).length < 2) return false;
+        if (!this.isHost) return false;
+        const minPlayers = this.isSolo ? 1 : 2;
+        if (Object.keys(this.state.players).length < minPlayers) {
+            this.lastStartError = 'NO_PLAYERS';
+            return false;
+        }
 
         this.state.turnDuration = Math.max(5, parseInt(settings.turnDuration) || 20);
         this.state.totalRounds = Math.max(1, parseInt(settings.roundCount) || 10);
@@ -107,17 +125,21 @@ class BilgiYarismasiGameEngine {
         let maxD = parseInt(settings.maxD, 10) || 100;
         if (minD > maxD) [minD, maxD] = [maxD, minD];
         
-        const selCats = settings.categories || [];
+        const hasExplicitCategories = Array.isArray(settings.categories);
+        const selCats = hasExplicitCategories ? settings.categories : null;
 
         let filtered = this.allQuestions.filter(q => {
-            const matchesCategory = selCats.length === 0 || (q.kategori && q.kategori.some(cat => selCats.includes(cat)));
+            const matchesCategory = !hasExplicitCategories || (q.kategori && q.kategori.some(cat => selCats.includes(cat)));
             const matchesDifficulty = q.zorluk >= minD && q.zorluk <= maxD;
             return matchesCategory && matchesDifficulty;
         });
 
         if (filtered.length === 0) {
-            filtered = [...this.allQuestions]; // fallback
+            this.lastStartError = 'NO_QUESTIONS';
+            return false;
         }
+
+        this.lastStartError = null;
 
         if (filtered.length < this.state.totalRounds) {
              this.state.totalRounds = filtered.length;
@@ -171,6 +193,7 @@ class BilgiYarismasiGameEngine {
             shuffled_choices: shuffledTexts,
             correct_answer_index: correctIndex, 
             reveal_answer: false,
+            fun_fact: currentQData.fun_fact || null,
             gorsel_url: currentQData.gorsel_url || null,
             ses_url: currentQData.ses_url || null
         };
@@ -283,7 +306,7 @@ class BilgiYarismasiGameEngine {
         }
 
         const tick = () => {
-            if (this.state.status !== 'playing' || this.isRoundEnding) {
+            if (this.state.status !== 'playing' || this.isRoundEnding || this.state.currentQuestion?.reveal_answer) {
                 this.renderFrame = null;
                 return;
             }
@@ -311,6 +334,10 @@ class BilgiYarismasiView {
     constructor(callbacks) {
         this.callbacks = callbacks;
         this.myId = null;
+        this.selectedChoiceIndex = null;
+        this._lastChoiceKey = null;
+        this._lastMediaKey = null;
+        this._lastRevealKey = null;
         this.bindEvents();
     }
 
@@ -374,6 +401,30 @@ class BilgiYarismasiView {
         document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => {
             this.callbacks.onBackToLobby();
         });
+
+        document.getElementById('btn-exit-game')?.addEventListener('click', () => {
+            if (window.gameNetwork) window.gameNetwork.leaveRoom();
+            else window.location.href = 'index.html';
+        });
+
+        const choicesContainer = document.getElementById('choices-container');
+        choicesContainer?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.choice-btn');
+            if (!btn || btn.classList.contains('disabled')) return;
+            if (this.selectedChoiceIndex !== null) return;
+
+            const idx = parseInt(btn.dataset.choice, 10);
+            if (isNaN(idx)) return;
+
+            this.selectedChoiceIndex = idx;
+            choicesContainer.querySelectorAll('.choice-btn').forEach(b => {
+                b.classList.add('disabled');
+                b.style.pointerEvents = 'none';
+            });
+            btn.classList.add('btn-selected');
+
+            this.callbacks.onAnswer(idx);
+        });
     }
 
     populateCategories(questions) {
@@ -391,6 +442,10 @@ class BilgiYarismasiView {
 
     updateUI(state, isHost) {
         if (state.status === 'lobby') {
+            this._lastChoiceKey = null;
+            this._lastMediaKey = null;
+            this._lastRevealKey = null;
+            this.selectedChoiceIndex = null;
             window.showScreen('lobby-screen');
         } else if (state.status === 'playing') {
             window.showScreen('game-screen');
@@ -481,57 +536,88 @@ class BilgiYarismasiView {
             }
 
             const choicesContainer = document.getElementById('choices-container');
-            choicesContainer.innerHTML = '';
-
             const letters = ['A', 'B', 'C', 'D'];
+            const choices = state.currentQuestion.shuffled_choices || [];
 
-            state.currentQuestion.shuffled_choices.forEach((choiceText, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-secondary choice-btn';
-                btn.style.padding = '1.2rem';
-                btn.style.fontSize = '1.1rem';
-                btn.style.height = 'auto';
-                btn.style.whiteSpace = 'normal';
-                btn.innerHTML = `<strong>${letters[idx]})</strong> ${window.escapeHtml(choiceText)}`;
+            if (this._lastChoiceKey !== mediaKey) {
+                this._lastChoiceKey = mediaKey;
+                this.selectedChoiceIndex = null;
 
-                if (state.currentQuestion.reveal_answer && state.currentQuestion.correct_answer_index !== undefined) {
-                    btn.classList.add('disabled');
-                    if (idx === state.currentQuestion.correct_answer_index) {
-                        btn.classList.add('btn-correct');
-                    } else if (myAnswer && myAnswer.choiceIndex === idx) {
-                        btn.classList.add('btn-wrong');
-                    }
-                } else if (myAnswer) {
-                    btn.classList.add('disabled');
-                    if (myAnswer.choiceIndex === idx) {
-                        btn.classList.add('btn-selected');
-                    }
-                } else {
-                    const handleChoice = (e) => {
-                        e.preventDefault(); 
-                        if (btn.classList.contains('disabled')) return;
-                        
-                        document.querySelectorAll('.choice-btn').forEach(b => {
-                            b.classList.add('disabled');
-                            b.style.pointerEvents = 'none';
-                        });
-                        btn.classList.add('btn-selected');
-
-                        this.callbacks.onAnswer(idx);
-
-                        btn.removeEventListener('click', handleChoice);
-                    };
-
-                    btn.addEventListener('click', handleChoice);
+                let existingBtns = Array.from(choicesContainer.querySelectorAll('.choice-btn'));
+                if (existingBtns.length !== choices.length) {
+                    choicesContainer.innerHTML = '';
+                    existingBtns = choices.map((_, idx) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn btn-secondary choice-btn';
+                        btn.style.padding = '1.2rem';
+                        btn.style.fontSize = '1.1rem';
+                        btn.style.height = 'auto';
+                        btn.style.whiteSpace = 'normal';
+                        btn.dataset.choice = String(idx);
+                        choicesContainer.appendChild(btn);
+                        return btn;
+                    });
                 }
 
-                choicesContainer.appendChild(btn);
+                choices.forEach((choiceText, idx) => {
+                    const btn = existingBtns[idx];
+                    btn.dataset.choice = String(idx);
+                    btn.className = 'btn btn-secondary choice-btn';
+                    btn.style.pointerEvents = '';
+                    btn.innerHTML = `<strong>${letters[idx]})</strong> ${window.escapeHtml(choiceText)}`;
+                });
+            }
+
+            const chosenIdx = (myAnswer && myAnswer.choiceIndex !== undefined)
+                ? myAnswer.choiceIndex
+                : this.selectedChoiceIndex;
+
+            const choiceBtns = choicesContainer.querySelectorAll('.choice-btn');
+            choiceBtns.forEach((btn, idx) => {
+                if (state.currentQuestion.reveal_answer && state.currentQuestion.correct_answer_index !== undefined) {
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none';
+                    btn.classList.remove('btn-selected');
+                    if (idx === state.currentQuestion.correct_answer_index) {
+                        btn.classList.add('btn-correct');
+                        btn.classList.remove('btn-wrong');
+                    } else if (chosenIdx === idx) {
+                        btn.classList.add('btn-wrong');
+                        btn.classList.remove('btn-correct');
+                    } else {
+                        btn.classList.remove('btn-correct', 'btn-wrong');
+                    }
+                } else if (myAnswer || chosenIdx !== null) {
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none';
+                    btn.classList.remove('btn-correct', 'btn-wrong');
+                    btn.classList.toggle('btn-selected', chosenIdx === idx);
+                } else {
+                    btn.classList.remove('disabled', 'btn-selected', 'btn-correct', 'btn-wrong');
+                    btn.style.pointerEvents = '';
+                }
             });
+
+            const funFactBox = document.getElementById('fun-fact-box');
+            if (funFactBox) {
+                if (state.currentQuestion.reveal_answer && state.currentQuestion.fun_fact) {
+                    funFactBox.innerHTML = `<strong>Bilgi:</strong> ${window.escapeHtml(state.currentQuestion.fun_fact)}`;
+                    funFactBox.classList.remove('hidden');
+                } else {
+                    funFactBox.textContent = '';
+                    funFactBox.classList.add('hidden');
+                }
+            }
 
         } else {
             qCard.classList.add('hidden');
             qMsg.innerText = "Soru Yükleniyor...";
             qMsg.className = "status-badge";
+            const funFactBox = document.getElementById('fun-fact-box');
+            if (funFactBox) {
+                funFactBox.textContent = '';
+                funFactBox.classList.add('hidden');
+            }
         }
     }
 
@@ -557,7 +643,9 @@ class BilgiYarismasiView {
 
         const btnBack = document.getElementById('btn-back-to-lobby');
         if (btnBack) {
-            const isLocalHost = sessionStorage.getItem('isHost') === 'true';
+            const isLocalHost = sessionStorage.getItem('isHost') === 'true' ||
+                sessionStorage.getItem('isSolo') === 'true' ||
+                new URLSearchParams(window.location.search).get('mode') === 'solo';
             btnBack.style.display = isLocalHost ? 'block' : 'none';
         }
     }

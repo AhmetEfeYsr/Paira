@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira Bağnam | Geliştirici Notları</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../shared/shared.css">
     <link rel="stylesheet" href="style.css">
@@ -13,7 +13,7 @@
     <!-- Favicons -->
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
-    
+
     <style>
         .about-container {
             max-width: 900px;
@@ -45,30 +45,21 @@
         }
         .about-container p {
             color: var(--text-muted);
-            line-height: 1.8;
-            margin-bottom: 1.2rem;
-            font-size: 0.98rem;
-        }
-        .about-container blockquote {
-            background: var(--input-bg);
-            border-left: 4px solid var(--neon-purple);
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 4px 12px 12px 4px;
-            font-style: italic;
-            color: var(--lilac);
+            line-height: 1.75;
+            margin-bottom: 1.1rem;
+            font-size: 0.96rem;
         }
         .about-container strong {
             color: var(--text-main);
         }
         .about-container ul {
             list-style-type: disc;
-            padding-left: 2rem;
+            padding-left: 1.75rem;
             margin-bottom: 1.2rem;
             color: var(--text-muted);
         }
         .about-container ul li {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.45rem;
             line-height: 1.6;
         }
         .about-container code {
@@ -77,21 +68,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             color: var(--neon-purple);
-            font-size: 0.95rem;
-        }
-        .about-container pre {
-            background: var(--input-bg);
-            border: var(--glass-border);
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 1.2rem 0;
-        }
-        .about-container pre code {
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
         }
         .back-link {
             display: inline-flex;
@@ -114,44 +91,44 @@
         <div class="about-container">
             <a href="index.html" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Game
+                Oyuna Dön
             </a>
-            
+
             <h1>Geliştirici Notları: Bağnam</h1>
-            
-            <h2>Giriş ve Anlamsal Kelime Uzayı</h2>
-            <p><strong>Paira Bağnam</strong>, Türkçe kelimeler arasındaki anlamsal (semantik) yakınlıkları yüksek boyutlu kelime vektörleri (Word Embeddings) üzerinden hesaplayarak oyunculara sunan günlük ve sonsuz modlu bir kelime bulmaca oyunudur. Klasik harf eşleştirme oyunlarının aksine Bağnam'da kelimelerin yazılış benzerliği değil, bağlamsal ve kavramsal ilişkileri ölçülür.</p>
-            <p>Veri hazırlık aşamasında binlerce Türkçe kelime kök ve gövdesi, büyük ölçekli Türkçe metin derlemleri üzerinde eğitilmiş vektör uzayında temsil edilir. Her hedef kelime için sözlükteki diğer tüm kelimelerle olan <strong>Kosinüs Benzerliği (Cosine Similarity)</strong> hesaplanır ve en yakın kelimeden (Sıra #1: Hedef Kelime) en uzak kelimeye doğru sıralanır.</p>
-            
-            <h2>Hibrit Veri Mimarisi (Firebase RTDB &amp; Cloudflare R2)</h2>
-            <p>İstemci tarafında devasa vektör matrislerini indirmeden milisaniyeler içinde tahmin sorgusu yapabilmek için iki katmanlı bir veri mimarisi uygulanmıştır:</p>
+
+            <h2>1. Önceden Hesaplanmış Statik Bulmaca JSON Mimarisi</h2>
+            <p><strong>Bağnam</strong>, tarayıcıda ağır vektör modelleri çalıştırmadan anlık tahmin geri bildirimi verebilmek için önceden hesaplanmış statik bulmaca verileri üzerinde çalışır. Her bulmaca için sözlükteki kelimelerin hedef kelimeye olan sıra (<code>r</code>) ve benzerlik skoru (<code>s</code>) değerleri önceden derlenmiştir.</p>
             <ul>
-                <li><strong>Günlük ve Arşiv Modu (Firebase Realtime Database):</strong> Her günün (<code>YYYY-MM-DD</code>) kelime sıralaması <code>gunluk_oyun/{tarih}/{kelime}.json</code> uç noktalarında anahtar-değer çifti (<code>{ r: sıra, s: skor }</code>) olarak tutulur. Böylece oyuncu bir tahmin yaptığında tüm sözlük indirilmez; yalnızca sorgulanan kelimenin verisi (~50 byte) çekilir ve gizli kelime ağ trafiğinden sızdırılmaz.</li>
-                <li><strong>Sonsuz Mod (Cloudflare R2 CDN):</strong> Oyuncuların günün kelimesi dışında sınırsız pratik yapabilmesi için önceden derlenmiş paketler <code>db.pairaaa.com</code> üzerinden JSON olarak belleğe yüklenir ve sıfır gecikmeyle yerel olarak sorgulanır.</li>
-                <li><strong>Zaman Senkronizasyonu:</strong> Günlük kelime geçişleri Türkiye saati (UTC+3) baz alınarak <code>PairaTime</code> sunucu zaman senkronizasyonu ile hesaplanır; böylece cihaz saati hatalı olan kullanıcılarda dahi doğru günün bulmacası yüklenir.</li>
+                <li><strong>Günlük, Arşiv ve Sonsuz Mod (<code>ID &gt;= 100</code>) — Firebase RTDB JSON:</strong> Her kelime tahmini yalnızca <code>gunluk_oyun/{nodeKey}/{kelime}.json</code> uç noktasından sorgulanır (örneğin <code>{ r: 42, s: 0.78 }</code>). Oyun açılışında tüm sözlük veya hedef kelime indirilmez; yalnızca <code>hint-5000-tanim.json</code> üzerinden bulmacanın varlığı doğrulanır.</li>
+                <li><strong>Sonsuz Mod (<code>ID 1..99</code>) — Statik JSON Paketleri:</strong> <code>db.pairaaa.com/Sonsuz%20Mod/{id}.json</code> adresindeki önceden derlenmiş JSON dosyaları tek seferde belleğe (<code>endlessGameData</code>) alınır ve tahminler yerel bellekten sorgulanır. <code>ID &gt;= 100</code> havuzu ise <code>sonsuz-meta/aralik.json</code> üzerinden dinamik olarak okunur.</li>
             </ul>
 
-            <h2>Eş Sesli Kelimeler (Homonyms) ve Türkçe Normalizasyon</h2>
-            <p>Türkçede yazılışı aynı fakat anlamı tamamen farklı olan eş sesli kelimeler (örneğin <em>yüz</em>, <em>yaz</em>, <em>kır</em>, <em>çay</em>) anlamsal uzayda birden fazla vektöre sahiptir. Bağnam bu durumu şu algoritmayla çözer:</p>
+            <h2>2. Benzerlik, Sıra Geri Bildirimi ve Türkçe Normalizasyon</h2>
+            <p>Her tahminin ardından liste sıra numarasına (<code>r</code>) göre küçükten büyüğe yeniden sıralanır ve <code>#1</code> hedef kelimeyi temsil eder.</p>
             <ul>
-                <li><strong>Varyant Sorgulama:</strong> Veri tabanında eş sesli kelimelerin farklı anlamları <code>kelime_1</code>, <code>kelime_2</code> ... <code>kelime_5</code> şeklinde indekslenir. Oyuncu bir kelime girdiğinde istemci bu varyantları paralel olarak sorgular ve hedef kelimeye en yakın olan (en yüksek benzerlik skoruna sahip) anlamı otomatik olarak seçer.</li>
-                <li><strong>Türkçe Karakter ve Unicode Normalizasyonu:</strong> <code>tr-TR</code> yerel ayarlarına duyarlı küçültme (<code>İ → i</code>, <code>I → ı</code>) ve Unicode NFC normalizasyonu uygulanır. Kullanıcının girdiği tam Türkçe kelime veritabanında öncelikli olarak aranır; yalnızca bulunamadığı durumda şapkalı veya ASCII karşılıklarına (<code>normalizeTurkishChars</code>) geri dönüş (fallback) yapılır. Bu sayede <em>köy/koy</em>, <em>tür/tur</em>, <em>taş/tas</em> gibi farklı Türkçe kelimelerin birbirini ezmesi engellenir.</li>
+                <li><strong>HSL Renk Skalası:</strong> <code>getSimilarityColor()</code>, <code>0.0–1.0</code> aralığındaki <code>s</code> değerini <code>score^0.7</code> eğrisiyle <code>0°</code> (kırmızı) &rarr; <code>120°</code> (yeşil) HSL tonlarına dönüştürür; en yakın tahmin üstteki takip kartında (<code>#best-guess-widget</code>) ayrıca gösterilir.</li>
+                <li><strong>Türkçe Karakter ve Eş Sesli Varyantlar:</strong> <code>normalizeInputWord()</code> girdiyi <code>tr-TR</code> kurallarına uygun küçültür ve NFC formatına getirir. Eş sesli kelimeler için <code>kelime</code> ile birlikte <code>kelime_1..5</code> anahtarları paralel sorgulanır; tam Türkçe yazımla eşleşen sonuçlar ASCII geri dönüşüne göre önceliklendirilir ve en yüksek skorlu anlam seçilir.</li>
             </ul>
 
-            <h2>Kademeli İpucu (Progressive Hint) Algoritması</h2>
-            <p>Oyuncunun takıldığı noktalarda oyunu doğrudan bitirmeden rehberlik eden 20 aşamalı bir ipucu merdiveni (<code>[5000, 4000, ..., 50, 30, 20, 10, 5, 2]</code>) tasarlanmıştır:</p>
+            <h2>3. Günlük, Arşiv ve Sonsuz Mod Akışı</h2>
             <ul>
-                <li>Sistem oyuncunun mevcut en yakın tahminini analiz eder ve henüz ulaşılmamış ilk eşik noktasını (<code>targetN</code>) belirler.</li>
-                <li><strong>1. Dokunuş (Tanım):</strong> Seçilen sıradaki kelimenin kendisini vermek yerine önce TDK/sözlük tanımını (<code>hint-{N}-tanim</code>) gösterir ve oyuncuyu düşünmeye teşvik eder.</li>
-                <li><strong>2. Dokunuş (Kelime):</strong> Oyuncu tanıma rağmen kelimeyi bulamazsa ikinci ipucu isteğinde o sıradaki kelimeyi (<code>hint-{N}-kelime</code>) açıklar. İpucu yardımıyla bulunan kelimeler tahmin geçmişinde <code>💡</code> rozetiyle işaretlenir.</li>
+                <li><strong>Günlük Mod:</strong> Türkiye saati (UTC+3) baz alınarak <code>window.getTodayDateTR()</code> üzerinden günün tarih anahtarı (<code>YYYY-MM-DD</code>) belirlenir.</li>
+                <li><strong>Arşiv Modu:</strong> Tarih seçici (<code>#past-date-picker</code>) aracılığıyla geçmiş günlerin bulmacaları aynı veri uç noktaları üzerinden oynanabilir; gelecek tarihler engellenir.</li>
+                <li><strong>Kayıt ve Seri (Streak):</strong> Tahminler, ipucu geçmişi ve günlük kazanma serileri <code>localStorage</code> üzerinde (<code>bagnam_state_daily_{tarih}</code>, <code>bagnam_state_endless</code>, <code>bagnam_stats</code>) saklanır.</li>
             </ul>
 
-            <h2>Durum Koruma (Persistence) ve Dinamik Görselleştirme</h2>
-            <p>Tahmin listesi her yeni girişte sıraya göre yeniden dizilir ve benzerlik skoruna bağlı doğrusal olmayan (<code>score^0.7</code>) HSL renk dönüşümüyle kırmızıdan (uzak) yeşile (yakın) dinamik olarak boyanır. Oyun durumu, kullanılan ipuçları ve günlük seri (streak) istatistikleri <code>localStorage</code> üzerinde tarih bazlı anahtarlarla otomatik kaydedilir; sayfa yenilense bile oyuncu kaldığı yerden devam edebilir.</p>
+            <h2>4. Kademeli İpucu ve Pes Etme Mekaniği</h2>
+            <ul>
+                <li><strong>20 Aşamalı İpucu Merdiveni:</strong> <code>[5000, 4000, ..., 50, 30, 20, 10, 5, 2]</code> eşiklerinden oyuncunun henüz ulaşmadığı ilk sıra seçilir. İlk tıklama o sıradaki kelimenin tanımını (<code>hint-{N}-tanim</code>), ikinci tıklama kelimenin kendisini (<code>hint-{N}-kelime</code>), üçüncü tıklama ise mevcut aşamayı atlayarak bir sonraki yakın aşamaya geçer.</li>
+                <li><strong>Pes Etme (<code>handleGiveUp</code>):</strong> Günlük/Arşiv ve <code>ID &gt;= 100</code> modlarında öncelikle <code>ana-kelime-pes.json</code> okunur; eksik olduğu durumlarda <code>target_word.json</code> geri dönüşü kullanılır.</li>
+            </ul>
 
-            <blockquote>
-                Bu teknik dokümantasyon, Paira Bağnam'ın doğal dil işleme (NLP) tabanlı veri yapısını ve istemci mimarisini açıklamak amacıyla geliştirici ekibi için hazırlanmıştır.
-            </blockquote>
+            <h2>5. Değişiklik Günlüğü (Changelog)</h2>
+            <ul>
+                <li><strong>Sonsuz Mod (<code>ID &gt;= 100</code>) Doğrulama ve Pes Etme:</strong> <code>initGame()</code> açılışında hedef kelimeyi belleğe sızdırmadan bulmaca varlık kontrolü (<code>hint-5000-tanim.json</code> öncelikli) eklendi. <code>handleGiveUp()</code> içinde <code>ana-kelime-pes.json</code> &rarr; <code>target_word.json</code> geri dönüşü sağlandı.</li>
+                <li><strong>İpucu Akışı Düzeltmesi:</strong> Özyinelemeli <code>handleHint()</code> çağrılarına <code>await</code> eklenerek asenkron istekler bitene kadar ipucu butonunun kilitli kalması sağlandı; 3. ipucu tıklamasının manuel kelime girişi istemek yerine doğrudan bir sonraki aşamaya geçmesi sağlandı.</li>
+                <li><strong>Kod ve Arayüz Temizliği:</strong> Kullanılmayan <code>MOCK_FIREBASE_URL</code>, <code>hintDataCache</code> ve <code>calculateLogarithmicScore</code> kaldırıldı. <code>#game-screen</code> başlangıçta <code>.hidden</code> ile gizlendi ve <code>.game-topbar</code> butonları <code>!important</code> ezicileri olmadan koyu mor/lila temayla uyumlu hale getirildi.</li>
+            </ul>
         </div>
     </main>
 </body>

@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', initAudioOnce, { once: true });
 
     if (document.getElementById('main-word')) {
-        initGame();
         initCanvas();
+        initGame();
     }
 });
 
@@ -56,7 +56,8 @@ function initCanvas() {
     const canvasElement = document.getElementById('drawing-board');
     drawingBoard = new AdvancedDrawingBoard(canvasElement, {
         defaultColor: '#000000',
-        defaultSize: 8
+        defaultSize: 8,
+        readOnly: true
     });
 
     // Toolbar logic
@@ -120,6 +121,7 @@ function initCanvas() {
     });
 
     bindInteraction(document.getElementById('btn-clear'), () => {
+        if (state.isPaused || !drawingBoard || drawingBoard.readOnly) return;
         drawingBoard.clear(false);
         if (window.showToast) window.showToast("Tuval temizlendi", "info");
     });
@@ -127,6 +129,7 @@ function initCanvas() {
     const btnUndo = document.getElementById('btn-undo');
     if (btnUndo) {
         bindInteraction(btnUndo, () => {
+            if (state.isPaused || !drawingBoard || drawingBoard.readOnly) return;
             drawingBoard.undo(false);
         });
     }
@@ -170,7 +173,7 @@ function initCanvas() {
     }
 }
 
-async function initGame() {
+function initGame() {
     const channel = sessionStorage.getItem('cizbil_channel');
     const platform = sessionStorage.getItem('cizbil_platform');
 
@@ -181,10 +184,9 @@ async function initGame() {
 
     document.getElementById('channel-name-display').textContent = `${platform.toUpperCase()} / ${channel}`;
 
-    await loadGarticWordsLocal();
-
-    // Update word database after loading
-    wordDatabase = [...window.cizbilWords];
+    if (window.cizbilWords && Array.isArray(window.cizbilWords) && window.cizbilWords.length > 0) {
+        wordDatabase = [...window.cizbilWords];
+    }
 
     // Shuffle words using Fisher-Yates
     for (let i = wordDatabase.length - 1; i > 0; i--) {
@@ -286,7 +288,8 @@ function presentWordChoices() {
 
     document.getElementById('btn-choice-1').textContent = word1;
     document.getElementById('btn-choice-2').textContent = word2;
-    document.getElementById('word-choice-overlay-bg').style.display = 'block';
+    const choiceBg = document.getElementById('word-choice-overlay-bg');
+    if (choiceBg) choiceBg.style.display = 'block';
     document.getElementById('word-choice-overlay').style.display = 'flex';
     document.getElementById('main-word').textContent = "SEÇİM YAPILIYOR...";
     document.getElementById('btn-next').style.display = 'none';
@@ -300,7 +303,8 @@ function presentWordChoices() {
 }
 
 function startWord(selectedWord) {
-    document.getElementById('word-choice-overlay-bg').style.display = 'none';
+    const choiceBg = document.getElementById('word-choice-overlay-bg');
+    if (choiceBg) choiceBg.style.display = 'none';
     document.getElementById('word-choice-overlay').style.display = 'none';
     currentWord = selectedWord;
     wordCount++;
@@ -337,7 +341,7 @@ function handleChatMessage(username, message) {
     if (!state.isPaused && currentWord && isMatch(message, currentWord)) {
         msgDiv.classList.add('correct');
         // FIX: Use textContent instead of innerHTML to prevent XSS from chat messages
-        textSpan.textContent = `🎉 ${message} (Doğru bildi!)`;
+        textSpan.textContent = `${message} (Doğru bildi!)`;
         textSpan.style.fontWeight = 'bold';
         handleCorrectGuess(username);
     }
@@ -404,41 +408,4 @@ function updateLeaderboard() {
         item.appendChild(scoreSpan);
         list.appendChild(item);
     });
-}
-
-async function loadGarticWordsLocal() {
-    try {
-        const response = await fetch('gartic.json');
-        if (!response.ok) throw new Error('Failed to fetch gartic.json');
-
-        const textData = await response.text();
-        let parsed = [];
-
-        try {
-            const jsonData = JSON.parse(textData);
-            if (Array.isArray(jsonData)) {
-                parsed = jsonData.map(x => String(x).trim()).filter(x => x.length > 0);
-            }
-        } catch (jsonErr) {
-            const cleanedText = textData.trim().replace(/^\[/, '').replace(/\]$/, '');
-            parsed = cleanedText.split(',')
-                .map(x => x.trim().replace(/\n/g, '').replace(/^["']|["']$/g, ''))
-                .filter(x => x.length > 0);
-        }
-
-        if (parsed.length > 0) {
-            window.cizbilWords = parsed;
-        }
-    } catch (e) {
-        console.error("Gartic kelimeleri yuklenemedi:", e);
-        // Fallback words
-        window.cizbilWords = [
-            "AĞAÇ", "GÜNEŞ", "ARABA", "KEDİ", "KÖPEK",
-            "EV", "TELEFON", "BİLGİSAYAR", "KİTAP", "GÖZLÜK",
-            "SAAT", "MASA", "SANDALYE", "ELMA", "DENİZ",
-            "BALIK", "KUŞ", "UÇAK", "BİSİKLET", "AYAKKABI",
-            "ŞAPKA", "PANTOLON", "GÖMLEK", "KAPI", "TELEVİZYON",
-            "KOLTUK", "YATAK", "YILDIZ", "AY", "ÇİÇEK"
-        ];
-    }
 }

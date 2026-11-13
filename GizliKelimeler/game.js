@@ -44,23 +44,23 @@ class GizliKelimelerEngine {
             const teamA = players.filter(p => p.team === 'A');
             const teamB = players.filter(p => p.team === 'B');
             
-            if (teamA.length === 0 || teamB.length === 0) {
-                this.endGame(teamA.length === 0 ? 'B' : 'A');
+            if (teamA.length < 2 || teamB.length < 2) {
+                const winner = teamA.length < 2 && teamB.length >= 2
+                    ? 'B'
+                    : (teamB.length < 2 && teamA.length >= 2 ? 'A' : (this.state.scoreA <= this.state.scoreB ? 'A' : 'B'));
+                this.endGame(winner);
                 return;
             }
-            
-            const turnTeamPlayers = players.filter(p => p.team === this.state.turnTeam);
-            if (this.state.phase === 'CLUE') {
-                const hasSpymaster = turnTeamPlayers.some(p => p.role === 'SPYMASTER');
+
+            [teamA, teamB].forEach(team => {
+                const hasSpymaster = team.some(p => p.role === 'SPYMASTER');
+                const hasGuesser = team.some(p => p.role === 'GUESSER');
                 if (!hasSpymaster) {
-                    this.switchTurn();
+                    team[0].role = 'SPYMASTER';
+                } else if (!hasGuesser) {
+                    team[0].role = 'GUESSER';
                 }
-            } else if (this.state.phase === 'GUESS') {
-                const hasGuesser = turnTeamPlayers.some(p => p.role === 'GUESSER');
-                if (!hasGuesser) {
-                    this.switchTurn();
-                }
-            }
+            });
         }
         
         this.setState({ players: this.state.players });
@@ -174,7 +174,6 @@ class GizliKelimelerEngine {
                 if (this.onSound) this.onSound('timeup');
                 if (this.isHostNode) {
                     this.switchTurn();
-                    this.setState(this.state);
                 }
                 return;
             }
@@ -229,6 +228,27 @@ class GizliKelimelerEngine {
         }));
     }
 
+    isValidClue(word, count) {
+        const raw = typeof word === 'string' ? word.trim() : '';
+        const parsedCount = parseInt(count, 10);
+        if (!raw || raw.length > 25 || /\s/.test(raw) || isNaN(parsedCount) || parsedCount < 1) {
+            return false;
+        }
+        const norm = (s) => {
+            const trimmed = String(s).trim();
+            return typeof window.normalizeTurkishChars === 'function'
+                ? window.normalizeTurkishChars(trimmed)
+                : trimmed.toLocaleLowerCase('tr-TR');
+        };
+        const normClue = norm(raw);
+        const conflictsWithBoard = this.state.board.some(c => {
+            if (!c || c.revealed || !c.word) return false;
+            const normBoard = norm(c.word);
+            return normClue === normBoard || normClue.includes(normBoard) || normBoard.includes(normClue);
+        });
+        return !conflictsWithBoard;
+    }
+
     processAction(actionType, payload, senderId) {
         if (this.state.status !== 'playing') return;
 
@@ -236,10 +256,10 @@ class GizliKelimelerEngine {
         if (!p) return;
 
         if (actionType === 'SUBMIT_CLUE' && this.state.phase === 'CLUE' && p.team === this.state.turnTeam && p.role === 'SPYMASTER') {
-            const count = parseInt(payload.count);
-            const cleanWord = payload.word ? payload.word.trim().toLocaleUpperCase('tr-TR') : '';
-            if (!cleanWord || isNaN(count) || count < 1) return;
-            if (this.state.board.some(c => !c.revealed && c.word.toLocaleUpperCase('tr-TR') === cleanWord)) return;
+            const count = parseInt(payload.count, 10);
+            const rawWord = payload.word ? String(payload.word).trim() : '';
+            if (!this.isValidClue(rawWord, count)) return;
+            const cleanWord = rawWord.toLocaleUpperCase('tr-TR');
 
             this.state.currentClue = {
                 word: cleanWord,
@@ -248,7 +268,7 @@ class GizliKelimelerEngine {
             };
             this.state.phase = 'GUESS';
             this.startTimer();
-            if(this.onSound) this.onSound('tick');
+            if (this.onSound) this.onSound('pop');
         }
         else if (actionType === 'MARK_WORD' && this.state.phase === 'GUESS' && p.team === this.state.turnTeam && p.role === 'GUESSER') {
             const cellIdx = payload.index;
@@ -277,8 +297,9 @@ class GizliKelimelerEngine {
             }
 
             if (cell.team === 'ASSASSIN') {
-                if (this.onSound) this.onSound('timeup'); // Game over sound
+                if (this.onSound) this.onSound('end');
                 this.endGame(p.team === 'A' ? 'B' : 'A');
+                return;
             }
             else if (cell.team === 'TEAM_' + this.state.turnTeam) {
                 if (this.onSound) this.onSound('correct');
@@ -287,10 +308,17 @@ class GizliKelimelerEngine {
 
                 this.state.currentClue.remaining--;
 
-                if (this.state.scoreA === 0) this.endGame('A');
-                else if (this.state.scoreB === 0) this.endGame('B');
-                else if (this.state.currentClue.remaining <= 0) {
+                if (this.state.scoreA === 0) {
+                    this.endGame('A');
+                    return;
+                }
+                if (this.state.scoreB === 0) {
+                    this.endGame('B');
+                    return;
+                }
+                if (this.state.currentClue.remaining <= 0) {
                     this.switchTurn();
+                    return;
                 }
             }
             else {
@@ -299,15 +327,21 @@ class GizliKelimelerEngine {
                 if (cell.team === 'TEAM_A') this.state.scoreA--;
                 else if (cell.team === 'TEAM_B') this.state.scoreB--;
 
-                if (this.state.scoreA === 0) this.endGame('A');
-                else if (this.state.scoreB === 0) this.endGame('B');
-                else this.switchTurn();
+                if (this.state.scoreA === 0) {
+                    this.endGame('A');
+                    return;
+                }
+                if (this.state.scoreB === 0) {
+                    this.endGame('B');
+                    return;
+                }
+                this.switchTurn();
+                return;
             }
             this.setState(this.state);
         }
         else if (actionType === 'END_TURN' && this.state.phase === 'GUESS' && p.team === this.state.turnTeam && p.role === 'GUESSER') {
             this.switchTurn();
-            this.setState(this.state);
         }
     }
 
@@ -331,6 +365,7 @@ class GizliKelimelerEngine {
         this.state.status = 'ended';
         this.state.winnerTeam = winnerTeam;
         this.stopTimer();
+        this.setState(this.state);
     }
 }
 
@@ -353,18 +388,32 @@ class GizliKelimelerView {
         const submitClue = () => {
             const word = document.getElementById('clue-word').value.trim();
             const countStr = document.getElementById('clue-count').value;
-            const count = parseInt(countStr);
-            if(!word || isNaN(count) || count < 1) {
+            const count = parseInt(countStr, 10);
+            if (!word || isNaN(count) || count < 1) {
                 this.showToast("Lütfen geçerli bir ipucu ve en az 1 sayısı giriniz!", "warning");
+                return;
+            }
+            if (word.length > 25) {
+                this.showToast("İpucu en fazla 25 karakter olabilir!", "warning");
                 return;
             }
             if (/\s/.test(word)) {
                 this.showToast("İpucu tek bir kelime olmalıdır!", "warning");
                 return;
             }
-            const upperWord = word.toLocaleUpperCase('tr-TR');
-            if (this.currentBoard && this.currentBoard.some(c => !c.revealed && c.word.toLocaleUpperCase('tr-TR') === upperWord)) {
-                this.showToast("Tahtada açık olmayan bir kelimeyi ipucu olarak veremezsiniz!", "warning");
+            const norm = (s) => {
+                const trimmed = String(s).trim();
+                return typeof window.normalizeTurkishChars === 'function'
+                    ? window.normalizeTurkishChars(trimmed)
+                    : trimmed.toLocaleLowerCase('tr-TR');
+            };
+            const normClue = norm(word);
+            if (this.currentBoard && this.currentBoard.some(c => {
+                if (!c || c.revealed || !c.word) return false;
+                const normBoard = norm(c.word);
+                return normClue === normBoard || normClue.includes(normBoard) || normBoard.includes(normClue);
+            })) {
+                this.showToast("Tahtadaki açılmamış bir kelimeyle eşleşen veya onu içeren ipucu veremezsiniz!", "warning");
                 return;
             }
             this.callbacks.onSubmitClue(word, count);
@@ -517,11 +566,12 @@ class GizliKelimelerView {
                 card.classList.add('marked');
                 if (state.marks[idx].includes(this.myId)) {
                     isMarkedByMe = true;
-                    card.style.boxShadow = "0 0 15px rgba(var(--primary-rgb), 0.9)";
+                    card.classList.add('marked-by-me');
                 }
             }
 
             if (!cell.revealed && canGuess) {
+                card.classList.add('can-guess');
                 card.style.cursor = 'pointer';
                 card.onclick = (e) => {
                     e.preventDefault();

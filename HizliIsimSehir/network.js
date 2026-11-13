@@ -45,9 +45,9 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
                 this.broadcast('SHOW_SCORES', { scores, round: this.engine.state.round, totalRounds: this.engine.config.rounds });
             };
 
-            this.engine.onVoteStart = (word, categoryName) => {
-                this.view.showVotingUI(word, categoryName);
-                this.broadcast('START_VOTE', { word, categoryName });
+            this.engine.onVoteStart = (word, categoryName, appealingPlayerId) => {
+                this.view.showVotingUI(word, categoryName, appealingPlayerId);
+                this.broadcast('START_VOTE', { word, categoryName, appealingPlayerId });
             };
 
             this.engine.onVoteResult = (result) => {
@@ -89,7 +89,7 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
         if (data.state.status === 'LOBBY') {
             this.lobbyUI.renderPlayers(data.state.players, this.myId);
             this.view.switchScreen('lobby-screen');
-        } else if (data.state.status === 'PLAYING' || data.state.status === 'WAITING_APPEAL') {
+        } else if (['PLAYING', 'WAITING_APPEAL', 'VOTING', 'VOTE_RESULT'].includes(data.state.status)) {
             this.view.updateGameUI(data.state);
         }
         // SCORE screen transition is handled by explicit SHOW_SCORES action
@@ -155,7 +155,7 @@ class HizliIsimSehirNetwork extends BaseGameNetwork {
             } else if (action === 'SHOW_SCORES') {
                 this.view.renderScoreboard(payload.scores, this.isHostNode, payload.round, payload.totalRounds);
             } else if (action === 'START_VOTE') {
-                this.view.showVotingUI(payload.word, payload.categoryName);
+                this.view.showVotingUI(payload.word, payload.categoryName, payload.appealingPlayerId);
             } else if (action === 'VOTE_UPDATE') {
                 this.view.updateVoteCount(payload.yes, payload.no);
             } else if (action === 'VOTE_RESULT') {
@@ -191,11 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
             engine.startGame(config);
         },
         onTimeUp: () => {
-            // Client auto-submits empty if time is up and they haven't manually submitted
+            // Client auto-submits if time is up and they haven't manually submitted
             const input = document.getElementById('compact-game-input');
             if (input && !input.disabled) {
-                const btn = document.getElementById('btn-finish-turn');
-                if (btn) btn.click();
+                view.submitCurrentTurn(true);
             }
         },
         onFinishTurn: (answers) => {
@@ -234,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Setup Timer Sync Hook
     let forceTurnTimeout = null;
+    let lastTimerTurnId = null;
     if (isHost) {
         engine.onStateChange = (state) => {
             if (state.status === 'LOBBY') {
@@ -243,29 +243,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 view.updateGameUI(state);
             }
             network.broadcastState({ state: state });
-            
-            if (forceTurnTimeout) {
-                clearTimeout(forceTurnTimeout);
-                forceTurnTimeout = null;
-            }
 
-            // If it's playing and we just changed state, we need to sync timer
             if (state.status === 'PLAYING') {
-                const duration = engine.config.endValue * 1000;
-                const endTime = window.PairaTime.now() + duration;
-                view.startTimer(endTime);
-                network.broadcast('TIMER_SYNC', { endTime });
-
-                // Host-side safety timeout: advancement if player doesn't submit
-                forceTurnTimeout = setTimeout(() => {
-                    const playersArr = Object.values(engine.state.players);
-                    const currentPlayer = playersArr[engine.state.currentPlayerIndex];
-                    if (currentPlayer && engine.state.status === 'PLAYING') {
-                        console.log("Force advancing turn for player:", currentPlayer.name);
-                        engine.handleTurnSubmit(currentPlayer.id, {});
+                if (state.turnId !== lastTimerTurnId) {
+                    lastTimerTurnId = state.turnId;
+                    if (forceTurnTimeout) {
+                        clearTimeout(forceTurnTimeout);
+                        forceTurnTimeout = null;
                     }
-                }, duration + 3000); // 3 seconds grace period
+                    const duration = engine.config.endValue * 1000;
+                    const endTime = window.PairaTime.now() + duration;
+                    view.startTimer(endTime);
+                    network.broadcast('TIMER_SYNC', { endTime });
+
+                    // Host-side safety timeout: advancement if player doesn't submit
+                    forceTurnTimeout = setTimeout(() => {
+                        const playersArr = Object.values(engine.state.players);
+                        const currentPlayer = playersArr[engine.state.currentPlayerIndex];
+                        if (currentPlayer && engine.state.status === 'PLAYING') {
+                            console.log("Force advancing turn for player:", currentPlayer.name);
+                            engine.handleTurnSubmit(currentPlayer.id, {});
+                        }
+                    }, duration + 3000); // 3 seconds grace period
+                }
             } else {
+                lastTimerTurnId = null;
+                if (forceTurnTimeout) {
+                    clearTimeout(forceTurnTimeout);
+                    forceTurnTimeout = null;
+                }
                 view.stopTimer();
             }
         };

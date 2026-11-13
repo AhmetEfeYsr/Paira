@@ -2,7 +2,7 @@
  * BilgiYarismasiNetwork - Network layer
  */
 class BilgiYarismasiNetwork extends BaseGameNetwork {
-    constructor(engine, view) {
+    constructor(engine, view, isSolo = false) {
         super({
             onStateSync: (state) => this.handleStateSync(state),
             onPlayerJoin: (id, player) => this.handlePlayerJoin(id, player),
@@ -12,6 +12,10 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
         
         this.engine = engine;
         this.view = view;
+        this.isSolo = Boolean(isSolo);
+        if (this.isSolo) {
+            this.isHostNode = true;
+        }
         
         const initialCode = this.isHostNode ? (sessionStorage.getItem('myId') || sessionStorage.getItem('roomCode') || '') : (this.roomCode || '');
 
@@ -32,6 +36,9 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
                 this.lobbyUI.setRoomCode(codeToSet);
                 if (this.isHostNode && this.engine && this.engine.state) {
                     this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+                    if (this.isSolo) {
+                        document.getElementById('btn-start-game')?.classList.remove('disabled');
+                    }
                 }
             } finally {
                 inPeerReady = false;
@@ -42,10 +49,16 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
             this.engine.onStateChange = (state) => {
                 this.view.updateUI(state, this.isHostNode);
                 this.lobbyUI.renderPlayers(state.players, this.myId);
+                if (this.isSolo) {
+                    document.getElementById('btn-start-game')?.classList.remove('disabled');
+                    return;
+                }
                 
                 const stateCopy = { ...state };
                 delete stateCopy.activeQuestions;
                 
+                const isRevealed = Boolean(state.status === 'playing' && state.currentQuestion && state.currentQuestion.reveal_answer);
+
                 if (state.status === 'playing' && state.currentQuestion) {
                     stateCopy.currentQuestion = {
                         category: state.currentQuestion.category,
@@ -55,11 +68,22 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
                         gorsel_url: state.currentQuestion.gorsel_url,
                         ses_url: state.currentQuestion.ses_url
                     };
-                    if (state.currentQuestion.reveal_answer) {
+                    if (isRevealed) {
                         stateCopy.currentQuestion.correct_answer_index = state.currentQuestion.correct_answer_index;
+                        if (state.currentQuestion.fun_fact) {
+                            stateCopy.currentQuestion.fun_fact = state.currentQuestion.fun_fact;
+                        }
                     }
                 } else {
                     stateCopy.currentQuestion = null;
+                }
+
+                if (!isRevealed) {
+                    const maskedAnswers = {};
+                    Object.keys(state.answersInRound || {}).forEach(pid => {
+                        maskedAnswers[pid] = { answered: true };
+                    });
+                    stateCopy.answersInRound = maskedAnswers;
                 }
                 
                 this.broadcastState({ state: stateCopy, hostId: this.myId });
@@ -68,7 +92,7 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
             let lastSyncSec = -1;
             this.engine.onTimerTick = (secs) => {
                 this.view.updateTimer(secs);
-                if (lastSyncSec !== secs) {
+                if (!this.isSolo && lastSyncSec !== secs) {
                     lastSyncSec = secs;
                     if (secs === this.engine.state.turnDuration || secs % 5 === 0 || secs <= 5) {
                         const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
@@ -79,13 +103,52 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
             
             this.engine.onSound = (sound) => {
                 window.PairaAudio && window.PairaAudio.play(sound);
-                this.broadcast('PLAY_SOUND', { sound });
+                if (!this.isSolo) {
+                    this.broadcast('PLAY_SOUND', { sound });
+                }
             };
         }
 
         window.addEventListener('beforeunload', () => {
-            this.leaveRoom();
+            if (!this.isSolo) this.leaveRoom();
         });
+    }
+
+    autoInit() {
+        if (this.isSolo) {
+            this.myId = 'solo-player';
+            this.isHostNode = true;
+            this.view.setMyId('solo-player');
+
+            const codeContainer = document.querySelector('.lobby-header .code-container');
+            if (codeContainer) codeContainer.style.display = 'none';
+            const copyBtn = document.getElementById('btn-copy-room');
+            if (copyBtn) copyBtn.style.display = 'none';
+
+            this.engine.addPlayer('solo-player', this.myName, true);
+            document.getElementById('btn-start-game')?.classList.remove('disabled');
+            return Promise.resolve('solo-player');
+        }
+        return super.autoInit();
+    }
+
+    sendGameAction(actionType, payload = {}) {
+        if (this.isSolo) {
+            if (this.onAction) this.onAction(actionType, payload, this.myId);
+            return;
+        }
+        super.sendGameAction(actionType, payload);
+    }
+
+    leaveRoom() {
+        if (this.isSolo) {
+            this._isLeaving = true;
+            sessionStorage.removeItem('myId');
+            sessionStorage.removeItem('roomCode');
+            window.location.href = 'index.html';
+            return;
+        }
+        super.leaveRoom();
     }
 
     handleStateSync(data) {
@@ -120,8 +183,10 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
         super._handleDataReceived(action, payload, senderId);
         
         if (action === 'SYNC_TIME' && !this.isHostNode) {
-            this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
-            this.engine.startRenderTimer();
+            if (this.engine.state.status === 'playing' && !this.engine.state.currentQuestion?.reveal_answer) {
+                this.engine.localTurnEndTime = window.PairaTime.now() + payload.durationLeft;
+                this.engine.startRenderTimer();
+            }
         }
         else if (action === 'PLAY_SOUND' && !this.isHostNode) {
             window.PairaAudio && window.PairaAudio.play(payload.sound);
@@ -144,13 +209,19 @@ class BilgiYarismasiNetwork extends BaseGameNetwork {
 document.addEventListener('DOMContentLoaded', async () => {
     window.PairaAudio && window.PairaAudio.init();
     
-    const isHost = sessionStorage.getItem('isHost') === 'true';
-    const engine = new BilgiYarismasiGameEngine(isHost);
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSolo = sessionStorage.getItem('isSolo') === 'true' || urlParams.get('mode') === 'solo';
+    const isHost = isSolo ? true : sessionStorage.getItem('isHost') === 'true';
+    const engine = new BilgiYarismasiGameEngine(isHost, isSolo);
     
     const view = new BilgiYarismasiView({
         onStartGame: (settings) => {
             if (!engine.startGame(settings)) {
-                if (window.showToast) window.showToast("Oyuna başlamak için en az 2 kişi olmalı!", "warning");
+                if (engine.lastStartError === 'NO_QUESTIONS') {
+                    if (window.showToast) window.showToast("Seçili kategori ve zorluk aralığında soru bulunamadı!", "warning");
+                } else {
+                    if (window.showToast) window.showToast("Oyuna başlamak için en az 2 kişi olmalı!", "warning");
+                }
             }
         },
         onAnswer: (choiceIndex) => {
@@ -163,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    const network = new BilgiYarismasiNetwork(engine, view);
+    const network = new BilgiYarismasiNetwork(engine, view, isSolo);
     window.gameEngine = engine;
     window.gameNetwork = network;
     

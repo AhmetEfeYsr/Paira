@@ -28,15 +28,19 @@
         <!-- Bağlantı Bekleme Ekranı -->
         <section id="waiting-screen" class="view-state active" style="justify-content: center; align-items: center; min-height: 100%;">
             <div class="card" style="text-align: center; max-width: 400px; padding: 2.5rem; width: 100%;">
-                <div class="game-logo-container" style="font-size: 3rem; margin: 0 auto 1.5rem; display:inline-flex; align-items:center; justify-content:center; width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); animation: float 6s ease-in-out infinite; background: var(--card-bg);">⏳</div>
+                <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                    <div class="spinner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    </div>
+                </div>
                 <h2 style="margin-bottom: 0.5rem; color: var(--text-main);">Rakip Bekleniyor</h2>
                 <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Oda kodunu arkadaşınla paylaş:</p>
                 
                 <div class="code-container" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--code-bg); padding: 10px 20px; border-radius: 12px; margin-bottom: 1.5rem; border: 1px dashed var(--btn-secondary-bg);">
-                    <span id="display-room-code" data-code="" style="font-family: monospace; font-size: 2rem; letter-spacing: 4px; color: var(--neon-purple); font-weight: bold; cursor: pointer;" title="Kopyalamak için tıkla">----</span>
+                    <span id="display-room-code" data-code="" style="font-family: monospace; font-size: 2rem; letter-spacing: 4px; color: var(--neon-purple); font-weight: bold; cursor: pointer;" title="Kopyalamak için tıkla">••••••••</span>
                     <button id="btn-toggle-code" class="btn btn-icon toggle-btn" title="Göster/Gizle" style="padding: 6px; display: flex; align-items: center; justify-content: center;">
-                        <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                     </button>
                     <button id="btn-copy-room" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 4px;">Kopyala</button>
                 </div>
@@ -46,13 +50,7 @@
                     <ul id="players-list" class="custom-scrollbar" style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></ul>
                 </div>
                 
-                <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
-                    <div class="spinner">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
-                    </div>
-                </div>
-                
-                <button id="btn-cancel-wait" class="btn btn-secondary btn-block" style="margin-top: 1rem;">İptal</button>
+                <button id="btn-cancel-wait" class="btn btn-secondary btn-block" style="margin-top: 1.5rem;">İptal</button>
             </div>
         </section>
 
@@ -64,7 +62,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </button>
             <div class="player-info" id="player1-info">
-                <div class="player-avatar" style="border-color: var(--success); color: var(--success);">👤</div>
+                <div class="player-avatar" style="border-color: var(--success); color: var(--success);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
                 <div class="player-details">
                     <span class="player-name" id="p1-name" style="color: var(--success);">Oyuncu 1</span>
                     <span class="player-wpm" id="p1-wpm">0 WPM</span>
@@ -86,7 +86,9 @@
                     <span class="player-name" id="p2-name" style="color: var(--danger);">Oyuncu 2</span>
                     <span class="player-wpm" id="p2-wpm">0 WPM</span>
                 </div>
-                <div class="player-avatar" style="border-color: var(--danger); color: var(--danger);">👤</div>
+                <div class="player-avatar" style="border-color: var(--danger); color: var(--danger);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
             </div>
         </header>
 
@@ -170,13 +172,6 @@
             </div>
         </section>
     </main>
-
-    <div class="game-seo-info">
-        <h2>Paira Katiplik Düellosu Hakkında</h2>
-        <p>Klavye hızına güveniyor musun? On parmak yazma yeteneğini geliştirmek, zabıt katipliği sınavlarına hazırlanmak veya sadece arkadaşlarınla kıyasıya bir hız yarışına girmek istiyorsan <strong>Paira Katiplik Düellosu</strong> tam sana göre!</p>
-        <p>İster tek başınıza antrenman yapıp kişisel rekorlarınızı kırmaya çalışın, ister arkadaşlarınızla aynı odada buluşup gerçek zamanlı bir klavye savaşına katılın. Oyunda karşınıza çıkan resmi yazışmalar, hukuki makaleler ve edebi metinleri en kısa sürede, hatasız olarak yazmanız gerekir. Sistem; yazdığınız kelime sayısını, dakikadaki vuruş hızınızı (WPM) ve hata oranınızı anlık olarak ölçer.</p>
-        <p>Arkadaşlarla oynanan çok oyunculu modda, kimin kelimeleri daha hızlı erittiğini canlı olarak görebilirsiniz. Yanlış yazılan kelimeler ilerlemenizi yavaşlatır, bu yüzden sadece hızlı olmak değil, doğru tuşlara basmak da zafere giden yolda kritik bir rol oynar. Hiçbir kurulum yapmadan tarayıcın üzerinden klavyenin başına geç ve parmaklarının hızını herkese göster!</p>
-    </div>
 
     <script src="../shared/peer_manager.js?v=1.0.2"></script>
     <script src="../shared/base_network.js?v=1.0.2"></script>

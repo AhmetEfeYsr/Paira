@@ -4,6 +4,12 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
     const normalizeForSearch = window.normalizeTurkishChars || (str => str.toLowerCase());
+    const foldCircumflexLower = (str) => String(str || '')
+        .trim()
+        .toLocaleLowerCase('tr-TR')
+        .replace(/â/g, 'a')
+        .replace(/î/g, 'i')
+        .replace(/û/g, 'u');
     // --- Session Setup ---
     const isHost = sessionStorage.getItem('isHost') === 'true';
     const roomCode = sessionStorage.getItem('roomCode');
@@ -199,12 +205,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Network Integration ---
+    let roundParticipants = new Set();
+    let votingParticipants = new Set();
+
+    function getActiveRoundParticipants() {
+        return [...roundParticipants].filter(id => Boolean(network.players[id]));
+    }
+
+    function getActiveVotingParticipants() {
+        return [...votingParticipants].filter(id => Boolean(network.players[id]));
+    }
+
     const network = new NetworkManager(
         (senderId, data) => handleNetworkData(senderId, data),
         (player) => {
             updatePlayerList();
             if (isHost && player && player.id !== network.myId) {
                 broadcastConfig();
+                if (gameState.status !== 'LOBBY') {
+                    network.sendTo(player.id, { type: 'GAME_IN_PROGRESS' });
+                }
             }
         },
         (player) => {
@@ -217,12 +237,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePlayerDisconnect(playerId) {
         if (!isHost) return;
 
+        roundParticipants.delete(playerId);
+        votingParticipants.delete(playerId);
+
         if (gameState.status === 'PLAYING' && !isRoundOver) {
             finishedPlayers.delete(playerId);
             delete gameState.playerAnswers[playerId];
             
-            const totalPlayers = Object.keys(network.players).length;
-            const finishedCount = finishedPlayers.size;
+            const activeIds = getActiveRoundParticipants();
+            const totalPlayers = activeIds.length;
+            const finishedCount = activeIds.filter(id => finishedPlayers.has(id)).length;
 
             if (totalPlayers > 0 && finishedCount >= totalPlayers) {
                 endRound();
@@ -233,8 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (gameState.status === 'VOTING') {
             finishedVoters.delete(playerId);
-            const totalPlayers = Object.keys(network.players).length;
-            if (totalPlayers > 0 && finishedVoters.size >= totalPlayers) {
+            const activeVoters = getActiveVotingParticipants();
+            const remainingFinished = activeVoters.filter(id => finishedVoters.has(id)).length;
+            if (activeVoters.length > 0 && remainingFinished >= activeVoters.length) {
                 resolveVotesAndScore();
             }
         }
@@ -250,23 +275,39 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const [id, p] of Object.entries(network.players)) {
             count++;
             const li = document.createElement('li');
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.alignItems = 'center';
 
+            const nameSpan = document.createElement('span');
             let displayName = p.name;
             if (id === network.myId) {
                 displayName += ' (Sen)';
             }
             if (p.isHost) {
-                li.classList.add('is-host');
+                nameSpan.classList.add('is-host');
                 hostName = p.name;
-                // Leave the emoji for Host badge via CSS as requested initially
             }
 
             if (id === network.myId) {
                 const strong = document.createElement('strong');
                 strong.textContent = displayName;
-                li.appendChild(strong);
+                nameSpan.appendChild(strong);
             } else {
-                li.textContent = displayName;
+                nameSpan.textContent = displayName;
+            }
+
+            li.appendChild(nameSpan);
+
+            if (isHost && id !== network.myId) {
+                const kickBtn = document.createElement('button');
+                kickBtn.className = 'btn btn-danger btn-icon';
+                kickBtn.style.padding = '4px 8px';
+                kickBtn.style.marginLeft = '8px';
+                kickBtn.title = 'Oyuncuyu At';
+                kickBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                kickBtn.addEventListener('click', () => network.kickPlayer(id));
+                li.appendChild(kickBtn);
             }
 
             if(ui.playersList) ui.playersList.appendChild(li);
@@ -297,6 +338,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isHost) {
                     gameConfig = data.config;
                     updateClientLobbyPreview();
+                }
+                break;
+            case 'GAME_IN_PROGRESS':
+                if (!isHost && gameState.status === 'LOBBY') {
+                    const waitingDesc = document.querySelector('#client-waiting p');
+                    if (waitingDesc) {
+                        waitingDesc.textContent = 'Oyun şu an devam ediyor. Bir sonraki tur başladığında otomatik olarak katılacaksınız.';
+                    }
                 }
                 break;
             // ... more logic is handled in the extended handleNetworkData below
@@ -333,7 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isHost) return;
         gameConfig.rounds = parseInt(ui.settingRounds.value, 10) || 3;
         gameConfig.endCondition = ui.settingEndCondition.value;
-        gameConfig.endValue = parseInt(ui.settingEndValue.value, 10) || 90;
+        const fallbackVal = gameConfig.endCondition === 'all_finish' ? 2 : (gameConfig.endCondition === 'first_finish' ? 15 : 90);
+        gameConfig.endValue = parseInt(ui.settingEndValue.value, 10) || fallbackVal;
 
         if(ui.categorySelection) {
             const selected = Array.from(ui.categorySelection.querySelectorAll('input:checked'));
@@ -353,15 +403,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isHost) {
         renderCategories();
 
+        let prevEndCondition = ui.settingEndCondition ? ui.settingEndCondition.value : 'time_limit';
         if(ui.settingRounds) ui.settingRounds.addEventListener('change', broadcastConfig);
         if(ui.settingEndCondition) ui.settingEndCondition.addEventListener('change', (e) => {
             const label = document.getElementById('setting-end-label');
-            if (e.target.value === 'all_finish') {
+            const newCond = e.target.value;
+            if (newCond === 'all_finish') {
                 if(label) label.textContent = 'Kişi Sayısı (X):';
-                ui.settingEndValue.value = Math.max(1, Object.keys(network.players).length - 1);
+                if (ui.settingEndValue) {
+                    ui.settingEndValue.min = '1';
+                    ui.settingEndValue.max = '20';
+                    ui.settingEndValue.value = Math.max(2, Object.keys(network.players).length);
+                }
             } else {
                 if(label) label.textContent = 'Saniye (X):';
+                if (ui.settingEndValue) {
+                    ui.settingEndValue.min = '5';
+                    ui.settingEndValue.max = '300';
+                    const currentVal = parseInt(ui.settingEndValue.value, 10) || 0;
+                    if (prevEndCondition === 'all_finish' || currentVal < 5) {
+                        ui.settingEndValue.value = newCond === 'first_finish' ? 15 : 90;
+                    }
+                }
             }
+            prevEndCondition = newCond;
             broadcastConfig();
         });
         if(ui.settingEndValue) ui.settingEndValue.addEventListener('change', broadcastConfig);
@@ -510,8 +575,12 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.round = roundNum;
         gameState.letter = letter;
         gameState.status = 'PLAYING';
+        gameState.playerAnswers = {};
         isRoundOver = false;
         finishedPlayers.clear();
+        if (isHost) {
+            roundParticipants = new Set(Object.keys(network.players));
+        }
 
         if(ui.currentRound) ui.currentRound.textContent = roundNum;
         if(ui.totalRounds) ui.totalRounds.textContent = config.rounds;
@@ -621,16 +690,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if(ui.btnChangeLetter) {
             ui.btnChangeLetter.addEventListener('click', () => {
-                if (gameState.status !== 'PLAYING') return;
+                if (gameState.status !== 'PLAYING' || isRoundOver) return;
                 const newLetter = getRandomLetter();
+                finishedPlayers.clear();
+                gameState.playerAnswers = {};
                 network.broadcast({ type: 'CHANGE_LETTER', letter: newLetter });
 
                 // Also update self
                 gameState.letter = newLetter;
                 if(ui.currentLetter) ui.currentLetter.textContent = newLetter;
+                if(ui.finishStatusText) ui.finishStatusText.textContent = '';
+                if(ui.btnFinishTurn) {
+                    ui.btnFinishTurn.disabled = false;
+                    ui.btnFinishTurn.classList.add('pulse');
+                }
                 document.querySelectorAll('.game-input-wrapper input').forEach(input => {
+                    input.disabled = false;
                     input.value = '';
                 });
+
+                if (gameConfig.endCondition === 'first_finish') {
+                    clearInterval(currentTimer);
+                    if (ui.timerDisplay) ui.timerDisplay.textContent = '--:--';
+                    if (ui.timerStatusText) {
+                        ui.timerStatusText.style.display = 'block';
+                        ui.timerStatusText.textContent = 'Henüz bitiren olmadı';
+                    }
+                } else if (gameConfig.endCondition === 'time_limit') {
+                    startHostTimer(gameConfig.endValue);
+                }
             });
         }
     }
@@ -669,9 +757,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isHost) {
                 gameState.letter = data.letter;
                 if(ui.currentLetter) ui.currentLetter.textContent = data.letter;
+                if(ui.finishStatusText) ui.finishStatusText.textContent = '';
+                if(ui.btnFinishTurn) {
+                    ui.btnFinishTurn.disabled = false;
+                    ui.btnFinishTurn.classList.add('pulse');
+                }
                 document.querySelectorAll('.game-input-wrapper input').forEach(input => {
+                    input.disabled = false;
                     input.value = '';
                 });
+                if (gameConfig.endCondition === 'first_finish') {
+                    clearInterval(currentTimer);
+                    if (ui.timerDisplay) ui.timerDisplay.textContent = '--:--';
+                    if (ui.timerStatusText) {
+                        ui.timerStatusText.style.display = 'block';
+                        ui.timerStatusText.textContent = 'Henüz bitiren olmadı';
+                    }
+                }
             }
         }
         else if (data.type === 'TIMER_SYNC') {
@@ -691,13 +793,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         else if (data.type === 'PLAYER_FINISHED' && isHost) {
+            if (!roundParticipants.has(data.id)) return;
             finishedPlayers.add(data.id);
             gameState.playerAnswers[data.id] = data.answers;
 
-            const totalPlayers = Object.keys(network.players).length;
-            const finishedCount = finishedPlayers.size;
+            const activeIds = getActiveRoundParticipants();
+            const totalPlayers = activeIds.length;
+            const finishedCount = activeIds.filter(id => finishedPlayers.has(id)).length;
 
-            if (finishedCount >= totalPlayers) {
+            if (totalPlayers > 0 && finishedCount >= totalPlayers) {
                 endRound();
             } else if (gameConfig.endCondition === 'all_finish') {
                 if (finishedCount >= gameConfig.endValue) {
@@ -714,8 +818,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 isRoundOver = true;
                 clearInterval(currentTimer);
 
+                const shouldSendFinal = ui.btnFinishTurn && !ui.btnFinishTurn.disabled;
+                if (ui.btnFinishTurn) {
+                    ui.btnFinishTurn.disabled = true;
+                    ui.btnFinishTurn.classList.remove('pulse');
+                }
+                document.querySelectorAll('.game-input-wrapper input').forEach(input => {
+                    input.disabled = true;
+                });
+                if (ui.finishStatusText) {
+                    ui.finishStatusText.textContent = 'Süre doldu! Cevaplar kontrol ediliyor...';
+                }
+
                 // If I haven't clicked finish, send my answers now
-                if (ui.btnFinishTurn && !ui.btnFinishTurn.disabled) {
+                if (shouldSendFinal) {
                     const myAnswers = getPlayerAnswers();
                     network.sendToHost({
                         type: 'FINAL_ANSWERS',
@@ -737,9 +853,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Host needs to submit their own answers if they haven't manually clicked finish
         if (ui.btnFinishTurn && !ui.btnFinishTurn.disabled) {
-            ui.btnFinishTurn.disabled = true;
             gameState.playerAnswers[network.myId] = getPlayerAnswers();
             finishedPlayers.add(network.myId);
+        }
+        if (ui.btnFinishTurn) {
+            ui.btnFinishTurn.disabled = true;
+            ui.btnFinishTurn.classList.remove('pulse');
+        }
+        document.querySelectorAll('.game-input-wrapper input').forEach(input => {
+            input.disabled = true;
+        });
+        if (ui.finishStatusText) {
+            ui.finishStatusText.textContent = 'Süre doldu! Cevaplar kontrol ediliyor...';
         }
 
         // Force anyone who hasn't submitted to submit
@@ -852,30 +977,39 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
     }
 
     async function checkWikipedia(word, keywords, requiredLetterLower) {
-        const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&utf8=&format=json&srlimit=5&origin=*`;
+        const cleanWord = (word || '').trim();
+        if (cleanWord.length < 2) return false;
+        const wikiUrl = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanWord)}&utf8=&format=json&srlimit=5&origin=*`;
         try {
             const wikiRes = await fetchWithTimeout(wikiUrl, {}, 2500);
             if (!wikiRes || !wikiRes.ok) return false;
             const wikiData = await wikiRes.json();
             if (wikiData.query && wikiData.query.search) {
-                const lowerWord = word.toLocaleLowerCase('tr-TR');
+                const lowerWord = foldCircumflexLower(cleanWord);
                 const normWord = normalizeForSearch(lowerWord);
+                const requiredFolded = requiredLetterLower ? foldCircumflexLower(requiredLetterLower) : '';
                 for (let item of wikiData.query.search) {
                     const snippet = item.snippet.toLocaleLowerCase('tr-TR');
                     const title = item.title.toLocaleLowerCase('tr-TR');
+                    const foldedTitle = foldCircumflexLower(item.title);
                     
-                    if (requiredLetterLower && !title.startsWith(requiredLetterLower)) {
+                    if (requiredFolded && !foldedTitle.startsWith(requiredFolded)) {
                         continue;
                     }
                     
                     const normTitle = normalizeForSearch(title);
                     const normSnippet = normalizeForSearch(snippet);
+                    const titleWords = normTitle.split(/[\s,()\-.:;"'/]+/).filter(Boolean);
+                    const inputWords = normWord.split(/[\s,()\-.:;"'/]+/).filter(Boolean);
                     
-                    if (title === lowerWord || normTitle === normWord) {
-                        return true;
-                    }
+                    const isTitleMatch = foldedTitle === lowerWord ||
+                        normTitle === normWord ||
+                        (inputWords.length === 1 ? titleWords.includes(normWord) : normTitle.includes(normWord));
                     
-                    if (title.includes(lowerWord) || snippet.includes(lowerWord) || normTitle.includes(normWord) || normSnippet.includes(normWord)) {
+                    if (isTitleMatch) {
+                        if (foldedTitle === lowerWord || normTitle === normWord) {
+                            return true;
+                        }
                         if (keywords.length === 0 || keywords.some(kw => {
                             const normKw = normalizeForSearch(kw);
                             return snippet.includes(kw) || title.includes(kw) || normSnippet.includes(normKw) || normTitle.includes(normKw);
@@ -890,120 +1024,137 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
     }
 
     async function validateViaApi(catId, word, requiredLetterLower) {
-        if (!word) return false;
-        const cacheKey = `${catId}_${word}_${requiredLetterLower}`;
+        const cleanWord = (word || '').trim();
+        if (cleanWord.length < 2) return false;
+        const requiredFolded = requiredLetterLower ? foldCircumflexLower(requiredLetterLower) : '';
+        const cacheKey = `${catId}_${cleanWord}_${requiredFolded}`;
         if (apiCache[cacheKey] !== undefined) return apiCache[cacheKey];
 
+        const lowerWord = foldCircumflexLower(cleanWord);
+        const normWord = normalizeForSearch(lowerWord);
         let result = false;
         try {
             if (catId === 'sehir') {
-                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(word)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
+                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanWord)}&format=json&addressdetails=1&limit=1&accept-language=tr`;
                 const response = await fetchWithTimeout(url, { headers: { 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
-                    result = data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype);
-                    if (result) {
-                        const nameLower = data[0].name.toLocaleLowerCase('tr-TR');
-                        if (!nameLower.startsWith(requiredLetterLower)) result = false;
+                    if (data.length > 0 && ['city', 'administrative', 'town', 'province', 'state'].includes(data[0].type || data[0].addresstype)) {
+                        const foldedName = foldCircumflexLower(data[0].name || '');
+                        const normName = normalizeForSearch(foldedName);
+                        const nameMatch = normName === normWord || normName.split(/[\s,()\-.:]+/).includes(normWord);
+                        result = nameMatch && (!requiredFolded || foldedName.startsWith(requiredFolded));
                     }
                 }
-                if (!result) result = await checkWikipedia(word, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredLetterLower);
+                if (!result) result = await checkWikipedia(cleanWord, ['şehir', 'ilçe', 'kasaba', 'başkent'], requiredFolded);
             }
             else if (catId === 'ulke') {
-                const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(word)}`;
+                const url = `https://restcountries.com/v3.1/translation/${encodeURIComponent(cleanWord)}`;
                 const response = await fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
-                    result = Array.isArray(data) && data.length > 0;
-                    if (result) {
-                        const trName = data[0].translations?.tur?.common?.toLocaleLowerCase('tr-TR');
-                        if (trName && !trName.startsWith(requiredLetterLower)) {
-                            result = false;
+                    if (Array.isArray(data) && data.length > 0) {
+                        const trName = foldCircumflexLower(data[0].translations?.tur?.common || '');
+                        const normTr = normalizeForSearch(trName);
+                        if (trName && (normTr === normWord || normTr.includes(normWord)) && (!requiredFolded || trName.startsWith(requiredFolded))) {
+                            result = true;
                         }
                     }
                 }
-                if (!result) result = await checkWikipedia(word, ['ülke', 'cumhuriyet', 'devlet'], requiredLetterLower);
+                if (!result) result = await checkWikipedia(cleanWord, ['ülke', 'cumhuriyet', 'devlet'], requiredFolded);
             }
             else if (catId === 'film_dizi') {
-                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&country=tr&limit=5`;
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanWord)}&country=tr&limit=5`;
                 const response = await fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
-                        const match = data.results.find(item => 
-                            item.wrapperType === 'track' && 
-                            (item.kind === 'feature-movie' || item.kind === 'tv-episode') &&
-                            item.trackName.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower)
-                        );
+                        const match = data.results.find(item => {
+                            if (item.wrapperType !== 'track' || (item.kind !== 'feature-movie' && item.kind !== 'tv-episode')) return false;
+                            const foldedTrack = foldCircumflexLower(item.trackName || '');
+                            const normTrack = normalizeForSearch(foldedTrack);
+                            return (!requiredFolded || foldedTrack.startsWith(requiredFolded)) &&
+                                (normTrack === normWord || normTrack.includes(normWord));
+                        });
                         result = !!match;
                     }
                 }
-                if (!result) result = await checkWikipedia(word, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel'], requiredLetterLower);
+                if (!result) result = await checkWikipedia(cleanWord, ['dizi', 'film', 'sinema', 'televizyon', 'belgesel'], requiredFolded);
             }
             else if (catId === 'muzik') {
-                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(word)}&entity=musicArtist,song&country=tr&limit=5`;
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanWord)}&entity=musicArtist,song&country=tr&limit=5`;
                 const response = await fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.results) {
-                        const match = data.results.find(item => 
-                            ((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist') &&
-                            (item.trackName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower) || item.artistName?.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower))
-                        );
+                        const match = data.results.find(item => {
+                            if (!((item.wrapperType === 'track' && item.kind === 'song') || item.wrapperType === 'artist')) return false;
+                            const foldedTrack = foldCircumflexLower(item.trackName || '');
+                            const foldedArtist = foldCircumflexLower(item.artistName || '');
+                            const normTrack = normalizeForSearch(foldedTrack);
+                            const normArtist = normalizeForSearch(foldedArtist);
+                            const trackMatch = foldedTrack && (!requiredFolded || foldedTrack.startsWith(requiredFolded)) && (normTrack === normWord || normTrack.includes(normWord));
+                            const artistMatch = foldedArtist && (!requiredFolded || foldedArtist.startsWith(requiredFolded)) && (normArtist === normWord || normArtist.includes(normWord));
+                            return trackMatch || artistMatch;
+                        });
                         result = !!match;
                     }
                 }
-                if (!result) result = await checkWikipedia(word, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], requiredLetterLower);
+                if (!result) result = await checkWikipedia(cleanWord, ['şarkı', 'albüm', 'müzik', 'tekli', 'single'], requiredFolded);
             }
             else if (catId === 'sarkici') {
-                const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(word)}&fmt=json`;
+                const url = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(cleanWord)}&fmt=json`;
                 const response = await fetchWithTimeout(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'PairaGames/1.0 (contact@pairagames.com)' } }, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.artists && data.artists.length > 0) {
-                        const normWord = normalizeForSearch(word);
                         result = data.artists.some(artist => {
-                            const artistName = artist.name.toLocaleLowerCase('tr-TR');
-                            const normArtistName = normalizeForSearch(artistName);
-                            const matchesName = artistName.includes(word.toLocaleLowerCase('tr-TR')) || normArtistName.includes(normWord) ||
+                            const foldedArtist = foldCircumflexLower(artist.name || '');
+                            const normArtistName = normalizeForSearch(foldedArtist);
+                            const matchesName = foldedArtist.includes(lowerWord) || normArtistName.includes(normWord) ||
                                 (artist.aliases && artist.aliases.some(a => {
-                                    const aliasName = a.name.toLocaleLowerCase('tr-TR');
-                                    return aliasName.includes(word.toLocaleLowerCase('tr-TR')) || normalizeForSearch(aliasName).includes(normWord);
+                                    const aliasName = foldCircumflexLower(a.name || '');
+                                    return aliasName.includes(lowerWord) || normalizeForSearch(aliasName).includes(normWord);
                                 }));
-                            return matchesName && artistName.startsWith(requiredLetterLower);
+                            return matchesName && (!requiredFolded || foldedArtist.startsWith(requiredFolded));
                         });
                     }
                 }
-                if (!result) result = await checkWikipedia(word, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist'], requiredLetterLower);
+                if (!result) result = await checkWikipedia(cleanWord, ['şarkıcı', 'müzisyen', 'grup', 'rapçi', 'solist'], requiredFolded);
             }
             else if (catId === 'yazar') {
-                const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(word)}`;
+                const url = `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(cleanWord)}`;
                 const response = await fetchWithTimeout(url, {}, 2500);
                 if (response && response.ok) {
                     const data = await response.json();
                     if (data.docs) {
-                        result = data.docs.some(doc => doc.name.toLocaleLowerCase('tr-TR').startsWith(requiredLetterLower));
+                        result = data.docs.some(doc => {
+                            const foldedDoc = foldCircumflexLower(doc.name || '');
+                            const normDoc = normalizeForSearch(foldedDoc);
+                            return (!requiredFolded || foldedDoc.startsWith(requiredFolded)) &&
+                                (normDoc === normWord || normDoc.includes(normWord));
+                        });
                     }
                 }
-                if (!result) result = await checkWikipedia(word, ['yazar', 'şair', 'roman', 'edebiyat'], requiredLetterLower);
+                if (!result) result = await checkWikipedia(cleanWord, ['yazar', 'şair', 'roman', 'edebiyat'], requiredFolded);
             }
             else if (catId === 'marka') {
-                result = await checkWikipedia(word, ['marka', 'şirket', 'holding', 'üretici', 'kuruluş'], requiredLetterLower);
+                result = await checkWikipedia(cleanWord, ['marka', 'şirket', 'holding', 'üretici', 'kuruluş'], requiredFolded);
             }
             else if (catId === 'oyun') {
-                result = await checkWikipedia(word, ['oyun', 'video oyunu', 'oyunu', 'game'], requiredLetterLower);
+                result = await checkWikipedia(cleanWord, ['oyun', 'video oyunu', 'oyunu', 'game'], requiredFolded);
             }
             else if (catId === 'unlu') {
-                result = await checkWikipedia(word, ['ünlü', 'oyuncu', 'sanatçı', 'sunucu', 'fenomen', 'şarkıcı', 'futbolcu'], requiredLetterLower);
+                result = await checkWikipedia(cleanWord, ['ünlü', 'oyuncu', 'sanatçı', 'sunucu', 'fenomen', 'şarkıcı', 'futbolcu'], requiredFolded);
             }
             else if (catId === 'hastalik') {
-                result = await checkWikipedia(word, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], requiredLetterLower);
+                result = await checkWikipedia(cleanWord, ['hastalık', 'sendrom', 'virüs', 'enfeksiyon', 'tıp', 'belirti', 'hastalığı'], requiredFolded);
             }
             else if (catId === 'spor') {
-                result = await checkWikipedia(word, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat'], requiredLetterLower);
+                result = await checkWikipedia(cleanWord, ['spor', 'oyun', 'takım', 'turnuva', 'olimpiyat'], requiredFolded);
             }
         } catch (e) {
-            console.error(`API validation error for ${catId} - ${word}:`, e);
+            console.error(`API validation error for ${catId} - ${cleanWord}:`, e);
             result = false;
         }
 
@@ -1043,14 +1194,17 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
     async function processAnswersAndGoToVoting() {
         if (!isHost) return;
 
-        // Ensure all active players have an answers object and remove any disconnected players
-        for (const pId of Object.keys(network.players)) {
+        const activeRoundIds = getActiveRoundParticipants();
+        const activeIdSet = new Set(activeRoundIds);
+
+        // Ensure all active round participants have an answers object and remove any disconnected/non-participant players
+        for (const pId of activeRoundIds) {
             if (!gameState.playerAnswers[pId]) {
                 gameState.playerAnswers[pId] = {};
             }
         }
         for (const pId of Object.keys(gameState.playerAnswers)) {
-            if (!network.players[pId]) {
+            if (!network.players[pId] || !activeIdSet.has(pId)) {
                 delete gameState.playerAnswers[pId];
             }
         }
@@ -1059,57 +1213,111 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
 
         const results = {}; // categoryId -> [ {playerId, word, suggestedScore} ]
         const llmCandidates = [];
-        const checkedList = {};
+        const checkedLlmList = {};
+        const apiPendingMap = new Map(); // cacheKey -> { catId, word, letterFolded }
+        const apiSupportedCats = new Set(['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'marka', 'oyun', 'unlu', 'hastalik', 'spor']);
+        const letterFolded = foldCircumflexLower(gameState.letter);
 
-        // First pass: load dictionaries and check offline/API validation first
+        // Load all category dictionaries in parallel
+        await Promise.all(gameConfig.categories.map(cat => loadDictionary(cat.id)));
+
+        // First pass: check local dictionaries and queue unique API lookups
         for (const cat of gameConfig.categories) {
             results[cat.id] = [];
-            const dictObj = await loadDictionary(cat.id);
-            const letterLower = gameState.letter.toLocaleLowerCase('tr-TR');
-            const normLetter = normalizeForSearch(gameState.letter);
+            const dictObj = validationCache[cat.id];
+            const isCustomCat = cat.id.startsWith('custom_');
 
             for (const [playerId, answers] of Object.entries(gameState.playerAnswers)) {
-                let word = answers[cat.id] || "";
-                word = word.trim().toLocaleLowerCase('tr-TR');
+                const rawWord = (answers[cat.id] || "").trim();
+                const word = rawWord.toLocaleLowerCase('tr-TR');
+                const foldedWord = foldCircumflexLower(word);
                 const normWord = normalizeForSearch(word);
 
-                if (word.length > 0 && normWord.startsWith(normLetter)) {
-                    const isCustomCat = cat.id.startsWith('custom_');
-                    if (!isCustomCat) {
-                        let inDict = false;
-                        if (dictObj) {
-                            if (dictObj.dict.has(word) && word.startsWith(letterLower)) {
-                                inDict = true;
-                            } else if (dictObj.normDict.has(normWord)) {
-                                const originals = dictObj.normDict.get(normWord);
-                                for (const ow of originals) {
-                                    if (ow.startsWith(letterLower)) {
-                                        inDict = true;
-                                        break;
-                                    }
+                if (word.length >= 2 && foldedWord.startsWith(letterFolded) && !isCustomCat) {
+                    let inDict = false;
+                    if (dictObj) {
+                        if (dictObj.dict.has(word) && foldCircumflexLower(word).startsWith(letterFolded)) {
+                            inDict = true;
+                        } else if (dictObj.normDict.has(normWord)) {
+                            const originals = dictObj.normDict.get(normWord);
+                            for (const ow of originals) {
+                                if (foldCircumflexLower(ow).startsWith(letterFolded)) {
+                                    inDict = true;
+                                    break;
                                 }
                             }
                         }
+                    }
 
-                        if (!inDict) {
-                            let apiValid = false;
-                            if (['sehir', 'ulke', 'film_dizi', 'muzik', 'sarkici', 'yazar', 'marka', 'oyun', 'unlu', 'hastalik', 'spor'].includes(cat.id)) {
-                                apiValid = await validateViaApi(cat.id, word, letterLower);
-                            }
+                    if (!inDict && apiSupportedCats.has(cat.id)) {
+                        const apiKey = `${cat.id}_${word}_${letterFolded}`;
+                        if (!apiPendingMap.has(apiKey)) {
+                            apiPendingMap.set(apiKey, { catId: cat.id, word, letterFolded });
+                        }
+                    } else if (!inDict) {
+                        const candidateKey = `${cat.id}_${word}`;
+                        if (!checkedLlmList[candidateKey]) {
+                            checkedLlmList[candidateKey] = true;
+                            llmCandidates.push({
+                                catId: cat.id,
+                                catName: cat.name,
+                                word: word,
+                                requiredLetter: gameState.letter,
+                                letterLower: letterFolded
+                            });
+                        }
+                    }
+                }
+            }
+        }
 
-                            if (!apiValid) {
-                                const candidateKey = `${cat.id}_${word}`;
-                                if (!checkedList[candidateKey]) {
-                                    checkedList[candidateKey] = true;
-                                    llmCandidates.push({
-                                        catId: cat.id,
-                                        catName: cat.name,
-                                        word: word,
-                                        requiredLetter: gameState.letter,
-                                        letterLower: letterLower
-                                    });
+        // Run all unique API validations in parallel
+        await Promise.all(
+            Array.from(apiPendingMap.values()).map(item =>
+                validateViaApi(item.catId, item.word, item.letterFolded)
+            )
+        );
+
+        // Queue LLM validation only for words that failed both local dict & API checks
+        for (const cat of gameConfig.categories) {
+            const dictObj = validationCache[cat.id];
+            const isCustomCat = cat.id.startsWith('custom_');
+            if (isCustomCat) continue;
+
+            for (const answers of Object.values(gameState.playerAnswers)) {
+                const word = (answers[cat.id] || "").trim().toLocaleLowerCase('tr-TR');
+                const foldedWord = foldCircumflexLower(word);
+                const normWord = normalizeForSearch(word);
+
+                if (word.length >= 2 && foldedWord.startsWith(letterFolded)) {
+                    let inDict = false;
+                    if (dictObj) {
+                        if (dictObj.dict.has(word) && foldedWord.startsWith(letterFolded)) {
+                            inDict = true;
+                        } else if (dictObj.normDict.has(normWord)) {
+                            for (const ow of dictObj.normDict.get(normWord)) {
+                                if (foldCircumflexLower(ow).startsWith(letterFolded)) {
+                                    inDict = true;
+                                    break;
                                 }
                             }
+                        }
+                    }
+
+                    const apiKey = `${cat.id}_${word}_${letterFolded}`;
+                    const apiValid = apiSupportedCats.has(cat.id) ? Boolean(apiCache[apiKey]) : false;
+
+                    if (!inDict && !apiValid) {
+                        const candidateKey = `${cat.id}_${word}`;
+                        if (!checkedLlmList[candidateKey]) {
+                            checkedLlmList[candidateKey] = true;
+                            llmCandidates.push({
+                                catId: cat.id,
+                                catName: cat.name,
+                                word: word,
+                                requiredLetter: gameState.letter,
+                                letterLower: letterFolded
+                            });
                         }
                     }
                 }
@@ -1119,55 +1327,42 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
         // Batch LLM validation for any still unvalidated words
         const batchResults = await validateViaLlmBatch(llmCandidates);
 
-        // Second pass: Calculate score frequency and assign scores
+        // Second pass: Validate each answer first, count only valid words in wordFrequency, then assign scores
         for (const cat of gameConfig.categories) {
             const dictObj = validationCache[cat.id];
-            const wordFrequency = {}; // normWord -> count
+            const wordFrequency = {}; // normWord -> count of VALID words only
+            const evaluatedEntries = [];
+            const isCustomCat = cat.id.startsWith('custom_');
 
             for (const [playerId, answers] of Object.entries(gameState.playerAnswers)) {
-                let word = answers[cat.id] || "";
-                word = word.trim().toLocaleLowerCase('tr-TR');
-                const normWord = normalizeForSearch(word);
-                const normLetter = normalizeForSearch(gameState.letter);
+                let word = (answers[cat.id] || "").trim().toLocaleLowerCase('tr-TR');
+                const foldedWord = foldCircumflexLower(word);
+                let normWord = normalizeForSearch(word);
 
-                if (word.length > 0 && normWord.startsWith(normLetter)) {
-                    wordFrequency[normWord] = (wordFrequency[normWord] || 0) + 1;
-                }
-            }
-
-            for (const [playerId, answers] of Object.entries(gameState.playerAnswers)) {
-                let word = answers[cat.id] || "";
-                word = word.trim().toLocaleLowerCase('tr-TR');
-                const normWord = normalizeForSearch(word);
-                const letterLower = gameState.letter.toLocaleLowerCase('tr-TR');
-                const normLetter = normalizeForSearch(gameState.letter);
-                
-                let score = 0;
+                let isValid = false;
                 let llmReason = "";
 
-                if (word.length > 0 && normWord.startsWith(normLetter)) {
-                    const isCustomCat = cat.id.startsWith('custom_');
-                    let isValid = false;
-
+                if (word.length >= 2 && foldedWord.startsWith(letterFolded)) {
                     if (isCustomCat) {
-                        isValid = word.startsWith(letterLower);
+                        isValid = true;
                     } else {
                         if (dictObj) {
-                            if (dictObj.dict.has(word) && word.startsWith(letterLower)) {
+                            if (dictObj.dict.has(word) && foldedWord.startsWith(letterFolded)) {
                                 isValid = true;
                             } else if (dictObj.normDict.has(normWord)) {
                                 const originals = dictObj.normDict.get(normWord);
                                 for (const ow of originals) {
-                                    if (ow.startsWith(letterLower)) {
+                                    if (foldCircumflexLower(ow).startsWith(letterFolded)) {
                                         isValid = true;
                                         word = ow;
+                                        normWord = normalizeForSearch(ow);
                                         break;
                                     }
                                 }
                             }
                         }
-                        
-                        const apiCacheKey = `${cat.id}_${word}_${letterLower}`;
+
+                        const apiCacheKey = `${cat.id}_${word}_${letterFolded}`;
                         if (!isValid && apiCache[apiCacheKey]) {
                             isValid = true;
                         }
@@ -1181,25 +1376,41 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
                             }
                         }
                     }
-
-                    if (isValid) {
-                        score = (wordFrequency[normWord] > 1) ? 5 : 10;
-                    }
                 }
 
+                if (isValid) {
+                    wordFrequency[normWord] = (wordFrequency[normWord] || 0) + 1;
+                }
+
+                evaluatedEntries.push({
+                    playerId,
+                    word,
+                    normWord,
+                    isValid,
+                    llmReason
+                });
+            }
+
+            for (const entry of evaluatedEntries) {
+                const score = entry.isValid ? ((wordFrequency[entry.normWord] > 1) ? 5 : 10) : 0;
                 results[cat.id].push({
-                    playerId: playerId,
-                    word: word,
+                    playerId: entry.playerId,
+                    word: entry.word,
                     suggestedScore: score,
-                    llmReason: llmReason
+                    llmReason: entry.llmReason
                 });
             }
         }
 
-        network.broadcast({
-            type: 'START_VOTING',
-            results: results,
-            config: gameConfig
+        votingParticipants = new Set(activeRoundIds);
+        activeRoundIds.forEach(pId => {
+            if (pId !== network.myId) {
+                network.sendTo(pId, {
+                    type: 'START_VOTING',
+                    results: results,
+                    config: gameConfig
+                });
+            }
         });
 
         gameState.status = 'VOTING';
@@ -1260,12 +1471,14 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
             });
         });
 
-        // Let the host auto-populate initial recommended scores for everyone
+        // Let the host auto-populate initial recommended scores for voting participants
         if (isHost) {
+            const voterIds = getActiveVotingParticipants();
+            const fallbackIds = voterIds.length > 0 ? voterIds : Object.keys(network.players);
             for (const catId in liveVotes) {
                 for (const targetId in liveVotes[catId]) {
                     const suggested = results[catId].find(r => r.playerId === targetId).suggestedScore;
-                    for (const pId in network.players) {
+                    for (const pId of fallbackIds) {
                         liveVotes[catId][targetId][pId] = suggested;
                     }
                 }
@@ -1449,11 +1662,14 @@ Yanıtını her aday kelime için sırasıyla geçerli olup olmadığını ("val
 
     function handlePlayerFinishedVoting(senderId) {
         if (!isHost) return;
+        if (!votingParticipants.has(senderId)) return;
         if (finishedVoters.has(senderId)) return; // Prevent double-counting
 
         finishedVoters.add(senderId);
-        const totalPlayers = Math.max(Object.keys(network.players).length, 1);
-        if (finishedVoters.size >= totalPlayers) {
+        const activeVoters = getActiveVotingParticipants();
+        const totalPlayers = Math.max(activeVoters.length, 1);
+        const finishedCount = activeVoters.filter(id => finishedVoters.has(id)).length;
+        if (finishedCount >= totalPlayers) {
             resolveVotesAndScore();
         }
     }

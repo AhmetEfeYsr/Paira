@@ -8,6 +8,25 @@ let timerInterval;
 let lastRenderedRound = -1;
 let lastRenderedState = null;
 let lastTimerRound = -1;
+let cachedBlankWebP = null;
+
+function getBlankWebPDataURL() {
+    if (cachedBlankWebP) return cachedBlankWebP;
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 450;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 800, 450);
+        const url = canvas.toDataURL('image/webp', 0.5);
+        if (url && url.startsWith('data:image/webp')) {
+            cachedBlankWebP = url;
+            return cachedBlankWebP;
+        }
+    } catch (e) {}
+    return 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+}
 
 export function resetGameUIState() {
     lastRenderedRound = -1;
@@ -53,13 +72,10 @@ export function initGameUI(networkState, myId) {
                 drawingBoard.setColor(target.dataset.color);
                 if (target.dataset.color === '#ffffff') {
                     drawingBoard.setTool('eraser');
-                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 } else {
                     const currentToolBtn = document.querySelector('.tool-btn.active');
                     if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
                         drawingBoard.setTool('brush');
-                        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                        document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
                     } else {
                         drawingBoard.setTool(currentToolBtn.dataset.tool);
                     }
@@ -95,13 +111,13 @@ export function initGameUI(networkState, myId) {
         });
 
         bindInteraction(document.getElementById('btn-clear'), () => {
-            if (drawingBoard) drawingBoard.clear(false);
+            if (drawingBoard && !drawingBoard.readOnly) drawingBoard.clear(false);
         });
 
         const btnUndo = document.getElementById('btn-undo');
         if (btnUndo) {
             bindInteraction(btnUndo, () => {
-                if (drawingBoard) drawingBoard.undo(false);
+                if (drawingBoard && !drawingBoard.readOnly) drawingBoard.undo(false);
             });
         }
 
@@ -241,6 +257,7 @@ export function updateGameStateUI(networkState, myId) {
 }
 
 function submitPrompt(networkState, myId) {
+    if (!networkState || networkState.completedTasks[myId]) return;
     const input = document.getElementById('prompt-input');
     const text = input.value.trim();
     if(!text) {
@@ -248,8 +265,11 @@ function submitPrompt(networkState, myId) {
         return;
     }
 
+    networkState.completedTasks[myId] = true;
+
     // Disable inputs and show wait
     document.getElementById('prompt-container').style.display = 'none';
+    document.getElementById('draw-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
 
     if (window.PairaAudio) window.PairaAudio.play('pass');
@@ -258,9 +278,17 @@ function submitPrompt(networkState, myId) {
 }
 
 function submitDrawing(networkState, myId) {
+    if (!networkState || networkState.completedTasks[myId]) return;
     const board = ensureDrawingBoard();
-    const dataURL = board ? board.getDataURL() : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const dataURL = board ? board.getDataURL() : getBlankWebPDataURL();
+    if (board) {
+        board.readOnly = true;
+        board.updateCursor();
+    }
 
+    networkState.completedTasks[myId] = true;
+
+    document.getElementById('prompt-container').style.display = 'none';
     document.getElementById('draw-container').style.display = 'none';
     document.getElementById('wait-container').style.display = 'flex';
 
@@ -319,6 +347,7 @@ export function startTimer(duration, networkState, myId) {
 }
 
 function submitPromptFallback(networkState, myId) {
+    if (!networkState || networkState.completedTasks[myId]) return;
     const input = document.getElementById('prompt-input');
     let text = input ? input.value.trim() : '';
     if (!text) {
@@ -328,12 +357,25 @@ function submitPromptFallback(networkState, myId) {
             text = "... (Zamanında yazılamadı)";
         }
     }
+    networkState.completedTasks[myId] = true;
+    document.getElementById('prompt-container').style.display = 'none';
+    document.getElementById('draw-container').style.display = 'none';
+    document.getElementById('wait-container').style.display = 'flex';
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'text', content: text, round: networkState.roundCount });
 }
 
 function submitDrawingFallback(networkState, myId) {
+    if (!networkState || networkState.completedTasks[myId]) return;
     const board = ensureDrawingBoard();
-    const dataURL = board ? board.getDataURL() : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const dataURL = board ? board.getDataURL() : getBlankWebPDataURL();
+    if (board) {
+        board.readOnly = true;
+        board.updateCursor();
+    }
+    networkState.completedTasks[myId] = true;
+    document.getElementById('prompt-container').style.display = 'none';
+    document.getElementById('draw-container').style.display = 'none';
+    document.getElementById('wait-container').style.display = 'flex';
     broadcastAction({ type: 'SUBMIT_TASK', taskType: 'draw', content: dataURL, round: networkState.roundCount });
 }
 
@@ -355,6 +397,7 @@ export function renderAlbumState(networkState) {
         const item = seq[i];
         
         if (item.type === 'TITLE') {
+            const ownerName = item.ownerName || networkState.playerNames?.[item.ownerId] || networkState.players[item.ownerId]?.name || 'Bilinmeyen';
             const title = document.createElement('h2');
             title.style.color = 'var(--neon-purple)';
             title.style.borderBottom = '1px solid var(--btn-secondary-border)';
@@ -363,11 +406,11 @@ export function renderAlbumState(networkState) {
             title.style.textAlign = 'center';
             title.style.fontSize = '2rem';
             title.style.marginTop = '20px';
-            title.textContent = `${networkState.players[item.ownerId]?.name || 'Bilinmeyen'}'in Başlattığı Hikaye`;
+            title.textContent = `${ownerName}'in Başlattığı Hikaye`;
             container.appendChild(title);
         } else if (item.type === 'ENTRY') {
             const step = item.stepData;
-            const authorName = networkState.players[step.authorId]?.name || "Bilinmeyen";
+            const authorName = step.authorName || networkState.playerNames?.[step.authorId] || networkState.players[step.authorId]?.name || "Bilinmeyen";
             
             const entryDiv = document.createElement('div');
             entryDiv.className = 'card pop-animation';

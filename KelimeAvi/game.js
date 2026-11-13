@@ -77,6 +77,9 @@ class KelimeAviGameEngine {
 
     removePlayer(id) {
         if (this.state.status !== 'lobby') {
+            const prevActiveIds = Object.keys(this.state.players).filter(pid => !this.state.players[pid].disconnected);
+            const removedPos = prevActiveIds.indexOf(id);
+
             if (this.state.players[id]) {
                 this.state.players[id].disconnected = true;
             }
@@ -91,7 +94,10 @@ class KelimeAviGameEngine {
             if (this.state.currentEbe === id) {
                 this.endRoundPrematurely("Ebe'nin bağlantısı koptuğu için tur iptal edildi.", false, true);
             } else {
-                this.setState({ players: this.state.players });
+                if (removedPos !== -1 && removedPos < this.state.ebeIndex) {
+                    this.state.ebeIndex = Math.max(0, this.state.ebeIndex - 1);
+                }
+                this.setState({ players: this.state.players, ebeIndex: this.state.ebeIndex });
             }
         } else {
             delete this.state.players[id];
@@ -154,8 +160,12 @@ class KelimeAviGameEngine {
             this.onShowResult(`📢 Bu tur EBE: ${ebeName}! Kelimesini belirliyor...`);
         }
 
+        const selectDuration = 45;
+        this.localEndTime = window.PairaTime.now() + (selectDuration * 1000);
+
         this.setState(this.state);
-        if (this.onTimerTick) this.onTimerTick(this.state.turnDuration);
+        if (this.onTimerTick) this.onTimerTick(selectDuration);
+        this.startRenderTimer();
     }
 
     handleEbeTargetWord(peerId, word) {
@@ -196,8 +206,9 @@ class KelimeAviGameEngine {
         const cleanTarget = this.state.targetWord.trim().toLocaleUpperCase('tr-TR');
         const revealedPrefix = cleanTarget.substring(0, this.state.revealedLetters);
 
-        // Enforce that masum submitted word MUST start with the currently revealed letters
-        if (!cleanWord.startsWith(revealedPrefix)) {
+        // Enforce that masum submitted word MUST start with the currently revealed letters,
+        // be strictly longer than revealedPrefix, and have at least 2 letters
+        if (cleanWord.length < 2 || cleanWord.length <= revealedPrefix.length || !cleanWord.startsWith(revealedPrefix)) {
             delete this.state.submittedWords[peerId];
             return;
         }
@@ -294,8 +305,8 @@ class KelimeAviGameEngine {
                 if (!word) continue;
                 const cleanWord = word.trim().toLocaleUpperCase('tr-TR');
                 
-                // Enforce revealed prefix match
-                if (!cleanWord.startsWith(revealedPrefix)) continue;
+                // Enforce revealed prefix match and strict minimum length
+                if (cleanWord.length < 2 || cleanWord.length <= revealedPrefix.length || !cleanWord.startsWith(revealedPrefix)) continue;
 
                 wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
                 if (!wordPeerMap[cleanWord]) wordPeerMap[cleanWord] = [];
@@ -410,8 +421,12 @@ class KelimeAviGameEngine {
             this.onShowResult(`📢 EBE: ${ebeName} - ${this.state.round} / ${this.state.totalRounds}. tur için yeni kelimesini belirliyor...`);
         }
 
+        const selectDuration = 45;
+        this.localEndTime = window.PairaTime.now() + (selectDuration * 1000);
+
         this.setState(this.state);
-        if (this.onTimerTick) this.onTimerTick(this.state.turnDuration);
+        if (this.onTimerTick) this.onTimerTick(selectDuration);
+        this.startRenderTimer();
     }
 
     advanceToNextEbe() {
@@ -456,7 +471,7 @@ class KelimeAviGameEngine {
         if (this.renderFrame) cancelAnimationFrame(this.renderFrame);
 
         const tick = () => {
-            if (this.state.status !== 'playing') return;
+            if (this.state.status !== 'playing' && this.state.status !== 'ebe_word_select') return;
 
             const left = Math.max(0, this.localEndTime - window.PairaTime.now());
             const secs = Math.ceil(left / 1000);
@@ -469,7 +484,11 @@ class KelimeAviGameEngine {
             }
 
             if (left <= 0 && this.isHost) {
-                this.evaluateRound();
+                if (this.state.status === 'ebe_word_select') {
+                    this.endRoundPrematurely("Ebe 45 saniye içinde kelime seçemedi, sonraki Ebe'ye geçiliyor...", false, false);
+                } else {
+                    this.evaluateRound();
+                }
                 return;
             }
 
@@ -569,16 +588,27 @@ class KelimeAviView {
         if (btnTriggerMatch && masumInput) {
             const checkPrefix = (word, showAlert = false) => {
                 const gameState = window._gameState;
-                if (gameState && gameState.targetWord && gameState.revealedLetters > 0) {
-                    const cleanTarget = gameState.targetWord.trim().toLocaleUpperCase('tr-TR');
-                    const prefix = cleanTarget.substring(0, gameState.revealedLetters);
-                    const upperWord = word.trim().toLocaleUpperCase('tr-TR');
-                    if (!upperWord.startsWith(prefix)) {
-                        if (showAlert && window.showToast) {
-                            window.showToast(`Girdiğiniz kelime '${prefix}' harfi/harfleri ile başlamalıdır!`, "warning");
-                        }
-                        return false;
+                const upperWord = word.trim().toLocaleUpperCase('tr-TR');
+                const prefix = (gameState && gameState.targetWord && gameState.revealedLetters > 0)
+                    ? gameState.targetWord.trim().toLocaleUpperCase('tr-TR').substring(0, gameState.revealedLetters)
+                    : '';
+
+                if (upperWord.length < 2 || (prefix && upperWord.length <= prefix.length)) {
+                    if (showAlert && window.showToast) {
+                        window.showToast(
+                            prefix
+                                ? `Kelime açılan '${prefix}' kısmından daha uzun ve en az 2 harfli olmalıdır!`
+                                : "Kelime en az 2 harfli olmalıdır!",
+                            "warning"
+                        );
                     }
+                    return false;
+                }
+                if (prefix && !upperWord.startsWith(prefix)) {
+                    if (showAlert && window.showToast) {
+                        window.showToast(`Girdiğiniz kelime '${prefix}' harfi/harfleri ile başlamalıdır!`, "warning");
+                    }
+                    return false;
                 }
                 return true;
             };
@@ -708,10 +738,15 @@ class KelimeAviView {
                 if (statusMsg) statusMsg.innerText = `🎭 Bu tur EBE: ${ebeName}! Gizli kelimesini belirliyor...`;
                 if (letterDisplay) letterDisplay.innerText = "Ebe Kelime Seçiyor...";
             }
-            this.updateTimer(state.turnDuration || 45);
+            const selectKey = `${state.round}_${state.currentEbe}_${state.ebeIndex}`;
+            if (this._lastEbeSelectKey !== selectKey) {
+                this._lastEbeSelectKey = selectKey;
+                this.updateTimer(45);
+            }
             return;
         }
 
+        this._lastEbeSelectKey = null;
         ebeTargetArea?.classList.add('hidden');
 
         // Clear input fields when a new step/round, revealed letter, or failed attempt changes

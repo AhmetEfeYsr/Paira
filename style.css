@@ -5,20 +5,12 @@ html, body { min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
 body {
     font-family: 'Poppins', sans-serif;
     background: radial-gradient(circle at top left, var(--bg-navy), var(--bg-deep) 80%);
-    background-size: 400% 400%;
-    animation: bgGradient 15s ease infinite;
     color: var(--text-main);
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: clamp(0.5rem, 2vw, 1rem);
     padding-bottom: 0;
-}
-
-@keyframes bgGradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 
@@ -52,27 +44,13 @@ body {
 
 
 
-@keyframes pulseGlow {
-    0% { text-shadow: 0 0 10px var(--neon-glow-rgba), 0 0 20px var(--btn-secondary-bg); }
-    50% { text-shadow: 0 0 20px var(--neon-glow-rgba), 0 0 30px var(--neon-glow-rgba); }
-    100% { text-shadow: 0 0 10px var(--neon-glow-rgba), 0 0 20px var(--btn-secondary-bg); }
-}
-
 .gradient-text {
-    background: linear-gradient(45deg, var(--lilac), var(--neon-purple), var(--gradient-end));
-    background-size: 200% auto;
-    animation: gradientShift 3s ease infinite, pulseGlow 2s infinite alternate;
+    background: linear-gradient(135deg, #f3e8ff 0%, var(--lilac) 55%, var(--neon-purple) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     font-size: clamp(2.2rem, 6vw, 3.5rem);
     font-weight: 800; text-align: center; margin-bottom: clamp(1.2rem, 3vw, 2.5rem);
     position: relative;
     display: inline-block;
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 .games-grid {
@@ -116,18 +94,18 @@ body {
 }
 
 .game-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-2px);
     border-color: var(--neon-purple);
-    background: rgba(var(--primary-rgb), 0.15);
-    box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.3), 0 0 15px var(--neon-glow-rgba) inset;
+    background: rgba(var(--primary-rgb), 0.12);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
 }
 
 .game-card:hover::before {
-    opacity: 1;
+    opacity: 0.4;
 }
 
 .game-card:active {
-    transform: translateY(-2px) scale(0.98);
+    transform: translateY(0) scale(0.99);
 }
 
 .game-icon {
@@ -140,14 +118,15 @@ body {
     font-size: 1.8rem;
     font-weight: 800;
     color: var(--text-main);
-    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--lilac-muted);
     flex-shrink: 0;
-    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: border-color 0.2s ease;
     overflow: hidden;
 }
 
 .game-card:hover .game-icon {
-    transform: rotate(5deg) scale(1.1);
+    border-color: var(--neon-purple);
 }
 
 .game-icon img {

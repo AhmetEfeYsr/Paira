@@ -6,7 +6,7 @@
     background: linear-gradient(145deg, var(--modal-bg), var(--toast-bg));
     border: 2px solid var(--neon-purple); border-radius: 16px;
     width: 100%; text-align: center;
-    box-shadow: 0 8px 25px var(--input-bg);
+    box-shadow: var(--glass-shadow);
     display: flex; flex-direction: column; flex: 1; min-height: 0; margin-bottom: clamp(0.6rem, 1.5vw, 1rem);
 }
 
@@ -20,3 +20,15 @@
 .btn-selected { background: rgba(var(--primary-rgb), 0.4); border-color: var(--neon-purple); color: var(--text-main); transform: scale(0.98); }
 .btn-correct { background: var(--success-bg) !important; border-color: var(--success) !important; color: var(--text-main) !important; }
 .btn-wrong { background: var(--danger-bg) !important; border-color: var(--danger) !important; color: var(--text-main) !important; }
+
+.fun-fact-box {
+    margin-top: 1rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: 12px;
+    background: rgba(var(--primary-rgb), 0.14);
+    border: 1px solid var(--lilac-muted);
+    color: var(--lilac);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: left;
+}

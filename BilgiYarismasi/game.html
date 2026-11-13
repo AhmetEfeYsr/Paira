@@ -83,7 +83,9 @@
                 </section>
 
                 <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
-                    <div style="color: var(--lilac); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <div class="spinner" style="margin-bottom: 1.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    </div>
                     <h3>Bekleniyor...</h3>
                     <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu ayarları yapıyor.</p>
                 </section>
@@ -122,6 +124,8 @@
                         <button class="btn btn-secondary choice-btn" data-choice="2" style="padding: 1.2rem; font-size: 1.1rem; height: auto; white-space: normal;">C) ...</button>
                         <button class="btn btn-secondary choice-btn" data-choice="3" style="padding: 1.2rem; font-size: 1.1rem; height: auto; white-space: normal;">D) ...</button>
                     </div>
+
+                    <div id="fun-fact-box" class="fun-fact-box hidden"></div>
                 </div>
             </div>
         </section>
@@ -137,18 +141,10 @@
                 </ul>
 
                 <button id="btn-back-to-lobby" class="btn btn-primary btn-block" style="padding: 16px; font-size: 1.15rem;">Lobiye Dön</button>
+                <button id="btn-exit-game" class="btn btn-secondary btn-block" style="padding: 14px; font-size: 1.05rem; margin-top: 10px;">Ana Menüye Dön</button>
             </div>
         </section>
     </main>
-
-    <div class="game-seo-info">
-        <h2>Paira Bilgi Yarışması Hakkında</h2>
-        <p>Arkadaşlarınla hem eğlenip hem de genel kültürünü test etmeye hazır mısın? <strong>Paira Bilgi Yarışması</strong>, tarihten spora, sinemadan bilime kadar binlerce soruyla dolu hızlı ve rekabetçi bir online trivia oyunudur.</p>
-
-        <p>Oyun başladığında karşına çıkan çoktan seçmeli sorularda sadece doğru cevabı bilmek yetmez, aynı zamanda en hızlı cevap veren sen olmalısın! Hızlı cevapladıkça daha yüksek puan kazanır, yanlış cevaplarda ise puan kaybedebilirsin. Her sorunun ardından gelen ilginç bilgilerle de yeni şeyler öğrenme fırsatı yakalarsın.</p>
-
-        <p>İster kendi başına rekor kırmaya çalış, ister arkadaşlarınla kıyasıya bir rekabete girip aranızdaki en bilgili kişinin kim olduğunu kanıtla. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden anında oynamaya başla ve zirveye adını yazdır!</p>
-    </div>
 
     <script src="../shared/peer_manager.js?v=1.0.2"></script>
     <script src="../shared/base_network.js?v=1.0.2"></script>

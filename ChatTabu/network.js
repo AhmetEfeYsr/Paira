@@ -167,6 +167,14 @@ const broadcastToClients = (data) => {
     });
 };
 
+const sendToClient = (peerId, data) => {
+    if (!isHost) return;
+    const conn = connections[peerId];
+    if (conn && conn.open) {
+        conn.send(data);
+    }
+};
+
 const sendToHost = (data) => {
     if (isHost) return;
     if (hostConn && hostConn.open) {
@@ -196,6 +204,7 @@ const disconnectPeer = () => {
 window.Network = {
     initPeer,
     broadcastToClients,
+    sendToClient,
     sendToHost,
     disconnectPeer,
     isHost: () => isHost,

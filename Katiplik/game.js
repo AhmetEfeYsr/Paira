@@ -13,6 +13,11 @@ class KatiplikGame {
         this.timerInterval = null;
         this.totalKeystrokes = 0;
         this.correctKeystrokes = 0;
+        this.incorrectWords = 0;
+        this.expectedKeystrokes = 0;
+        this.finalWpm = 0;
+        this.finalAccuracy = 0;
+        this.finalTime = 0;
         this.isFinished = false;
         
         // Rakip Durumu
@@ -42,8 +47,14 @@ class KatiplikGame {
             // Prevent default space/enter behavior for immediate visual feedback on desktop
             if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
                 e.preventDefault();
-                this._spaceHandledByKeydown = true;
-                this.handleWordCompletion(textInput.value.trim());
+                const trimmed = textInput.value.trim();
+                if (trimmed.length > 0) {
+                    this._spaceHandledByKeydown = true;
+                    this.handleWordCompletion(trimmed);
+                } else {
+                    this._spaceHandledByKeydown = false;
+                    textInput.value = '';
+                }
             }
         });
         
@@ -255,6 +266,11 @@ class KatiplikGame {
         this.currentWordIndex = 0;
         this.totalKeystrokes = 0;
         this.correctKeystrokes = 0;
+        this.incorrectWords = 0;
+        this.expectedKeystrokes = 0;
+        this.finalWpm = 0;
+        this.finalAccuracy = 0;
+        this.finalTime = 0;
         this.isFinished = false;
         
         // Rakip sıfırlama
@@ -367,8 +383,11 @@ class KatiplikGame {
         if (normInput === normExpected) {
             wordSpan.classList.add('correct');
             this.correctKeystrokes += typedWord.length + 1;
+            this.expectedKeystrokes += typedWord.length + 1;
         } else {
             wordSpan.classList.add('incorrect');
+            this.incorrectWords++;
+            this.expectedKeystrokes += Math.max(typedWord.length, normExpected.length) + 1;
         }
         
         this.currentWordIndex++;
@@ -399,20 +418,20 @@ class KatiplikGame {
         }
     }
 
-    calculateWPM() {
-        if (!this.startTime || this.isFinished) {
+    calculateWPM(forceFinal = false) {
+        if (!this.startTime || (this.isFinished && !forceFinal)) {
             const currentWpmText = document.getElementById('p1-wpm').textContent;
-            return parseInt(currentWpmText) || 0;
+            return parseInt(currentWpmText, 10) || 0;
         }
         
-        const timeElapsed = (window.PairaTime.now() - this.startTime) / 60000; // minutes
+        const rawElapsed = (window.PairaTime.now() - this.startTime) / 60000; // minutes
+        if (!forceFinal && rawElapsed < 0.005) return 0;
+        const timeElapsed = forceFinal ? Math.max(0.01, rawElapsed) : rawElapsed;
         
-        if (timeElapsed < 0.005) return 0;
-        
-        // Calculate correct characters in progress for current word to prevent WPM dropping mid-word
+        // Calculate Net WPM from validated correct keystrokes only, penalizing incorrect words
         let currentWordCorrectChars = 0;
         const textInput = document.getElementById('text-input');
-        if (textInput && !this.isFinished) {
+        if (textInput && !this.isFinished && !forceFinal) {
             const inputVal = textInput.value.trim();
             const currentWord = this.words[this.currentWordIndex];
             if (inputVal && currentWord) {
@@ -425,7 +444,8 @@ class KatiplikGame {
         }
         
         const totalCorrect = this.correctKeystrokes + currentWordCorrectChars;
-        const wpm = Math.round((totalCorrect / 5) / timeElapsed);
+        const netWords = (totalCorrect / 5) - this.incorrectWords;
+        const wpm = Math.max(0, Math.round(netWords / timeElapsed));
         const finalWpm = isNaN(wpm) || wpm < 0 || !isFinite(wpm) ? 0 : wpm;
         
         document.getElementById('p1-wpm').textContent = `${finalWpm} WPM`;
@@ -471,12 +491,14 @@ class KatiplikGame {
         textInput.disabled = true;
         
         const finalTime = Math.max(1, Math.floor((window.PairaTime.now() - this.startTime) / 1000));
-        
-        this.isFinished = false; 
-        const finalWpm = this.calculateWPM();
-        this.isFinished = true;
-        
-        const accuracy = this.totalKeystrokes > 0 ? Math.round((this.correctKeystrokes / this.totalKeystrokes) * 100) : 0;
+        const finalWpm = this.calculateWPM(true);
+        const accuracy = this.expectedKeystrokes > 0
+            ? Math.min(100, Math.round((this.correctKeystrokes / this.expectedKeystrokes) * 100))
+            : 0;
+
+        this.finalTime = finalTime;
+        this.finalWpm = finalWpm;
+        this.finalAccuracy = accuracy;
         
         if (!this.isSolo) {
             this.network.sendMessage({
@@ -546,20 +568,37 @@ class KatiplikGame {
             document.getElementById('opp-final-time').textContent = `${this.opponentFinishedTime || 0}s`;
         }
         
-        const wpmText = document.getElementById('final-wpm').textContent;
-        const myWpm = parseInt(wpmText) || 0;
+        const myWpm = this.finalWpm !== undefined ? this.finalWpm : (parseInt(document.getElementById('final-wpm').textContent, 10) || 0);
+        const myAcc = this.finalAccuracy !== undefined ? this.finalAccuracy : (parseInt((document.getElementById('final-accuracy').textContent || '0').replace('%', ''), 10) || 0);
+        const myTime = this.finalTime || 0;
         const opWpm = this.opponentWpm || 0;
-        
-        if (myWpm > opWpm) {
-            title.textContent = "🏆 Kazandın! 🏆";
+        const opAcc = this.opponentAccuracy || 0;
+        const opTime = this.opponentFinishedTime || 0;
+
+        let outcome = 'draw';
+        const myValid = myAcc >= 50;
+        const opValid = opAcc >= 50;
+
+        if (myValid !== opValid) {
+            outcome = myValid ? 'win' : 'lose';
+        } else if (myWpm !== opWpm) {
+            outcome = myWpm > opWpm ? 'win' : 'lose';
+        } else if (myAcc !== opAcc) {
+            outcome = myAcc > opAcc ? 'win' : 'lose';
+        } else if (myTime !== opTime && myTime > 0 && opTime > 0) {
+            outcome = myTime < opTime ? 'win' : 'lose';
+        }
+
+        if (outcome === 'win') {
+            title.textContent = "Kazandın!";
             title.style.color = "var(--success)";
             if (window.PairaAudio && window.PairaAudio.play) window.PairaAudio.play('correct');
-        } else if (opWpm > myWpm) {
-            title.textContent = "❌ Kaybettin! ❌";
+        } else if (outcome === 'lose') {
+            title.textContent = "Kaybettin!";
             title.style.color = "var(--danger)";
             if (window.PairaAudio && window.PairaAudio.play) window.PairaAudio.play('wrong');
         } else {
-            title.textContent = "🤝 Berabere! 🤝";
+            title.textContent = "Berabere!";
             title.style.color = "var(--warning)";
             if (window.PairaAudio && window.PairaAudio.play) window.PairaAudio.play('pass');
         }
@@ -576,6 +615,13 @@ class KatiplikGame {
     resetGame() {
         clearInterval(this.timerInterval);
         this.isFinished = false;
+        this.totalKeystrokes = 0;
+        this.correctKeystrokes = 0;
+        this.incorrectWords = 0;
+        this.expectedKeystrokes = 0;
+        this.finalWpm = 0;
+        this.finalAccuracy = 0;
+        this.finalTime = 0;
         
         document.getElementById('game-timer').textContent = "00:00";
         document.getElementById('p1-progress').style.width = "0%";

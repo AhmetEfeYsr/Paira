@@ -58,11 +58,11 @@
         <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
                 <div class="game-logo-container" style="position: relative; display: inline-block;">
-                    <div style="display:inline-flex; align-items:center; justify-content:center; width: 100px; height: 100px; border-radius: 20px; box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.4); animation: float 6s ease-in-out infinite; background: var(--card-bg); font-size: 4rem;">⌨️</div>
-                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a>
+                    <img src="../main_logo.avif" alt="Katiplik Düellosu Logo">
+                    <a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a>
                 </div>
                 <h1 class="gradient-text">Katiplik Düellosu</h1>
-                <p class="seo-description">Parmaklarına güveniyor musun? <strong>Paira Katiplik Düellosu</strong>'nda ister tek başına pratik yap, ister arkadaşlarınla gerçek zamanlı düellolara katıl. En yüksek WPM değerine ulaş ve rekorları kır!</p>
+                <p class="seo-description">Tek başına pratik yap ya da oda koduyla arkadaşınla birebir klavye yarışına çık.</p>
             </div>
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
@@ -71,9 +71,9 @@
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <button id="btn-solo" class="btn btn-success btn-block" style="padding: 14px; font-size: 1.1rem;">Solo Pratik Yap</button>
+                    <button id="btn-solo" class="btn btn-secondary btn-block" style="padding: 14px; font-size: 1.1rem;">Solo Pratik Yap</button>
                     
-                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Arkadaşına Meydan Oku (Oda Kur)</button>
+                    <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Oda Kur (1v1 Düello)</button>
                     
                     <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
                         <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-bg);"></div>
@@ -88,24 +88,24 @@
                 </div>
             </div>
 
-            <div class="game-seo-info custom-scrollbar" style="margin-top: auto;">
+            <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
                 <h2>Nasıl Oynanır?</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
-                        <h3>1. Modunu Seç</h3>
-                        <p>Solo Pratik ile kendini geliştir veya Düello moduyla arkadaşlarına meydan oku.</p>
+                        <h3>1. Modu Seç</h3>
+                        <p>Solo modda tek başına çalış veya 1v1 oda kurup arkadaşını oda koduyla davet et.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>2. Metni Yaz</h3>
-                        <p>Ekranda beliren metni, imla kurallarına dikkat ederek en hızlı şekilde kutucuğa yaz.</p>
+                        <h3>2. Ayarları Yap</h3>
+                        <p>İmlalı/imlasız modu, Türkçe veya İngilizce klavye düzenini ve çalışacağın metni seç.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>3. Hızını Ölç</h3>
-                        <p>Yazdıkça dakikadaki kelime sayın (WPM) ve doğruluk oranın anlık olarak hesaplanır.</p>
+                        <h3>3. Metni Yaz</h3>
+                        <p>Kelimeleri boşlukla tamamla; net yazma hızın (WPM) ve doğruluğun anlık olarak hesaplanır.</p>
                     </div>
                     <div class="rule-card">
                         <h3>4. Düelloyu Kazan</h3>
-                        <p>Arkadaşından daha hızlı ve hatasız yazarak klavye şampiyonu ol!</p>
+                        <p>Yanlış kelimeler net hızını ve doğruluğunu düşürür. Hem hızlı hem hatasız yazan kazanır.</p>
                     </div>
                 </div>
             </div>
@@ -113,10 +113,8 @@
     </main>
 
     <div class="game-seo-info">
-        <h2>Paira Katiplik Düellosu Hakkında</h2>
-        <p>Klavye hızına güveniyor musun? On parmak yazma yeteneğini geliştirmek, zabıt katipliği sınavlarına hazırlanmak veya sadece arkadaşlarınla kıyasıya bir hız yarışına girmek istiyorsan <strong>Paira Katiplik Düellosu</strong> tam sana göre!</p>
-        <p>İster tek başınıza antrenman yapıp kişisel rekorlarınızı kırmaya çalışın, ister arkadaşlarınızla aynı odada buluşup gerçek zamanlı bir klavye savaşına katılın. Oyunda karşınıza çıkan resmi yazışmalar, hukuki makaleler ve edebi metinleri en kısa sürede, hatasız olarak yazmanız gerekir. Sistem; yazdığınız kelime sayısını, dakikadaki vuruş hızınızı (WPM) ve hata oranınızı anlık olarak ölçer.</p>
-        <p>Arkadaşlarla oynanan çok oyunculu modda, kimin kelimeleri daha hızlı erittiğini canlı olarak görebilirsiniz. Yanlış yazılan kelimeler ilerlemenizi yavaşlatır, bu yüzden sadece hızlı olmak değil, doğru tuşlara basmak da zafere giden yolda kritik bir rol oynar. Hiçbir kurulum yapmadan tarayıcın üzerinden klavyenin başına geç ve parmaklarının hızını herkese göster!</p>
+        <h2>Paira Katiplik Düellosu</h2>
+        <p>Katiplik Düellosu; zabıt katipliği metinleri, resmi yazılar ve çeşitli Türkçe metinler üzerinde hız ve doğruluk pratiği yapabileceğin tarayıcı tabanlı bir yazma yarışmasıdır. Doğru yazılan karakterler üzerinden Net WPM hesaplanır ve 1v1 odalarda iki oyuncu aynı metinde yarışır.</p>
     </div>
 
     <script src="../shared/login.js"></script>

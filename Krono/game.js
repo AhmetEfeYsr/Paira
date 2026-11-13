@@ -19,6 +19,8 @@ class KronoGame {
         this.hintsRemaining = 2;
         this.finishedPlayers = 0;
         this.roundResults = {};
+        this.myRoundResultText = '';
+        this.usedEventIds = new Set();
 
         this.sortableInstance = null;
 
@@ -112,9 +114,19 @@ class KronoGame {
         document.getElementById('btn-submit')?.addEventListener('click', () => this.checkAnswers(true));
 
         document.getElementById('btn-back-to-lobby')?.addEventListener('click', () => {
-            if (this.network.isHost) {
+            if (this.network.isSolo) {
+                this.players.forEach(p => p.score = 0);
+                this.currentRound = 0;
+                this.usedEventIds.clear();
+                this.startNewRound();
+            } else if (this.network.isHost) {
                 this.returnToLobby();
             }
+        });
+
+        document.getElementById('btn-exit-game')?.addEventListener('click', () => {
+            if (this.network && !this.network.isSolo) this.network.leaveRoom();
+            else window.location.href = 'index.html';
         });
     }
 
@@ -154,15 +166,44 @@ class KronoGame {
         });
     }
 
+    shuffleArray(arr) {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+    }
+
     startNewRound() {
         this.currentRound++;
         
-        // Pick 5 random events
-        const shuffled = [...this.eventsData].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 5);
-        
-        // Correct order (oldest to newest)
-        const sorted = [...selected].sort((a, b) => a.tarih - b.tarih);
+        let pool = this.eventsData.filter(ev => !this.usedEventIds.has(ev.id));
+        if (pool.length < 5) {
+            this.usedEventIds.clear();
+            pool = [...this.eventsData];
+        }
+
+        const pickUniqueYearHand = (items) => {
+            const shuffled = this.shuffleArray(items);
+            const picked = [];
+            const seenYears = new Set();
+            for (const ev of shuffled) {
+                if (!seenYears.has(ev.tarih)) {
+                    seenYears.add(ev.tarih);
+                    picked.push(ev);
+                    if (picked.length === 5) break;
+                }
+            }
+            return picked;
+        };
+
+        let selected = pickUniqueYearHand(pool);
+        if (selected.length < 5 && this.usedEventIds.size > 0) {
+            this.usedEventIds.clear();
+            selected = pickUniqueYearHand(this.eventsData);
+        }
+        selected.forEach(ev => this.usedEventIds.add(ev.id));
         
         const gameData = {
             round: this.currentRound,
@@ -199,6 +240,7 @@ class KronoGame {
         this.hintsRemaining = 2;
         this.finishedPlayers = 0;
         this.roundResults = {};
+        this.myRoundResultText = '';
 
         // Audio trigger for round start
         window.PairaAudio && window.PairaAudio.play('correct');
@@ -371,8 +413,13 @@ class KronoGame {
                 randomCard.querySelector('.event-date').classList.add('visible');
             }
         } else if (this.hintsRemaining === 1) {
-            // Hint 2: Place one item correctly and lock it
-            const unlockedCards = cards.filter(c => !c.classList.contains('locked'));
+            // Hint 2: Place one unrevealed/unlocked item correctly and lock it
+            const unrevealedAndUnlocked = cards.filter(
+                c => !c.classList.contains('locked') && !c.querySelector('.event-date')?.classList.contains('visible')
+            );
+            const unlockedCards = unrevealedAndUnlocked.length > 0
+                ? unrevealedAndUnlocked
+                : cards.filter(c => !c.classList.contains('locked'));
             if (unlockedCards.length > 0) {
                 const randomCard = unlockedCards[Math.floor(Math.random() * unlockedCards.length)];
                 randomCard.classList.add('locked');
@@ -486,7 +533,8 @@ class KronoGame {
 
         this.updateScoreBoard();
         
-        document.getElementById('game-status-message').textContent = `${correctCount} doğru! Puan: +${roundScore}`;
+        this.myRoundResultText = `${correctCount} doğru! Puan: +${roundScore}`;
+        document.getElementById('game-status-message').textContent = this.myRoundResultText;
 
         this.network.send({
             type: 'SCORE_UPDATE',
@@ -529,21 +577,21 @@ class KronoGame {
     _checkAllPlayersFinishedRound() {
         const totalPlayers = this.network.isSolo ? 1 : this.players.length;
         const finishedCount = Object.keys(this.roundResults).filter(pid => this.players.some(p => p.id === pid)).length;
+        const statusMsg = document.getElementById('game-status-message');
 
         if (finishedCount >= totalPlayers && totalPlayers > 0) {
             if (this.nextRoundTimeout) return;
             // Everyone finished - show countdown before next action
             const isLastRound = this.currentRound >= this.settings.roundCount;
-            const statusMsg = document.getElementById('game-status-message');
-            const currentText = statusMsg.textContent;
+            const baseText = this.myRoundResultText || statusMsg.textContent;
             let countdown = 4;
             
             const updateCountdown = () => {
                 if (countdown > 0) {
                     if (isLastRound) {
-                        statusMsg.textContent = `${currentText} • Sonuçlar ${countdown}s sonra...`;
+                        statusMsg.textContent = `${baseText} • Sonuçlar ${countdown}s sonra...`;
                     } else {
-                        statusMsg.textContent = `${currentText} • Sonraki tur ${countdown}s sonra...`;
+                        statusMsg.textContent = `${baseText} • Sonraki tur ${countdown}s sonra...`;
                     }
                     countdown--;
                     this.nextRoundTimeout = setTimeout(updateCountdown, 1000);
@@ -564,8 +612,11 @@ class KronoGame {
                 }
             };
             updateCountdown();
-        } else {
-            document.getElementById('game-status-message').textContent = 'Rakibin bitirmesi bekleniyor...';
+        } else if (this.gameState === 'FINISHED') {
+            const baseText = this.myRoundResultText ? `${this.myRoundResultText} • ` : '';
+            statusMsg.textContent = `${baseText}Rakibin bitirmesi bekleniyor...`;
+        } else if (this.gameState === 'PLAYING') {
+            statusMsg.textContent = 'Rakibin turu bitirdi! Sıralamanı tamamla.';
         }
     }
 
@@ -610,15 +661,31 @@ class KronoGame {
             
             el.innerHTML = `
                 <span style="font-weight:600;">${window.escapeHtml(p.name)}</span>
-                <strong style="color:var(--primary-purple); font-size:1.5rem;">${p.score}</strong>
+                <strong style="color:var(--neon-purple); font-size:1.5rem;">${p.score}</strong>
             `;
             container.appendChild(el);
         });
 
-        if (!this.network.isHost) {
-            document.getElementById('btn-back-to-lobby').style.display = 'none';
+        const btnBack = document.getElementById('btn-back-to-lobby');
+        const btnExit = document.getElementById('btn-exit-game');
+        if (this.network.isSolo) {
+            if (btnBack) {
+                btnBack.style.display = 'flex';
+                btnBack.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> Tekrar Oyna`;
+            }
+            if (btnExit) {
+                btnExit.style.display = 'flex';
+                btnExit.textContent = 'Ana Menüye Dön';
+            }
         } else {
-            document.getElementById('btn-back-to-lobby').style.display = 'flex';
+            if (btnBack) {
+                btnBack.style.display = this.network.isHost ? 'flex' : 'none';
+                btnBack.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Lobiye Dön`;
+            }
+            if (btnExit) {
+                btnExit.style.display = 'flex';
+                btnExit.textContent = 'Odadan Çık';
+            }
         }
     }
 
@@ -630,6 +697,7 @@ class KronoGame {
         }
         this.players.forEach(p => p.score = 0);
         this.currentRound = 0;
+        this.usedEventIds.clear();
         this.gameState = 'LOBBY';
         
         if (this.network && this.network.isHost) {
@@ -644,11 +712,10 @@ class KronoGame {
         if (!container) return;
         
         container.innerHTML = '';
-        this.players.forEach((p, i) => {
-            const color = i === 0 ? 'var(--primary-purple)' : 'var(--danger)';
+        this.players.forEach((p) => {
+            const isSelf = p.id === this.myId;
             const el = document.createElement('div');
-            el.className = 'team';
-            el.style.color = color;
+            el.className = `team ${isSelf ? 'team-self' : 'team-opponent'}`;
             el.innerHTML = `${window.escapeHtml(p.name)}: <span>${p.score}</span>`;
             container.appendChild(el);
         });

@@ -29,6 +29,8 @@ class CizBilGameEngine {
         this.bgTimerInterval = null;
         this.lastTickSec = -1;
         this.lastReportedSec = -1;
+        this._pendingNextDrawerId = null;
+        this._pendingNextDrawerIndex = null;
         this.fuzzyMatcher = new window.FuzzyMatcher();
     }
 
@@ -56,6 +58,14 @@ class CizBilGameEngine {
     }
 
     removePlayer(id) {
+        const oldPlayers = Object.keys(this.state.players);
+        const oldIndex = oldPlayers.indexOf(id);
+        const wasDrawer = (this.state.currentDrawer === id);
+        if (wasDrawer && oldIndex !== -1 && oldPlayers.length > 1) {
+            this._pendingNextDrawerId = oldPlayers[(oldIndex + 1) % oldPlayers.length];
+            this._pendingNextDrawerIndex = oldIndex;
+        }
+
         delete this.state.players[id];
         if (Array.isArray(this.state.guessedCorrectly)) {
             this.state.guessedCorrectly = this.state.guessedCorrectly.filter(gid => gid !== id);
@@ -66,7 +76,7 @@ class CizBilGameEngine {
             if (Object.keys(this.state.players).length < 2) {
                 this.endGame();
             } else if (this.state.status === 'playing') {
-                if (this.state.currentDrawer === id) {
+                if (wasDrawer) {
                     this.checkWinOrNextRound(); // Drawer left, skip turn
                 } else {
                     this.checkAllGuessed();
@@ -83,6 +93,8 @@ class CizBilGameEngine {
         this.state.targetScore = Math.max(10, parseInt(settings.targetScore) || 50);
         this.state.turnDuration = Math.max(15, parseInt(settings.turnDuration) || 60);
         this.state.currentDrawer = null;
+        this._pendingNextDrawerId = null;
+        this._pendingNextDrawerIndex = null;
         
         if (window.cizbilWords && window.cizbilWords.length > 0) {
             this.state.wordsLeft = [...window.cizbilWords];
@@ -111,13 +123,28 @@ class CizBilGameEngine {
             return;
         }
 
-        let dIndex = activePlayers.indexOf(this.state.currentDrawer);
-        dIndex = (dIndex + 1) % activePlayers.length;
+        let dIndex;
+        const currentIdx = activePlayers.indexOf(this.state.currentDrawer);
+        if (currentIdx !== -1) {
+            dIndex = (currentIdx + 1) % activePlayers.length;
+        } else if (this._pendingNextDrawerId && activePlayers.includes(this._pendingNextDrawerId)) {
+            dIndex = activePlayers.indexOf(this._pendingNextDrawerId);
+        } else if (this._pendingNextDrawerIndex !== null && this._pendingNextDrawerIndex !== undefined) {
+            dIndex = this._pendingNextDrawerIndex % activePlayers.length;
+        } else {
+            dIndex = 0;
+        }
+        this._pendingNextDrawerId = null;
+        this._pendingNextDrawerIndex = null;
+
         this.state.currentDrawer = activePlayers[dIndex];
         this._timerShortened = false; // Reset timer shortened flag for new round
         this.state.guessedCorrectly = [];
         this.state.revealWord = null;
         this.state.status = 'playing';
+        this.localTurnEndTime = 0;
+        this.lastTickSec = -1;
+        this.lastReportedSec = -1;
 
         if (this.state.wordsLeft.length < 2) {
              if (window.cizbilWords && window.cizbilWords.length > 0) {
@@ -252,6 +279,8 @@ class CizBilGameEngine {
 
         if (winner) {
             this.endGame();
+        } else if (!this.state.currentWord) {
+            this.startRound();
         } else {
             this.state.status = 'round_end';
             this.state.revealWord = this.state.currentWord;
@@ -272,6 +301,9 @@ class CizBilGameEngine {
 
     backToLobby() {
         this.stopTimers();
+        this._pendingNextDrawerId = null;
+        this._pendingNextDrawerIndex = null;
+        this.localTurnEndTime = 0;
         this.state.status = 'lobby';
         this.state.currentDrawer = null;
         this.state.currentWord = '';
@@ -287,7 +319,7 @@ class CizBilGameEngine {
         if (this.bgTimerInterval) clearInterval(this.bgTimerInterval);
 
         const checkTimer = () => {
-            if (this.state.status !== 'playing' || this.state.choices) return false;
+            if (this.state.status !== 'playing' || this.state.choices || this.state.isChoosingWord) return false;
 
             const left = Math.max(0, this.localTurnEndTime - window.PairaTime.now());
             const secs = Math.ceil(left / 1000);
@@ -326,7 +358,7 @@ class CizBilGameEngine {
         if (!this._visibilityListenerBound) {
             this._visibilityListenerBound = true;
             document.addEventListener('visibilitychange', () => {
-                if (!document.hidden && this.state.status === 'playing') {
+                if (!document.hidden && this.state.status === 'playing' && !this.state.choices && !this.state.isChoosingWord) {
                     checkTimer();
                 }
             });
@@ -475,13 +507,10 @@ class CizBilView {
                 this.drawingBoard.setColor(target.dataset.color);
                 if (target.dataset.color === '#ffffff') {
                     this.drawingBoard.setTool('eraser');
-                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 } else {
                     const currentToolBtn = document.querySelector('.tool-btn.active');
                     if (!currentToolBtn || currentToolBtn.dataset.tool === 'eraser') {
                         this.drawingBoard.setTool('brush');
-                        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                        document.querySelector('.tool-btn[data-tool="brush"]')?.classList.add('active');
                     } else {
                         this.drawingBoard.setTool(currentToolBtn.dataset.tool);
                     }
@@ -514,12 +543,14 @@ class CizBilView {
         });
 
         bindInteraction(document.getElementById('btn-clear'), () => {
+            if (!this.drawingBoard || this.drawingBoard.readOnly) return;
             this.callbacks.onClearCanvas();
         });
 
         const btnUndo = document.getElementById('btn-undo');
         if (btnUndo) {
             bindInteraction(btnUndo, () => {
+                if (!this.drawingBoard || this.drawingBoard.readOnly) return;
                 this.callbacks.onUndoCanvas();
             });
         }
@@ -582,7 +613,7 @@ class CizBilView {
         msg.className = 'chat-msg' + (isCorrect ? ' correct' : '');
 
         if (isCorrect) {
-            msg.innerHTML = `<strong style="color:var(--success)">${window.escapeHtml(name)}</strong> doğru bildi! 🎉`;
+            msg.innerHTML = `<strong style="color:var(--success)">${window.escapeHtml(name)}</strong> doğru bildi!`;
         } else {
             msg.innerHTML = `<strong>${window.escapeHtml(name)}:</strong> <span>${window.escapeHtml(text)}</span>`;
         }
@@ -596,6 +627,7 @@ class CizBilView {
         this._lastStatus = state.status;
 
         if (state.status === 'lobby') {
+            this._inChoosingPhase = false;
             window.showScreen('lobby-screen');
             if (prevStatus && prevStatus !== 'lobby') {
                 const container = document.getElementById('messages-container');
@@ -605,6 +637,7 @@ class CizBilView {
             window.showScreen('game-screen');
             this.updateGameUI(state);
         } else if (state.status === 'ended') {
+            this._inChoosingPhase = false;
             window.showScreen('winner-screen');
             this.updateWinnerUI(state, isHost);
         }
@@ -612,8 +645,16 @@ class CizBilView {
 
     updateGameUI(state) {
         this.initCanvas(state.currentDrawer);
+        const isChoosing = Boolean(state.choices || state.isChoosingWord);
+        if (state.status === 'playing' && isChoosing && !this._inChoosingPhase) {
+            this._inChoosingPhase = true;
+            this.resetCanvasLocal();
+        } else if (state.status !== 'playing' || !isChoosing) {
+            this._inChoosingPhase = false;
+        }
+
         if (this.drawingBoard) {
-            const canDraw = (state.status === 'playing' && state.currentDrawer === this.myId && !state.choices);
+            const canDraw = (state.status === 'playing' && state.currentDrawer === this.myId && !state.choices && !state.isChoosingWord);
             this.drawingBoard.readOnly = !canDraw;
             this.drawingBoard.updateCursor();
         }
@@ -671,7 +712,7 @@ class CizBilView {
             }
         } else {
             const alreadyGuessed = Array.isArray(state.guessedCorrectly) && state.guessedCorrectly.includes(this.myId);
-            msgEl.textContent = alreadyGuessed ? 'Doğru Bildin! 🎉' : 'Tahmin Et!';
+            msgEl.textContent = alreadyGuessed ? 'Doğru Bildin!' : 'Tahmin Et!';
             document.getElementById('toolbar').style.display = 'none';
             document.getElementById('canvas-overlay').style.display = 'block';
             // Enable chat for guessers
@@ -682,7 +723,7 @@ class CizBilView {
             if (btnSendChat) btnSendChat.disabled = false;
             document.getElementById('word-choice-overlay').style.display = 'none';
 
-            if (state.choices) {
+            if (state.choices || state.isChoosingWord) {
                 wordEl.textContent = "KELİME SEÇİLİYOR...";
                 msgEl.textContent = 'Çizen kelime seçiyor...';
             } else {

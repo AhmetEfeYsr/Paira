@@ -189,9 +189,32 @@ class NetworkManager extends window.PeerNetworkManager {
         if (data.type === 'SYNC_PLAYERS') {
             this.players = data.players;
             Object.values(this.players).forEach(p => this.onPlayerJoin(p));
+        } else if (data.type === 'KICKED' && !this.isHost) {
+            if (window.showToast) window.showToast("Odadan atıldınız.", "error");
+            setTimeout(() => {
+                this.disconnect();
+                window.location.href = 'index.html';
+            }, 1500);
+            return;
         }
 
         this.onStateUpdate(senderId, data);
+    }
+
+    kickPlayer(peerId) {
+        if (!this.isHost || !peerId || peerId === this.myId) return;
+        this.sendTo(peerId, { type: 'KICKED' });
+        setTimeout(() => {
+            if (this.connections[peerId]) {
+                try { this.connections[peerId].close(); } catch (e) {}
+            }
+            if (this.players[peerId]) {
+                const player = this.players[peerId];
+                delete this.players[peerId];
+                this.onPlayerLeave(player);
+                this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+            }
+        }, 200);
     }
 
     sendToHost(data) {

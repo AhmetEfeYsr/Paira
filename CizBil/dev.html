@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira ÇizBil | Geliştirici Notları</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../shared/shared.css">
     <link rel="stylesheet" href="style.css">
@@ -13,7 +13,7 @@
     <!-- Favicons -->
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
     <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
-    
+
     <style>
         .about-container {
             max-width: 900px;
@@ -49,15 +49,6 @@
             margin-bottom: 1.2rem;
             font-size: 0.98rem;
         }
-        .about-container blockquote {
-            background: var(--input-bg);
-            border-left: 4px solid var(--neon-purple);
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 4px 12px 12px 4px;
-            font-style: italic;
-            color: var(--lilac);
-        }
         .about-container strong {
             color: var(--text-main);
         }
@@ -78,20 +69,6 @@
             border-radius: 4px;
             color: var(--neon-purple);
             font-size: 0.95rem;
-        }
-        .about-container pre {
-            background: var(--input-bg);
-            border: var(--glass-border);
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 1.2rem 0;
-        }
-        .about-container pre code {
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
-            font-size: 0.9rem;
         }
         .back-link {
             display: inline-flex;
@@ -114,47 +91,42 @@
         <div class="about-container">
             <a href="index.html" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Geri Dön / Back to Lobby
+                Lobiye Dön
             </a>
-            
+
             <h1>Geliştirici Notları: ÇizBil</h1>
-            
-            <h2>Giriş ve Mimari Yaklaşım</h2>
-            <p><strong>Paira ÇizBil</strong>, tamamen web tarayıcıları üzerinde koordine edilen, merkezi bir veritabanı (Database) veya oyun sunucusu barındırmayan, <strong>P2P (Peer-to-Peer)</strong> bağlantı mimarisine sahip çok oyunculu bir çizim ve kelime tahmin oyunudur. Gartic.io tarzı bu eğlenceli oyun, arkadaş gruplarının herhangi bir indirme veya kayıt işlemi yapmadan doğrudan web tarayıcıları üzerinden gerçek zamanlı olarak yarışabilmesini sağlar.</p>
-            <p>Tüm oyun durumu (state) yönetimi, sunucusuz mimarinin getirdiği sınırlamaları aşmak ve pürüzsüz bir oyun akışı sunmak adına tarayıcı düzeyinde koordine edilen Host-Client yapısıyla yönetilmektedir.</p>
 
-            <h2>P2P Ağ Topolojisi ve Oda Keşfi</h2>
-            <p>Geleneksel istemci-sunucu yapısı yerine, oyunda <strong>WebRTC (Web Real-Time Communication)</strong> protokolü üzerinde yükselen bir <strong>Host-Client (Kurucu-Katılımcı)</strong> ağ topolojisi kullanılır:</p>
+            <h2>Teknik Mimari</h2>
+            <p><strong>Paira ÇizBil</strong>, merkezi bir oyun sunucusu veya veritabanı olmadan çalışan, tarayıcı tabanlı bir <strong>Host-Client P2P</strong> çizim ve tahmin oyunudur. İletişim katmanı <code>PeerNetworkManager</code> ve <code>BaseGameNetwork</code> üzerine kuruludur ve <code>RTCDataChannel</code> üzerinden çalışır.</p>
             <ul>
-                <li><strong>Host (Kurucu Node):</strong> Oyunu başlatan kullanıcı yerel tarayıcısında sunucu (Host) rolünü üstlenir. <code>CizBilGameEngine</code> nesnesini yöneterek sürelerin takibinden, soru/kelime havuzunun yönetiminden, çizim izinlerinden, cevapların toplanmasından ve anlık liderlik sıralamasının dağıtılmasından sorumludur.</li>
-                <li><strong>Clients (Katılımcı Peer'lar):</strong> 6 haneli benzersiz oda kodunu girerek odaya bağlanan oyuncular, doğrudan Host ile peer-to-peer <code>RTCDataChannel</code> bağlantısı kurarlar. Katılımcıların kendi aralarında doğrudan veri kanalı açmasına gerek kalmaz; tüm bilgi akışı Host üzerinden senkronize edilir.</li>
-                <li><strong>Sinyalleşme (Signaling):</strong> Oyuncuların birbirlerini internet üzerinde bulup IP ve port bilgilerini (ICE Adayları) değiş tokuş edebilmesi için bir WebRTC aracı sinyalleşme sunucusu (PeerJS) kullanılır. Bağlantı kurulduktan sonra bu aracı sunucu tamamen devre dışı kalır ve veri akışı doğrudan cihazlar arasında akar.</li>
+                <li><strong>Host (Kurucu):</strong> <code>CizBilGameEngine</code> örneğini yerel olarak çalıştırır; tur sırasını, kelime havuzunu (<code>shared/cizbil_words.js</code>), süreleri, tahmin doğrulamasını ve skor tablosunu yönetir.</li>
+                <li><strong>Client (Katılımcı):</strong> Oda koduyla Host'a bağlanır. Tüm çizim olayları ve tahminler Host üzerinden yönlendirilir ve doğrulanır.</li>
+                <li><strong>Ağ Dayanıklılığı:</strong> <code>PeerNetworkManager</code> çoklu STUN/TURN yapılandırması, NAT keep-alive heartbeat mekanizması ve 48KB üzeri iletiler için parçalama (<code>__PAIR_CHUNK__</code>) desteği sunar.</li>
             </ul>
 
-            <h2>Gerçek Zamanlı Veri Senkronizasyonu (Data Synchronization)</h2>
-            <p>ÇizBil'de oyun akışının sorunsuz ilerlemesi ve çizim yollarının akıcı bir şekilde aktarılması için birçok kritik veri paketinin milisaniye düzeyinde senkronize edilmesi gerekir. Bu süreç, <code>RTCDataChannel</code> üzerinden iletilen şu paket tipleriyle koordine edilir:</p>
+            <h2>Tuval ve Gerçek Zamanlı Senkronizasyon</h2>
+            <p>Çizim alanı 16:9 oranında <code>AdvancedDrawingBoard</code> ile yönetilir. ÇizBil, her darbe için tam görüntü göndermek yerine normalize edilmiş (<code>0–1</code>) koordinat bazlı stroke senkronizasyonu kullanır (paylaşılan tuval sınıfı gerektiğinde <code>image/webp</code> 0.5 kalite dışa aktarımı da destekler):</p>
             <ul>
-                <li><strong>DRAW_EVENT:</strong> Çizen kişinin (currentDrawer) tuval üzerindeki çizim yolları (fırça hareketleri, X ve Y koordinatları, renk, fırça kalınlığı vb.) <code>AdvancedDrawingBoard</code> tarafından yakalanır ve doğrudan WebRTC veri kanalı üzerinden gecikmesiz olarak gönderilir.</li>
-                <li><strong>CLEAR_CANVAS & UNDO_CANVAS:</strong> Çizen kişinin tuvali temizleme (clear) veya son çizimi geri alma (undo) işlemleri tüm istemcilerde yerel olarak (<code>clearCanvasLocal</code>, <code>undoCanvasLocal</code>) yürütülür.</li>
-                <li><strong>GUESS:</strong> Diğer oyuncuların kelime tahminleri Host'a gönderilir. Host, <code>FuzzyMatcher</code> kütüphanesini kullanarak tahminin doğru olup olmadığını (küçük-büyük harf duyarlılığı olmadan) kontrol eder. Tahminin doğru olması durumunda tüm istemcilere doğru bildiğine dair <code>CHAT_EVENT</code> paketi gönderilir ve puanlar güncellenir.</li>
-                <li><strong>CHOOSE_WORD:</strong> Sıra çizen kişiye geldiğinde sunulan iki kelimeden (choices) birini seçmesi ve oyun turunun resmi olarak başlaması bu eylemle yönetilir.</li>
-                <li><strong>SYNC & SYNC_TIME:</strong> Host, oyun durumunu (players, currentDrawer, scores vb.) istemcilere yayınlar. Güvenlik ve haksız rekabeti önlemek amacıyla, çizen dışındaki oyuncuların durum paketlerindeki <code>currentWord</code> kelimesi sansürlenerek (örn. <code>_ _ _</code>) gönderilir.</li>
+                <li><strong><code>DRAW_EVENT</code>:</strong> <code>START_STROKE</code>, <code>MOVE_STROKE</code>, <code>DOT</code>, <code>END_STROKE</code>, <code>FILL</code> (flood fill) ve <code>SHAPE</code> (<code>rect</code>, <code>circle</code>, <code>line</code>) olayları Host üzerinden diğer istemcilere aktarılır ve <code>replayEvent()</code> ile çizdirilir.</li>
+                <li><strong><code>CLEAR_CANVAS</code> / <code>UNDO_CANVAS</code> / <code>RESET_CANVAS</code>:</strong> Temizleme ve geri alma işlemleri yerel tarihçeyle senkronize edilir; yeni tur başında <code>RESET_CANVAS</code> ve <code>resetHistory()</code> ile önceki turun geri alma yığını temizlenir.</li>
+                <li><strong>Gizlilik ve Hile Koruması:</strong> Host durum yayınında (<code>SYNC</code>) çizen dışındaki oyuncular için <code>choices</code> alanı <code>null</code> yapılır, <code>isChoosingWord</code> bayrağı gönderilir ve <code>currentWord</code> alt çizgilere (<code>_ _ _</code>) dönüştürülür. Kurucunun kendi <code>CHOOSE_WORD</code> ve <code>GUESS</code> eylemleri ağa yayınlanmadan doğrudan <code>handleAction</code> içinde işlenir.</li>
             </ul>
 
-            <h2>Oda Mantığı ve Oturum Yönetimi</h2>
-            <p>Oyun odaları, PeerJS altyapısı tarafından atanan 6 karakterli benzersiz bir <strong>Oda Kodu</strong> (Peer ID) ile yönetilir:</p>
+            <h2>Oyun Mekaniği, Süre ve Puanlama</h2>
             <ul>
-                <li><strong>Bağlantı Kurulumu:</strong> Katılımcı oda kodunu girdiğinde SDP (Session Description Protocol) ve ICE Candidate alışverişi başlar ve güvenli bir veri kanalı açılır.</li>
-                <li><strong>Kelime Havuzu Yönetimi:</strong> Host, oyun ayarlarında seçilen kelimeleri (<code>cizbil_words.js</code> dosyasındaki havuzdan) belleğe yükler. Oyun sırasında kelimelerin sırası Host tarafından kontrol edilir ve dağıtılır.</li>
-                <li><strong>Hata Toleransı (Resilience):</strong> Bağlantı kesintileri veya bir oyuncunun oyundan düşmesi durumunda, Host'un <code>removePlayer</code> mekanizması tetiklenir. Çizen kişinin ayrılması durumunda tur otomatik olarak atlanırken (<code>checkWinOrNextRound</code>), tahmincilerin ayrılması halinde de kalan oyunculara göre turun sonlanıp sonlanmayacağı (<code>checkAllGuessed</code>) anlık olarak değerlendirilir.</li>
+                <li><strong>Kelime Seçimi ve Zamanlayıcı:</strong> Sıra gelen çizer <code>wordChoiceTimeout</code> (15 sn) içinde 2 kelimeden birini seçmezse ilk seçenek otomatik başlatılır. Kelime seçimi sırasında <code>localTurnEndTime</code> sıfır tutulur ve istemcilere erken <code>SYNC_TIME</code> gönderilmez.</li>
+                <li><strong>10 Saniye Kısaltma Kuralı:</strong> Birden fazla tahmincinin bulunduğu turlarda ilk doğru tahmin geldiğinde, kalan süre 10 saniyeden uzunsa tur süresi otomatik olarak 10 saniyeye düşürülür (<code>_timerShortened</code>) ve güncel süre <code>SYNC_TIME</code> ile yayınlanır.</li>
+                <li><strong>FuzzyMatcher ile Tahmin Eşleştirme:</strong> Tahminler <code>normalizeTurkishChars</code> ile sadeleştirildikten sonra <code>FuzzyMatcher</code> tarafından değerlendirilir. Hedef kelime uzunluğu &le;3 ise tolerans <code>0</code>, 4 ise <code>0.5</code>, 5+ ise <code>1.2</code> olarak uygulanır.</li>
+                <li><strong>Puanlama:</strong> Doğru tahmin eden ilk oyuncu 15 puan alır, sonraki her doğru tahminde puan 2 azalır ve alt sınır 5 puandır (<code>Math.max(5, 15 - (order - 1) * 2)</code>). Çizen oyuncu her doğru tahminden <code>Math.floor(points / 3)</code> puan kazanır.</li>
+                <li><strong>Bağlantı Kopması Yönetimi:</strong> Çizen oyuncu ayrılırsa sıra indeksi korunarak bir sonraki oyuncuya geçilir; kelime henüz seçilmemişse (<code>!currentWord</code>) 4 saniyelik kelime gösterim beklemesi atlanarak doğrudan yeni tur başlatılır. Odada 2'den az oyuncu kalırsa oyun sonlandırılır.</li>
             </ul>
 
-            <h2>E-E-A-T & Güvenlik</h2>
-            <p>Uygulama tamamen istemci tarafında (Client-Side) çalıştığı için kullanıcıların kişisel verileri, IP adresleri veya oyun içi yazışmaları herhangi bir uzak sunucuda veya veritabanında depolanmaz. Tüm veri transferleri WebRTC'nin doğası gereği <strong>uçtan uca şifreli (End-to-End Encrypted - DTLS/SRTP)</strong> kanallar üzerinden doğrudan cihazlar arasında gerçekleşir. Bu yaklaşım hem maksimum hız ve sıfır sunucu maliyeti sağlar, hem de veri gizliliğini en üst düzeyde korur.</p>
-
-            <blockquote>
-                Bu teknik dokümantasyon, tarayıcı tabanlı eş zamanlı oyun geliştirme meraklıları ve platformun altyapısını merak eden geliştiriciler için Ahmet Efe Yaşar tarafından hazırlanmıştır.
-            </blockquote>
+            <h2>Değişiklik Günlüğü (Changelog)</h2>
+            <ul>
+                <li><strong>v1.2.0:</strong> Kelime seçimi durumunu izleyicilere aktarmak için <code>isChoosingWord</code> bayrağı eklendi; <code>startRound</code> içinde <code>localTurnEndTime</code> sıfırlandı ve seçim aşamasında <code>SYNC_TIME</code> yayını durduruldu.</li>
+                <li><strong>v1.1.5:</strong> Kurucunun kendi <code>CHOOSE_WORD</code> ve <code>GUESS</code> eylemlerini ağa sızdırması engellendi; tur geçişlerinde tuval geri alma yığını (<code>resetHistory</code>) sıfırlandı.</li>
+                <li><strong>v1.1.0:</strong> Çizen ayrıldığında tur sırası indeksinin korunması sağlandı ve boş kelime durumunda 4 saniyelik tur sonu beklemesi kaldırıldı; araç çubuğuna özel silgi düğmesi eklendi.</li>
+            </ul>
         </div>
     </main>
 </body>

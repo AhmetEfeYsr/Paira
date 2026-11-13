@@ -7,6 +7,8 @@ export let networkManager = null;
 export const networkState = {
     state: 'LOBBY', // LOBBY, WRITE, DRAW, ALBUM, WAIT
     players: {}, // { id: { name, score, id } }
+    playerNames: {}, // Preserved map of id -> name for album attribution
+    playerOrder: [], // Deterministic active player order for book shifting
     hostId: null,
     turnDuration: 60,
     roundCount: 1, // Current round
@@ -20,6 +22,25 @@ export const networkState = {
     albumSequence: [],
     albumIndex: -1
 };
+
+let cachedBlankWebP = null;
+function getBlankWebPDataURL() {
+    if (cachedBlankWebP) return cachedBlankWebP;
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 450;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 800, 450);
+        const url = canvas.toDataURL('image/webp', 0.5);
+        if (url && url.startsWith('data:image/webp')) {
+            cachedBlankWebP = url;
+            return cachedBlankWebP;
+        }
+    } catch (e) {}
+    return 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+}
 
 let lobbyUI = null;
 let turnTimeout = null;
@@ -91,11 +112,14 @@ function initLobby() {
         onKickPlayer: (pid) => {
             if (isHost && networkManager) {
                 networkManager.sendToPeer(pid, 'KICKED');
-                if (networkManager.connections[pid]) {
-                    networkManager.connections[pid].close();
-                }
-                delete networkState.players[pid];
-                broadcastState();
+                setTimeout(() => {
+                    if (networkManager.connections[pid]) {
+                        networkManager.connections[pid].close();
+                    }
+                    delete networkState.players[pid];
+                    networkState.playerOrder = networkState.playerOrder.filter(id => id !== pid);
+                    broadcastState();
+                }, 300);
             }
         },
         onRoomStart: () => {
@@ -123,6 +147,10 @@ function initLobby() {
                 }
                 if (payload.oldId && payload.oldId !== senderId && networkState.players[payload.oldId]) {
                     delete networkState.players[payload.oldId];
+                    const orderIdx = networkState.playerOrder.indexOf(payload.oldId);
+                    if (orderIdx !== -1) {
+                        networkState.playerOrder[orderIdx] = senderId;
+                    }
                     if (networkState.assignments && networkState.assignments[payload.oldId]) {
                         networkState.assignments[senderId] = networkState.assignments[payload.oldId];
                         delete networkState.assignments[payload.oldId];
@@ -133,6 +161,10 @@ function initLobby() {
                     }
                 }
                 networkState.players[senderId] = { id: senderId, name: payload.name, isHost: Boolean(payload.isHost || senderId === myId) };
+                networkState.playerNames[senderId] = payload.name;
+                if (!networkState.playerOrder.includes(senderId)) {
+                    networkState.playerOrder.push(senderId);
+                }
                 broadcastState();
             }
         },
@@ -140,9 +172,17 @@ function initLobby() {
             if (isHost) {
                 if (networkState.players[senderId]) {
                     delete networkState.players[senderId];
+                    delete networkState.assignments[senderId];
+                    delete networkState.completedTasks[senderId];
+                    networkState.playerOrder = networkState.playerOrder.filter(id => id !== senderId);
                     
-                    // Check if the remaining players have all completed their tasks
+                    // Handle mid-game disconnect
                     if (networkState.state === 'WRITE' || networkState.state === 'DRAW') {
+                        const activeCount = Object.keys(networkState.players).length;
+                        if (activeCount < 2) {
+                            endGameCleanly();
+                            return;
+                        }
                         const allCompleted = Object.keys(networkState.players).every(pid => {
                             if (pid === networkState.hostId) return networkState.completedTasks[pid];
                             return networkState.completedTasks[pid] || !networkManager.connections[pid];
@@ -167,6 +207,10 @@ function initLobby() {
         if (isHost) {
             networkState.hostId = myId;
             networkState.players[myId] = { id: myId, name: playerName, isHost: true };
+            networkState.playerNames[myId] = playerName;
+            if (!networkState.playerOrder.includes(myId)) {
+                networkState.playerOrder.push(myId);
+            }
             lobbyUI.setRoomCode(myId);
             document.getElementById('host-settings').style.display = 'flex';
             updateLobbyUI();
@@ -197,6 +241,7 @@ function handleNetworkData(action, payload, senderId) {
             networkState.stories[ownerId].push({
                 type: payload.taskType,
                 authorId: senderId,
+                authorName: networkState.players[senderId]?.name || networkState.playerNames[senderId] || 'Oyuncu',
                 content: payload.content
             });
 
@@ -234,6 +279,10 @@ function handleNetworkData(action, payload, senderId) {
         } else if (action === 'PLAYER_WAITING') {
             networkState.completedTasks[payload.playerId] = true;
             handlePlayingState({ action: 'PLAYER_WAITING', playerId: payload.playerId });
+        } else if (action === 'GAME_TOAST') {
+            if (payload?.message && window.showToast) {
+                window.showToast(payload.message, payload.type || 'info');
+            }
         }
     }
 }
@@ -298,6 +347,24 @@ function updateLobbyUI() {
     }
 }
 
+function endGameCleanly() {
+    if (!isHost) return;
+    clearTimeout(turnTimeout);
+    stopTimer();
+    const msg = "Yeterli oyuncu kalmadığı için oyun sonlandırıldı.";
+    if (window.showToast) window.showToast(msg, "warning");
+    networkManager?.broadcast('GAME_TOAST', { message: msg, type: 'warning' });
+
+    const hasEntries = Object.values(networkState.stories).some(story => Array.isArray(story) && story.length > 0);
+    if (hasEntries) {
+        prepareAlbum();
+        networkState.state = 'ALBUM';
+        broadcastState({ action: 'SHOW_ALBUM' });
+    } else {
+        returnToLobby();
+    }
+}
+
 async function startGame() {
     if (!isHost) return;
 
@@ -307,21 +374,30 @@ async function startGame() {
         return;
     }
 
-    networkState.turnDuration = Math.max(15, parseInt(document.getElementById('turn-duration').value) || 60);
-    networkState.maxRounds = Math.min(Math.max(1, parseInt(document.getElementById('round-count').value) || 3), pCount);
+    networkState.turnDuration = Math.max(15, parseInt(document.getElementById('turn-duration')?.value) || 60);
+    const requestedRounds = Math.max(1, parseInt(document.getElementById('round-count')?.value) || 3);
+    networkState.maxRounds = Math.min(requestedRounds, pCount);
     networkState.roundCount = 1;
     resetGameUIState();
 
     const pKeys = Object.keys(networkState.players);
+    networkState.playerOrder = [...pKeys];
     networkState.stories = {};
     networkState.assignments = {};
 
     pKeys.forEach(pid => {
+        networkState.playerNames[pid] = networkState.players[pid]?.name || networkState.playerNames[pid] || 'Oyuncu';
         networkState.stories[pid] = [];
         networkState.assignments[pid] = pid;
     });
 
     startPhase('WRITE');
+
+    if (requestedRounds > pCount) {
+        const msg = `Tur sayısı oyuncu sayısına göre ${networkState.maxRounds} olarak ayarlandı.`;
+        if (window.showToast) window.showToast(msg, "info");
+        networkManager?.broadcast('GAME_TOAST', { message: msg, type: 'info' });
+    }
 }
 
 function startPhase(phase) {
@@ -347,7 +423,8 @@ function forceSubmitTasks() {
                 networkState.stories[ownerId].push({
                     type: isDrawingTurn ? 'draw' : 'text',
                     authorId: pid,
-                    content: isDrawingTurn ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' : '... (Zamanında yazamadı)'
+                    authorName: networkState.players[pid]?.name || networkState.playerNames[pid] || 'Oyuncu',
+                    content: isDrawingTurn ? getBlankWebPDataURL() : '... (Zamanında yazamadı)'
                 });
             }
             networkState.completedTasks[pid] = true;
@@ -360,12 +437,17 @@ function forceSubmitTasks() {
 function passBooksAndNextRound() {
     if (!isHost) return;
 
-    const pKeys = Object.keys(networkState.players).filter(pid => networkState.assignments[pid] !== undefined);
-    if (pKeys.length === 0) return;
+    const pKeys = (networkState.playerOrder && networkState.playerOrder.length > 0
+        ? networkState.playerOrder
+        : Object.keys(networkState.players)).filter(pid => networkState.players[pid] && networkState.assignments[pid] !== undefined);
+    if (pKeys.length < 2) {
+        endGameCleanly();
+        return;
+    }
 
     const oldAssignments = { ...networkState.assignments };
 
-    // Shift assignments securely
+    // Shift assignments deterministically among active players
     for (let i = 0; i < pKeys.length; i++) {
         const nextIdx = (i + 1) % pKeys.length;
         networkState.assignments[pKeys[i]] = oldAssignments[pKeys[nextIdx]];
@@ -390,11 +472,16 @@ function prepareAlbum() {
     networkState.albumSequence = [];
     const owners = Object.keys(networkState.stories);
     owners.forEach(ownerId => {
-        networkState.albumSequence.push({ type: 'TITLE', ownerId });
+        const ownerName = networkState.playerNames[ownerId] || networkState.players[ownerId]?.name || 'Bilinmeyen';
+        networkState.albumSequence.push({ type: 'TITLE', ownerId, ownerName });
         const story = networkState.stories[ownerId];
         if (story) {
             story.forEach((step, idx) => {
-                networkState.albumSequence.push({ type: 'ENTRY', ownerId, stepIdx: idx, stepData: step });
+                const enrichedStep = {
+                    ...step,
+                    authorName: step.authorName || networkState.playerNames[step.authorId] || networkState.players[step.authorId]?.name || 'Bilinmeyen'
+                };
+                networkState.albumSequence.push({ type: 'ENTRY', ownerId, stepIdx: idx, stepData: enrichedStep });
             });
         }
     });
@@ -487,3 +574,6 @@ export function showAlbumScreen() {
         document.getElementById('btn-back-to-lobby').style.display = 'none';
     }
 }
+
+window.networkState = networkState;
+window.startGame = startGame;

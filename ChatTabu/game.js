@@ -66,14 +66,22 @@ class ChatTabuGameEngine {
 
     isMatch(guess, target) {
         if (!guess || !target) return false;
-        const cleanGuess = guess.toLocaleLowerCase('tr-TR').trim();
-        const cleanTarget = target.toLocaleLowerCase('tr-TR').trim();
+        const norm = (s) => {
+            const trimmed = String(s).trim();
+            return typeof window.normalizeTurkishChars === 'function'
+                ? window.normalizeTurkishChars(trimmed)
+                : trimmed.toLocaleLowerCase('tr-TR');
+        };
+        const cleanGuess = norm(guess);
+        const cleanTarget = norm(target);
+        if (!cleanGuess || !cleanTarget) return false;
         if (cleanGuess === cleanTarget) return true;
 
-        if (this.fuzzyMatcher) {
-            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, 1.0);
+        const tolerance = cleanTarget.length <= 4 ? 0 : (cleanTarget.length <= 7 ? 0.8 : 1.2);
+        if (tolerance > 0 && this.fuzzyMatcher) {
+            return this.fuzzyMatcher.isMatch(cleanGuess, cleanTarget, tolerance);
         }
-        return cleanGuess === cleanTarget;
+        return false;
     }
 
     startGameSolo() {
@@ -128,6 +136,9 @@ class ChatTabuGameEngine {
             // In solo mode or when allowAnyChat is true or guess comes from active narrator's chat
             if (this.state.mode === 'solo' || allowAny || isTurnStreamer) {
                 this.state.isPaused = true;
+                if (this.state.turnEndTime) {
+                    this.state.turnEndTime += 2000;
+                }
 
                 if (!this.state.scores[username]) this.state.scores[username] = 0;
                 this.state.scores[username] += 1;
@@ -136,9 +147,9 @@ class ChatTabuGameEngine {
                     const hostPlayer = this.state.players.find(p => p.isHost);
                     if (hostPlayer) hostPlayer.score += 1;
                 } else {
-                    const targetPlayer = this.state.players.find(p => p.id === streamerId) || this.state.players.find(p => p.id === this.state.turnId);
-                    if (targetPlayer) {
-                        targetPlayer.score += 1;
+                    const narrator = this.state.players.find(p => p.id === this.state.turnId);
+                    if (narrator) {
+                        narrator.score = (narrator.score || 0) + (this.state.settings?.pointsPerCorrect || 1);
                     }
                 }
 
@@ -263,6 +274,27 @@ class ChatTabuGameEngine {
 class ChatTabuView {
     constructor() {
         this.chatListener = null;
+        this.wordVisible = true;
+    }
+
+    setWordVisibility(visible) {
+        this.wordVisible = Boolean(visible);
+        const mainWord = document.getElementById('main-word');
+        const forbiddenWords = document.getElementById('forbidden-words');
+        const iconEyeOpen = document.getElementById('word-eye-open');
+        const iconEyeClosed = document.getElementById('word-eye-closed');
+
+        if (this.wordVisible) {
+            if (mainWord) mainWord.style.filter = 'none';
+            if (forbiddenWords) forbiddenWords.style.filter = 'none';
+            if (iconEyeOpen) iconEyeOpen.style.display = 'block';
+            if (iconEyeClosed) iconEyeClosed.style.display = 'none';
+        } else {
+            if (mainWord) mainWord.style.filter = 'blur(12px)';
+            if (forbiddenWords) forbiddenWords.style.filter = 'blur(12px)';
+            if (iconEyeOpen) iconEyeOpen.style.display = 'none';
+            if (iconEyeClosed) iconEyeClosed.style.display = 'block';
+        }
     }
 
     setupChatListener(platform, channelConfig, onMessage, onOpen = null, onError = null) {
@@ -285,6 +317,11 @@ class ChatTabuView {
         list.innerHTML = '';
 
         if (countDisplay) countDisplay.textContent = players.length;
+
+        const btnStartGame = document.getElementById('btn-start-game');
+        if (btnStartGame) {
+            btnStartGame.classList.toggle('btn-not-ready', players.length < 2);
+        }
 
         players.forEach((p, idx) => {
             let platformIcon = '🟣 Twitch';
@@ -325,15 +362,15 @@ class ChatTabuView {
         if (activeTurnIndicator) {
             if (state.mode === 'solo') {
                 const p = state.players[0];
-                const icon = p?.platform === 'both' ? '⚡ Twitch + Kick' : (p?.platform === 'kick' ? '🟢 Kick' : '🟣 Twitch');
-                activeTurnIndicator.innerHTML = `<span>👤 Tek Oyunculu Mod (${icon})</span>`;
+                const icon = p?.platform === 'both' ? 'Twitch + Kick' : (p?.platform === 'kick' ? 'Kick' : 'Twitch');
+                activeTurnIndicator.innerHTML = `<span>Tek Oyunculu Mod (${icon})</span>`;
             } else if (activePlayer) {
                 let icon = '🟣';
                 if (activePlayer.platform === 'kick') icon = '🟢';
                 else if (activePlayer.platform === 'both') icon = '⚡';
 
                 activeTurnIndicator.innerHTML = `
-                    <span>🎙️ Anlatan Yayıncı:</span>
+                    <span>Anlatan Yayıncı:</span>
                     <span style="color:var(--primary-purple);">${icon} @${window.escapeHtml(activePlayer.name)}</span>
                     <span style="font-size:0.9rem; color:var(--text-muted);">(${activePlayer.score} Puan)</span>
                 `;
@@ -353,23 +390,32 @@ class ChatTabuView {
             }
         }
 
+        const btnSkipEl = document.getElementById('btn-skip');
+        const btnTabooEl = document.getElementById('btn-taboo');
+
         if (state.isGameOver) {
             statusEl.textContent = "Oyun Bitti!";
             statusEl.style.borderColor = "var(--warning)";
             if (roundDisplay) roundDisplay.textContent = "Oyun Bitti";
             if (turnTimer) turnTimer.style.display = "none";
-            if (mainEl) mainEl.style.filter = 'none';
-            if (fbEl) fbEl.style.filter = 'none';
+            this.setWordVisibility(true);
             if (toggleVisibilityBtn) toggleVisibilityBtn.style.display = 'none';
+            if (btnSkipEl) {
+                btnSkipEl.classList.remove('disabled');
+                btnSkipEl.disabled = false;
+            }
+            if (btnTabooEl) {
+                btnTabooEl.classList.remove('disabled');
+                btnTabooEl.disabled = false;
+            }
 
             if (state.mode === 'solo') {
                 controls.style.display = "flex";
-                const btnSkip = document.getElementById('btn-skip');
-                if (btnSkip) {
-                    btnSkip.style.display = 'inline-block';
-                    btnSkip.textContent = 'Yeniden Başlat';
+                if (btnSkipEl) {
+                    btnSkipEl.style.display = 'inline-block';
+                    btnSkipEl.textContent = 'Yeniden Başlat';
                 }
-                if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
+                if (btnTabooEl) btnTabooEl.style.display = 'none';
 
                 const hostP = state.players.find(p => p.isHost);
                 const score = hostP ? hostP.score : 0;
@@ -379,23 +425,31 @@ class ChatTabuView {
                 const isHost = window.Network && window.Network.isHost();
                 if (isHost) {
                     controls.style.display = "flex";
-                    const btnSkip = document.getElementById('btn-skip');
-                    if (btnSkip) {
-                        btnSkip.style.display = 'inline-block';
-                        btnSkip.textContent = 'Yeniden Başlat';
+                    if (btnSkipEl) {
+                        btnSkipEl.style.display = 'inline-block';
+                        btnSkipEl.textContent = 'Yeniden Başlat';
                     }
-                    if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
+                    if (btnTabooEl) btnTabooEl.style.display = 'none';
                 } else {
                     controls.style.display = "none";
                 }
                 const sorted = [...state.players].sort((a, b) => b.score - a.score);
                 const winner = sorted[0];
-                let winnerText = winner ? `🏆 Kazanan: @${winner.name} (${winner.score} Puan)!` : "Oyun Bitti";
+                let winnerText = winner ? `Kazanan: @${winner.name} (${winner.score} Puan)` : "Oyun Bitti";
                 mainEl.textContent = winnerText;
 
                 fbEl.innerHTML = sorted.map(p => `<li>@${window.escapeHtml(p.name)}: ${p.score} Puan</li>`).join('');
             }
             return;
+        }
+
+        if (btnSkipEl) {
+            btnSkipEl.classList.toggle('disabled', Boolean(state.isPaused));
+            btnSkipEl.disabled = Boolean(state.isPaused);
+        }
+        if (btnTabooEl) {
+            btnTabooEl.classList.toggle('disabled', Boolean(state.isPaused));
+            btnTabooEl.disabled = Boolean(state.isPaused);
         }
 
         if (state.mode === 'solo') {
@@ -404,12 +458,11 @@ class ChatTabuView {
             controls.style.display = "flex";
             if (toggleVisibilityBtn) toggleVisibilityBtn.style.display = 'flex';
 
-            const btnSkip = document.getElementById('btn-skip');
-            if (btnSkip) {
-                btnSkip.style.display = 'inline-block';
-                btnSkip.textContent = 'Pas Geç';
+            if (btnSkipEl) {
+                btnSkipEl.style.display = 'inline-block';
+                btnSkipEl.textContent = 'Pas Geç';
             }
-            if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
+            if (btnTabooEl) btnTabooEl.style.display = 'none';
 
             if (state.activeWord) {
                 mainEl.textContent = state.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
@@ -421,12 +474,11 @@ class ChatTabuView {
             controls.style.display = "flex";
             if (toggleVisibilityBtn) toggleVisibilityBtn.style.display = 'flex';
 
-            const btnSkip = document.getElementById('btn-skip');
-            if (btnSkip) {
-                btnSkip.style.display = 'inline-block';
-                btnSkip.textContent = 'Pas Geç';
+            if (btnSkipEl) {
+                btnSkipEl.style.display = 'inline-block';
+                btnSkipEl.textContent = 'Pas Geç';
             }
-            if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'none';
+            if (btnTabooEl) btnTabooEl.style.display = 'none';
 
             if (state.activeWord) {
                 mainEl.textContent = state.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
@@ -440,8 +492,8 @@ class ChatTabuView {
 
             if (state.mode !== 'solo') {
                 controls.style.display = "flex";
-                document.getElementById('btn-skip').style.display = 'none';
-                if (document.getElementById('btn-taboo')) document.getElementById('btn-taboo').style.display = 'inline-block';
+                if (btnSkipEl) btnSkipEl.style.display = 'none';
+                if (btnTabooEl) btnTabooEl.style.display = 'inline-block';
 
                 if (state.activeWord) {
                     mainEl.textContent = state.activeWord.ana_kelime.toLocaleUpperCase('tr-TR');
@@ -467,7 +519,7 @@ class ChatTabuView {
         const usernameSpan = document.createElement('strong');
         usernameSpan.textContent = username + ': ';
         const textSpan = document.createElement('span');
-        textSpan.textContent = message + (isCorrect ? ' (🎉 DOĞRU BİLDİ!)' : '');
+        textSpan.textContent = message + (isCorrect ? ' (DOĞRU BİLDİ!)' : '');
 
         msgDiv.appendChild(usernameSpan);
         msgDiv.appendChild(textSpan);
@@ -489,7 +541,7 @@ class ChatTabuView {
             if (msgDiv.dataset.username === username && !msgDiv.classList.contains('correct')) {
                 msgDiv.classList.add('correct');
                 const span = msgDiv.querySelector('span');
-                if (span) span.textContent += ' (🎉 DOĞRU BİLDİ!)';
+                if (span) span.textContent += ' (DOĞRU BİLDİ!)';
                 break;
             }
         }
@@ -499,8 +551,8 @@ class ChatTabuView {
             card.style.borderColor = 'var(--success)';
             card.style.boxShadow = '0 10px 40px var(--success-bg)';
             setTimeout(() => {
-                card.style.borderColor = 'var(--neon-purple)';
-                card.style.boxShadow = '0 8px 25px var(--input-bg)';
+                card.style.borderColor = '';
+                card.style.boxShadow = '';
             }, 2000);
         }
     }
@@ -816,28 +868,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnLeaveLobby = document.getElementById('btn-leave-lobby');
     const btnLeaveGame = document.getElementById('btn-leave-game');
     const btnToggleVisibility = document.getElementById('btn-toggle-visibility');
-    const iconEyeOpen = document.getElementById('icon-eye-open');
-    const iconEyeClosed = document.getElementById('icon-eye-closed');
-
-    let wordVisible = true;
 
     if (btnToggleVisibility) {
         btnToggleVisibility.addEventListener('click', () => {
-            wordVisible = !wordVisible;
-            const mainWord = document.getElementById('main-word');
-            const forbiddenWords = document.getElementById('forbidden-words');
-
-            if (wordVisible) {
-                if (mainWord) mainWord.style.filter = 'none';
-                if (forbiddenWords) forbiddenWords.style.filter = 'none';
-                if (iconEyeOpen) iconEyeOpen.style.display = 'block';
-                if (iconEyeClosed) iconEyeClosed.style.display = 'none';
-            } else {
-                if (mainWord) mainWord.style.filter = 'blur(12px)';
-                if (forbiddenWords) forbiddenWords.style.filter = 'blur(12px)';
-                if (iconEyeOpen) iconEyeOpen.style.display = 'none';
-                if (iconEyeClosed) iconEyeClosed.style.display = 'block';
-            }
+            view.setWordVisibility(!view.wordVisible);
         });
     }
 
@@ -845,22 +879,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnSkip.addEventListener('click', () => {
             if (engine.state.mode === 'solo') {
                 if (engine.state.isGameOver) {
+                    view.setWordVisibility(true);
                     engine.startGameSolo();
                     view.updateGameUI(engine.state, null);
-                } else {
-                    engine.nextWord();
+                    return;
                 }
-            } else if (window.Network && window.Network.isHost()) {
+                if (!engine.state.isGameStarted || engine.state.isPaused) return;
+                engine.nextWord();
+                return;
+            }
+
+            if (window.Network && window.Network.isHost()) {
                 if (engine.state.isGameOver) {
+                    view.setWordVisibility(true);
                     engine.startMultiplayer(window.Network.getMyId(), engine.state.settings);
                     window.Network.broadcastToClients({ type: 'START_GAME', state: engine.state, hostNow: window.PairaTime.now() });
                     view.updateGameUI(engine.state, window.Network.getMyId());
                     view.updateLeaderboard(engine.state.players, engine.state.scores);
-                } else if (engine.state.turnId === window.Network.getMyId()) {
+                } else if (engine.state.isGameStarted && !engine.state.isPaused && engine.state.turnId === window.Network.getMyId()) {
                     engine.nextWord();
                     window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
                 }
-            } else if (window.Network && engine.state.turnId === window.Network.getMyId()) {
+            } else if (window.Network && engine.state.isGameStarted && !engine.state.isGameOver && !engine.state.isPaused && engine.state.turnId === window.Network.getMyId()) {
                 window.Network.sendToHost({ type: 'SKIP_WORD' });
             }
         });
@@ -868,6 +908,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnTaboo) {
         btnTaboo.addEventListener('click', () => {
+            if (!engine.state.isGameStarted || engine.state.isGameOver || engine.state.isPaused) return;
+            const myId = window.Network ? window.Network.getMyId() : null;
+            if (engine.state.turnId === myId) return;
+
             if (window.Network && window.Network.isHost()) {
                 const narrator = engine.state.players.find(p => p.id === engine.state.turnId);
                 if (narrator) {
@@ -878,7 +922,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
                 view.updateGameUI(engine.state, window.Network.getMyId());
                 view.updateLeaderboard(engine.state.players, engine.state.scores);
-            } else {
+            } else if (window.Network) {
                 window.Network.sendToHost({ type: 'TABOO_PRESSED' });
             }
         });
@@ -887,9 +931,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnStartGame) {
         btnStartGame.addEventListener('click', () => {
             if (window.Network && window.Network.isHost()) {
+                if (engine.state.players.length < 2) {
+                    if (window.showToast) window.showToast("Çoklu yayıncı modu için odada en az 2 yayıncı olmalıdır!", "warning");
+                    return;
+                }
+
                 const allowAny = document.getElementById('setting-allow-any-chat')?.checked ?? true;
-                const turnDuration = parseInt(document.getElementById('setting-turn-duration')?.value) || 60;
-                const maxRounds = parseInt(document.getElementById('setting-max-rounds')?.value) || 5;
+                const turnDuration = Math.min(180, Math.max(30, parseInt(document.getElementById('setting-turn-duration')?.value) || 60));
+                const maxRounds = Math.min(15, Math.max(1, parseInt(document.getElementById('setting-max-rounds')?.value) || 5));
 
                 engine.state.turnDuration = turnDuration;
                 engine.state.maxRounds = maxRounds;
@@ -898,6 +947,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const launchMP = () => {
                     if (started) return;
                     started = true;
+                    view.setWordVisibility(true);
                     engine.startMultiplayer(window.Network.getMyId(), { allowAnyChat: allowAny });
                     window.Network.broadcastToClients({ type: 'START_GAME', state: engine.state, hostNow: window.PairaTime.now() });
 
@@ -906,7 +956,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     view.updateGameUI(engine.state, window.Network.getMyId());
                     view.updateLeaderboard(engine.state.players, engine.state.scores);
-                    if (window.showToast) window.showToast("Sohbet Bağlandı! Oyun Başladı! 🎉", "success");
+                    if (window.showToast) window.showToast("Sohbet bağlandı, oyun başladı!", "success");
                 };
 
                 if (view.chatListener && view.chatListener.isConnected) {
@@ -922,7 +972,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const leaveFn = () => {
+    const leaveFn = async (title, message, cancelText) => {
+        if (typeof window.pairaConfirm === 'function') {
+            const confirmed = await window.pairaConfirm({
+                title,
+                message,
+                confirmText: "Ayrıl",
+                cancelText,
+                confirmType: "danger"
+            });
+            if (!confirmed) return;
+        }
         view.stopChatListener();
         if (window.Network) window.Network.disconnectPeer();
         sessionStorage.removeItem('chattabu_room');
@@ -930,8 +990,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'index.html';
     };
 
-    if (btnLeaveLobby) btnLeaveLobby.addEventListener('click', leaveFn);
-    if (btnLeaveGame) btnLeaveGame.addEventListener('click', leaveFn);
+    if (btnLeaveLobby) btnLeaveLobby.addEventListener('click', () => leaveFn("Lobiden Ayrıl", "Lobiden ayrılmak istediğinize emin misiniz?", "Kal"));
+    if (btnLeaveGame) btnLeaveGame.addEventListener('click', () => leaveFn("Oyundan Ayrıl", "Devam eden oyundan ayrılmak istediğinize emin misiniz?", "Oyuna Dön"));
 
     // Engine callbacks
     engine.onStateChange = (state) => {
@@ -967,7 +1027,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 type: 'GUESSED_CORRECTLY',
                 username,
                 word: word,
-                state: engine.state
+                state: engine.state,
+                hostNow: window.PairaTime.now()
             });
         }
     };
@@ -1029,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const statusEl = document.getElementById('turn-status');
         if (statusEl) {
-            statusEl.textContent = "⏳ Sohbete Bağlanılıyor, Lütfen Bekleyin...";
+            statusEl.textContent = "Sohbete bağlanılıyor, lütfen bekleyin...";
             statusEl.style.borderColor = "var(--warning)";
         }
         if (window.showToast) window.showToast("Sohbete bağlanılıyor... Bağlantı sağlandıktan sonra oyun başlayacak.", "info");
@@ -1038,9 +1099,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const launchSolo = () => {
             if (gameStarted) return;
             gameStarted = true;
+            view.setWordVisibility(true);
             engine.startGameSolo();
             view.updateGameUI(engine.state, null);
-            if (window.showToast) window.showToast("Sohbet Bağlandı! Oyun Başladı! 🎉", "success");
+            if (window.showToast) window.showToast("Sohbet bağlandı, oyun başladı!", "success");
         };
 
         view.setupChatListener(platform, channelConfig, handleChatMessage, () => {
@@ -1068,18 +1130,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         const myId = window.Network.getMyId();
 
         if (isHostUser) {
-            document.getElementById('room-code-val').textContent = data.roomCode;
+            if (typeof window.bindStandardLobbyCode === 'function') {
+                window.bindStandardLobbyCode({
+                    codeSpanId: 'display-room-code',
+                    toggleBtnId: 'btn-toggle-code',
+                    copyBtnId: 'btn-copy-room',
+                    roomCode: data.roomCode
+                });
+            }
             engine.state.players = [{ id: myId, name: displayName, platform: platform, score: 0, isHost: true }];
             view.updateLobbyPlayers(engine.state.players);
         }
     } catch (e) {
         if (window.showToast) window.showToast(e.message || "Bağlantı hatası", "error");
-        else alert(e.message || "Bağlantı hatası");
         window.location.href = 'index.html';
     }
 
     window.onPlayerJoined = (peerId) => {
-        window.Network.broadcastToClients({ type: 'REQUEST_INFO' });
+        if (window.Network.sendToClient) {
+            window.Network.sendToClient(peerId, { type: 'REQUEST_INFO' });
+        } else {
+            window.Network.broadcastToClients({ type: 'REQUEST_INFO' });
+        }
         document.getElementById('lobby-status').textContent = 'Yeni yayıncı katılıyor...';
     };
 
@@ -1095,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (lobbyStatus) lobbyStatus.textContent = `${engine.state.players.length} yayıncı odada.`;
 
         if (engine.state.isGameStarted && !engine.state.isGameOver) {
-            if (engine.state.players.length < 1) {
+            if (engine.state.players.length < 2) {
                 engine.state.isGameOver = true;
                 engine.stopTimer();
                 engine.setState(engine.state);
@@ -1113,24 +1185,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    const ensureClientLiveUI = () => {
+        const lobbyScreen = document.getElementById('lobby-screen');
+        const gameScreen = document.getElementById('game-screen');
+        if (lobbyScreen && lobbyScreen.classList.contains('active')) {
+            lobbyScreen.classList.remove('active');
+        }
+        if (gameScreen && !gameScreen.classList.contains('active')) {
+            gameScreen.classList.add('active');
+        }
+        if (!view.chatListener || !view.chatListener.isConnected) {
+            view.setupChatListener(platform, channelConfig, handleChatMessage);
+        }
+    };
+
     window.handleNetworkData = (data, sender) => {
         if (data.type === 'REQUEST_INFO') {
             window.Network.sendToHost({ type: 'CLIENT_INFO', channel: displayName, platform, myId: window.Network.getMyId() });
         }
         else if (data.type === 'CLIENT_INFO') {
+            if (!window.Network.isHost()) return;
             const senderId = data.myId || sender;
             const existingIndex = engine.state.players.findIndex(p => p.id === senderId);
-            const pData = { id: senderId, name: data.channel, platform: data.platform, score: 0, isHost: false };
+            const preservedScore = existingIndex >= 0 ? (engine.state.players[existingIndex].score || 0) : 0;
+            const preservedHost = existingIndex >= 0 ? Boolean(engine.state.players[existingIndex].isHost) : false;
+            const pData = {
+                id: senderId,
+                name: data.channel,
+                platform: data.platform,
+                score: preservedScore,
+                isHost: preservedHost
+            };
             
             if (existingIndex >= 0) {
                 engine.state.players[existingIndex] = pData;
             } else {
                 engine.state.players.push(pData);
+                if (engine.state.isGameStarted && !engine.state.isGameOver && !engine.state.turnOrder.includes(senderId)) {
+                    engine.state.turnOrder.push(senderId);
+                }
             }
 
             view.updateLobbyPlayers(engine.state.players);
             window.Network.broadcastToClients({ type: 'SYNC_LOBBY', players: engine.state.players });
             document.getElementById('lobby-status').textContent = `${engine.state.players.length} yayıncı hazır!`;
+
+            if (engine.state.isGameStarted) {
+                const syncPayload = {
+                    type: 'SYNC_STATE',
+                    state: engine.state,
+                    hostNow: window.PairaTime.now()
+                };
+                if (window.Network.sendToClient) {
+                    window.Network.sendToClient(senderId, syncPayload);
+                }
+                window.Network.broadcastToClients(syncPayload);
+                view.updateLeaderboard(engine.state.players, engine.state.scores);
+            }
         }
         else if (data.type === 'SYNC_LOBBY') {
             engine.state.players = data.players;
@@ -1142,6 +1253,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 data.state.turnEndTime += diff;
             }
             engine.state = { ...engine.state, ...data.state };
+            if (engine.state.isGameStarted) {
+                ensureClientLiveUI();
+            }
             view.updateGameUI(engine.state, window.Network.getMyId());
             view.updateLeaderboard(engine.state.players, engine.state.scores);
             if (engine.state.isGameStarted && !engine.state.isGameOver) {
@@ -1153,6 +1267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (data.type === 'START_GAME') {
             document.getElementById('lobby-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
+            view.setWordVisibility(true);
 
             if (data.state) {
                 if (data.hostNow && data.state.turnEndTime) {
@@ -1182,6 +1297,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         else if (data.type === 'GUESSED_CORRECTLY') {
             if (data.state) {
+                if (data.hostNow && data.state.turnEndTime) {
+                    const diff = window.PairaTime.now() - data.hostNow;
+                    data.state.turnEndTime += diff;
+                }
                 engine.state = { ...engine.state, ...data.state };
             }
             view.triggerCorrectGuess(data.username);
@@ -1190,7 +1309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.PairaAudio) window.PairaAudio.play('correct');
         }
         else if (data.type === 'SKIP_WORD') {
-            if (window.Network.isHost() && sender === engine.state.turnId) {
+            if (window.Network.isHost() && engine.state.isGameStarted && !engine.state.isGameOver && !engine.state.isPaused && sender === engine.state.turnId) {
                 engine.nextWord();
                 window.Network.broadcastToClients({ type: 'SYNC_STATE', state: engine.state, hostNow: window.PairaTime.now() });
             }
@@ -1202,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         else if (data.type === 'TABOO_PRESSED') {
-            if (window.Network.isHost() && !engine.state.isGameOver && engine.state.isGameStarted && sender !== engine.state.turnId) {
+            if (window.Network.isHost() && engine.state.isGameStarted && !engine.state.isGameOver && !engine.state.isPaused && sender !== engine.state.turnId) {
                 const narrator = engine.state.players.find(p => p.id === engine.state.turnId);
                 if (narrator) {
                     narrator.score = Math.max(0, narrator.score - (engine.state.settings?.tabooPenalty || 1));

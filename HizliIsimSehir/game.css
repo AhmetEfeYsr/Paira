@@ -32,7 +32,8 @@
 
 .game-input-wrapper input:focus {
     border-color: var(--neon-purple);
-    background: var(--glass-shadow);
+    background: var(--item-hover-bg);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.25);
     outline: none;
 }
 
@@ -97,7 +98,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: clamp(400px, 60vh, 600px);
+    min-height: clamp(360px, 56vh, 560px);
     overflow: hidden;
 }
 
@@ -111,14 +112,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: clamp(4px, 1vmin, 8px);
     z-index: 10;
     text-align: center;
     background: var(--overlay-bg);
-    padding: 20px;
+    padding: clamp(12px, 2vmin, 20px);
     border-radius: 50%;
-    width: 320px;
-    height: 320px;
+    width: clamp(190px, 34vmin, 280px);
+    height: clamp(190px, 34vmin, 280px);
     box-shadow: 0 0 30px var(--neon-glow-rgba);
     backdrop-filter: blur(10px);
     border: 1px solid var(--neon-glow-rgba);
@@ -147,28 +148,28 @@
 }
 
 .center-label {
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 1.4vmin, 0.85rem);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .center-letter {
-    font-size: 3rem;
+    font-size: clamp(2rem, 5vmin, 3rem);
     color: var(--neon-purple);
     line-height: 1;
     text-shadow: 0 0 15px var(--neon-glow-rgba);
 }
 
 .center-category-text {
-    font-size: 1.5rem;
+    font-size: clamp(1.05rem, 2.6vmin, 1.5rem);
     font-weight: 600;
     color: var(--text-main);
     text-align: center;
 }
 
 .center-timer {
-    font-size: 1.8rem;
+    font-size: clamp(1.3rem, 3vmin, 1.8rem);
     font-weight: 800;
     color: var(--lilac);
     font-variant-numeric: tabular-nums;
@@ -187,8 +188,8 @@
 
 .player-node {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: clamp(72px, 13vmin, 100px);
+    height: clamp(72px, 13vmin, 100px);
     transform: translate(-50%, -50%);
     transform-origin: center;
     display: flex;
@@ -200,7 +201,7 @@
     border-radius: 50%;
     box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.15);
     transition: all 0.3s ease;
-    opacity: 0.6;
+    opacity: 0.72;
     pointer-events: auto;
 }
 
@@ -208,7 +209,7 @@
     opacity: 1;
     border-color: var(--neon-purple);
     box-shadow: 0 0 20px var(--neon-glow-rgba);
-    transform: translate(-50%, -50%) scale(1.15);
+    transform: translate(-50%, -50%) scale(1.12);
     z-index: 20;
     animation: activePulse 2s infinite;
 }
@@ -220,15 +221,25 @@
 }
 
 .node-avatar {
-    font-size: 1.5rem;
+    width: clamp(26px, 4.4vmin, 34px);
+    height: clamp(26px, 4.4vmin, 34px);
+    border-radius: 50%;
+    background: rgba(var(--primary-rgb), 0.22);
+    border: 1px solid var(--lilac-muted);
+    color: var(--lilac);
+    font-size: clamp(0.8rem, 1.8vmin, 1rem);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 2px;
 }
 
 .node-name {
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 1.5vmin, 0.85rem);
     font-weight: 600;
     color: var(--text-main);
-    max-width: 80px;
+    max-width: clamp(58px, 11vmin, 80px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -236,13 +247,13 @@
 }
 
 .node-score {
-    font-size: 0.8rem;
+    font-size: clamp(0.68rem, 1.4vmin, 0.8rem);
     color: var(--lilac);
     font-weight: 800;
     background: var(--input-bg);
     padding: 2px 8px;
     border-radius: 10px;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 /* Compact Input Area */
@@ -314,4 +325,74 @@
     cursor: not-allowed;
     background: var(--btn-secondary-bg);
     color: var(--text-muted);
+}
+
+/* Appeal Voting Overlay */
+#voting-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 8, 24, 0.88);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+}
+
+#voting-overlay .voting-card {
+    background: var(--card-bg);
+    border: 1px solid var(--lilac-muted);
+    border-radius: 20px;
+    padding: 28px 24px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+#voting-overlay h2 {
+    color: var(--text-main);
+    margin: 0 0 10px;
+}
+
+#voting-text {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 20px;
+    word-break: break-word;
+}
+
+#voting-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+#btn-vote-yes {
+    background-color: var(--success);
+    min-width: 120px;
+    border: none;
+}
+
+#btn-vote-no {
+    background-color: var(--danger);
+    min-width: 120px;
+    border: none;
+}
+
+#voting-timer {
+    color: var(--lilac);
+    margin-top: 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+#voting-status-text {
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-size: 0.9rem;
+    min-height: 1.2em;
 }

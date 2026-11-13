@@ -89,7 +89,7 @@ class KronoNetwork extends BaseGameNetwork {
         };
 
         window.addEventListener('beforeunload', () => {
-            this.leaveRoom();
+            if (!this.isSolo) this.leaveRoom();
         });
 
         // Hide settings if not host
@@ -117,6 +117,59 @@ class KronoNetwork extends BaseGameNetwork {
 
             this.game.startNewRound();
         }
+    }
+
+    _handleDataReceived(action, payload, senderId) {
+        if (action === 'JOIN' && this.isHostNode) {
+            if (this.game.gameState !== 'LOBBY') {
+                this.sendToPeer(senderId, 'JOIN_REJECTED', { reason: 'Oyun devam ediyor, odaya katılınamaz.' });
+                setTimeout(() => {
+                    const conn = this.connections[senderId];
+                    delete this.connections[senderId];
+                    if (conn) conn.close();
+                }, 300);
+                return;
+            }
+            const activeOpponents = Array.from(this._joinedPeers).filter(id => id !== senderId);
+            const isReconnectingOpponent = payload && payload.oldId && this._joinedPeers.has(payload.oldId);
+            if (activeOpponents.length >= 1 && !isReconnectingOpponent) {
+                this.sendToPeer(senderId, 'JOIN_REJECTED', { reason: 'Oda dolu! Krono en fazla 2 kişiliktir.' });
+                setTimeout(() => {
+                    const conn = this.connections[senderId];
+                    delete this.connections[senderId];
+                    if (conn) conn.close();
+                }, 300);
+                return;
+            }
+            if (isReconnectingOpponent && payload.oldId !== senderId) {
+                this._joinedPeers.delete(payload.oldId);
+                if (this.connections[payload.oldId]) {
+                    delete this.connections[payload.oldId];
+                }
+            }
+        } else if (action === 'JOIN_REJECTED' && !this.isHostNode) {
+            this._isLeaving = true;
+            if (this._joinInterval) {
+                clearInterval(this._joinInterval);
+                this._joinInterval = null;
+            }
+            const msg = (payload && payload.reason) ? payload.reason : 'Odaya katılınamadı.';
+            if (window.showToast) window.showToast(msg, 'error');
+            setTimeout(() => this.leaveRoom(), 2000);
+            return;
+        }
+        super._handleDataReceived(action, payload, senderId);
+    }
+
+    leaveRoom() {
+        if (this.isSolo) {
+            this._isLeaving = true;
+            sessionStorage.removeItem('myId');
+            sessionStorage.removeItem('roomCode');
+            window.location.href = 'index.html';
+            return;
+        }
+        super.leaveRoom();
     }
 
     handleStateSync(data) {

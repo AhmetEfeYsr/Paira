@@ -62,8 +62,8 @@
 #forbidden-words li {
     font-size: clamp(1.05rem, 2.2vw, 1.3rem);
     padding: 12px 20px;
-    background: rgba(231, 76, 60, 0.14);
-    border: 1.5px solid rgba(231, 76, 60, 0.4);
+    background: rgba(var(--danger-rgb), 0.14);
+    border: 1.5px solid rgba(var(--danger-rgb), 0.4);
     border-radius: 14px;
     color: #ffaaaa;
     font-weight: 700;
@@ -77,14 +77,18 @@
 }
 
 #forbidden-words li::before {
-    content: "🚫";
-    font-size: 0.95rem;
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    flex-shrink: 0;
     opacity: 0.85;
 }
 
 #forbidden-words li:hover {
     transform: scale(1.015);
-    background: rgba(231, 76, 60, 0.22);
+    background: rgba(var(--danger-rgb), 0.22);
 }
 
 .narrator-actions {
@@ -137,17 +141,17 @@
 .chat-input-wrapper input { flex-grow: 1; min-height: 36px; padding: 10px 14px; font-size: 15px; }
 
 .status-badge.guesser-mode {
-    background: rgba(138, 43, 226, 0.25);
+    background: rgba(var(--primary-rgb), 0.25);
     border-color: var(--neon-purple);
     color: var(--lilac);
     box-shadow: 0 0 15px var(--neon-glow-rgba);
 }
 
 .status-badge.opponent-mode {
-    background: rgba(231, 76, 60, 0.25);
+    background: rgba(var(--danger-rgb), 0.25);
     border-color: var(--danger);
     color: #ff9999;
-    box-shadow: 0 0 15px rgba(231, 76, 60, 0.3);
+    box-shadow: 0 0 15px rgba(var(--danger-rgb), 0.3);
     font-weight: 700;
 }
 

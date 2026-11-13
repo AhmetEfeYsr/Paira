@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <script src="../shared/shared.js"></script>
+    <script src="../shared/shared.js?v=2.0.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Paira ChatTabu | Twitch ve Kick İçin İnteraktif Tabu Oyunu</title>
@@ -35,9 +35,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="../shared/shared.css">
+    <link rel="stylesheet" href="../shared/shared.css?v=2.0.0">
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
 
     <!-- Favicons -->
     <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
@@ -48,18 +48,16 @@
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
-    <div class="glass-bg"></div>
-    <div class="bubble-layer" id="bubble-layer"></div>
 
     <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
         <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
         <div class="hero-content">
-            <div class="game-logo-container" style="position: relative; display: inline-block;"><img src="../logolar/chat-tabu.svg" alt="Chat Tabu Logo"><a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a></div>
+            <div class="game-logo-container" style="position: relative; display: inline-block;"><img src="../main_logo.avif" alt="Paira ChatTabu Logo"><a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a></div>
             <h1 class="gradient-text">Chat Tabu</h1>
-            <p class="seo-description">Yayınınızda izleyicilerinizle bağınızı güçlendirin! <strong>Paira ChatTabu</strong> ile siz anlatın, sohbetinizdeki (chat) herkes aynı anda tahmin etsin. En hızlı kim bilecek?</p>
+            <p class="seo-description">Twitch veya Kick kanalını bağla, yasaklı kelimeleri kullanmadan anlat; sohbetin anında tahmin etsin.</p>
         </div>
 
-        <div style="max-width: 520px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 1.2rem; padding: 1.8rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+        <div style="max-width: 520px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem; background: var(--card-bg); border: var(--glass-border); border-radius: 1.2rem; padding: 1.8rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
             <!-- ADIM 1: Platform Seçimi (Tıklanıp Açılıp Kapanabilir 2 Buton) -->
             <div class="form-group" style="margin-bottom: 1.4rem;">
                 <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.6rem; display: block; color: var(--text-main);">1. Canlı Yayın Platformu Seçimi</label>
@@ -104,21 +102,19 @@
                     <!-- Kart 1: Solo -->
                     <div class="mode-card active" data-mode="solo" style="border: 2px solid var(--primary-purple); background: var(--header-bg); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
-                            <div style="font-size: 1.4rem; margin-bottom: 4px;">👤</div>
-                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Tek Yayıncı</div>
+                            <div style="font-weight: 700; font-size: 0.98rem; color: var(--text-main);">Tek Yayıncı</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">Kendi sohbetinle 3 dakikada kaç kelime bilinecek?</div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: var(--success); text-transform: uppercase;">• Tek Kişilik Klasik</div>
+                        <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: var(--success); text-transform: uppercase;">• Tek Kişilik Tur</div>
                     </div>
 
                     <!-- Kart 2: Multiplayer -->
                     <div class="mode-card" data-mode="multiplayer" style="border: 2px solid var(--btn-secondary-border); background: var(--input-bg); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
-                            <div style="font-size: 1.4rem; margin-bottom: 4px;">⚔️</div>
-                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Çoklu Yayıncı</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">2+ yayıncı aynı odaya katılın, sohbetler yarışsın!</div>
+                            <div style="font-weight: 700; font-size: 0.98rem; color: var(--text-main);">Çoklu Yayıncı</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">En az 2 yayıncı aynı odaya katılır, sırayla anlatır.</div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: var(--success); text-transform: uppercase;">• ODAYA KATIL / KUR</div>
+                        <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 800; color: var(--success); text-transform: uppercase;">• Odaya Katıl / Kur</div>
                     </div>
                 </div>
                 <input type="hidden" id="game-mode-select" value="solo">
@@ -126,11 +122,11 @@
 
             <!-- Aksiyon Butonları -->
             <div id="solo-actions">
-                <button id="btn-start-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">🚀 Tek Oyunculu Oyunu Başlat</button>
+                <button id="btn-start-solo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">Tek Oyunculu Başlat</button>
             </div>
 
             <div id="multiplayer-actions" style="display: none; flex-direction: column; gap: 1rem;">
-                <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">🏠 Yeni Çoklu Yayıncı Odası Kur</button>
+                <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">Yeni Oda Kur</button>
                 <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
                     <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
                     <span>VEYA VAROLAN ODAYA KATIL</span>
@@ -146,23 +142,23 @@
         </div>
 
         <div class="seo-rules-container custom-scrollbar" style="margin-top: auto;">
-                <h2>Nasıl Oynanır? 🗣️</h2>
+                <h2>Nasıl Oynanır?</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
-                        <h3>1. Platformu Bağla</h3>
-                        <p>Twitch veya Kick kanal ismini girerek saniyeler içinde bağlan.</p>
+                        <h3>1. Kanalı Bağla</h3>
+                        <p>Twitch, Kick veya her iki platformun kanal adını girerek canlı sohbete bağlan.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>2. Modunu Seç</h3>
-                        <p>Solo, Streamer vs Streamer veya Chat vs Chat modlarından birini belirle.</p>
+                        <h3>2. Modu Seç</h3>
+                        <p>Tek Yayıncı modunda kendi sohbetinle oyna, Çoklu Yayıncı modunda diğer yayıncılarla oda kur.</p>
                     </div>
                     <div class="rule-card">
                         <h3>3. Yasaklara Dikkat Et</h3>
-                        <p>Ekranda çıkan ana kelimeyi, yasaklı olanları kullanmadan anlatmaya başla.</p>
+                        <p>Ekranda çıkan ana kelimeyi yasaklı kelimeleri söylemeden anlat; gerekirse kartı gizleyebilirsin.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>4. Sohbet Kazansın</h3>
-                        <p>Sohbetindeki izleyiciler kelimeyi bildikçe puanlar hanene (veya takımlara) yazılsın!</p>
+                        <h3>4. Sohbet Tahmin Etsin</h3>
+                        <p>İzleyiciler kelimeyi sohbete yazdıkça hem izleyici hem anlatıcı puan kazanır.</p>
                     </div>
                 </div>
             </div>
@@ -171,14 +167,13 @@
 
     <div class="game-seo-info">
         <h2>Paira ChatTabu Hakkında</h2>
-        <p>Yayınlarında izleyicilerinle olan etkileşimi tavan yaptıracak eğlenceli bir oyuna ne dersin? <strong>Paira ChatTabu</strong>, bildiğimiz klasik tabu oyununun Twitch ve Kick yayıncıları için özel olarak tasarlanmış halidir. Ancak bu kez kelimeyi tahmin edecek olan arkadaşın değil, tüm yayın sohbetin!</p>
-        <p>Senin ekranına gelen ana kelimeyi ve yasaklı kelimeleri sadece sen görürsün. Görevin, yasaklı kelimelere hiç bulaşmadan ana kelimeyi chate anlatmak. Chatteki izleyiciler de senin anlattıklarından yola çıkarak doğru kelimeyi sohbete yazmaya çalışır. Sistemimiz chat akışını saniyesinde tarar ve doğru kelimeyi ilk yazanı otomatik olarak bulup ekrana yansıtır.</p>
-        <p>İster tek başına yayıncı olarak chatine karşı oyna, istersen "Streamer vs Streamer" veya "Chat vs Chat" modlarıyla diğer yayıncılarla ve onların chatleriyle rekabet et. İzleyicilerinle bağını güçlendirecek ve yayınlarına yepyeni bir enerji katacak bu interaktif tabu deneyimine hemen başla!</p>
+        <p><strong>Paira ChatTabu</strong>, Twitch ve Kick yayınları için hazırlanmış canlı sohbet entegrasyonlu bir tabu oyunudur. Yayıncı ekrandaki ana kelimeyi yasaklı kelimeleri kullanmadan tarif ederken izleyiciler sohbet üzerinden tahmin yürütür.</p>
+        <p>Tek Yayıncı modunda 3 dakikalık sürede kendi sohbetinizle puan toplarsınız. Çoklu Yayıncı modunda ise en az iki yayıncı aynı odada sırayla anlatıcı olur; yalnızca anlatıcının sohbeti ya da tüm bağlı sohbetler (çapraz chat) tahmin yapabilir.</p>
     </div>
 
     <!-- Scripts -->
 
-    <script src="../shared/chat.js?v=2"></script>
-    <script src="game.js?v=2"></script>
+    <script src="../shared/chat.js?v=2.0.0"></script>
+    <script src="game.js?v=2.0.0"></script>
 </body>
 </html>

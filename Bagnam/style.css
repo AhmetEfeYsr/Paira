@@ -3,29 +3,31 @@
 /* --- Topbar Action Buttons (Icon-only, mobile-safe) --- */
 .topbar-actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
     align-items: center;
 }
 
-.topbar-btn {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    min-height: 42px;
+.game-topbar .topbar-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
     border-radius: 10px;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     cursor: pointer;
-    display: flex !important;
+    display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
     position: relative;
     flex-shrink: 0;
     line-height: 1;
     padding: 0;
     margin: 0;
-    color: white;
+    color: var(--text-main);
+    background: rgba(var(--primary-rgb), 0.16);
+    border: 1px solid var(--lilac-muted);
     outline: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -33,38 +35,32 @@
     text-decoration: none;
 }
 
-.topbar-btn:hover {
-    transform: scale(1.1);
+.game-topbar .topbar-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: rgba(var(--primary-rgb), 0.3);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 12px var(--neon-glow-rgba);
 }
 
-.topbar-btn:active {
+.game-topbar .topbar-btn:active:not(:disabled) {
     transform: scale(0.95);
 }
 
-.topbar-btn:disabled {
+.game-topbar .topbar-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    transform: none !important;
+    transform: none;
 }
 
-/* Hint button - amber */
-.hint-btn {
-    background: rgba(243, 156, 18, 0.25) !important;
-    border: 2px solid rgba(243, 156, 18, 0.7) !important;
-}
-.hint-btn:hover {
-    box-shadow: 0 0 14px rgba(243, 156, 18, 0.5);
-    background: rgba(243, 156, 18, 0.4) !important;
+.game-topbar .hint-btn:hover:not(:disabled) {
+    border-color: var(--lilac);
 }
 
-/* Stats button - cyan/lilac */
-.stats-btn {
-    background: rgba(var(--primary-rgb), 0.25) !important;
-    border: 2px solid var(--neon-purple) !important;
-}
-.stats-btn:hover {
-    box-shadow: 0 0 14px var(--neon-glow-rgba);
-    background: rgba(var(--primary-rgb), 0.4) !important;
+.game-topbar .back-btn:hover:not(:disabled),
+.game-topbar .giveup-btn:hover:not(:disabled) {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: var(--danger);
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.35);
 }
 
 /* Topbar status & mode badge */
@@ -103,40 +99,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Last hint button - purple */
-.last-hint-btn {
-    background: rgba(142, 68, 173, 0.25) !important;
-    border: 2px solid rgba(142, 68, 173, 0.7) !important;
-}
-.last-hint-btn:hover {
-    box-shadow: 0 0 14px rgba(142, 68, 173, 0.5);
-    background: rgba(142, 68, 173, 0.4) !important;
-}
-
-/* Back button - red */
-.back-btn {
-    background: rgba(231, 76, 60, 0.25) !important;
-    border: 2px solid rgba(231, 76, 60, 0.7) !important;
-    color: #ffffff !important;
-}
-.back-btn:hover {
-    box-shadow: 0 0 14px rgba(231, 76, 60, 0.5);
-    background: rgba(231, 76, 60, 0.4) !important;
-}
-
-/* Give up button - red */
-.giveup-btn {
-    background: rgba(231, 76, 60, 0.25) !important;
-    border: 2px solid rgba(231, 76, 60, 0.7) !important;
-}
-.giveup-btn:hover {
-    box-shadow: 0 0 14px rgba(231, 76, 60, 0.5);
-    background: rgba(231, 76, 60, 0.4) !important;
-}
-
-/* Hidden override for topbar buttons */
-.topbar-btn.hidden {
-    display: none !important;
+.game-topbar .topbar-btn.hidden {
+    display: none;
 }
 
 

@@ -23,11 +23,6 @@
     <div id="toast-container" class="toast-container"></div>
     <main id="app-container" class="glass-panel custom-scrollbar">
 
-        <header class="app-header" style="position: relative;">
-            <h1 class="gradient-text" style="font-size: 2rem;">ÇizBil</h1>
-            <button id="btn-leave" class="btn btn-secondary btn-sm" style="position: absolute; right: 0; top: 0;">Çıkış</button>
-        </header>
-
         <!-- LOBİ EKRANI -->
         <section id="lobby-screen" class="view-state active">
             <header class="lobby-header" style="justify-content: space-between; align-items: center; display: flex;">
@@ -68,7 +63,9 @@
 
                 <!-- Katılımcı Bekleme Paneli -->
                 <section class="settings-panel card hidden" id="client-waiting" style="justify-content: center; align-items: center; text-align: center;">
-                    <div style="color: var(--primary-purple); font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                    <div class="spinner" style="margin-bottom: 1rem; color: var(--primary-purple);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
                     <h3>Bekleniyor...</h3>
                     <p style="color: var(--text-muted); font-size: 1.05rem;">Kurucu oyunu başlatacak.</p>
                 </section>
@@ -142,6 +139,9 @@
                             <button class="btn btn-secondary btn-sm btn-icon tool-btn active" data-tool="brush" title="Fırça" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2l4 4-10 10H8v-4L18 2z"></path><path d="M14 6l4 4"></path><path d="M3 21h18"></path></svg>
                             </button>
+                            <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="eraser" title="Silgi" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"></path><path d="M22 21H7"></path><path d="m5 11 9 9"></path></svg>
+                            </button>
                             <button class="btn btn-secondary btn-sm btn-icon tool-btn" data-tool="fill" title="Doldur" style="display: flex; align-items: center; justify-content: center; padding: 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2a2 2 0 0 0 2.8 0L19 11Z"></path><path d="M5 2l5 5"></path><path d="M2 13h15"></path><path d="M22 20a2 2 0 1 1-4 0c0-1.6 2-5 2-5s2 3.4 2 5Z"></path></svg>
                             </button>
@@ -201,15 +201,6 @@
             </div>
         </section>
     </main>
-
-    <div class="game-seo-info">
-        <h2>Paira ÇizBil Hakkında</h2>
-        <p>Çizim yeteneğine ne kadar güveniyorsun? Ya da arkadaşlarının senin ne çizdiğini anlayabileceğine? <strong>Paira ÇizBil</strong>, birinizin çizdiği diğerlerinin ise ne çizildiğini bulmaya çalıştığı son derece komik ve rekabetçi bir tahmin oyunudur.</p>
-
-        <p>Oyun başladığında sırası gelen oyuncuya bir kelime verilir. Oyuncu bu kelimeyi fırça ve renkleri kullanarak tuvale yansıtmaya çalışır. Bu esnada diğer oyuncular da ortaya çıkan esere bakarak sohbet ekranından kelimeyi tahmin etmeye çalışırlar. Kelimeyi ilk doğru tahmin eden oyuncu en yüksek puanı alırken, çizimi anlaşılan çizer de puan kazanır. Çizim ne kadar kötüyse, tahminler de bir o kadar komik olur!</p>
-
-        <p>Hiçbir şey indirmene gerek kalmadan, arkadaşlarınla aynı odada buluşarak bu eğlenceli deneyime hemen ortak olabilirsin. Sanatını konuştur ya da berbat çizimlerinle herkesi güldür, seçim senin!</p>
-    </div>
 
     <script src="../shared/peer_manager.js?v=1.0.2"></script>
     <script src="../shared/base_network.js?v=1.0.2"></script>

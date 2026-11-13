@@ -60,9 +60,9 @@
     <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
         <section id="login-screen" class="view-state active" style="align-items: center; justify-content: flex-start; padding-top: 5vh; overflow: visible !important; height: auto !important; min-height: 100%;">
             <div class="hero-content">
-                <div class="game-logo-container" style="position: relative; display: inline-block;"><img src="../logolar/bilgi-yarismasi.svg" alt="BilgiYarismasi Logo" ><a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları / Dev Notes"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a></div>
+                <div class="game-logo-container" style="position: relative; display: inline-block;"><img src="../main_logo.avif" alt="Bilgi Yarışması Logo"><a href="dev.html" class="dev-notes-btn" title="Geliştirici Notları"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></a></div>
                 <h1 class="gradient-text">Bilgi Yarışması</h1>
-                <p class="seo-description">Genel kültürüne güveniyor musun? <strong>Paira Bilgi Yarışması</strong>'nda arkadaşlarınla veya diğer oyuncularla gerçek zamanlı yarış, soruları en hızlı cevaplayan sen ol ve zirveye tırman!</p>
+                <p class="seo-description">Tek başına pratik yap ya da arkadaşlarınla oda kurup genel kültür sorularında hızını test et.</p>
             </div>
 
             <div style="max-width: 420px; width: 100%; flex-shrink: 0; margin-bottom: 2.5rem;">
@@ -71,6 +71,7 @@
                     <input type="text" id="username-input" placeholder="Kullanıcı adı giriniz (Örn: paiko)" autocomplete="off" maxlength="25">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="btn-solo" class="btn btn-secondary btn-block" style="padding: 14px; font-size: 1.1rem;">Solo Oyna</button>
                     <button id="btn-host" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Yeni Oda Kur</button>
                     <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">
                         <div style="flex-grow: 1; height: 1px; background: var(--btn-secondary-border);"></div>
@@ -88,20 +89,20 @@
                 <h2>Nasıl Oynanır?</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
-                        <h3>1. Odaya Katıl</h3>
-                        <p>İster bir oda kurup arkadaşlarına davet kodu gönder, istersen herkese açık bir odaya dahil ol.</p>
+                        <h3>1. Modu Seç</h3>
+                        <p>Solo modda tek başına oyna ya da oda kurup arkadaşlarını kodla davet et.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>2. Kategorini Seç</h3>
-                        <p>Farklı ilgi alanlarına hitap eden soru havuzlarından dilediğini seçerek yarışmaya başla.</p>
+                        <h3>2. Ayarları Belirle</h3>
+                        <p>Kategori, zorluk aralığı, tur süresi ve soru sayısını isteğine göre seç.</p>
                     </div>
                     <div class="rule-card">
                         <h3>3. Hızlı Cevapla</h3>
-                        <p>Sorular ekrana geldiğinde doğru şıkkı rakiplerinden önce işaretle. Ne kadar hızlıysan o kadar çok puan kazanırsın.</p>
+                        <p>Doğru şıkkı ne kadar erken işaretlersen kalan süre kadar puan kazanırsın.</p>
                     </div>
                     <div class="rule-card">
-                        <h3>4. Şampiyon Ol</h3>
-                        <p>Tüm soruların sonunda en yüksek puanı toplayarak kürsüdeki yerini al!</p>
+                        <h3>4. Sıralamayı Gör</h3>
+                        <p>Her tur sonunda doğru cevabı ve kısa bilgi notunu gör, oyun sonunda puan tablosunu incele.</p>
                     </div>
                 </div>
             </div>
@@ -109,12 +110,8 @@
     </main>
 
     <div class="game-seo-info">
-        <h2>Paira Bilgi Yarışması Hakkında</h2>
-        <p>Arkadaşlarınla hem eğlenip hem de genel kültürünü test etmeye hazır mısın? <strong>Paira Bilgi Yarışması</strong>, tarihten spora, sinemadan bilime kadar binlerce soruyla dolu hızlı ve rekabetçi bir online trivia oyunudur.</p>
-
-        <p>Oyun başladığında karşına çıkan çoktan seçmeli sorularda sadece doğru cevabı bilmek yetmez, aynı zamanda en hızlı cevap veren sen olmalısın! Hızlı cevapladıkça daha yüksek puan kazanır, yanlış cevaplarda ise puan kaybedebilirsin. Her sorunun ardından gelen ilginç bilgilerle de yeni şeyler öğrenme fırsatı yakalarsın.</p>
-
-        <p>İster kendi başına rekor kırmaya çalış, ister arkadaşlarınla kıyasıya bir rekabete girip aranızdaki en bilgili kişinin kim olduğunu kanıtla. Hiçbir şey indirmene gerek kalmadan tarayıcın üzerinden anında oynamaya başla ve zirveye adını yazdır!</p>
+        <h2>Paira Bilgi Yarışması</h2>
+        <p>Tarihten bilime, sanattan spora farklı kategorilerde çoktan seçmeli sorular sunan tarayıcı tabanlı bilgi yarışmasıdır. Doğru cevaplarda kalan saniye kadar puan kazanılır; yanlış cevap cezası açıksa puan düşülür ve her sorudan sonra ilgili kısa bilgi notu gösterilir.</p>
     </div>
 
     <script src="../shared/login.js"></script>

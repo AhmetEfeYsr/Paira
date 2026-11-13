@@ -32,6 +32,7 @@ class KelimeAviNetwork extends BaseGameNetwork {
                 this.lobbyUI.setRoomCode(codeToSet);
                 if (this.isHostNode && this.engine && this.engine.state) {
                     this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+                    this.updateStartButtonState(this.engine.state.players);
                 }
             } finally {
                 inPeerReady = false;
@@ -40,30 +41,11 @@ class KelimeAviNetwork extends BaseGameNetwork {
 
         if (this.isHostNode) {
             this.engine.onStateChange = (state) => {
-                const isHostEbe = (this.myId === state.currentEbe);
-                const hostState = JSON.parse(JSON.stringify(state));
-
-                if (!isHostEbe && (hostState.status === 'playing' || hostState.status === 'countdown') && hostState.targetWord) {
-                    hostState.targetWord = hostState.targetWord.substring(0, hostState.revealedLetters);
-                }
+                const hostState = this.censorStateForViewer(state, this.myId);
 
                 this.view.updateUI(hostState, this.isHostNode);
                 this.lobbyUI.renderPlayers(hostState.players, this.myId);
-
-                // Enforce min 3 players requirement on start game button
-                const btnStart = document.getElementById('btn-start-game');
-                if (btnStart) {
-                    const count = Object.keys(hostState.players).length;
-                    if (count < 3) {
-                        btnStart.classList.add('disabled');
-                        btnStart.setAttribute('disabled', 'true');
-                        btnStart.textContent = 'Oyunu Başlat (Min 3 Kişi)';
-                    } else {
-                        btnStart.classList.remove('disabled');
-                        btnStart.removeAttribute('disabled');
-                        btnStart.textContent = 'Oyunu Başlat';
-                    }
-                }
+                this.updateStartButtonState(hostState.players);
                 
                 this.broadcastCensoredState();
             };
@@ -73,7 +55,8 @@ class KelimeAviNetwork extends BaseGameNetwork {
                 this.view.updateTimer(secs);
                 if (lastSyncSec !== secs) {
                     lastSyncSec = secs;
-                    if (secs === this.engine.state.turnDuration || secs % 5 === 0 || secs <= 5) {
+                    const targetDur = this.engine.state.status === 'ebe_word_select' ? 45 : this.engine.state.turnDuration;
+                    if (secs === targetDur || secs % 5 === 0 || secs <= 5) {
                         const durationLeft = Math.max(0, this.engine.localEndTime - window.PairaTime.now());
                         this.broadcast('SYNC_TIME', { durationLeft });
                     }
@@ -96,22 +79,41 @@ class KelimeAviNetwork extends BaseGameNetwork {
         });
     }
 
+    updateStartButtonState(players) {
+        const btnStart = document.getElementById('btn-start-game');
+        if (!btnStart) return;
+        const count = Object.keys(players || {}).filter(id => !players[id].disconnected).length;
+        if (count < 3) {
+            btnStart.classList.add('disabled');
+            btnStart.setAttribute('disabled', 'true');
+            btnStart.textContent = 'Oyunu Başlat (Min 3 Kişi)';
+        } else {
+            btnStart.classList.remove('disabled');
+            btnStart.removeAttribute('disabled');
+            btnStart.textContent = 'Oyunu Başlat';
+        }
+    }
+
+    censorStateForViewer(fullState, viewerId) {
+        const isEbe = (viewerId === fullState.currentEbe);
+        const safeState = JSON.parse(JSON.stringify(fullState));
+        safeState.targetWordLength = fullState.targetWord ? fullState.targetWord.length : 0;
+
+        if (!isEbe && ['playing', 'countdown', 'evaluating'].includes(safeState.status) && safeState.targetWord && safeState.revealedLetters < safeState.targetWord.length) {
+            safeState.targetWord = safeState.targetWord.substring(0, safeState.revealedLetters);
+        }
+        if (safeState.status === 'playing' || safeState.status === 'countdown') {
+            safeState.submittedWords = {};
+            safeState.ebeGuesses = [];
+        }
+        return safeState;
+    }
+
     broadcastCensoredState() {
         const fullState = this.engine.state;
         
         Object.keys(this.connections).forEach(peerId => {
-            const isEbe = (peerId === fullState.currentEbe);
-            const safeState = JSON.parse(JSON.stringify(fullState));
-            safeState.targetWordLength = fullState.targetWord ? fullState.targetWord.length : 0;
-            
-            if (!isEbe && (safeState.status === 'playing' || safeState.status === 'countdown') && safeState.targetWord) {
-                safeState.targetWord = safeState.targetWord.substring(0, safeState.revealedLetters);
-            }
-            if (safeState.status === 'playing' || safeState.status === 'countdown') {
-                safeState.submittedWords = {};
-                safeState.ebeGuesses = [];
-            }
-            
+            const safeState = this.censorStateForViewer(fullState, peerId);
             this.sendToPeer(peerId, 'SYNC', safeState);
         });
     }
@@ -125,6 +127,7 @@ class KelimeAviNetwork extends BaseGameNetwork {
             }
             this.engine.addPlayer(id, player.name, player.isHost || false);
             this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.updateStartButtonState(this.engine.state.players);
             this.broadcastCensoredState();
         }
     }
@@ -133,6 +136,7 @@ class KelimeAviNetwork extends BaseGameNetwork {
         if (this.isHostNode) {
             this.engine.removePlayer(id);
             this.lobbyUI.renderPlayers(this.engine.state.players, this.myId);
+            this.updateStartButtonState(this.engine.state.players);
             this.broadcastCensoredState();
         }
     }

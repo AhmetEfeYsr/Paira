@@ -31,7 +31,9 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
             };
             this.engine.onSound = (sound) => {
                 this.playSound(sound);
-                this.sendGameAction('PLAY_SOUND', { sound });
+                if (sound !== 'tick' && sound !== 'timeup') {
+                    this.sendGameAction('PLAY_SOUND', { sound });
+                }
             };
         } else {
             this.engine.onSound = (sound) => this.playSound(sound);
@@ -318,8 +320,8 @@ class GizliKelimelerNetwork extends BaseGameNetwork {
 
         const btnStart = document.getElementById('btn-start-game');
         if (btnStart) {
-            if (meetsCriteria) btnStart.classList.remove('disabled');
-            else btnStart.classList.add('disabled');
+            btnStart.classList.remove('disabled');
+            btnStart.classList.toggle('btn-not-ready', !meetsCriteria);
         }
     }
 

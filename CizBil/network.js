@@ -35,7 +35,7 @@ class CizBilNetwork extends BaseGameNetwork {
                 if (state.choices && !this.wasChoosing) {
                      this.wasChoosing = true;
                      this.view.resetCanvasLocal();
-                     this.broadcast('CLEAR_CANVAS');
+                     this.broadcast('RESET_CANVAS');
                 } else if (!state.choices) {
                      this.wasChoosing = false;
                 }
@@ -43,6 +43,7 @@ class CizBilNetwork extends BaseGameNetwork {
                 // Censor view for host if host is not drawer
                 const hostState = JSON.parse(JSON.stringify(state));
                 const isHostDrawer = (this.myId === state.currentDrawer);
+                hostState.isChoosingWord = Boolean(state.choices);
                 
                 if (!isHostDrawer && hostState.status === 'playing') {
                     if (hostState.currentWord) {
@@ -59,6 +60,7 @@ class CizBilNetwork extends BaseGameNetwork {
 
             this.engine.onTimerTick = (secs) => {
                 this.view.updateTimer(secs);
+                if (this.engine.state.choices || this.engine.state.isChoosingWord) return;
                 if (secs === this.engine.state.turnDuration || secs === 10 || secs % 5 === 0 || secs <= 5) {
                     const durationLeft = Math.max(0, this.engine.localTurnEndTime - window.PairaTime.now());
                     this.broadcast('SYNC_TIME', { durationLeft });
@@ -86,6 +88,7 @@ class CizBilNetwork extends BaseGameNetwork {
             const isDrawer = (peerId === fullState.currentDrawer);
             const safeState = JSON.parse(JSON.stringify(fullState));
             safeState.wordsLeft = [];
+            safeState.isChoosingWord = Boolean(fullState.choices);
             
             if (!isDrawer && safeState.status === 'playing') {
                 if (safeState.currentWord) {
@@ -96,6 +99,15 @@ class CizBilNetwork extends BaseGameNetwork {
             
             this.sendToPeer(peerId, 'SYNC', safeState);
         });
+    }
+
+    sendGameAction(actionType, payload = {}) {
+        // Prevent Host from broadcasting secret word choices or guesses to clients
+        if (this.isHostNode && (actionType === 'CHOOSE_WORD' || actionType === 'GUESS')) {
+            this.handleAction(actionType, payload, this.myId);
+            return;
+        }
+        super.sendGameAction(actionType, payload);
     }
 
     handleStateSync(data) {
@@ -159,9 +171,12 @@ class CizBilNetwork extends BaseGameNetwork {
 
     _handleDataReceived(action, payload, senderId) {
         if (action === 'SYNC' && !this.isHostNode) {
-            const wasEmptyChoices = !this.engine.state.choices;
+            const wasChoosing = Boolean(this.engine.state.isChoosingWord || this.engine.state.choices);
+            const prevStatus = this.engine.state.status;
+            const prevDrawer = this.engine.state.currentDrawer;
             this.engine.state = payload; // Update client engine state silently
-            if (payload.status === 'playing' && payload.currentWord === '' && wasEmptyChoices) {
+            const isChoosing = Boolean(payload.isChoosingWord || payload.choices);
+            if (payload.status === 'playing' && ((isChoosing && !wasChoosing) || prevStatus !== 'playing' || (prevDrawer !== payload.currentDrawer && !payload.currentWord))) {
                 this.view.resetCanvasLocal();
             }
             this.view.updateUI(payload, this.isHostNode);
@@ -187,6 +202,11 @@ class CizBilNetwork extends BaseGameNetwork {
             }
             if (senderId !== this.myId) {
                 this.view.syncCanvasEvent(payload);
+            }
+        }
+        else if (action === 'RESET_CANVAS') {
+            if (senderId !== this.myId) {
+                this.view.resetCanvasLocal();
             }
         }
         else if (action === 'CLEAR_CANVAS') {
@@ -228,12 +248,8 @@ class CizBilNetwork extends BaseGameNetwork {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     window.PairaAudio && window.PairaAudio.init();
-    
-    if (window.loadGarticWords) {
-        await window.loadGarticWords();
-    }
     
     const isHost = sessionStorage.getItem('isHost') === 'true';
     const engine = new CizBilGameEngine(isHost);

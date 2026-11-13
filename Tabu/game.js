@@ -172,19 +172,27 @@ class TabuGameEngine {
             this.shuffleTeams();
         }
 
+        const clamp = (val, min, max, fallback) => {
+            const n = parseInt(val, 10);
+            if (isNaN(n)) return fallback;
+            return Math.min(max, Math.max(min, n));
+        };
+
         this.state.status = 'playing';
         this.state.scoreA = 0;
         this.state.scoreB = 0;
         this.state.round = 1;
-        this.state.totalRounds = parseInt(settings.rounds) || 3;
-        this.state.turnDuration = parseInt(settings.duration) || 60;
-        const pLimit = parseInt(settings.passLimit);
-        this.state.passLimit = isNaN(pLimit) ? 3 : pLimit;
-        const pPen = parseInt(settings.penalty);
-        this.state.tabooPenalty = isNaN(pPen) ? 1 : pPen;
+        this.state.totalRounds = clamp(settings.rounds, 1, 10, 3);
+        this.state.turnDuration = clamp(settings.duration, 10, 180, 60);
+        this.state.passLimit = clamp(settings.passLimit, 0, 10, 3);
+        this.state.tabooPenalty = clamp(settings.penalty, 0, 5, 1);
+
+        let minDiff = clamp(settings.minDifficulty, 1, 100, 1);
+        let maxDiff = clamp(settings.maxDifficulty, 1, 100, 100);
+        if (minDiff > maxDiff) [minDiff, maxDiff] = [maxDiff, minDiff];
 
         this.gameSeed = window.PairaTime.now();
-        this.filterWords(settings.category, parseInt(settings.minDifficulty) || 1, parseInt(settings.maxDifficulty) || 100);
+        this.filterWords(settings.category, minDiff, maxDiff);
 
         this.state.turnOrder = this.generateTurnOrder();
         this.state.turnIndex = 0;
@@ -337,7 +345,8 @@ class TabuGameEngine {
             } else if (this.state.isWaitingForReady) {
                 if (this.onTimerTick) this.onTimerTick(0, 'waiting');
             } else if (this.state.isPaused) {
-                if (this.onTimerTick) this.onTimerTick(0, 'paused');
+                const pausedSecs = Math.ceil((this.pauseOffset || 0) / 1000);
+                if (this.onTimerTick) this.onTimerTick(pausedSecs, 'paused');
             }
             return false;
         };
@@ -477,6 +486,21 @@ class TabuView {
             if (window.PairaAudio) window.PairaAudio.play('pop');
         });
 
+        const clampInput = (id, min, max, fallback) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', () => {
+                const n = parseInt(el.value, 10);
+                el.value = isNaN(n) ? fallback : Math.min(max, Math.max(min, n));
+            });
+        };
+        clampInput('turn-duration', 10, 180, 60);
+        clampInput('pass-limit', 0, 10, 3);
+        clampInput('taboo-penalty', 0, 5, 1);
+        clampInput('round-count', 1, 10, 3);
+        clampInput('min-difficulty', 1, 100, 1);
+        clampInput('max-difficulty', 1, 100, 100);
+
         // Keyboard shortcuts for quick narrating (Arrows, D/T/P, 1/2/3, Enter/Space)
         document.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
@@ -484,14 +508,21 @@ class TabuView {
             const narratorActions = document.getElementById('narrator-actions');
             if (!gameScreen || gameScreen.classList.contains('hidden')) return;
             if (!narratorActions || narratorActions.classList.contains('hidden')) return;
-            
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === '1') {
+
+            const btnCorrect = document.getElementById('btn-correct');
+            const btnTaboo = document.getElementById('btn-taboo');
+            const btnPass = document.getElementById('btn-pass');
+
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === '1' || e.key === 'Enter') {
+                if (!btnCorrect || btnCorrect.classList.contains('hidden') || btnCorrect.classList.contains('disabled')) return;
                 e.preventDefault();
                 triggerAction('CORRECT');
             } else if (e.key === 'ArrowDown' || e.key === 't' || e.key === 'T' || e.key === 'x' || e.key === 'X' || e.key === '2') {
+                if (!btnTaboo || btnTaboo.classList.contains('hidden') || btnTaboo.classList.contains('disabled')) return;
                 e.preventDefault();
                 triggerAction('TABOO');
             } else if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P' || e.key === '3' || e.key === ' ') {
+                if (!btnPass || btnPass.classList.contains('hidden') || btnPass.classList.contains('disabled')) return;
                 e.preventDefault();
                 triggerAction('PASS');
             }
@@ -553,7 +584,9 @@ class TabuView {
         const isOpponent = myTeam !== tPlayer.team;
 
         document.getElementById('pass-text').innerText = `Pas (${state.passesLeft})`;
-        document.getElementById('btn-pass').classList.toggle('disabled', state.passesLeft <= 0);
+        const btnCorrect = document.getElementById('btn-correct');
+        const btnTaboo = document.getElementById('btn-taboo');
+        const btnPass = document.getElementById('btn-pass');
 
         const wordCard = document.getElementById('word-card');
         const narratorActions = document.getElementById('narrator-actions');
@@ -601,11 +634,25 @@ class TabuView {
             if (amINarrator) {
                 wordCard.classList.remove('hidden');
                 narratorActions.classList.remove('hidden');
+                btnCorrect?.classList.remove('hidden');
+                btnPass?.classList.remove('hidden');
+                btnTaboo?.classList.remove('hidden');
+                if (btnCorrect) btnCorrect.disabled = Boolean(state.isPaused);
+                if (btnTaboo) btnTaboo.disabled = Boolean(state.isPaused);
+                if (btnPass) btnPass.disabled = Boolean(state.isPaused || state.passesLeft <= 0);
+                btnCorrect?.classList.toggle('disabled', state.isPaused);
+                btnTaboo?.classList.toggle('disabled', state.isPaused);
+                btnPass?.classList.toggle('disabled', state.isPaused || state.passesLeft <= 0);
                 gameStatusMessage.innerText = "Sıra Sende - Anlatıyorsun!";
                 gameStatusMessage.className = "status-badge guesser-mode";
             } else if (isOpponent) {
                 wordCard.classList.remove('hidden');
-                narratorActions.classList.add('hidden');
+                narratorActions.classList.remove('hidden');
+                btnCorrect?.classList.add('hidden');
+                btnPass?.classList.add('hidden');
+                btnTaboo?.classList.remove('hidden');
+                btnTaboo?.classList.toggle('disabled', state.isPaused);
+                if (btnTaboo) btnTaboo.disabled = Boolean(state.isPaused);
                 gameStatusMessage.innerText = "Rakip Anlatıyor - Kontrol Et!";
                 gameStatusMessage.className = "status-badge opponent-mode";
             } else {
@@ -669,7 +716,9 @@ class TabuView {
             timerEl.innerText = "BEKLİYOR";
             timerEl.style.color = 'var(--lilac)';
         } else if (status === 'paused') {
-            timerEl.innerText = "DURDU";
+            const m = Math.floor(secs / 60).toString().padStart(2, '0');
+            const s = (secs % 60).toString().padStart(2, '0');
+            timerEl.innerText = `${m}:${s} (Durdu)`;
             timerEl.style.color = 'var(--warning)';
         } else {
             const m = Math.floor(secs / 60).toString().padStart(2, '0');

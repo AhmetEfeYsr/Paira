@@ -2,7 +2,10 @@ class KatiplikNetwork extends BaseGameNetwork {
     constructor(game) {
         super({
             onPlayerJoin: (peerId, payload) => this.handlePlayerJoin(peerId, payload),
-            onAction: (actionType, payload, senderId) => this.onMessageReceived({ type: actionType, ...payload }),
+            onAction: (actionType, payload, senderId) => {
+                if (senderId === this.myId) return;
+                this.onMessageReceived({ type: actionType, ...payload });
+            },
             onPlayerLeave: (peerId) => {
                 window.showToast("Rakip ayrıldı", "warning");
                 setTimeout(() => window.location.href = 'index.html', 3000);
@@ -14,8 +17,6 @@ class KatiplikNetwork extends BaseGameNetwork {
             roomCode: this.roomCode || this.myId,
             isHost: this.isHostNode
         });
-        this.lobbyUI.isCodeVisible = true;
-        this.lobbyUI._updateRoomCodeDisplay();
 
         this.onPeerReady = (id) => {
             super._handlePeerReady(id);
@@ -26,6 +27,39 @@ class KatiplikNetwork extends BaseGameNetwork {
         window.addEventListener('beforeunload', () => {
             this.leaveRoom();
         });
+    }
+
+    _handleDataReceived(action, payload, senderId) {
+        if (action === 'JOIN' && this.isHostNode) {
+            const activeOpponents = Array.from(this._joinedPeers).filter(id => id !== senderId);
+            const isReconnectingOpponent = payload && payload.oldId && this._joinedPeers.has(payload.oldId);
+            if (activeOpponents.length >= 1 && !isReconnectingOpponent) {
+                this.sendToPeer(senderId, 'ROOM_FULL', { reason: 'Oda dolu! Katiplik Düellosu en fazla 2 kişiliktir.' });
+                setTimeout(() => {
+                    const conn = this.connections[senderId];
+                    delete this.connections[senderId];
+                    if (conn) conn.close();
+                }, 300);
+                return;
+            }
+            if (isReconnectingOpponent && payload.oldId !== senderId) {
+                this._joinedPeers.delete(payload.oldId);
+                if (this.connections[payload.oldId]) {
+                    delete this.connections[payload.oldId];
+                }
+            }
+        } else if (action === 'ROOM_FULL' && !this.isHostNode) {
+            this._isLeaving = true;
+            if (this._joinInterval) {
+                clearInterval(this._joinInterval);
+                this._joinInterval = null;
+            }
+            const msg = (payload && payload.reason) ? payload.reason : 'Oda dolu olduğu için katılınamadı.';
+            if (window.showToast) window.showToast(msg, 'error');
+            setTimeout(() => this.leaveRoom(), 2000);
+            return;
+        }
+        super._handleDataReceived(action, payload, senderId);
     }
 
     initialize(isHost, roomCode) {

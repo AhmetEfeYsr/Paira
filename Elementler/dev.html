@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <script src="../shared/shared.js?v=2.0.0"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Paira Elementler | Geliştirici Notları</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/shared.css?v=2.0.0">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
+    <link rel="icon" type="image/avif" href="https://pairaaa.com/main_logo.avif">
+    <link rel="apple-touch-icon" href="https://pairaaa.com/main_logo.avif">
+    <style>
+        .devnotes-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: clamp(1rem, 4vw, 2rem);
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            overflow-wrap: break-word;
+        }
+        .devnotes-container h1 {
+            color: var(--neon-purple);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: clamp(1.8rem, 4vw, 2.4rem);
+        }
+        .devnotes-container h2 {
+            color: var(--lilac);
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            font-size: clamp(1.15rem, 2.5vw, 1.4rem);
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 10px;
+        }
+        .devnotes-container p, .devnotes-container li {
+            color: var(--text-muted);
+            line-height: 1.75;
+            font-size: 0.96rem;
+        }
+        .devnotes-container ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .devnotes-container li { margin-bottom: 0.45rem; }
+        .devnotes-container strong { color: var(--text-main); }
+        .devnotes-container code {
+            font-family: monospace;
+            background: var(--input-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--lilac);
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--lilac);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .back-link:hover { color: var(--neon-purple); }
+    </style>
+</head>
+<body>
+    <main id="app-container" class="glass-panel custom-scrollbar" style="overflow: visible !important; max-height: none !important;">
+        <div class="devnotes-container">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Oyuna Dön
+            </a>
+
+            <h1>Geliştirici Notları: Elementler</h1>
+
+            <h2>Genel Bakış</h2>
+            <p><strong>Elementler</strong>, 1 ile 4 oyuncunun birlikte oynayabildiği, 2D fizik ve bulmaca mekaniklerine dayalı bir co-op platform oyunudur. Her oyuncu odaya katılma sırasına göre bir element rolü alır ve bölümlerdeki engelleri takım arkadaşlarıyla koordine olarak aşar.</p>
+
+            <h2>Teknik Mimari</h2>
+            <ul>
+                <li><strong>Fizik Motoru (<code>engine.js</code>):</strong> Kare tabanlı (<code>TILE = 32</code>) harita ızgarası üzerinde AABB çarpışma tespiti, yerçekimi, itilebilir kutular (<code>PushableBox</code>), ağırlık dengeli tahterevalli (<code>Seesaw</code>) ve buton-kapı (<code>button</code> / <code>door</code>) tetikleyicilerini yönetir.</li>
+                <li><strong>Harita Sistemi (<code>maps.js</code>):</strong> 1, 2, 3 ve 4 kişilik gruplara ayrılmış dallanan (branching) harita ağacı içerir. Tamamlanan bölümler <code>localStorage</code> altında <code>elementler_progress_tree</code> anahtarında saklanır.</li>
+                <li><strong>Ağ ve Senkronizasyon (<code>network.js</code>):</strong> PeerJS tabanlı WebRTC veri kanalları üzerinden çalışır. Roller <code>ELEMENT_ROLES = ['su', 'ates', 'doga', 'hava']</code> sırasıyla atanır ve oyuncuların pozisyon, hız ve tuş durumları periyodik paketlerle paylaşılır.</li>
+            </ul>
+
+            <h2>Oyun Mekanikleri</h2>
+            <ul>
+                <li><strong>Su (<code>su</code>):</strong> Zehir havuzlarından etkilenmez; boru (<code>Tile 8</code>) kanallarını kullanabilir.</li>
+                <li><strong>Ateş (<code>ates</code>):</strong> Lav zeminlerde güvenle yürür ve tahta engelleri (<code>Tile 7</code>) yakarak yolu açabilir.</li>
+                <li><strong>Doğa (<code>doga</code>):</strong> Asit havuzlarına dayanıklıdır ve sarmaşıklara (<code>Tile 5</code>) tırmanabilir.</li>
+                <li><strong>Hava (<code>hava</code>):</strong> Rüzgar akımlarında (<code>Tile 6</code>) yükselerek yüksek platformlara ulaşır.</li>
+            </ul>
+
+            <h2>Sürüm Notları</h2>
+            <ul>
+                <li><strong>v1.1:</strong> Dallanan bölüm seçme ağacı, ilerleme kaydı (<code>localStorage</code>) ve 1–4 kişilik harita paketleri eklendi.</li>
+                <li><strong>v1.0:</strong> İlk sürüm; temel platform fiziği, tahterevalli/kutu objeleri ve WebRTC çok oyunculu senkronizasyon yayına alındı.</li>
+            </ul>
+        </div>
+    </main>
+</body>
+</html>
+
