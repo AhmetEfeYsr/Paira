@@ -3,7 +3,33 @@ const MOCK_FIREBASE_URL = "https://raw.githubusercontent.com/AhmetEfeYSR/BagnamM
 
 let targetDate = ""; // Hedeflenen tarih (YYYY-MM-DD) veya sonsuz mod id
 let gameMode = "daily"; // "daily" veya "endless"
-let endlessGameData = null; // Sonsuz mod için R2'den çekilen toplu veri
+let endlessGameData = null; // Sonsuz mod için R2'den çekilen toplu veri (ID 1..99)
+let cachedEndlessFirebaseRange = null; // Firebase'deki sonsuz-{id} aralığı (ID >= 100)
+
+function getFirebaseNodeKey() {
+    return gameMode === "endless" ? `sonsuz-${targetDate}` : targetDate;
+}
+
+async function fetchEndlessFirebaseRange() {
+    if (cachedEndlessFirebaseRange !== null) return cachedEndlessFirebaseRange;
+    try {
+        const res = await fetch("https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/sonsuz-meta/aralik.json");
+        if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data.max_id === "number" && data.max_id >= 100) {
+                const minId = typeof data.min_id === "number" ? Math.max(100, data.min_id) : 100;
+                if (data.max_id >= minId) {
+                    cachedEndlessFirebaseRange = { minId, maxId: data.max_id };
+                    return cachedEndlessFirebaseRange;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("Firebase sonsuz mod aralığı alınamadı, sadece R2 havuzu kullanılacak:", e);
+    }
+    cachedEndlessFirebaseRange = null;
+    return null;
+}
 let guesses = []; // Kullanıcının tahminleri: { word: string, rank: number, score: number, hintAssisted: boolean }
 let hasWon = false;
 let hintsUsed = 0; // Kaç ipucu kullanıldı
@@ -348,6 +374,13 @@ async function initGame(selectedDateStr = null, isEndless = false) {
     let savedState = tryLoadGameState(gameMode, intendedDate);
 
     if (isEndless) {
+        const fbRange = await fetchEndlessFirebaseRange();
+        const availableIds = [];
+        for (let i = 1; i <= 99; i++) availableIds.push(i);
+        if (fbRange) {
+            for (let i = fbRange.minId; i <= fbRange.maxId; i++) availableIds.push(i);
+        }
+
         if (savedState) {
             targetDate = savedState.targetDate;
             showToast("Sonsuz Mod (Kaldığın Yerden) yükleniyor...", "info");
@@ -361,18 +394,13 @@ async function initGame(selectedDateStr = null, isEndless = false) {
                 playedEndlessIds = [];
             }
 
-            if (playedEndlessIds.length >= 99) {
+            let unplayedIds = availableIds.filter(id => !playedEndlessIds.includes(id));
+            if (unplayedIds.length === 0) {
                 playedEndlessIds = []; // Hepsi bitince başa sar
+                unplayedIds = availableIds;
             }
 
-            let randomId;
-            let attempts = 0;
-            do {
-                randomId = Math.floor(Math.random() * 99) + 1;
-                attempts++;
-                if (attempts > 500) break;
-            } while (playedEndlessIds.includes(randomId));
-
+            const randomId = unplayedIds[Math.floor(Math.random() * unplayedIds.length)];
             playedEndlessIds.push(randomId);
             try {
                 localStorage.setItem("playedEndlessIds", JSON.stringify(playedEndlessIds));
@@ -383,9 +411,18 @@ async function initGame(selectedDateStr = null, isEndless = false) {
         }
 
         try {
-            const res = await fetch(`https://db.pairaaa.com/Sonsuz%20Mod/${targetDate}.json`);
-            if (!res.ok) throw new Error("Ağ hatası");
-            endlessGameData = await res.json();
+            const numericId = parseInt(targetDate, 10);
+            if (!isNaN(numericId) && numericId >= 100) {
+                // Firebase tabanlı günlük eklenen sonsuz mod kelimesi (istemci isteğe bağlı sorgular)
+                endlessGameData = null;
+                const checkRes = await fetch(`https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/sonsuz-${targetDate}/target_word.json`);
+                const checkVal = checkRes.ok ? await checkRes.json() : null;
+                if (!checkVal) throw new Error("Firebase sonsuz mod verisi bulunamadı");
+            } else {
+                const res = await fetch(`https://db.pairaaa.com/Sonsuz%20Mod/${targetDate}.json`);
+                if (!res.ok) throw new Error("Ağ hatası");
+                endlessGameData = await res.json();
+            }
 
             updateModeBadge();
             if (savedState) {
@@ -533,8 +570,7 @@ async function handleGuess() {
 
         let foundData = [];
 
-        if (gameMode === "endless") {
-            if (!endlessGameData) throw new Error("Sonsuz mod verisi eksik.");
+        if (gameMode === "endless" && endlessGameData) {
             for (const entry of variantEntries) {
                 if (endlessGameData[entry.word]) {
                     foundData.push({
@@ -545,8 +581,9 @@ async function handleGuess() {
                 }
             }
         } else {
+            const nodeKey = getFirebaseNodeKey();
             const fetchPromises = variantEntries.map(async (entry) => {
-                const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${encodeURIComponent(entry.word)}.json`;
+                const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${nodeKey}/${encodeURIComponent(entry.word)}.json`;
                 try {
                     const response = await fetch(url);
                     if (response.ok) {
@@ -945,10 +982,10 @@ async function handleGiveUp() {
 
     try {
         let targetWord;
-        if (gameMode === "endless") {
-            targetWord = endlessGameData ? endlessGameData["ana-kelime-pes"] : null;
+        if (gameMode === "endless" && endlessGameData) {
+            targetWord = endlessGameData["ana-kelime-pes"];
         } else {
-            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/ana-kelime-pes.json`;
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${getFirebaseNodeKey()}/ana-kelime-pes.json`;
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -1046,19 +1083,20 @@ async function handleHint() {
         let data;
         let wordDataForDefinition = null;
 
-        if (gameMode === "endless") {
-            data = endlessGameData ? endlessGameData[hintKey] : null;
-            if (isDefinition && endlessGameData) {
+        if (gameMode === "endless" && endlessGameData) {
+            data = endlessGameData[hintKey];
+            if (isDefinition) {
                 wordDataForDefinition = endlessGameData[`hint-${targetN}-kelime`];
             }
         } else {
-            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/${hintKey}.json`;
+            const nodeKey = getFirebaseNodeKey();
+            const url = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${nodeKey}/${hintKey}.json`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("Fetch error");
             data = await response.json();
 
             if (isDefinition) {
-                const wordUrl = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${targetDate}/hint-${targetN}-kelime.json`;
+                const wordUrl = `https://paira-games-default-rtdb.firebaseio.com/gunluk_oyun/${nodeKey}/hint-${targetN}-kelime.json`;
                 const wordResponse = await fetch(wordUrl);
                 if (wordResponse.ok) {
                     wordDataForDefinition = await wordResponse.json();
