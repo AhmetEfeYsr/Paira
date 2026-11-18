@@ -9,32 +9,6 @@ class NetworkManager extends BaseGameNetwork {
             onAction: (action, payload, senderId) => {
                 // Map BaseGameNetwork action handler to the custom ones expected by app.js
                 this.onStateUpdate(senderId, { type: action, ...payload });
-            },
-            onPlayerJoin: (id, payload) => {
-                if (this.isHostNode) {
-                    if (!this.players[id]) {
-                        this.players[id] = {
-                            id: id,
-                            name: payload.name,
-                            isHost: payload.isHost || false,
-                            isAlive: true,
-                            role: null,
-                            score: 0
-                        };
-                    }
-                    this.onPlayerJoinCallback(this.players[id]);
-                    this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
-                }
-            },
-            onPlayerLeave: (id) => {
-                if (this.isHostNode) {
-                    if (this.players[id]) {
-                        const player = this.players[id];
-                        delete this.players[id];
-                        this.onPlayerLeaveCallback(player);
-                        this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
-                    }
-                }
             }
         });
 
@@ -43,6 +17,23 @@ class NetworkManager extends BaseGameNetwork {
         this.onPlayerJoinCallback = onPlayerJoin;
         this.onPlayerLeaveCallback = onPlayerLeave;
         this.onErrorCallback = onError;
+    }
+
+    _getSanitizedPlayers() {
+        const clean = {};
+        Object.keys(this.players).forEach(id => {
+            const p = this.players[id];
+            if (!p) return;
+            clean[id] = {
+                id: p.id,
+                name: p.name,
+                isHost: Boolean(p.isHost),
+                isAlive: p.isAlive !== false,
+                role: null,
+                score: p.score || 0
+            };
+        });
+        return clean;
     }
 
     generateClientId() {
@@ -76,7 +67,7 @@ class NetworkManager extends BaseGameNetwork {
         this.isHostNode = isHost === 'true' || isHost === true;
         this.roomCode = (roomCodeParam || '').replace(/^vk-host-/i, '');
         this.myName = username;
-        
+
         if (existingId && !this.isHostNode) {
             this.myId = existingId;
         } else {
@@ -115,7 +106,11 @@ class NetworkManager extends BaseGameNetwork {
                     this._vkJoinInterval = setInterval(sendJoin, 500);
                 }).catch(err => {
                     console.error('Connection to host failed', err);
-                    this.onErrorCallback('host_disconnected');
+                    if (err && err.type === 'peer-unavailable') {
+                        this.onErrorCallback('room_not_found');
+                    } else {
+                        this.onErrorCallback('host_disconnected');
+                    }
                 });
             }
         }).catch(err => {
@@ -132,6 +127,10 @@ class NetworkManager extends BaseGameNetwork {
 
     _handleDataReceived(action, payload, senderId) {
         if (action === 'JOIN' && this.isHostNode) {
+            if (typeof gameState !== 'undefined' && gameState.status !== 'LOBBY' && !gameState.players[senderId]) {
+                this.sendToPeer(senderId, 'ROOM_LOCKED', {});
+                return;
+            }
             if (!this.players[senderId]) {
                 this.players[senderId] = {
                     id: senderId,
@@ -147,7 +146,14 @@ class NetworkManager extends BaseGameNetwork {
             if (this.onPlayerJoinCallback) {
                 this.onPlayerJoinCallback(this.players[senderId]);
             }
-            this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+            this.broadcast({ type: 'SYNC_PLAYERS', players: this._getSanitizedPlayers() });
+            return;
+        }
+
+        if (action === 'ROOM_LOCKED') {
+            this._joinSynced = true;
+            if (this._vkJoinInterval) clearInterval(this._vkJoinInterval);
+            if (this.onErrorCallback) this.onErrorCallback('room_locked');
             return;
         }
 
@@ -158,7 +164,7 @@ class NetworkManager extends BaseGameNetwork {
                 if (this.onPlayerLeaveCallback) {
                     this.onPlayerLeaveCallback(player);
                 }
-                this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+                this.broadcast({ type: 'SYNC_PLAYERS', players: this._getSanitizedPlayers() });
             }
             return;
         }
@@ -196,7 +202,7 @@ class NetworkManager extends BaseGameNetwork {
                 const player = this.players[peerId];
                 delete this.players[peerId];
                 this.onPlayerLeaveCallback(player);
-                this.broadcast({ type: 'SYNC_PLAYERS', players: this.players });
+                this.broadcast({ type: 'SYNC_PLAYERS', players: this._getSanitizedPlayers() });
             }
         } else if (peerId.includes('host') || peerId === `vk-host-${this.roomCode}`) {
             this.onErrorCallback('host_disconnected');

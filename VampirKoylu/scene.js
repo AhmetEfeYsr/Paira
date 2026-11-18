@@ -5,10 +5,10 @@ function createGrassTexture() {
     canvas.width = 512;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
-    
-    ctx.fillStyle = '#081409'; 
+
+    ctx.fillStyle = '#081409';
     ctx.fillRect(0, 0, 512, 512);
-    
+
     for (let i = 0; i < 4000; i++) {
         const isLight = Math.random() > 0.5;
         ctx.fillStyle = isLight ? '#0c1f0d' : '#050d06';
@@ -19,11 +19,11 @@ function createGrassTexture() {
         ctx.ellipse(x, y, radius, radius * 0.4, Math.random() * Math.PI, 0, Math.PI * 2);
         ctx.fill();
     }
-    
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(100, 100); 
+    texture.repeat.set(100, 100);
     return texture;
 }
 
@@ -42,23 +42,23 @@ class PlayerModel {
         this.maxForce = 8.0;
         this.arriveRadius = 1.0;
         this.isDead = false;
-        
+
         // For animations
         this.animState = 'idle'; // idle, walk, hit, blocked, trapped, hang
         this.animTimer = 0;
 
         this.meshGroup = new THREE.Group();
         this.meshGroup.userData = { id: playerId, type: 'player' };
-        
+
         this.buildCharacter(colorHex);
 
         this.meshGroup.position.copy(this.firePos);
         this.meshGroup.lookAt(0, 1, 0);
-        
+
         // Add name tag
         this.addNameTag(playerName);
     }
-    
+
     addNameTag(name) {
         const canvas = document.createElement('canvas');
         canvas.width = 256;
@@ -72,7 +72,7 @@ class PlayerModel {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(name, 128, 32);
-        
+
         const texture = new THREE.CanvasTexture(canvas);
         const mat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
         this.nameSprite = new THREE.Sprite(mat);
@@ -127,7 +127,7 @@ class PlayerModel {
         this.rightLeg = createLimb(0.14, 0.45);
         this.rightLeg.position.set(0.2, -0.3, 0);
         this.meshGroup.add(this.leftLeg, this.rightLeg);
-        
+
         // Trap visual (hidden by default)
         this.trapMesh = new THREE.Mesh(
             new THREE.TorusGeometry(0.5, 0.05, 8, 24),
@@ -148,18 +148,18 @@ class PlayerModel {
         this.tombstone.visible = false;
         this.meshGroup.add(this.tombstone);
     }
-    
+
     setHighlight(isSelected) {
         if (this.isDead) return;
-        if(isSelected) {
+        if (isSelected) {
             this.nameSprite.material.color.setHex(0xffff00); // Yellow name
-            if(this.body.children[0]) {
+            if (this.body.children[0]) {
                 this.body.children[0].material.emissive.setHex(0x333333);
                 this.body.children[0].material.emissiveIntensity = 0.5;
             }
         } else {
             this.nameSprite.material.color.setHex(0xffffff);
-            if(this.body.children[0]) {
+            if (this.body.children[0]) {
                 this.body.children[0].material.emissive.setHex(0x000000);
                 this.body.children[0].material.emissiveIntensity = 0;
             }
@@ -168,6 +168,15 @@ class PlayerModel {
 
     setDead(isDead) {
         this.isDead = isDead;
+        this.animState = 'idle';
+        this.animTimer = 0;
+        if (this.trapMesh) this.trapMesh.visible = false;
+        this.meshGroup.rotation.z = 0;
+        if (this.head) this.head.rotation.y = 0;
+        if (this.body && this.body.children[0]) {
+            this.body.children[0].material.emissive.setHex(0x000000);
+            this.body.children[0].material.emissiveIntensity = 0;
+        }
         if (isDead) {
             this.body.visible = false;
             this.leftLeg.visible = false;
@@ -200,58 +209,58 @@ class PlayerModel {
     playAnim(state, duration) {
         this.animState = state;
         this.animTimer = duration;
-        if(state === 'trapped') this.trapMesh.visible = true;
+        if (state === 'trapped') this.trapMesh.visible = true;
         else this.trapMesh.visible = false;
     }
 
     update(delta, time) {
         if (this.isDead && this.animState !== 'hang') return;
-        
+
         if (this.animTimer > 0) {
             this.animTimer -= delta;
             if (this.animTimer <= 0) {
                 // Reset emissive from hit flash
-                if(this.animState === 'hit' && this.body.children[0]) {
+                if (this.animState === 'hit' && this.body.children[0]) {
                     this.body.children[0].material.emissive.setHex(0x000000);
                     this.body.children[0].material.emissiveIntensity = 0;
                 }
                 // Reset head rotation from blocked
-                if(this.animState === 'blocked') {
+                if (this.animState === 'blocked') {
                     this.head.rotation.y = 0;
                 }
                 // Don't auto-revert hang — external code calls setDead
-                if(this.animState !== 'hang') {
+                if (this.animState !== 'hang') {
                     this.animState = 'idle';
                 }
                 this.trapMesh.visible = false;
             }
         }
-        
-        if(this.animState === 'hit') {
+
+        if (this.animState === 'hit') {
             this.meshGroup.position.x += (Math.random() - 0.5) * 0.2;
             this.meshGroup.position.z += (Math.random() - 0.5) * 0.2;
             // Flash red using emissive — no new material created
-            if(this.body.children[0]) {
+            if (this.body.children[0]) {
                 this.body.children[0].material.emissive.setHex(0xff0000);
                 this.body.children[0].material.emissiveIntensity = Math.sin(time * 30) * 0.5 + 0.5;
             }
         }
-        
-        if(this.animState === 'blocked') {
+
+        if (this.animState === 'blocked') {
             this.head.rotation.y = Math.sin(time * 15) * 0.3;
             return;
         }
-        
-        if(this.animState === 'trapped') {
+
+        if (this.animState === 'trapped') {
             this.meshGroup.position.y = 1.0 + Math.sin(time * 20) * 0.05; // Struggle
             return;
         }
-        
-        if(this.animState === 'hang') {
+
+        if (this.animState === 'hang') {
             this.meshGroup.position.y = 1.5;
             this.meshGroup.rotation.z = Math.sin(time * 5) * 0.1;
         }
-        
+
         const toTarget = this.targetPos.clone().sub(this.meshGroup.position);
         const distance = toTarget.length();
 
@@ -307,25 +316,25 @@ class HouseBuilder {
         const houseGroup = new THREE.Group();
         houseGroup.userData = { id: playerId, type: 'house' };
 
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0xddcbb8, roughness: 0.9 }); 
-        const woodMat = new THREE.MeshStandardMaterial({ color: 0x3b2210, roughness: 0.8 }); 
-        const roofMat = new THREE.MeshStandardMaterial({ color: roofColorHex, roughness: 0.7, flatShading: true }); 
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xddcbb8, roughness: 0.9 });
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0x3b2210, roughness: 0.8 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: roofColorHex, roughness: 0.7, flatShading: true });
 
         const width = 3.6, depth = 3.6, radius = 0.6;
         const shape = new THREE.Shape();
-        shape.moveTo(-width/2, -depth/2 + radius);
-        shape.lineTo(-width/2, depth/2 - radius);
-        shape.quadraticCurveTo(-width/2, depth/2, -width/2 + radius, depth/2);
-        shape.lineTo(width/2 - radius, depth/2);
-        shape.quadraticCurveTo(width/2, depth/2, width/2, depth/2 - radius);
-        shape.lineTo(width/2, -depth/2 + radius);
-        shape.quadraticCurveTo(width/2, -depth/2, width/2 - radius, -depth/2);
-        shape.lineTo(-width/2 + radius, -depth/2);
-        shape.quadraticCurveTo(-width/2, -depth/2, -width/2, -depth/2 + radius);
+        shape.moveTo(-width / 2, -depth / 2 + radius);
+        shape.lineTo(-width / 2, depth / 2 - radius);
+        shape.quadraticCurveTo(-width / 2, depth / 2, -width / 2 + radius, depth / 2);
+        shape.lineTo(width / 2 - radius, depth / 2);
+        shape.quadraticCurveTo(width / 2, depth / 2, width / 2, depth / 2 - radius);
+        shape.lineTo(width / 2, -depth / 2 + radius);
+        shape.quadraticCurveTo(width / 2, -depth / 2, width / 2 - radius, -depth / 2);
+        shape.lineTo(-width / 2 + radius, -depth / 2);
+        shape.quadraticCurveTo(-width / 2, -depth / 2, -width / 2, -depth / 2 + radius);
 
         const extrudeSettings = { depth: 2.2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 };
         const wallGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-        wallGeo.rotateX(-Math.PI / 2); 
+        wallGeo.rotateX(-Math.PI / 2);
 
         const walls = new THREE.Mesh(wallGeo, wallMat);
         walls.castShadow = true;
@@ -336,18 +345,18 @@ class HouseBuilder {
         const roofGeo = new THREE.CylinderGeometry(0, 3.2, roofHeight, 4);
         roofGeo.rotateY(Math.PI / 4);
         const roof = new THREE.Mesh(roofGeo, roofMat);
-        roof.position.y = 2.3 + (roofHeight/2);
+        roof.position.y = 2.3 + (roofHeight / 2);
         roof.castShadow = true;
 
         const trimGeo = new THREE.CylinderGeometry(0, 3.1, 0.2, 4);
         trimGeo.rotateY(Math.PI / 4);
         const trim = new THREE.Mesh(trimGeo, woodMat);
-        trim.position.y = - (roofHeight/2) + 0.1;
+        trim.position.y = - (roofHeight / 2) + 0.1;
         roof.add(trim);
         houseGroup.add(roof);
 
         const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: 0x6e3511 }));
-        chimney.position.set(-1.2, 2.3 + roofHeight/2, -1.0);
+        chimney.position.set(-1.2, 2.3 + roofHeight / 2, -1.0);
         chimney.castShadow = true;
         houseGroup.add(chimney);
 
@@ -360,18 +369,18 @@ class HouseBuilder {
         doorGroup.add(doorBase, doorTop);
 
         const knob = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffa500, metalness: 0.8, roughness: 0.2 }));
-        knob.position.set(0.3, 0.6, 0.15); 
+        knob.position.set(0.3, 0.6, 0.15);
         doorGroup.add(knob);
-        doorGroup.position.set(0, 0, depth/2 + 0.02); 
+        doorGroup.position.set(0, 0, depth / 2 + 0.02);
         houseGroup.add(doorGroup);
 
         const step = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 1.2, 2, 8), new THREE.MeshStandardMaterial({ color: 0x555555 }));
         step.rotation.z = Math.PI / 2;
-        step.position.set(0, 0.1, depth/2 + 0.3);
+        step.position.set(0, 0.1, depth / 2 + 0.3);
         step.receiveShadow = true;
         houseGroup.add(step);
 
-        const winMat = new THREE.MeshStandardMaterial({ color: 0x4488ff, roughness: 0.2, metalness: 0.8 }); 
+        const winMat = new THREE.MeshStandardMaterial({ color: 0x4488ff, roughness: 0.2, metalness: 0.8 });
         windowsArray.push(winMat);
 
         const createWindow = (px, py, pz) => {
@@ -383,15 +392,15 @@ class HouseBuilder {
 
             const frameGeo = new THREE.TorusGeometry(0.4, 0.08, 6, 16);
             const frame = new THREE.Mesh(frameGeo, woodMat);
-            frame.position.z = 0.05; 
+            frame.position.z = 0.05;
             winGroup.add(frame);
 
             winGroup.position.set(px, py, pz);
             return winGroup;
         };
 
-        houseGroup.add(createWindow(-1.1, 1.3, depth/2 + 0.02)); 
-        houseGroup.add(createWindow(1.1, 1.3, depth/2 + 0.02));  
+        houseGroup.add(createWindow(-1.1, 1.3, depth / 2 + 0.02));
+        houseGroup.add(createWindow(1.1, 1.3, depth / 2 + 0.02));
 
         return houseGroup;
     }
@@ -401,19 +410,19 @@ export class GameScene {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.Fog(0x3a5f7a, 120, 350); 
-        
+        this.scene.fog = new THREE.Fog(0x3a5f7a, 120, 350);
+
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 500);
-        
+
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
-        
+
         this.container.appendChild(this.renderer.domElement);
 
         window.addEventListener('resize', () => {
@@ -424,13 +433,13 @@ export class GameScene {
 
         this.clock = new THREE.Clock();
         this.isNight = false;
-        
+
         this.playerModels = {}; // id -> PlayerModel
         this.houses = {}; // id -> Group
         this.windows = [];
         this.houseRadius = 14;
-        this.fireScale = 1.0; 
-        this.currentFireRadius = 4.0; 
+        this.fireScale = 1.0;
+        this.currentFireRadius = 4.0;
 
         // Camera control
         this.localId = null;
@@ -441,12 +450,12 @@ export class GameScene {
         this.targetCamX = 0;
         this.camera.position.set(0, this.targetCamY, this.targetCamZ);
         this.camera.lookAt(0, 0, 0);
-        
+
         this.flickerTimer = 0;
         this.targetFlicker = 100;
-        this.colorCore = new THREE.Color(0xffbb33); 
-        this.colorMid = new THREE.Color(0xff4400);  
-        this.colorEdge = new THREE.Color(0xaa0000); 
+        this.colorCore = new THREE.Color(0xffbb33);
+        this.colorMid = new THREE.Color(0xff4400);
+        this.colorEdge = new THREE.Color(0xaa0000);
 
         this.campfireActive = true;
 
@@ -460,29 +469,33 @@ export class GameScene {
     setupRaycaster() {
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
-        
+
         this.renderer.domElement.addEventListener('pointerdown', (e) => {
             if (!window.onPlayerSelected) return; // Callback must be defined
-            
+
             const rect = this.renderer.domElement.getBoundingClientRect();
             let cx = e.clientX, cy = e.clientY;
-            if(e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-            
+            if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+
             this.pointer.x = ((cx - rect.left) / rect.width) * 2 - 1;
             this.pointer.y = -((cy - rect.top) / rect.height) * 2 + 1;
-            
+
             this.raycaster.setFromCamera(this.pointer, this.camera);
-            
-            // Check players and houses
+
+            // Check living players and their houses
             let objects = [];
-            Object.values(this.playerModels).forEach(p => objects.push(p.meshGroup));
-            Object.values(this.houses).forEach(h => objects.push(h));
-            
+            Object.values(this.playerModels).forEach(p => {
+                if (!p.isDead) objects.push(p.meshGroup);
+            });
+            Object.entries(this.houses).forEach(([id, h]) => {
+                if (this.playerModels[id] && !this.playerModels[id].isDead) objects.push(h);
+            });
+
             const intersects = this.raycaster.intersectObjects(objects, true);
             if (intersects.length > 0) {
                 // Find nearest parent with userData.id
                 let obj = intersects[0].object;
-                while(obj && !obj.userData.id) {
+                while (obj && !obj.userData.id) {
                     obj = obj.parent;
                 }
                 if (obj && obj.userData.id) {
@@ -512,7 +525,7 @@ export class GameScene {
         this.starsMat = new THREE.PointsMaterial({ color: 0xdde8ff, size: 0.3, transparent: true, opacity: 0, depthWrite: false });
         const starsGeo = new THREE.BufferGeometry();
         const stars = [];
-        for (let i = 0; i < 600; i++) { 
+        for (let i = 0; i < 600; i++) {
             const radius = 80 + Math.random() * 200;
             const theta = Math.random() * Math.PI * 2;
             stars.push(Math.cos(theta) * radius, 60 + Math.random() * 100, Math.sin(theta) * radius);
@@ -532,14 +545,14 @@ export class GameScene {
             new THREE.SphereGeometry(5.0, 16, 16),
             new THREE.MeshBasicMaterial({ color: 0xffe680, transparent: true, opacity: 1.0 })
         );
-        this.sun.position.set(60, 70, 60); 
+        this.sun.position.set(60, 70, 60);
         this.scene.add(this.sun);
 
         this.fireGroup = new THREE.Group();
         this.flameVisualGroup = new THREE.Group();
 
         const fireWoodMat = new THREE.MeshStandardMaterial({ color: 0x2b1e16, roughness: 0.95 });
-        for(let i=0; i<6; i++) {
+        for (let i = 0; i < 6; i++) {
             const wood = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 1.8, 6), fireWoodMat);
             wood.rotation.z = Math.PI / 3 + (Math.random() - 0.5) * 0.08;
             wood.rotation.x = (Math.random() - 0.5) * 0.14;
@@ -552,14 +565,14 @@ export class GameScene {
 
         this.particleCount = 45;
         this.particles = [];
-        const particleGeo = new THREE.IcosahedronGeometry(0.4, 0); 
+        const particleGeo = new THREE.IcosahedronGeometry(0.4, 0);
         const particleMat = new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
 
-        for(let i=0; i<this.particleCount; i++) {
+        for (let i = 0; i < this.particleCount; i++) {
             const pMesh = new THREE.Mesh(particleGeo, particleMat.clone());
             const p = {
                 mesh: pMesh, life: Math.random(), speed: 0.4 + Math.random() * 0.6,
-                wobbleSpeed: 1.0 + Math.random() * 2.0, wobbleSize: 0.1 + Math.random() * 0.2, 
+                wobbleSpeed: 1.0 + Math.random() * 2.0, wobbleSize: 0.1 + Math.random() * 0.2,
                 xOffset: (Math.random() - 0.5) * 0.5, zOffset: (Math.random() - 0.5) * 0.5,
                 rotSpeed: (Math.random() - 0.5) * 2.5
             };
@@ -580,11 +593,11 @@ export class GameScene {
         const sparkGeo = new THREE.BufferGeometry();
         const sparkPositions = new Float32Array(this.sparkCount * 3);
         this.sparkData = [];
-        for(let i = 0; i < this.sparkCount; i++) {
-            sparkPositions[i*3] = (Math.random() - 0.5);
-            sparkPositions[i*3+1] = Math.random() * 2;
-            sparkPositions[i*3+2] = (Math.random() - 0.5);
-            this.sparkData.push({ velocity: new THREE.Vector3((Math.random()-0.5)*1.2, 0.8 + Math.random()*1.2, (Math.random()-0.5)*1.2), life: Math.random() });
+        for (let i = 0; i < this.sparkCount; i++) {
+            sparkPositions[i * 3] = (Math.random() - 0.5);
+            sparkPositions[i * 3 + 1] = Math.random() * 2;
+            sparkPositions[i * 3 + 2] = (Math.random() - 0.5);
+            this.sparkData.push({ velocity: new THREE.Vector3((Math.random() - 0.5) * 1.2, 0.8 + Math.random() * 1.2, (Math.random() - 0.5) * 1.2), life: Math.random() });
         }
         sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPositions, 3));
         const sparkMaterial = new THREE.PointsMaterial({ color: 0xffcc44, size: 0.05, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -599,10 +612,10 @@ export class GameScene {
         this.hemiLight = new THREE.HemisphereLight(0x7da4c4, 0x081409, 0.4);
         this.scene.add(this.hemiLight);
 
-        this.dirLight = new THREE.DirectionalLight(0xffeedd, 1.3); 
+        this.dirLight = new THREE.DirectionalLight(0xffeedd, 1.3);
         this.dirLight.position.set(30, 45, 30);
         this.dirLight.castShadow = true;
-        this.dirLight.shadow.mapSize.width = 1024; 
+        this.dirLight.shadow.mapSize.width = 1024;
         this.dirLight.shadow.mapSize.height = 1024;
         this.dirLight.shadow.camera.left = -50;
         this.dirLight.shadow.camera.right = 50;
@@ -612,21 +625,21 @@ export class GameScene {
         this.dirLight.shadow.bias = -0.001;
         this.scene.add(this.dirLight);
 
-        this.fireLight = new THREE.PointLight(0xff7a1f, 150, 60, 2.0); 
-        this.fireLight.position.set(0, 1.2, 0); 
+        this.fireLight = new THREE.PointLight(0xff7a1f, 150, 60, 2.0);
+        this.fireLight.position.set(0, 1.2, 0);
         this.fireLight.castShadow = true;
         this.fireLight.shadow.camera.near = 0.5;
         this.fireLight.shadow.bias = -0.005;
-        this.fireLight.shadow.mapSize.width = 512; 
+        this.fireLight.shadow.mapSize.width = 512;
         this.fireLight.shadow.mapSize.height = 512;
         this.scene.add(this.fireLight);
-        
+
         this.scene.add(this.fireGroup);
     }
 
     generateColors(count) {
         const colors = [];
-        for(let i=0; i<count; i++) {
+        for (let i = 0; i < count; i++) {
             const hue = (i / count) * 360;
             const c = new THREE.Color(`hsl(${hue}, 80%, 55%)`);
             colors.push(c.getHex());
@@ -642,11 +655,11 @@ export class GameScene {
         // playersData is array of { id, name, isAlive }
         const pIds = playersData.map(p => p.id);
         const count = playersData.length;
-        if(count === 0) return;
+        if (count === 0) return;
 
         // Cleanup removed players
         Object.keys(this.playerModels).forEach(id => {
-            if(!pIds.includes(id)) {
+            if (!pIds.includes(id)) {
                 this.scene.remove(this.playerModels[id].meshGroup);
                 this.scene.remove(this.houses[id]);
                 delete this.playerModels[id];
@@ -654,26 +667,39 @@ export class GameScene {
             }
         });
 
-        this.fireScale = 0.5 + (count * 0.06); 
+        this.fireScale = 0.5 + (count * 0.06);
         this.fireGroup.scale.set(this.fireScale, this.fireScale, this.fireScale);
         this.currentFireRadius = (3.0 * this.fireScale) + (count * 0.35);
         this.houseRadius = Math.max(12, count * 1.8);
-        
+
         this.mainDirt.scale.setScalar(this.houseRadius / 10);
 
         const colors = this.generateColors(count);
 
         playersData.forEach((pData, index) => {
-            if(!this.playerModels[pData.id]) {
+            const angle = (index / count) * Math.PI * 2;
+            const homePos = new THREE.Vector3(Math.cos(angle) * this.houseRadius, 1.0, Math.sin(angle) * this.houseRadius);
+            const firePos = new THREE.Vector3(Math.cos(angle) * this.currentFireRadius, 1.0, Math.sin(angle) * this.currentFireRadius);
+
+            if (!this.playerModels[pData.id]) {
                 const p = new PlayerModel(colors[index], index, count, this.houseRadius, this.currentFireRadius, pData.id, pData.name);
                 this.playerModels[pData.id] = p;
                 this.scene.add(p.meshGroup);
 
                 const house = HouseBuilder.build(colors[index], this.windows, pData.id);
-                house.position.copy(p.homePos);
+                house.position.copy(homePos);
                 house.lookAt(0, 0, 0);
                 this.houses[pData.id] = house;
                 this.scene.add(house);
+            } else {
+                const p = this.playerModels[pData.id];
+                p.index = index;
+                p.homePos.copy(homePos);
+                p.firePos.copy(firePos);
+                if (this.houses[pData.id]) {
+                    this.houses[pData.id].position.copy(homePos);
+                    this.houses[pData.id].lookAt(0, 0, 0);
+                }
             }
             // Update dead status
             this.playerModels[pData.id].setDead(!pData.isAlive);
@@ -684,7 +710,7 @@ export class GameScene {
 
     setCampfireActive(active) {
         this.campfireActive = active;
-        if(!active) {
+        if (!active) {
             this.flameVisualGroup.visible = false;
         } else {
             this.flameVisualGroup.visible = true;
@@ -694,12 +720,12 @@ export class GameScene {
     setNight(state) {
         this.isNight = state;
         this.updatePlayerTargets(state ? "home" : "fire");
-        
+
         // Kamera her zaman köyün tamamını (kuşbakışı/ateş merkezli) görecek şekilde kalır
         this.cameraMode = 'fire';
         this.cameraFollowTarget = null;
     }
-    
+
     // Kameralı odaklanmayı kaldırıyoruz, POV aynı kalacak. Sadece animasyonlar kişiye özel gidecek.
     watchHouse(targetId) {
         this.cameraMode = 'fire';
@@ -709,13 +735,13 @@ export class GameScene {
     getPlayerScreenCoords(playerId) {
         if (!this.playerModels[playerId]) return null;
         const playerPos = this.playerModels[playerId].meshGroup.position.clone();
-        
+
         // Y offset for head
         playerPos.y += 3.5;
-        
+
         playerPos.project(this.camera);
 
-        const x = (playerPos.x *  .5 + .5) * window.innerWidth;
+        const x = (playerPos.x * .5 + .5) * window.innerWidth;
         const y = (playerPos.y * -.5 + .5) * window.innerHeight;
 
         return { x, y };
@@ -742,14 +768,14 @@ export class GameScene {
     animatePlayerAction(actorId, targetId, actionType, callback) {
         const actor = this.playerModels[actorId];
         const target = this.playerModels[targetId];
-        if(!actor || !target || actor.isDead) {
-            if(callback) setTimeout(callback, 500);
+        if (!actor || !target || actor.isDead) {
+            if (callback) setTimeout(callback, 500);
             return;
         }
 
         const doorPos = target.homePos.clone();
         doorPos.multiplyScalar(0.85); // Doorstep
-        
+
         const speed = (actionType === 'KILL' || actionType === 'POLICE_BLOCK') ? 15.0 : 10.0;
 
         // Walk to target
@@ -760,7 +786,7 @@ export class GameScene {
         const walkTime = (dist / speed) * 1000 + 500;
 
         setTimeout(() => {
-            if(actionType === 'KILL') {
+            if (actionType === 'KILL') {
                 actor.playAnim('hit', 0.5);
                 target.playAnim('hit', 0.5);
                 // Create slash particle or red flash
@@ -775,34 +801,34 @@ export class GameScene {
             setTimeout(() => {
                 // Send back home
                 actor.setTarget(actor.homePos, speed);
-                
+
                 setTimeout(() => {
-                    if(callback) callback();
+                    if (callback) callback();
                 }, walkTime);
-                
+
             }, 1000);
-            
+
         }, walkTime);
     }
-    
+
     // Hang animation for voting
     animateHang(targetId, callback) {
         const target = this.playerModels[targetId];
-        if(!target) return;
-        
+        if (!target) return;
+
         target.setTarget(new THREE.Vector3(0, 1.0, 0), 2.0); // Walk to fire
         setTimeout(() => {
             target.playAnim('hang', 2.0);
             setTimeout(() => {
                 target.setDead(true);
-                if(callback) callback();
+                if (callback) callback();
             }, 2000);
         }, 3000);
     }
 
     animate() {
         requestAnimationFrame(this.animate);
-        const delta = Math.min(this.clock.getDelta(), 0.1); 
+        const delta = Math.min(this.clock.getDelta(), 0.1);
         const time = this.clock.getElapsedTime();
 
         // Camera Update logic
@@ -827,9 +853,9 @@ export class GameScene {
         this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.targetCamX, delta * 2);
         this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.targetCamY, delta * 2);
         this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, delta * 2);
-        
-        if(this.cameraMode === 'fire') {
-            this.camera.lookAt(0,0,0);
+
+        if (this.cameraMode === 'fire') {
+            this.camera.lookAt(0, 0, 0);
         } else if (this.cameraFollowTarget) {
             const lookPos = this.cameraFollowTarget.position.clone();
             this.camera.lookAt(lookPos);
@@ -844,7 +870,7 @@ export class GameScene {
         this.ambientLight.intensity = THREE.MathUtils.lerp(this.ambientLight.intensity, this.isNight ? 0.05 : 0.5, delta * 2);
         this.hemiLight.intensity = THREE.MathUtils.lerp(this.hemiLight.intensity, this.isNight ? 0.02 : 0.4, delta * 2);
         this.dirLight.intensity = THREE.MathUtils.lerp(this.dirLight.intensity, this.isNight ? 0.01 : 1.3, delta * 2);
-        
+
         this.starsMat.opacity = THREE.MathUtils.lerp(this.starsMat.opacity, this.isNight ? 0.95 : 0, delta * 1.8);
         this.moon.material.emissiveIntensity = THREE.MathUtils.lerp(this.moon.material.emissiveIntensity, this.isNight ? 0.95 : 0.22, delta * 1.5);
         this.moon.position.y = THREE.MathUtils.lerp(this.moon.position.y, this.isNight ? 60 : 10, delta * 1.5);
@@ -853,23 +879,23 @@ export class GameScene {
 
         this.renderer.toneMappingExposure = THREE.MathUtils.lerp(this.renderer.toneMappingExposure, this.isNight ? 0.6 : 1.0, delta * 1.2);
 
-        if(this.campfireActive) {
+        if (this.campfireActive) {
             this.flickerTimer += delta;
             if (this.flickerTimer > 0.12) {
                 const baseIntensity = (this.isNight ? 180 : 80) * this.fireScale;
                 const variance = (this.isNight ? 150 : 40) * this.fireScale;
-                this.targetFlicker = baseIntensity + Math.random() * variance; 
+                this.targetFlicker = baseIntensity + Math.random() * variance;
                 this.flickerTimer = 0;
             }
-            
+
             this.fireLight.intensity = THREE.MathUtils.lerp(this.fireLight.intensity, this.targetFlicker, delta * 10);
-            this.fireLight.distance = 60 * this.fireScale; 
+            this.fireLight.distance = 60 * this.fireScale;
             this.emberBed.material.emissiveIntensity = 0.6 + (this.fireLight.intensity / (300 * this.fireScale)) * 0.4;
 
             this.particles.forEach(p => {
                 p.life += delta * p.speed;
                 if (p.life >= 1.0) { p.life = 0; p.xOffset = (Math.random() - 0.5) * 0.5; p.zOffset = (Math.random() - 0.5) * 0.5; }
-                const height = p.life * 2.3; 
+                const height = p.life * 2.3;
                 const wobbleX = Math.sin(time * p.wobbleSpeed) * p.wobbleSize * p.life;
                 const wobbleZ = Math.cos(time * p.wobbleSpeed * 0.8) * p.wobbleSize * p.life;
 
@@ -881,7 +907,7 @@ export class GameScene {
 
                 if (p.life < 0.3) {
                     p.mesh.material.color.lerpColors(this.colorCore, this.colorMid, p.life / 0.3);
-                    p.mesh.material.opacity = p.life / 0.3; 
+                    p.mesh.material.opacity = p.life / 0.3;
                 } else {
                     const factor = (p.life - 0.3) / 0.7;
                     p.mesh.material.color.lerpColors(this.colorMid, this.colorEdge, factor);
@@ -892,7 +918,7 @@ export class GameScene {
             this.fireLight.intensity = THREE.MathUtils.lerp(this.fireLight.intensity, 0, delta * 5);
         }
 
-        const winColorDay = new THREE.Color(0x4488ff); 
+        const winColorDay = new THREE.Color(0x4488ff);
         const winColorNight = new THREE.Color(0xffcc00);
         const winEmissiveDay = new THREE.Color(0x000000);
         const winEmissiveNight = new THREE.Color(0xffaa00);

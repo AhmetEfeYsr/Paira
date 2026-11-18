@@ -16,7 +16,7 @@ body:has(#game-container) {
 }
 
 /* 3D sahne oyun ekranında tıklanabilir olmalı */
-#game-screen.active ~ #game-container,
+#game-screen.active~#game-container,
 body.game-active #game-container {
     pointer-events: auto;
 }
@@ -40,7 +40,7 @@ body.game-active .game-seo-info {
     z-index: 5;
 }
 
-#app-container > * {
+#app-container>* {
     pointer-events: auto;
 }
 
@@ -70,31 +70,70 @@ body.game-active .game-seo-info {
 .lobby-grid {
     display: flex;
     gap: clamp(1rem, 2.5vw, 2rem);
-    flex-grow: 1; min-height: 0; overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
     flex-wrap: wrap;
 }
-.lobby-grid > aside {
-    flex: 1; min-width: 250px; max-width: 400px;
+
+.lobby-grid>aside {
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
 }
-.lobby-grid > section {
-    flex: 2; min-width: 320px;
+
+.lobby-grid>section {
+    flex: 2;
+    min-width: 320px;
 }
 
 
 
 
-.game-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(0.8rem, 2vw, 1.5rem); padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.5rem); flex-wrap: wrap; gap: 0.8rem; background: rgba(18, 20, 28, 0.7); backdrop-filter: blur(8px); border-radius: 15px; flex-shrink: 0; }
+.game-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: clamp(0.8rem, 2vw, 1.5rem);
+    padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.5rem);
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    background: rgba(18, 20, 28, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 15px;
+    flex-shrink: 0;
+}
 
 
-.timer.timer-danger { color: var(--danger); animation: heartbeat 1s infinite; }
+.timer.timer-danger {
+    color: var(--danger);
+    animation: heartbeat 1s infinite;
+}
 
 @keyframes heartbeat {
-    0% { transform: scale(1); }
-    15% { transform: scale(1.15); }
-    30% { transform: scale(1); }
-    45% { transform: scale(1.15); }
-    60% { transform: scale(1); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    15% {
+        transform: scale(1.15);
+    }
+
+    30% {
+        transform: scale(1);
+    }
+
+    45% {
+        transform: scale(1.15);
+    }
+
+    60% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 
@@ -112,17 +151,55 @@ body.game-active .game-seo-info {
     justify-content: space-between;
     align-items: center;
 }
+
 .player-action-card:hover {
     background: var(--btn-secondary-hover);
 }
+
 .player-action-card.selected {
     border-color: var(--neon-purple);
     background: rgba(157, 78, 221, 0.2);
 }
+
 .player-action-card.dead {
     opacity: 0.5;
     cursor: not-allowed;
     text-decoration: line-through;
+}
+
+/* Scoreboard Table */
+.scoreboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.scoreboard-table th,
+.scoreboard-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--btn-secondary-border);
+}
+
+.scoreboard-table th {
+    color: var(--lilac);
+    font-weight: 600;
+}
+
+.scoreboard-table tr:hover {
+    background: var(--input-bg);
+}
+
+/* Keep top-left HUD role tooltips inside viewport */
+#roles-list .custom-tooltip-wrapper .custom-tooltip-content {
+    bottom: auto;
+    top: 125%;
+    left: 0;
+    transform: none;
+}
+
+#roles-container .custom-tooltip-wrapper .custom-tooltip-content {
+    left: 0;
+    transform: none;
 }
 
 @media (max-width: 768px) {
@@ -132,6 +209,7 @@ body.game-active .game-seo-info {
         left: 10px !important;
         max-width: calc(100vw - 20px) !important;
     }
+
     .game-topbar {
         left: 10px !important;
         right: 10px !important;
@@ -139,16 +217,17 @@ body.game-active .game-seo-info {
         width: calc(100vw - 20px) !important;
         transform: none !important;
     }
+
     #notepad-hud {
         top: 85px !important;
         right: 10px !important;
         width: 220px !important;
     }
-    #game-screen > .hud-panel:last-of-type {
+
+    #game-screen>.hud-panel:last-of-type {
         width: calc(100vw - 20px) !important;
         left: 10px !important;
         bottom: 10px !important;
         height: 220px !important;
     }
 }
-

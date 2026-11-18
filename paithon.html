@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lila Kedi Subathon Sayacı 🐾💜</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Socket.io Client v2.3.0 (Streamlabs Socket API uyumlu) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <!-- Google Fonts: El çizimi hissi veren tatlı yuvarlak fontlar -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Quicksand:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-lilac: #E6D7F5;
+            --bg-lilac-dot: #D3BBE8;
+            --cat-cream: #FFFDF9;
+            --cat-lilac-soft: #F5ECFC;
+            --cat-outline: #4A3267;
+            --cat-ear-pink: #F5C2E7;
+            --cat-blush: #FF9EBB;
+            --accent-lilac: #B983FF;
+            --accent-deep: #7A49A5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg-lilac);
+            /* TATLI Kedi Patisi Seamless SVG Arka Plan (200x200 Tile): pembe pati yastıklı patiler, kalpler ve parıltılar */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cg id='p'%3E%3Cg fill='%23C9AEEA'%3E%3Cpath d='M0 1C-8 1-12.5 8-10.5 12.5C-8.5 17-3.5 15.5 0 15.5C3.5 15.5 8.5 17 10.5 12.5C12.5 8 8 1 0 1Z'/%3E%3Cellipse cx='-11' cy='-6' rx='3.9' ry='4.8' transform='rotate(-22 -11 -6)'/%3E%3Cellipse cx='-4' cy='-11.5' rx='3.9' ry='5'/%3E%3Cellipse cx='4' cy='-11.5' rx='3.9' ry='5'/%3E%3Cellipse cx='11' cy='-6' rx='3.9' ry='4.8' transform='rotate(22 11 -6)'/%3E%3C/g%3E%3Cg fill='%23F7BEDD'%3E%3Cpath d='M0 5.5C-4.5 5.5-6.8 9.2-5.8 11.6C-4.8 13.6-2 12.9 0 12.9C2 12.9 4.8 13.6 5.8 11.6C6.8 9.2 4.5 5.5 0 5.5Z'/%3E%3Cellipse cx='-10.6' cy='-5.4' rx='1.9' ry='2.4' transform='rotate(-22 -10.6 -5.4)'/%3E%3Cellipse cx='-4' cy='-10.8' rx='1.9' ry='2.5'/%3E%3Cellipse cx='4' cy='-10.8' rx='1.9' ry='2.5'/%3E%3Cellipse cx='10.6' cy='-5.4' rx='1.9' ry='2.4' transform='rotate(22 10.6 -5.4)'/%3E%3C/g%3E%3C/g%3E%3Cpath id='h' d='M0 4C-1 3-7-1-7-5C-7-8-4-9.5 0-6C4-9.5 7-8 7-5C7-1 1 3 0 4Z' fill='%23F2A7CC'/%3E%3Cpath id='s' d='M0-6L1.4-1.4L6 0L1.4 1.4L0 6L-1.4 1.4L-6 0L-1.4-1.4Z' fill='%23FFFFFF'/%3E%3C/defs%3E%3Cuse href='%23p' transform='translate(52 60) rotate(-18) scale(1.5)'/%3E%3Cuse href='%23p' transform='translate(146 146) rotate(22) scale(1.3)'/%3E%3Cuse href='%23p' transform='translate(162 42) rotate(14) scale(0.8)'/%3E%3Cuse href='%23p' transform='translate(40 160) rotate(-26) scale(0.75)'/%3E%3Cuse href='%23h' transform='translate(108 98)'/%3E%3Cuse href='%23h' transform='translate(96 170) rotate(-12) scale(0.8)'/%3E%3Cuse href='%23h' transform='translate(183 100) rotate(14) scale(0.7)'/%3E%3Cuse href='%23s' transform='translate(110 30)' opacity='0.85'/%3E%3Cuse href='%23s' transform='translate(16 104) scale(0.8)' opacity='0.85'/%3E%3Cuse href='%23s' transform='translate(186 186) scale(0.9)' opacity='0.85'/%3E%3Ccircle cx='132' cy='74' r='2.5' fill='%23C9AEEA'/%3E%3Ccircle cx='72' cy='120' r='2.5' fill='%23C9AEEA'/%3E%3C/svg%3E");
+            animation: driftPaws 45s linear infinite;
+            color: var(--cat-outline);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes driftPaws {
+            0% {
+                background-position: 0px 0px;
+            }
+
+            100% {
+                background-position: 400px 400px;
+            }
+        }
+
+        /* İsteğe bağlı tamamen şeffaf OBS arka plan modu (SUBATHON_CONFIG.TRANSPARENT_OBS_BG = true ise) */
+        body.transparent-bg {
+            background: transparent !important;
+            background-image: none !important;
+            animation: none !important;
+        }
+
+        .font-doodle {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* El Çizimi Doodle Çerçeve ve Gölge Stili */
+        .doodle-box {
+            background-color: var(--cat-cream);
+            border: 3.5px solid var(--cat-outline);
+            box-shadow: 0 6px 0 var(--cat-outline);
+            border-radius: 26px;
+        }
+
+        .doodle-btn {
+            border: 3px solid var(--cat-outline);
+            box-shadow: 0 4px 0 var(--cat-outline);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .doodle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--cat-outline);
+        }
+
+        .doodle-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--cat-outline);
+        }
+
+        /* ==========================================
+           KEDİ YÜZÜ VE KULAKLARI (MİNİMALİST ÇİZGİ)
+           ========================================== */
+        .cat-head-container {
+            position: relative;
+            width: 100%;
+            max-width: 540px;
+            margin: 0 auto;
+            padding-top: 56px;
+            /* Kulaklar için alan */
+            padding-bottom: 18px;
+        }
+
+        .cat-face-body {
+            position: relative;
+            background: var(--cat-cream);
+            border: 4.5px solid var(--cat-outline);
+            border-radius: 125px 125px 90px 90px;
+            box-shadow: 0 10px 0 rgba(74, 50, 103, 0.22), inset 0 -10px 0 #F2E6FA;
+            padding: 20px 24px 28px 24px;
+            z-index: 10;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cat-face-body.excited-bounce {
+            animation: catHappyBounce 0.55s ease-in-out 2;
+        }
+
+        @keyframes catHappyBounce {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            40% {
+                transform: translateY(-10px) scale(1.02);
+            }
+
+            75% {
+                transform: translateY(3px) scale(0.99);
+            }
+        }
+
+        /* ==========================================
+           KEDİ RÖTUŞLARI: KULAK OYNATMA, YANAK TÜYLERİ, KUYRUK, KİRPİK, DİL
+           ========================================== */
+        /* Kulaklar ara sıra tatlı tatlı seğirir */
+        .cat-ear {
+            transform-box: view-box;
+            animation: earTwitch 7s ease-in-out infinite;
+        }
+        .cat-ear-left { transform-origin: 118px 100px; }
+        .cat-ear-right { transform-origin: 442px 100px; animation-duration: 9s; animation-delay: -3s; }
+        @keyframes earTwitch {
+            0%, 88%, 100% { transform: rotate(0deg); }
+            90% { transform: rotate(-9deg); }
+            93% { transform: rotate(4deg); }
+            96% { transform: rotate(-4deg); }
+        }
+        /* Bağış gelince kulaklar dikilir */
+        body.paws-excited .cat-ear-left { animation: earPerkLeft 0.55s ease-in-out 2; }
+        body.paws-excited .cat-ear-right { animation: earPerkRight 0.55s ease-in-out 2; }
+        @keyframes earPerkLeft {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            45% { transform: rotate(6deg) translateY(-6px); }
+        }
+        @keyframes earPerkRight {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            45% { transform: rotate(-6deg) translateY(-6px); }
+        }
+
+        /* Yüzün iki yanından taşan kabarık yanak tüyleri */
+        .cheek-fluff {
+            position: absolute;
+            top: 38%;
+            width: 34px;
+            height: 56px;
+            z-index: 12;
+            pointer-events: none;
+        }
+        .cheek-fluff-left { left: -28.5px; }
+        .cheek-fluff-right { right: -28.5px; transform: scaleX(-1); }
+
+        /* Yüzün arkasından sallanan kuyruk */
+        .cat-tail {
+            position: absolute;
+            right: -72px;
+            bottom: 26px;
+            width: 120px;
+            height: 170px;
+            z-index: 5;
+            pointer-events: none;
+            transform-origin: 8% 94%;
+            animation: tailWag 3.2s ease-in-out infinite alternate;
+        }
+        @keyframes tailWag {
+            0% { transform: rotate(-7deg); }
+            100% { transform: rotate(9deg); }
+        }
+        body.paws-excited .cat-tail {
+            animation-duration: 0.35s;
+        }
+
+        /* Göz çevresi kirpikler */
+        .eye-wrap {
+            position: relative;
+        }
+        .eye-lashes {
+            position: absolute;
+            inset: 0;
+            width: 98px;
+            height: 98px;
+            overflow: visible;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Tatlı minik pembe dil (blep!) - normalde ucu görünür, sevinince tam çıkar */
+        .cat-tongue {
+            transform-box: fill-box;
+            transform-origin: 50% 0%;
+            transform: scaleY(0.65);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cat-face-body.blushing .cat-tongue {
+            transform: scaleY(1.1);
+        }
+
+        /* KediBıyıkları */
+        .whisker-group {
+            position: absolute;
+            top: 47%;
+            width: 56px;
+            height: 44px;
+            z-index: 15;
+            pointer-events: none;
+            transition: transform 0.25s ease;
+        }
+
+        .whisker-left {
+            left: -48px;
+        }
+
+        .whisker-right {
+            right: -48px;
+        }
+
+        .cat-face-body.excited-bounce~.whisker-left,
+        .cat-head-container:hover .whisker-left {
+            transform: rotate(-7deg) translateX(-3px);
+        }
+
+        .cat-face-body.excited-bounce~.whisker-right,
+        .cat-head-container:hover .whisker-right {
+            transform: rotate(7deg) translateX(3px);
+        }
+
+        /* ==========================================
+           SLOT MAKİNESİ KEDİ GÖZLERİ (CASINO REELS)
+           ========================================== */
+        .cat-eye-socket {
+            width: 98px;
+            height: 98px;
+            border-radius: 50%;
+            background: var(--cat-cream);
+            border: 4.5px solid var(--cat-outline);
+            box-shadow: inset 0 5px 0 rgba(74, 50, 103, 0.12), 0 4px 0 #E5D4F5;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Göz Kapağı (Göz Kırpma için) */
+        .cat-eyelid {
+            position: absolute;
+            inset: 0;
+            background: var(--cat-cream);
+            border-bottom: 4px solid var(--cat-outline);
+            transform: translateY(-102%);
+            z-index: 25;
+            pointer-events: none;
+            transition: transform 0.11s ease-in-out;
+        }
+
+        .cat-eye-socket.blinking .cat-eyelid {
+            transform: translateY(0%);
+        }
+
+        /* Dikey Dönen Slot Şeridi (Reel Strip) */
+        /* Her sembol hücresi tam 90px yüksekliğinde */
+        .slot-reel-strip {
+            width: 100%;
+            will-change: transform;
+            transform: translateY(0px);
+        }
+
+        .slot-cell {
+            width: 100%;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        /* Slot kazanınca göz çerçevesi parlaması */
+        .cat-eye-socket.jackpot-flash {
+            animation: slotEyeFlash 0.45s ease-in-out 5;
+        }
+
+        @keyframes slotEyeFlash {
+
+            0%,
+            100% {
+                border-color: var(--cat-outline);
+                box-shadow: inset 0 5px 0 rgba(74, 50, 103, 0.12), 0 0 0px #FBBF24;
+            }
+
+            50% {
+                border-color: #D97706;
+                background-color: #FFFBEB;
+                box-shadow: 0 0 22px rgba(251, 191, 36, 0.85), inset 0 0 12px rgba(251, 191, 36, 0.35);
+            }
+        }
+
+        /* Kedi Yanak Allıkları */
+        .cat-cheek {
+            width: 38px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FFB3C6;
+            opacity: 0.65;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .cat-cheek::before,
+        .cat-cheek::after {
+            content: '';
+            width: 2.5px;
+            height: 9px;
+            background: #E06D94;
+            border-radius: 4px;
+            transform: rotate(18deg);
+            opacity: 0.7;
+        }
+
+        .cat-face-body.blushing .cat-cheek {
+            opacity: 1;
+            transform: scale(1.22);
+            background: #FF85A9;
+        }
+
+        /* FİYAT TABLOSUNU TUTAN TOMBUL KEDİ PATİLERİ
+           (Kollar kedi yüzünün arkasından iner, parmaklar tablonun üst kenarını kavrar) */
+        .table-paw {
+            position: absolute;
+            top: -66px;
+            width: 92px;
+            height: 92px;
+            z-index: 3;
+            pointer-events: none;
+            transform-origin: 50% 100%;
+            filter: drop-shadow(0 3px 0 rgba(74, 50, 103, 0.18));
+            animation: pawKnead 2.8s ease-in-out infinite;
+        }
+
+        .table-paw-left {
+            left: 40px;
+        }
+
+        .table-paw-right {
+            right: 40px;
+            animation-delay: -1.4s;
+        }
+
+        /* Hafif "yoğurma" hareketi: patiler sırayla tabloyu sıkıca kavrar */
+        @keyframes pawKnead {
+
+            0%,
+            100% {
+                transform: translateY(0) scaleY(1);
+            }
+
+            50% {
+                transform: translateY(2px) scaleY(0.97);
+            }
+        }
+
+        /* Bağış geldiğinde patiler sevinçle zıplar */
+        body.paws-excited .table-paw-left {
+            animation: pawGripLeft 0.55s ease-in-out 2;
+        }
+
+        body.paws-excited .table-paw-right {
+            animation: pawGripRight 0.55s ease-in-out 2;
+        }
+
+        @keyframes pawGripLeft {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            40% {
+                transform: translateY(-7px) rotate(-5deg);
+            }
+
+            75% {
+                transform: translateY(2px) rotate(2deg);
+            }
+        }
+
+        @keyframes pawGripRight {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            40% {
+                transform: translateY(-7px) rotate(5deg);
+            }
+
+            75% {
+                transform: translateY(2px) rotate(-2deg);
+            }
+        }
+
+        /* ==========================================
+           ANA SAYAÇ KUTUSU (KEDİ AĞZI ALTINDAKİ EKRAN)
+           ========================================== */
+        .timer-screen-box {
+            background: var(--cat-lilac-soft);
+            border: 3.5px solid var(--cat-outline);
+            border-radius: 30px;
+            padding: 12px 20px;
+            position: relative;
+            box-shadow: inset 0 4px 0 #E5D4F7;
+        }
+
+        /* Yüzen +Süre Baloncuğu */
+        @keyframes popFloatUp {
+            0% {
+                opacity: 0;
+                transform: translateY(14px) scale(0.7) rotate(-4deg);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translateY(-4px) scale(1.08) rotate(3deg);
+            }
+
+            80% {
+                opacity: 1;
+                transform: translateY(-24px) scale(1) rotate(-2deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-38px) scale(0.85);
+            }
+        }
+
+        .floating-pill {
+            animation: popFloatUp 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Kulak Arası Bildirim Çıkartması */
+        .ear-toast-banner {
+            transition: all 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateY(15px) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ear-toast-banner.active {
+            transform: translateY(0px) scale(1);
+            opacity: 1;
+        }
+
+        /* ==========================================
+           İZLEYİCİ SÜRE / FİYAT TABLOSU (RATE CARD)
+           ========================================== */
+        .rate-table-card {
+            background: var(--cat-cream);
+            border: 4px solid var(--cat-outline);
+            border-radius: 30px;
+            box-shadow: 0 8px 0 rgba(74, 50, 103, 0.22), inset 0 -6px 0 #F2E6FA;
+            position: relative;
+            z-index: 5;
+            /* Kedi yüzünün (z-index:10) altında kalsın ki kollar yüzün arkasından insin */
+        }
+
+        .rate-pill-item {
+            background: var(--cat-lilac-soft);
+            border: 3px solid var(--cat-outline);
+            border-radius: 20px;
+            box-shadow: 0 3px 0 rgba(74, 50, 103, 0.16);
+            transition: transform 0.2s ease;
+        }
+
+        .rate-pill-item:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Boşken göz durum etiketini gizle (yer kaplamaya devam etsin) */
+        #eyeStateLabel:empty {
+            visibility: hidden;
+        }
+    </style>
+</head>
+
+<body class="px-4 pt-2 pb-8 flex flex-col items-center justify-start sm:justify-center min-h-screen select-none">
+
+    <!-- Pati ve Yıldız Konfeti Canvas'ı -->
+    <canvas id="pawConfettiCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- =====================================================
+         ANA KEDİ YÜZÜ SUBATHON SAYACI (SAF OBS OVERLAY)
+         ===================================================== -->
+    <div class="cat-stage w-full max-w-xl relative -mt-1 sm:-mt-3">
+
+        <!-- Yüzen +Süre Baloncukları -->
+        <div id="floatingPillsContainer"
+            class="absolute top-6 right-4 z-40 pointer-events-none flex flex-col items-end"></div>
+
+        <!-- KEDİ KAFASI KONTEYNERİ -->
+        <div class="cat-head-container">
+
+            <!-- Kulaklar Arasından Çıkan Destek/Slot Bildirim Çıkartması -->
+            <div id="slotAlertToast"
+                class="ear-toast-banner absolute -top-3 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-md bg-[#FFF9DB] border-[3.5px] border-[#4A3267] rounded-2xl px-4 py-2 shadow-[0_5px_0_#4A3267] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 truncate">
+                    <span id="toastSymbolEmoji" class="text-2xl shrink-0">☕</span>
+                    <div class="truncate">
+                        <div id="toastDonorTitle" class="font-doodle font-bold text-sm text-[#4A3267] truncate">
+                            LilaSever • 50 TL Bağış!
+                        </div>
+                        <div id="toastDonorMessage" class="text-xs font-bold text-[#7A49A5] truncate">
+                            Kedi gözlerinde Latte belirdi!
+                        </div>
+                    </div>
+                </div>
+                <span id="toastAddedTime"
+                    class="font-doodle font-bold text-xs bg-[#E6D7F5] border-2 border-[#4A3267] px-2.5 py-1 rounded-xl shrink-0">
+                    +5dk 00sn
+                </span>
+            </div>
+
+            <!-- KEDİ KULAKLARI (Yuvarlak uçlu, iç tüylü, ara sıra seğiren) -->
+            <svg class="absolute top-0 left-0 w-full h-28 pointer-events-none z-0" viewBox="0 0 560 115" fill="none"
+                xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                <!-- Sol Kulak -->
+                <g class="cat-ear cat-ear-left">
+                    <path d="M 72 114 C 60 82 44 42 46 18 C 47 7 57 3 66 9 C 101 28 140 50 180 74 Z" fill="#FFFDF9"
+                        stroke="#4A3267" stroke-width="5" stroke-linejoin="round" />
+                    <path d="M 87 99 C 79 75 66 47 66 31 C 66 24 71 22 77 25 C 104 41 131 56 156 71 Z" fill="#F5C2E7" />
+                    <path d="M 98 95 Q 93 83 85 75 M 112 91 Q 110 79 103 68 M 126 88 Q 126 78 121 67" stroke="#FFFDF9"
+                        stroke-width="4" stroke-linecap="round" />
+                </g>
+                <!-- Sağ Kulak -->
+                <g class="cat-ear cat-ear-right">
+                    <path d="M 488 114 C 500 82 516 42 514 18 C 513 7 503 3 494 9 C 459 28 420 50 380 74 Z" fill="#FFFDF9"
+                        stroke="#4A3267" stroke-width="5" stroke-linejoin="round" />
+                    <path d="M 473 99 C 481 75 494 47 494 31 C 494 24 489 22 483 25 C 456 41 429 56 404 71 Z" fill="#F5C2E7" />
+                    <path d="M 462 95 Q 467 83 475 75 M 448 91 Q 450 79 457 68 M 434 88 Q 434 78 439 67" stroke="#FFFDF9"
+                        stroke-width="4" stroke-linecap="round" />
+                </g>
+            </svg>
+
+            <!-- KEDİ KUYRUĞU (Yüzün arkasından çıkıp nazlı nazlı sallanır) -->
+            <svg class="cat-tail" viewBox="0 0 120 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 10 160 C 72 150 96 112 84 72 C 76 44 84 20 104 16" stroke="#4A3267" stroke-width="23"
+                    stroke-linecap="round" />
+                <path d="M 10 160 C 72 150 96 112 84 72 C 76 44 84 20 104 16" stroke="#FFFDF9" stroke-width="14"
+                    stroke-linecap="round" />
+                <path d="M 83 40 C 86 27 94 18 104 16" stroke="#C9AEEA" stroke-width="14" stroke-linecap="round" />
+                <path d="M 88 96 Q 82 100 76 98" stroke="#E6D7F5" stroke-width="4" stroke-linecap="round" />
+                <path d="M 86 74 Q 80 76 74 73" stroke="#E6D7F5" stroke-width="4" stroke-linecap="round" />
+            </svg>
+
+            <!-- Kedi Tepesindeki Minik Lila Kraliçe Tacı (3 Tıkla Easter Egg) -->
+            <button onclick="handleSecretCrownClick()" title="Ablanın Tacı (3 kere tıkla!)"
+                class="absolute top-6 left-1/2 -translate-x-1/2 z-20 hover:scale-110 active:scale-95 transition cursor-pointer">
+                <svg width="46" height="34" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 28L3 10L15 18L23 5L31 18L43 10L40 28H6Z" fill="#FFD166" stroke="#4A3267"
+                        stroke-width="3.5" stroke-linejoin="round" />
+                    <circle cx="23" cy="5" r="3" fill="#E0B0FF" stroke="#4A3267" stroke-width="2.5" />
+                    <circle cx="3" cy="9" r="2.5" fill="#F5C2E7" stroke="#4A3267" stroke-width="2" />
+                    <circle cx="43" cy="9" r="2.5" fill="#F5C2E7" stroke="#4A3267" stroke-width="2" />
+                </svg>
+            </button>
+
+            <!-- KEDİ YÜZÜ ANA GÖVDESİ -->
+            <div id="catFaceCard" class="cat-face-body">
+
+                <!-- Kabarık Yanak Tüyleri (yüzün iki yanından taşar) -->
+                <svg class="cheek-fluff cheek-fluff-left" viewBox="0 0 34 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 24 1 Q 16 3 6 12 Q 14 16 15 20 Q 6 24 2 31 Q 10 34 13 38 Q 8 43 7 48 Q 16 52 24 55 L 31 55 L 31 1 Z" fill="#FFFDF9"/>
+                    <path d="M 24 1 Q 16 3 6 12 Q 14 16 15 20 Q 6 24 2 31 Q 10 34 13 38 Q 8 43 7 48 Q 16 52 24 55" stroke="#4A3267" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
+                <svg class="cheek-fluff cheek-fluff-right" viewBox="0 0 34 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 24 1 Q 16 3 6 12 Q 14 16 15 20 Q 6 24 2 31 Q 10 34 13 38 Q 8 43 7 48 Q 16 52 24 55 L 31 55 L 31 1 Z" fill="#FFFDF9"/>
+                    <path d="M 24 1 Q 16 3 6 12 Q 14 16 15 20 Q 6 24 2 31 Q 10 34 13 38 Q 8 43 7 48 Q 16 52 24 55" stroke="#4A3267" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
+
+                <!-- Alında Lila Tekir Çizgileri -->
+                <div class="flex justify-center mb-1.5">
+                    <svg width="60" height="24" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M30 3 V18" stroke="#C9AEEA" stroke-width="5.5" stroke-linecap="round"/>
+                        <path d="M18 5 Q21 10 20 15" stroke="#C9AEEA" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M42 5 Q39 10 40 15" stroke="#C9AEEA" stroke-width="5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+
+                <!-- =========================================
+                     KUMARHANE SLOT MAKİNESİ KEDİ GÖZLERİ
+                     ========================================= -->
+                <div class="flex items-center justify-center gap-8 sm:gap-14 my-1 relative">
+
+                    <!-- SOL GÖZ (SLOT REEL 1) -->
+                    <div class="eye-wrap">
+                        <svg class="eye-lashes" viewBox="0 0 98 98" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Tatlı Kirpikler ve Minik Kaş Noktası -->
+                            <path d="M6.6 24.5 L-3 19 M14.4 14.4 L6.5 6.5 M24.5 6.6 L19 -3" stroke="#4A3267"
+                                stroke-width="4" stroke-linecap="round" />
+                            <ellipse cx="64" cy="-9" rx="6.5" ry="4" transform="rotate(8 64 -9)" fill="#C9AEEA" />
+                        </svg>
+                        <div id="leftEyeSocket" class="cat-eye-socket">
+                            <div class="cat-eyelid"></div>
+                            <div id="leftEyeReel" class="slot-reel-strip">
+                                <!-- JS ile semboller (Göz Bebeği, Latte, Dolar, Altın Külçesi, 13) buraya doldurulur -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ORTA: KEDİ BURNU VE "ω" AĞZI -->
+                    <div class="flex flex-col items-center justify-center -mb-8">
+                        <!-- Pembe Kalp Burun + ω Ağız + Bıyık Noktaları + Minik Dil (Tıklanabilir) -->
+                        <svg onclick="boopCatNose()" class="cursor-pointer hover:scale-110 active:scale-90 transition"
+                            width="74" height="58" viewBox="0 0 74 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Tombul Ağız Yastığı (Muzzle Patch) -->
+                            <ellipse cx="37" cy="24" rx="28" ry="18" fill="#F9F3FD" />
+                            <!-- Minik Pembe Dil (blep!) -->
+                            <g class="cat-tongue">
+                                <path d="M31 28 Q31 41 37 41 Q43 41 43 28 Z" fill="#FF8FAB" />
+                                <path d="M31 28 Q31 41 37 41 Q43 41 43 28" stroke="#4A3267" stroke-width="3"
+                                    stroke-linejoin="round" />
+                                <path d="M37 30 V36" stroke="#E06D94" stroke-width="2" stroke-linecap="round" />
+                            </g>
+                            <!-- Kalp Şeklinde Burun -->
+                            <path d="M26 10 C25 4 33 3 37 7 C41 3 49 4 48 10 C47 15 40 20 37 22 C34 20 27 15 26 10 Z"
+                                fill="#F48FB1" stroke="#4A3267" stroke-width="3.5" stroke-linejoin="round" />
+                            <ellipse cx="32" cy="9.5" rx="3" ry="2" fill="#FFFFFF" opacity="0.85" />
+                            <!-- Kedi 'ω' Ağzı -->
+                            <path d="M37 22 C37 31 24 34 18 27" stroke="#4A3267" stroke-width="3.8"
+                                stroke-linecap="round" />
+                            <path d="M37 22 C37 31 50 34 56 27" stroke="#4A3267" stroke-width="3.8"
+                                stroke-linecap="round" />
+                            <!-- Bıyık Kökü Noktaları -->
+                            <g fill="#4A3267" opacity="0.45">
+                                <circle cx="11" cy="34" r="1.8" />
+                                <circle cx="6" cy="29" r="1.8" />
+                                <circle cx="7" cy="39" r="1.8" />
+                                <circle cx="63" cy="34" r="1.8" />
+                                <circle cx="68" cy="29" r="1.8" />
+                                <circle cx="67" cy="39" r="1.8" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- SAĞ GÖZ (SLOT REEL 2) -->
+                    <div class="eye-wrap">
+                        <svg class="eye-lashes" viewBox="0 0 98 98" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Tatlı Kirpikler ve Minik Kaş Noktası -->
+                            <path d="M91.4 24.5 L101 19 M83.6 14.4 L91.5 6.5 M73.5 6.6 L79 -3" stroke="#4A3267"
+                                stroke-width="4" stroke-linecap="round" />
+                            <ellipse cx="34" cy="-9" rx="6.5" ry="4" transform="rotate(-8 34 -9)" fill="#C9AEEA" />
+                        </svg>
+                        <div id="rightEyeSocket" class="cat-eye-socket">
+                            <div class="cat-eyelid"></div>
+                            <div id="rightEyeReel" class="slot-reel-strip">
+                                <!-- JS ile semboller buraya doldurulur -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- YANAK ALLIKLARI & SLOT DURUM ETİKETİ -->
+                <div class="flex items-center justify-between px-4 sm:px-10 -mt-2 mb-3">
+                    <div class="cat-cheek"></div>
+                    <div id="eyeStateLabel"
+                        class="text-[11px] font-bold text-[#7A49A5] bg-[#F5ECFC] border-2 border-[#4A3267]/30 px-3 py-0.5 rounded-full">
+                    </div>
+                    <div class="cat-cheek"></div>
+                </div>
+
+                <!-- =========================================
+                     ANA GERİ SAYIM EKRANI
+                     ========================================= -->
+                <div class="timer-screen-box text-center mb-3">
+                    <div id="timerDisplay"
+                        class="font-doodle text-5xl sm:text-6xl md:text-7xl font-bold tracking-wider text-[#4A3267] leading-none py-1">
+                        04:00:00
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3 mt-2 text-xs font-bold text-[#7A49A5]">
+                        <span>Eklenen: <strong id="totalAddedDisplay" class="text-[#4A3267]">+00dk 00sn</strong></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SOL VE SAĞ KEDİ BIYIKLARI (Minimalist Çizgiler) -->
+            <svg class="whisker-group whisker-left" viewBox="0 0 60 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M54 14 Q 25 6 4 10" stroke="#4A3267" stroke-width="4" stroke-linecap="round" />
+                <path d="M54 25 Q 25 25 2 28" stroke="#4A3267" stroke-width="4" stroke-linecap="round" />
+                <path d="M54 36 Q 28 40 10 43" stroke="#4A3267" stroke-width="4" stroke-linecap="round" />
+            </svg>
+            <svg class="whisker-group whisker-right" viewBox="0 0 60 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 14 Q 35 6 56 10" stroke="#4A3267" stroke-width="4" stroke-linecap="round" />
+                <path d="M6 25 Q 35 25 58 28" stroke="#4A3267" stroke-width="4" stroke-linecap="round" />
+                <path d="M6 36 Q 32 40 50 43" stroke="#4A3267" stroke-width="4" stroke-linecap="round" />
+            </svg>
+
+        </div>
+
+        <!-- =====================================================
+             İZLEYİCİLER İÇİN SÜRE / FİYAT TABLOSU (KEDİ PATİLERİYLE TUTULAN)
+             ===================================================== -->
+        <div class="rate-table-card max-w-[500px] mx-auto mt-3 px-3.5 py-3">
+
+            <!-- TABLOYU TUTAN 2 TOMBUL KEDİ PATİSİ (Kollar kedi yüzünün arkasından iniyor) -->
+            <svg class="table-paw table-paw-left" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M22 0 L20 38 C10 42 4 52 5 63 C5 72 10 78 17 78 C22 78 25 76 26 73 C28 78 32 80 34 80 C38 80 41 78 42 74 C44 78 47 80 50 80 C54 80 57 78 58 73 C59 76 62 78 67 78 C74 78 79 72 79 63 C80 52 74 42 64 38 L62 0"
+                    fill="#FFFDF9" stroke="#4A3267" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round" />
+                <path d="M24 12 Q42 16 60 12" stroke="#E6D7F5" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M23 24 Q42 28 61 24" stroke="#E6D7F5" stroke-width="3.5" stroke-linecap="round" />
+                <ellipse cx="42" cy="55" rx="13" ry="6.5" fill="#F5C2E7" opacity="0.9" />
+                <path d="M26 73 V66 M42 74 V67 M58 73 V66" stroke="#4A3267" stroke-width="3.2" stroke-linecap="round" />
+            </svg>
+            <svg class="table-paw table-paw-right" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M22 0 L20 38 C10 42 4 52 5 63 C5 72 10 78 17 78 C22 78 25 76 26 73 C28 78 32 80 34 80 C38 80 41 78 42 74 C44 78 47 80 50 80 C54 80 57 78 58 73 C59 76 62 78 67 78 C74 78 79 72 79 63 C80 52 74 42 64 38 L62 0"
+                    fill="#FFFDF9" stroke="#4A3267" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round" />
+                <path d="M24 12 Q42 16 60 12" stroke="#E6D7F5" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M23 24 Q42 28 61 24" stroke="#E6D7F5" stroke-width="3.5" stroke-linecap="round" />
+                <ellipse cx="42" cy="55" rx="13" ry="6.5" fill="#F5C2E7" opacity="0.9" />
+                <path d="M26 73 V66 M42 74 V67 M58 73 V66" stroke="#4A3267" stroke-width="3.2" stroke-linecap="round" />
+            </svg>
+
+            <!-- Üst Başlık Etiketi -->
+            <div class="flex items-center justify-center gap-1.5 mb-2">
+                <span class="text-xs">🐾</span>
+                <span class="font-doodle font-bold text-xs sm:text-sm tracking-wide text-[#4A3267] uppercase">
+                    Süre Uzatma Tablosu
+                </span>
+                <span class="text-xs">🐾</span>
+            </div>
+
+            <!-- 3'lü Fiyat / Süre Kutu Grid'i -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-2.5 text-center">
+                <!-- 1 TL Bağış -->
+                <div class="rate-pill-item px-2 py-2 flex flex-col items-center justify-center">
+                    <div class="flex items-center gap-1 text-xs sm:text-sm font-doodle font-bold text-[#7A49A5]">
+                        <span>1 TL</span>
+                    </div>
+                    <div id="rateTryText"
+                        class="font-doodle font-bold text-sm sm:text-base text-[#4A3267] leading-tight mt-0.5">
+                        +6 Saniye
+                    </div>
+                </div>
+
+                <!-- 100 Kicks -->
+                <div class="rate-pill-item px-2 py-2 flex flex-col items-center justify-center">
+                    <div class="flex items-center gap-1 text-xs sm:text-sm font-doodle font-bold text-[#7A49A5]">
+                        <span>100 Kicks</span>
+                    </div>
+                    <div id="rateKicksText"
+                        class="font-doodle font-bold text-sm sm:text-base text-[#4A3267] leading-tight mt-0.5">
+                        +120 Saniye
+                    </div>
+                </div>
+
+                <!-- 1 Abonelik -->
+                <div class="rate-pill-item px-2 py-2 flex flex-col items-center justify-center">
+                    <div class="flex items-center gap-1 text-xs sm:text-sm font-doodle font-bold text-[#7A49A5]">
+                        <span>1 Sub</span>
+                    </div>
+                    <div id="rateSubText"
+                        class="font-doodle font-bold text-sm sm:text-base text-[#4A3267] leading-tight mt-0.5">
+                        +300 Saniye
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alt Bilgi: Göz Slotları & #13 Uğuru İpucu -->
+            <div
+                class="mt-2 pt-1.5 border-t-2 border-dashed border-[#D3BBE8] flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-bold text-[#7A49A5]">
+                <span>🎰 Gözler: ☕ Latte • 💵 Dolar • 🪙 Altın</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         INLINE JAVASCRIPT: TÜM AYARLAR & OTOMATİK BAŞLATMA
+         ===================================================== -->
+    <script>
+        // ============================================================================
+        // 🛠️ INLINE SUBATHON AYARLARI (OBS'E YAPIŞTIRMADAN ÖNCE BURADAN DÜZENLEYİN)
+        // ============================================================================
+        const SUBATHON_CONFIG = {
+            // 1. Streamlabs Socket API Token (Streamlabs -> API Settings -> API Tokens -> Socket API Token)
+            STREAMLABS_SOCKET_TOKEN: "BURAYA_STREAMLABS_SOCKET_TOKEN_YAZIN",
+
+            // 2. Başlangıç Süresi (Saniye cinsinden: 4 * 3600 = 4 Saat)
+            // Not: Sayfayı sıfırlamak isterseniz OBS URL'sinin sonuna ?reset=1 ekleyebilirsiniz.
+            INITIAL_SECONDS: 4 * 3600,
+
+            // 3. Bağış ve Abonelik Süre Uzatma Çarpanları (Saniye)
+            SECONDS_PER_1_TRY: 6,        // 1 TL = +6 saniye (Örn: 50 TL = +5 dakika)
+            SECONDS_PER_100_KICKS: 120,  // 100 Kicks = +120 saniye (+2 dakika)
+            SECONDS_PER_1_SUB: 300,      // 1 Abonelik = +300 saniye (+5 dakika)
+
+            // 4. Easter Egg Bonus Süreleri (Saniye)
+            LUCKY_13_BONUS_SECONDS: 13,  // 13, 13'ün katı, sonu 13 ile biten bağış veya saat 13:13'te +13 sn!
+            LILA_ABLA_BONUS_SECONDS: 60, // Mesajda "lila"/"abla" geçerse veya taca 3 kez tıklanırsa +60 sn!
+
+            // 5. Görünüm & Ses Ayarları
+            TRANSPARENT_OBS_BG: false,   // false: Pastel lila kedi patili arka plan | true: Şeffaf arka plan
+            SOUND_ENABLED: true          // Slot makinesi dönüş ve jackpot ses efektleri
+        };
+
+        // ==========================================
+        // 1. KEDİ GÖZÜ SLOT MAKİNESİ SVG SEMBOLLERİ
+        // ==========================================
+        // Her bir slot hücresi 90px yüksekliğindedir.
+        const EYE_SLOT_SYMBOLS = {
+            // Sembol 0: Kocaman Parlak Sevimli Kedi Gözü (Kawaii)
+            PUPIL: `
+                <svg width="88" height="88" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Koyu Mor İris -->
+                    <ellipse cx="44" cy="45" rx="35" ry="38" fill="#3B2554"/>
+                    <!-- Alt Kısımda Lila Işıltı -->
+                    <ellipse cx="44" cy="60" rx="25" ry="16" fill="#7A49A5" opacity="0.6"/>
+                    <ellipse cx="44" cy="65" rx="15" ry="8" fill="#C9A6FF" opacity="0.55"/>
+                    <!-- Büyük Parıltı -->
+                    <ellipse cx="30" cy="28" rx="11" ry="10" fill="#FFFFFF"/>
+                    <!-- Küçük Parıltılar -->
+                    <circle cx="57" cy="57" r="5.5" fill="#FFFFFF"/>
+                    <circle cx="53" cy="24" r="3.5" fill="#FFFFFF" opacity="0.9"/>
+                </svg>
+            `,
+            // Sembol 1: LATTE / KAHVE BARDAĞI (Küçük Bağışlar)
+            LATTE: `
+                <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Buhar -->
+                    <path d="M27 16 C25 11 31 9 29 4" stroke="#B08968" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M41 16 C39 11 45 9 43 4" stroke="#B08968" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Kupa Sapı -->
+                    <path d="M52 29 H58 C62 29 62 45 58 45 H52" stroke="#4A3267" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Kupa Gövdesi -->
+                    <path d="M16 24 H52 V44 C52 54 44 60 34 60 C24 60 16 54 16 44 Z" fill="#F3D5B5" stroke="#4A3267" stroke-width="4" stroke-linejoin="round"/>
+                    <!-- Latte Köpüğü & Kalp -->
+                    <ellipse cx="34" cy="24" rx="18" ry="5.5" fill="#FFFDF9" stroke="#4A3267" stroke-width="3.5"/>
+                    <path d="M34 45 C34 45 25 39 25 34 C25 31 29 30 34 34 C39 30 43 31 43 34 C43 39 34 45 34 45 Z" fill="#C9ADE6" stroke="#4A3267" stroke-width="2.5"/>
+                </svg>
+            `,
+            // Sembol 2: DOLAR İŞARETİ ($) (Orta Bağışlar)
+            DOLLAR: `
+                <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="36" cy="36" r="27" fill="#B2F2BB" stroke="#4A3267" stroke-width="4"/>
+                    <circle cx="36" cy="36" r="21" fill="#69DB7C" stroke="#4A3267" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <!-- Dolar $ Çizimi -->
+                    <path d="M43 25 C43 20 27 20 27 27 C27 35 45 34 45 43 C45 50 28 50 28 44" stroke="#4A3267" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M36 15 V57" stroke="#4A3267" stroke-width="4.5" stroke-linecap="round"/>
+                    <!-- Parıltılar -->
+                    <circle cx="17" cy="18" r="3" fill="#FFF3BF"/>
+                    <circle cx="55" cy="52" r="2.5" fill="#FFF3BF"/>
+                </svg>
+            `,
+            // Sembol 3: ALTIN KÜLÇESİ (Büyük Bağışlar / Jackpot)
+            GOLD: `
+                <svg width="74" height="74" viewBox="0 0 74 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Altın Parıltı Yıldızları -->
+                    <path d="M16 18 L18 12 L20 18 L26 20 L20 22 L18 28 L16 22 L10 20 Z" fill="#FCC419"/>
+                    <path d="M56 14 L57.5 9 L59 14 L64 15.5 L59 17 L57.5 22 L56 17 L51 15.5 Z" fill="#FCC419"/>
+                    <!-- 3B Altın Külçesi (Trapezoid Ingot) -->
+                    <path d="M12 52 L22 30 H52 L62 52 Z" fill="#FFD43B" stroke="#4A3267" stroke-width="4" stroke-linejoin="round"/>
+                    <path d="M22 30 L27 22 H47 L52 30 Z" fill="#FFF3BF" stroke="#4A3267" stroke-width="3.5" stroke-linejoin="round"/>
+                    <path d="M19 46 H55" stroke="#F08C00" stroke-width="3" stroke-linecap="round"/>
+                    <text x="37" y="45" text-anchor="middle" fill="#4A3267" font-family="Fredoka" font-weight="700" font-size="11">999.9</text>
+                </svg>
+            `,
+            // Sembol 4: UĞURLU 13 SEMBOLÜ (#13 Kardeş Bonusu)
+            LUCKY13: `
+                <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="36" cy="36" r="27" fill="#E5DBFF" stroke="#4A3267" stroke-width="4"/>
+                    <text x="36" y="46" text-anchor="middle" fill="#4A3267" font-family="Fredoka" font-weight="700" font-size="28">13</text>
+                    <circle cx="20" cy="20" r="3.5" fill="#FCC419" stroke="#4A3267" stroke-width="2"/>
+                    <circle cx="53" cy="22" r="3" fill="#F5C2E7" stroke="#4A3267" stroke-width="2"/>
+                </svg>
+            `
+        };
+
+        // Slot şeridindeki sembol sırası (4 tur dönebilmesi için tekrarlı dizi)
+        const REEL_SEQUENCE = [
+            'PUPIL',
+            'LATTE', 'DOLLAR', 'GOLD', 'LUCKY13',
+            'LATTE', 'DOLLAR', 'GOLD', 'LUCKY13',
+            'LATTE', 'DOLLAR', 'GOLD', 'LUCKY13',
+            'LATTE', 'DOLLAR', 'GOLD', 'LUCKY13',
+            'PUPIL'
+        ];
+        const CELL_HEIGHT = 90; // px
+
+        // --- DURUM DEĞİŞKENLERİ ---
+        let remainingSeconds = SUBATHON_CONFIG.INITIAL_SECONDS;
+        let totalAddedSeconds = 0;
+        let isRunning = false;
+        let timerInterval = null;
+        let soundEnabled = SUBATHON_CONFIG.SOUND_ENABLED;
+        let lucky13Counter = 0;
+        let crownClicks = 0;
+        let slotResetTimeout = null;
+        let isSlotSpinning = false;
+        let streamlabsSocket = null;
+        let processedEventIds = new Set();
+
+        const rules = {
+            tryPerUnitSec: SUBATHON_CONFIG.SECONDS_PER_1_TRY,
+            kicksPer100Sec: SUBATHON_CONFIG.SECONDS_PER_100_KICKS,
+            subPerUnitSec: SUBATHON_CONFIG.SECONDS_PER_1_SUB
+        };
+
+        // --- OBS'E YAPIŞTIRILDIĞI ANDA OTOMATİK BAŞLATMA ---
+        window.addEventListener('DOMContentLoaded', () => {
+            if (SUBATHON_CONFIG.TRANSPARENT_OBS_BG) {
+                document.body.classList.add('transparent-bg');
+            }
+
+            buildEyeSlotReels();
+            loadSavedState();
+            updateTimerUI();
+            renderViewerRateTable();
+            startNaturalCatBlinking();
+            initPawConfettiCanvas();
+
+            // Sayacı hiç beklemeden otomatik başlat!
+            startCountdownAutomatically();
+
+            // Token girilmişse Streamlabs Socket API'ye otomatik bağlan!
+            connectStreamlabsSocket();
+
+            // Klavye kısayolları ile görünmez hızlı test (1, 2, 3, 4, 5, R)
+            setupKeyboardShortcuts();
+        });
+
+        // İki gözün içine de dikey casino slot şeridini yerleştirir
+        function buildEyeSlotReels() {
+            const leftReel = document.getElementById('leftEyeReel');
+            const rightReel = document.getElementById('rightEyeReel');
+
+            const html = REEL_SEQUENCE.map(key => `
+                <div class="slot-cell">${EYE_SLOT_SYMBOLS[key]}</div>
+            `).join('');
+
+            leftReel.innerHTML = html;
+            rightReel.innerHTML = html;
+        }
+
+        // Normal modda kedinin doğal göz kırpması
+        function startNaturalCatBlinking() {
+            setInterval(() => {
+                if (isSlotSpinning) return;
+                const leftSocket = document.getElementById('leftEyeSocket');
+                const rightSocket = document.getElementById('rightEyeSocket');
+                leftSocket.classList.add('blinking');
+                rightSocket.classList.add('blinking');
+                setTimeout(() => {
+                    leftSocket.classList.remove('blinking');
+                    rightSocket.classList.remove('blinking');
+                }, 150);
+            }, 4200);
+        }
+
+        // =====================================================
+        // 2. KUMARHANE SLOT MAKİNESİ GÖZ DÖNDÜRME ANİMASYONU
+        // =====================================================
+        function spinCatEyesSlot(targetSymbolKey, statusLabelText) {
+            const leftReel = document.getElementById('leftEyeReel');
+            const rightReel = document.getElementById('rightEyeReel');
+            const leftSocket = document.getElementById('leftEyeSocket');
+            const rightSocket = document.getElementById('rightEyeSocket');
+            const catFace = document.getElementById('catFaceCard');
+            const eyeLabel = document.getElementById('eyeStateLabel');
+
+            if (slotResetTimeout) clearTimeout(slotResetTimeout);
+            isSlotSpinning = true;
+
+            // Şeridin son turundaki hedef sembol indeksini bul (en az 12 hücre aşağı kayarak dönsün)
+            let targetIndex = 13; // varsayılan
+            for (let i = 12; i < REEL_SEQUENCE.length; i++) {
+                if (REEL_SEQUENCE[i] === targetSymbolKey) {
+                    targetIndex = i;
+                    break;
+                }
+            }
+
+            // 1. Önce şeridi en başa (0px) animasyonsuz sıfırla
+            leftReel.style.transition = 'none';
+            rightReel.style.transition = 'none';
+            leftReel.style.transform = 'translateY(0px)';
+            rightReel.style.transform = 'translateY(0px)';
+            leftSocket.classList.remove('jackpot-flash');
+            rightSocket.classList.remove('jackpot-flash');
+
+            // Reflow tetikle
+            void leftReel.offsetHeight;
+
+            eyeLabel.textContent = '🎰 Gözler Dönüyor...';
+            playSlotTickSequence();
+
+            // 2. Casino slot makinesi gibi hızlanıp hedef sembole kilitlenerek durma (Sol göz 1.15s, Sağ göz 1.35s)
+            const targetY = -(targetIndex * CELL_HEIGHT);
+            leftReel.style.transition = 'transform 1.15s cubic-bezier(0.15, 0.88, 0.28, 1.06)';
+            rightReel.style.transition = 'transform 1.35s cubic-bezier(0.15, 0.88, 0.28, 1.06)';
+
+            leftReel.style.transform = `translateY(${targetY}px)`;
+            rightReel.style.transform = `translateY(${targetY}px)`;
+
+            // 3. Sembol kilitlendiğinde parlat ve yanakları kızart
+            setTimeout(() => {
+                leftSocket.classList.add('jackpot-flash');
+                rightSocket.classList.add('jackpot-flash');
+                catFace.classList.add('blushing', 'excited-bounce');
+                document.body.classList.add('paws-excited');
+                eyeLabel.textContent = statusLabelText;
+                playJackpotWinSound(targetSymbolKey);
+            }, 1320);
+
+            // 4. 4.8 saniye sonra gözleri tatlı bir göz kırpmayla normal kedi göz bebeğine döndür
+            slotResetTimeout = setTimeout(() => {
+                leftSocket.classList.add('blinking');
+                rightSocket.classList.add('blinking');
+
+                setTimeout(() => {
+                    leftReel.style.transition = 'none';
+                    rightReel.style.transition = 'none';
+                    leftReel.style.transform = 'translateY(0px)';
+                    rightReel.style.transform = 'translateY(0px)';
+                    leftSocket.classList.remove('jackpot-flash', 'blinking');
+                    rightSocket.classList.remove('jackpot-flash', 'blinking');
+                    catFace.classList.remove('blushing', 'excited-bounce');
+                    document.body.classList.remove('paws-excited');
+                    eyeLabel.textContent = '';
+                    isSlotSpinning = false;
+                }, 140);
+            }, 5200);
+        }
+
+        // Eklenen SÜREYE göre hangi sembolün (Latte / Dolar / Altın Külçesi) çıkacağını belirler
+        // 0-10 dk = Kahve • 10-60 dk = Dolar • 60 dk ve üzeri = Altın
+        function determineEyeSlotTier(addedSeconds) {
+            if (addedSeconds >= 60 * 60) return { symbol: 'GOLD', emoji: '🪙', label: '🪙 Gözler: ALTIN KÜLÇESİ JACKPOT!' };
+            if (addedSeconds >= 10 * 60) return { symbol: 'DOLLAR', emoji: '💵', label: '💵 Gözler: Dolar Modu ($)' };
+            return { symbol: 'LATTE', emoji: '☕', label: '☕ Gözler: Sıcak Latte Modu' };
+        }
+
+        // =====================================================
+        // 3. EASTER EGG SİSTEMİ (#13 = +13 SANİYE & ABLA/LİLA)
+        // =====================================================
+        function isLucky13(val) {
+            const n = Math.round(Number(val));
+            if (!n || n <= 0) return false;
+            return n === 13 || (n % 13 === 0) || String(n).endsWith('13');
+        }
+
+        // #13 Sayısı Yakalandığında TAM +13 SANİYE Ekler!
+        function triggerLucky13Bonus(donorName) {
+            const bonusSec = SUBATHON_CONFIG.LUCKY_13_BONUS_SECONDS;
+            lucky13Counter++;
+
+            remainingSeconds += bonusSec;
+            totalAddedSeconds += bonusSec;
+            updateTimerUI();
+            saveState();
+
+            spinCatEyesSlot('LUCKY13', `✨ Gözler: #13 KARDEŞ UĞURU (+${bonusSec}sn)`);
+            showFloatingPill(`✨ #13 Uğuru +${bonusSec}sn!`);
+            showEarToast('✨', `${donorName} • #13 Uğuru!`, 'Kardeşin favori sayısı 13 yakalandı!', `+${bonusSec} sn`);
+            spawnPawConfetti('#B983FF', '#FFD43B');
+        }
+
+        // Lila / Abla / Taç Easter Egg (+60 Saniye)
+        function triggerSisterQueenBonus(donorName) {
+            const bonusSec = SUBATHON_CONFIG.LILA_ABLA_BONUS_SECONDS;
+            remainingSeconds += bonusSec;
+            totalAddedSeconds += bonusSec;
+            updateTimerUI();
+            saveState();
+
+            spinCatEyesSlot('GOLD', '👑 Gözler: LİLA KRALİÇESİ ABLA!');
+            showFloatingPill(`👑 Canım Ablam +${bonusSec}sn!`);
+            showEarToast('👑', `${donorName} • Lila Kraliçesi!`, `En tatlı yayıncı ablaya +${bonusSec} sn hediye!`, `+${bonusSec} sn`);
+            spawnPawConfetti('#F5C2E7', '#B983FF');
+        }
+
+        function handleSecretCrownClick() {
+            crownClicks++;
+            if (crownClicks >= 3) {
+                crownClicks = 0;
+                triggerSisterQueenBonus('Gizli Taç Tıklaması');
+            }
+        }
+
+        function boopCatNose() {
+            playBoopSound();
+            showFloatingPill('🐾 Miyav! 💜');
+            const catFace = document.getElementById('catFaceCard');
+            if (catFace) {
+                catFace.classList.add('blushing', 'excited-bounce');
+                document.body.classList.add('paws-excited');
+                setTimeout(() => {
+                    if (!isSlotSpinning) {
+                        catFace.classList.remove('blushing', 'excited-bounce');
+                        document.body.classList.remove('paws-excited');
+                    }
+                }, 1200);
+            }
+        }
+
+        // =====================================================
+        // 4. OTOMATİK SAYAÇ & STREAMLABS EVENT İŞLEYİCİSİ
+        // =====================================================
+        function startCountdownAutomatically() {
+            if (isRunning) return;
+            isRunning = true;
+            timerInterval = setInterval(() => {
+                if (remainingSeconds > 0) {
+                    remainingSeconds--;
+                    // Saat XX:13:13 olduğunda otomatik +13 sn uğuru
+                    const m = Math.floor((remainingSeconds % 3600) / 60);
+                    const s = Math.floor(remainingSeconds % 60);
+                    if (m === 13 && s === 13) {
+                        triggerLucky13Bonus('Saat 13:13 Uğuru');
+                    }
+                    updateTimerUI();
+                    saveState();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const hrs = Math.floor(remainingSeconds / 3600);
+            const mins = Math.floor((remainingSeconds % 3600) / 60);
+            const secs = Math.floor(remainingSeconds % 60);
+
+            document.getElementById('timerDisplay').textContent =
+                `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            const addM = Math.floor(totalAddedSeconds / 60);
+            const addS = Math.floor(totalAddedSeconds % 60);
+            document.getElementById('totalAddedDisplay').textContent = `+${addM}dk ${String(addS).padStart(2, '0')}sn`;
+        }
+
+        function formatDeltaTime(seconds) {
+            const s = Math.round(seconds);
+            const sign = s >= 0 ? '+' : '-';
+            const abs = Math.abs(s);
+            if (abs >= 60) {
+                return `${sign}${Math.floor(abs / 60)}dk ${abs % 60}sn`;
+            }
+            return `${sign}${abs} sn`;
+        }
+
+        // İzleyici Fiyat/Süre Tablosunu SUBATHON_CONFIG'den otomatik doldurur
+        function renderViewerRateTable() {
+            const formatRateLabel = (sec) => {
+                if (sec >= 60 && sec % 60 === 0) {
+                    return `+${sec} sn (${sec / 60} dk)`;
+                }
+                return `+${sec} Saniye`;
+            };
+
+            const tryEl = document.getElementById('rateTryText');
+            const kicksEl = document.getElementById('rateKicksText');
+            const subEl = document.getElementById('rateSubText');
+
+            if (tryEl) tryEl.textContent = formatRateLabel(SUBATHON_CONFIG.SECONDS_PER_1_TRY);
+            if (kicksEl) kicksEl.textContent = formatRateLabel(SUBATHON_CONFIG.SECONDS_PER_100_KICKS);
+            if (subEl) subEl.textContent = formatRateLabel(SUBATHON_CONFIG.SECONDS_PER_1_SUB);
+        }
+
+        function resetToInitialTime() {
+            remainingSeconds = SUBATHON_CONFIG.INITIAL_SECONDS;
+            totalAddedSeconds = 0;
+            updateTimerUI();
+            saveState();
+            showFloatingPill('🔄 Süre Sıfırlandı');
+        }
+
+        // Streamlabs Event Çözümleyici (TRY Bağış, Kick Kicks, Abonelik)
+        function processSupportEvent(type, sender, amount, currency, messageText) {
+            let addedSec = 0;
+            let titleText = '';
+
+            if (type === 'donation') {
+                addedSec = Math.round(amount * rules.tryPerUnitSec);
+                titleText = `${sender} • ${amount} ${currency} Bağış!`;
+            } else if (type === 'kicks') {
+                addedSec = Math.round((amount / 100) * rules.kicksPer100Sec);
+                titleText = `${sender} • ${amount} Kicks!`;
+            } else if (type === 'subscription') {
+                addedSec = Math.round(amount * rules.subPerUnitSec);
+                titleText = `${sender} • ${amount}x Abonelik!`;
+            }
+
+            remainingSeconds += addedSec;
+            totalAddedSeconds += addedSec;
+
+            // 13 Uğuru kontrolü (+13 saniye ekstra!)
+            const hasLucky13 = isLucky13(amount);
+            const luckyBonus = hasLucky13 ? SUBATHON_CONFIG.LUCKY_13_BONUS_SECONDS : 0;
+            if (hasLucky13) {
+                lucky13Counter++;
+                remainingSeconds += luckyBonus;
+                totalAddedSeconds += luckyBonus;
+            }
+
+            // Mesajda "lila", "abla" veya "kedi" geçiyor mu? (+60 sn ekstra!)
+            const lowerMsg = (messageText || '').toLowerCase();
+            const hasQueenWord = lowerMsg.includes('lila') || lowerMsg.includes('abla') || lowerMsg.includes('kedi');
+            const queenBonus = hasQueenWord ? SUBATHON_CONFIG.LILA_ABLA_BONUS_SECONDS : 0;
+            if (hasQueenWord) {
+                remainingSeconds += queenBonus;
+                totalAddedSeconds += queenBonus;
+            }
+
+            updateTimerUI();
+            saveState();
+
+            const totalThisEventSec = addedSec + luckyBonus + queenBonus;
+
+            // Göz Slotu Sembolünü Eklenen Süreye Göre Seç ve Döndür
+            const tier = determineEyeSlotTier(totalThisEventSec);
+            spinCatEyesSlot(tier.symbol, tier.label);
+
+            const formattedTime = formatDeltaTime(totalThisEventSec);
+
+            let subNote = messageText || tier.label;
+            if (hasLucky13) subNote = `✨ #13 Uğuru (+${luckyBonus}sn!) • ${subNote}`;
+            if (hasQueenWord) subNote = `👑 Canım Ablam (+${queenBonus}sn!) • ${subNote}`;
+
+            showFloatingPill(formattedTime);
+            showEarToast(tier.emoji, titleText, subNote, formattedTime);
+
+            if (tier.symbol === 'GOLD' || hasLucky13 || hasQueenWord) {
+                spawnPawConfetti('#FFD43B', '#B983FF');
+            }
+        }
+
+        // --- GÖRÜNMEZ KLAVYE TEST KISAYOLLARI (1, 2, 3, 4, 5, R) ---
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '1') {
+                    processSupportEvent('donation', 'LatteSever_Pati', 50, 'TRY', 'Ablaya sıcak bir latte benden! ☕');
+                } else if (e.key === '2') {
+                    processSupportEvent('kicks', 'DolarKedi', 400, 'KICKS', 'Kedinin gözleri dolar olsun! 💵');
+                } else if (e.key === '3') {
+                    processSupportEvent('donation', 'AltinPati_VIP', 1000, 'TRY', 'ALTIN KÜLÇESİ JACKPOT GELSİN! 🪙');
+                } else if (e.key === '4') {
+                    processSupportEvent('donation', 'Kardesin_13', 13, 'TRY', 'Favori sayım 13 ile +13 saniye uğuru! ✨');
+                } else if (e.key === '5') {
+                    processSupportEvent('donation', 'LilaTakipcisi', 100, 'TRY', 'Dünyanın en tatlı yayıncı abla ve lila kedisi!');
+                } else if (e.key === 'r' || e.key === 'R') {
+                    resetToInitialTime();
+                }
+            });
+        }
+
+        // --- STREAMLABS SOCKET OTOMATİK BAĞLANTISI ---
+        function connectStreamlabsSocket() {
+            const token = (SUBATHON_CONFIG.STREAMLABS_SOCKET_TOKEN || '').trim();
+            if (!token || token === 'BURAYA_STREAMLABS_SOCKET_TOKEN_YAZIN') return;
+
+            if (streamlabsSocket) streamlabsSocket.disconnect();
+
+            streamlabsSocket = io(`https://sockets.streamlabs.com?token=${token}`, {
+                transports: ['websocket']
+            });
+
+            streamlabsSocket.on('event', (eventData) => {
+                if (!eventData || !eventData.message) return;
+                const msgs = Array.isArray(eventData.message) ? eventData.message : [eventData.message];
+                const evtType = (eventData.type || '').toLowerCase();
+                const evtFor = (eventData.for || '').toLowerCase();
+
+                msgs.forEach(m => {
+                    const uid = m._id || m.id || `${evtType}_${m.name}_${Date.now()}`;
+                    if (processedEventIds.has(uid)) return;
+                    processedEventIds.add(uid);
+
+                    const sender = m.name || m.from || 'Gizli Pati';
+                    const amount = parseFloat(m.amount || m.count || m.months || 1) || 1;
+                    const currency = (m.currency || 'TRY').toUpperCase();
+                    const msgText = m.message || '';
+
+                    if (evtType === 'donation') {
+                        processSupportEvent('donation', sender, amount, currency, msgText);
+                    } else if (evtType === 'kicks' || (evtFor.includes('kick') && (evtType === 'gift' || evtType === 'bits'))) {
+                        processSupportEvent('kicks', sender, amount, 'KICKS', msgText);
+                    } else if (evtType === 'subscription' || evtType === 'resub' || evtType === 'submysterygift') {
+                        processSupportEvent('subscription', sender, amount, 'SUB', msgText);
+                    }
+                });
+            });
+        }
+
+        // --- GÖRSEL BİLDİRİM YARDIMCILARI ---
+        let toastTimer = null;
+        function showEarToast(emoji, title, subtitle, timeText) {
+            const toast = document.getElementById('slotAlertToast');
+            document.getElementById('toastSymbolEmoji').textContent = emoji;
+            document.getElementById('toastDonorTitle').textContent = title;
+            document.getElementById('toastDonorMessage').textContent = subtitle;
+            document.getElementById('toastAddedTime').textContent = timeText;
+
+            toast.classList.add('active');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('active');
+            }, 4600);
+        }
+
+        function showFloatingPill(text) {
+            const container = document.getElementById('floatingPillsContainer');
+            const pill = document.createElement('div');
+            pill.className = 'floating-pill font-doodle font-bold text-base bg-[#FFF9DB] text-[#4A3267] border-[3px] border-[#4A3267] shadow-[0_4px_0_#4A3267] px-3.5 py-1 rounded-full mb-1.5';
+            pill.textContent = text;
+            container.appendChild(pill);
+            setTimeout(() => pill.remove(), 2600);
+        }
+
+        // --- WEB AUDIO API İLE SLOT MAKİNESİ SESLERİ ---
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        // Slot dönerken çıkan mekanik tık-tık-tık sesi
+        function playSlotTickSequence() {
+            if (!soundEnabled) return;
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+
+            const tickTimes = [0, 0.09, 0.19, 0.30, 0.42, 0.56, 0.72, 0.90, 1.10];
+            tickTimes.forEach((t, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(520 + (idx * 35), ctx.currentTime + t);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime + t);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.045);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + t);
+                osc.stop(ctx.currentTime + t + 0.05);
+            });
+        }
+
+        // Sembol kilitlendiğinde çıkan kazanma melodisi
+        function playJackpotWinSound(symbolKey) {
+            if (!soundEnabled) return;
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+
+            const notes = symbolKey === 'GOLD'
+                ? [523.25, 659.25, 783.99, 1046.50] // C5 E5 G5 C6
+                : [440, 554.37, 659.25];            // A4 C#5 E5
+
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + (i * 0.11));
+                gain.gain.setValueAtTime(0.11, ctx.currentTime + (i * 0.11));
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (i * 0.11) + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + (i * 0.11));
+                osc.stop(ctx.currentTime + (i * 0.11) + 0.26);
+            });
+        }
+
+        function playBoopSound() {
+            if (!soundEnabled) return;
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(380, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(680, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        }
+
+        // --- LOCALSTORAGE KAYIT (?reset=1 İLE SIFIRLAMA DESTEKLİ) ---
+        function saveState() {
+            localStorage.setItem('lilaCatSubathon_v3', JSON.stringify({
+                remainingSeconds,
+                totalAddedSeconds,
+                lucky13Counter
+            }));
+        }
+
+        function loadSavedState() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('reset') === '1') {
+                    localStorage.removeItem('lilaCatSubathon_v3');
+                    return;
+                }
+                const raw = localStorage.getItem('lilaCatSubathon_v3');
+                if (!raw) return;
+                const d = JSON.parse(raw);
+                if (typeof d.remainingSeconds === 'number' && d.remainingSeconds > 0) {
+                    remainingSeconds = d.remainingSeconds;
+                }
+                if (typeof d.totalAddedSeconds === 'number') totalAddedSeconds = d.totalAddedSeconds;
+                if (typeof d.lucky13Counter === 'number') {
+                    lucky13Counter = d.lucky13Counter;
+                }
+            } catch (e) { }
+        }
+
+        // --- LİLA PATİ KONFETİ CANVAS ---
+        let confettiItems = [];
+        let confettiCtx = null;
+
+        function initPawConfettiCanvas() {
+            const canvas = document.getElementById('pawConfettiCanvas');
+            confettiCtx = canvas.getContext('2d');
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resize);
+            resize();
+            requestAnimationFrame(renderPawConfetti);
+        }
+
+        function spawnPawConfetti(c1, c2) {
+            const cx = window.innerWidth / 2;
+            const cy = 240;
+            const colors = [c1, c2, '#F5C2E7', '#4A3267', '#FFF3BF'];
+            for (let i = 0; i < 40; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2.5 + Math.random() * 6.5;
+                confettiItems.push({
+                    x: cx,
+                    y: cy,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 2.5,
+                    r: 4 + Math.random() * 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1
+                });
+            }
+        }
+
+        function renderPawConfetti() {
+            if (confettiCtx) {
+                confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                for (let i = confettiItems.length - 1; i >= 0; i--) {
+                    const p = confettiItems[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.16;
+                    p.alpha -= 0.016;
+                    if (p.alpha <= 0) {
+                        confettiItems.splice(i, 1);
+                        continue;
+                    }
+                    confettiCtx.save();
+                    confettiCtx.globalAlpha = p.alpha;
+                    confettiCtx.fillStyle = p.color;
+                    // Mini pati izi çizimi
+                    confettiCtx.beginPath();
+                    confettiCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    confettiCtx.arc(p.x - p.r * 0.9, p.y - p.r * 1.1, p.r * 0.45, 0, Math.PI * 2);
+                    confettiCtx.arc(p.x, p.y - p.r * 1.4, p.r * 0.45, 0, Math.PI * 2);
+                    confettiCtx.arc(p.x + p.r * 0.9, p.y - p.r * 1.1, p.r * 0.45, 0, Math.PI * 2);
+                    confettiCtx.fill();
+                    confettiCtx.restore();
+                }
+            }
+            requestAnimationFrame(renderPawConfetti);
+        }
+    </script>
+</body>
+
+</html>
