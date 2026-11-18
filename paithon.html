@@ -192,20 +192,6 @@
             animation-duration: 0.35s;
         }
 
-        /* Göz çevresi kirpikler */
-        .eye-wrap {
-            position: relative;
-        }
-        .eye-lashes {
-            position: absolute;
-            inset: 0;
-            width: 98px;
-            height: 98px;
-            overflow: visible;
-            pointer-events: none;
-            z-index: 2;
-        }
-
         /* Tatlı minik pembe dil (blep!) - normalde ucu görünür, sevinince tam çıkar */
         .cat-tongue {
             transform: translateY(-5px);
@@ -251,7 +237,7 @@
             width: 98px;
             height: 98px;
             border-radius: 50%;
-            background: var(--cat-cream);
+            background: #FFFFFF;
             border: 4.5px solid var(--cat-outline);
             box-shadow: inset 0 5px 0 rgba(74, 50, 103, 0.12), 0 4px 0 #E5D4F5;
             position: relative;
@@ -262,7 +248,7 @@
         .cat-eyelid {
             position: absolute;
             inset: 0;
-            background: var(--cat-cream);
+            background: var(--cat-lilac-soft);
             border-bottom: 4px solid var(--cat-outline);
             transform: translateY(-102%);
             z-index: 25;
@@ -574,18 +560,10 @@
                 <div class="flex items-center justify-center gap-4 sm:gap-11 my-1 relative">
 
                     <!-- SOL GÖZ (SLOT REEL 1) -->
-                    <div class="eye-wrap">
-                        <svg class="eye-lashes" viewBox="0 0 98 98" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Tatlı Kirpikler ve Minik Kaş Noktası -->
-                            <path d="M6.6 24.5 L-3 19 M14.4 14.4 L6.5 6.5 M24.5 6.6 L19 -3" stroke="#4A3267"
-                                stroke-width="4" stroke-linecap="round" />
-                            <ellipse cx="64" cy="-9" rx="6.5" ry="4" transform="rotate(8 64 -9)" fill="#C9AEEA" />
-                        </svg>
-                        <div id="leftEyeSocket" class="cat-eye-socket">
-                            <div class="cat-eyelid"></div>
-                            <div id="leftEyeReel" class="slot-reel-strip">
-                                <!-- JS ile semboller (Göz Bebeği, Latte, Dolar, Altın Külçesi, 13) buraya doldurulur -->
-                            </div>
+                    <div id="leftEyeSocket" class="cat-eye-socket">
+                        <div class="cat-eyelid"></div>
+                        <div id="leftEyeReel" class="slot-reel-strip">
+                            <!-- JS ile semboller (Göz Bebeği, Latte, Dolar, Altın Külçesi, 13) buraya doldurulur -->
                         </div>
                     </div>
 
@@ -632,18 +610,10 @@
                     </div>
 
                     <!-- SAĞ GÖZ (SLOT REEL 2) -->
-                    <div class="eye-wrap">
-                        <svg class="eye-lashes" viewBox="0 0 98 98" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Tatlı Kirpikler ve Minik Kaş Noktası -->
-                            <path d="M91.4 24.5 L101 19 M83.6 14.4 L91.5 6.5 M73.5 6.6 L79 -3" stroke="#4A3267"
-                                stroke-width="4" stroke-linecap="round" />
-                            <ellipse cx="34" cy="-9" rx="6.5" ry="4" transform="rotate(-8 34 -9)" fill="#C9AEEA" />
-                        </svg>
-                        <div id="rightEyeSocket" class="cat-eye-socket">
-                            <div class="cat-eyelid"></div>
-                            <div id="rightEyeReel" class="slot-reel-strip">
-                                <!-- JS ile semboller buraya doldurulur -->
-                            </div>
+                    <div id="rightEyeSocket" class="cat-eye-socket">
+                        <div class="cat-eyelid"></div>
+                        <div id="rightEyeReel" class="slot-reel-strip">
+                            <!-- JS ile semboller buraya doldurulur -->
                         </div>
                     </div>
 
@@ -792,19 +762,17 @@
         // ==========================================
         // Her bir slot hücresi 90px yüksekliğindedir.
         const EYE_SLOT_SYMBOLS = {
-            // Sembol 0: Kocaman Parlak Sevimli Kedi Gözü (Kawaii)
+            // Sembol 0: Normal Sevimli Kedi Göz Bebeği
             PUPIL: `
-                <svg width="88" height="88" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Koyu Mor İris -->
-                    <ellipse cx="44" cy="45" rx="35" ry="38" fill="#3B2554"/>
-                    <!-- Alt Kısımda Lila Işıltı -->
-                    <ellipse cx="44" cy="60" rx="25" ry="16" fill="#7A49A5" opacity="0.6"/>
-                    <ellipse cx="44" cy="65" rx="15" ry="8" fill="#C9A6FF" opacity="0.55"/>
+                <svg width="74" height="74" viewBox="0 0 74 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="37" cy="37" rx="22" ry="27" fill="#4A3267"/>
+                    <ellipse cx="37" cy="39" rx="14" ry="18" fill="#2D1B42"/>
                     <!-- Büyük Parıltı -->
-                    <ellipse cx="30" cy="28" rx="11" ry="10" fill="#FFFFFF"/>
-                    <!-- Küçük Parıltılar -->
-                    <circle cx="57" cy="57" r="5.5" fill="#FFFFFF"/>
-                    <circle cx="53" cy="24" r="3.5" fill="#FFFFFF" opacity="0.9"/>
+                    <circle cx="28" cy="26" r="7.5" fill="#FFFFFF"/>
+                    <!-- Küçük Parıltı -->
+                    <circle cx="46" cy="46" r="4" fill="#FFFFFF"/>
+                    <!-- Lila İris Yansıması -->
+                    <path d="M27 52 C33 57 41 57 47 52" stroke="#D0BFFF" stroke-width="3" stroke-linecap="round"/>
                 </svg>
             `,
             // Sembol 1: LATTE / KAHVE BARDAĞI (Küçük Bağışlar)
