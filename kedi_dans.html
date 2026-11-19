@@ -723,6 +723,7 @@
                 <div class="panel-brand">
                     <h1 class="panel-title">Kedi Dans</h1>
                     <span id="readinessBadge" class="status-pill">0/0 Hazır</span>
+                    <span id="serverBadge" class="status-pill is-ok hidden">Yerel MP4</span>
                 </div>
                 <div class="panel-actions">
                     <button id="btnCopyObsUrl" class="btn btn-ok btn-sm" type="button">OBS Linki Kopyala</button>
@@ -817,6 +818,12 @@
             const forceMuted = urlParams.get('muted') === '1' || urlParams.get('muted') === 'true';
             const showCaption = urlParams.get('caption') !== '0' && urlParams.get('caption') !== 'false';
             const urlConfigParam = (urlParams.get('config') || '').trim();
+            const customApiParam = (urlParams.get('api') || '').trim().replace(/\/+$/, '');
+            const apiBase = customApiParam || (
+                (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port
+                    ? window.location.origin
+                    : 'http://127.0.0.1:8765'
+            );
 
             if (isPanelMode) {
                 document.body.classList.add('mode-panel');
@@ -826,9 +833,15 @@
             const tabClientId = 'tab_' + Math.random().toString(36).slice(2, 10);
             let appConfig = createDefaultConfig();
             let syncChannel = null;
+            let serverOnline = false;
+            let sseSource = null;
+            let sseReconnectTimer = null;
+            let serverSaveTimer = null;
+            const serverStatusesByKey = new Map();
+            const serverStatusesByUrl = new Map();
 
             const mediaStatuses = new Map(); // itemId -> { state, label }
-            const videoPool = new Map();     // itemId -> { videoEl, srcUrl, isObjectUrl, naturalRatio, fullSig }
+            const videoPool = new Map();     // itemId -> { videoEl, srcUrl, isObjectUrl, naturalRatio, fullSig, fromServer }
             const ytSlots = new Map();       // itemId -> { slotEl, player, videoId, playerReady, warmState, onPlaybackEnd, onPlaybackError }
             const directFetchInFlight = new Map();
             const ytWarmQueue = [];
@@ -860,6 +873,7 @@
 
                 panelOverlay: document.getElementById('panelOverlay'),
                 readinessBadge: document.getElementById('readinessBadge'),
+                serverBadge: document.getElementById('serverBadge'),
                 btnCopyObsUrl: document.getElementById('btnCopyObsUrl'),
                 btnStopAll: document.getElementById('btnStopAll'),
                 btnClosePanel: document.getElementById('btnClosePanel'),
@@ -1064,7 +1078,7 @@
                             safeLsSet(STORAGE_KEY, JSON.stringify(normalized));
                             safeLsSet(URL_CFG_HASH_KEY, cfgHash);
                             appConfig = normalized;
-                            return;
+                            return true;
                         } catch (err) {
                             console.warn('[KediDans] URL config okunamadı:', err);
                         }
@@ -1075,7 +1089,7 @@
                 if (stored) {
                     try {
                         appConfig = normalizeConfig(JSON.parse(stored));
-                        return;
+                        return false;
                     } catch (_) { }
                 }
 
@@ -1086,6 +1100,30 @@
                 }
                 appConfig = def;
                 safeLsSet(STORAGE_KEY, JSON.stringify(appConfig));
+                return false;
+            }
+
+            async function serverPost(path, body) {
+                try {
+                    const resp = await fetch(apiBase + path, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body || {})
+                    });
+                    if (!resp.ok) return null;
+                    return await resp.json();
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            function pushConfigToServer() {
+                if (!serverOnline) return;
+                serverPost('/api/config', { config: appConfig, sender: tabClientId }).then(function (res) {
+                    if (res && res.statuses) {
+                        applyServerStatuses(res.statuses);
+                    }
+                });
             }
 
             function saveConfig(opts) {
@@ -1099,6 +1137,14 @@
                             config: appConfig
                         });
                     } catch (_) { }
+                }
+                if (serverOnline && !o.silentSync) {
+                    clearTimeout(serverSaveTimer);
+                    if (o.reprefetch || o.immediate) {
+                        pushConfigToServer();
+                    } else {
+                        serverSaveTimer = setTimeout(pushConfigToServer, 250);
+                    }
                 }
                 if (o.reprefetch) {
                     prefetchAllItems();
@@ -1234,7 +1280,7 @@
                 videoPool.delete(itemId);
             }
 
-            function mountWarmVideo(item, srcUrl, isObjectUrl, label) {
+            function mountWarmVideo(item, srcUrl, isObjectUrl, label, fromServer) {
                 const sig = item.url.trim() + '|' + srcUrl;
                 const existing = videoPool.get(item.id);
                 if (existing && existing.fullSig === sig) {
@@ -1254,7 +1300,8 @@
                     srcUrl: srcUrl,
                     isObjectUrl: Boolean(isObjectUrl),
                     naturalRatio: 16 / 9,
-                    fullSig: sig
+                    fullSig: sig,
+                    fromServer: Boolean(fromServer)
                 };
 
                 video.addEventListener('loadedmetadata', function () {
@@ -1522,6 +1569,53 @@
                 });
             }
 
+            function findServerStatusForItem(item) {
+                if (!item || !item.url) return null;
+                const cleanUrl = item.url.trim();
+                if (!cleanUrl) return null;
+                const ytId = extractYouTubeId(cleanUrl);
+                if (ytId) {
+                    return serverStatusesByKey.get('yt_' + ytId) || serverStatusesByUrl.get(cleanUrl) || null;
+                }
+                return serverStatusesByUrl.get(cleanUrl) || null;
+            }
+
+            function syncServerEntryToItems(entry) {
+                if (!entry || !entry.key) return;
+                for (let i = 0; i < appConfig.items.length; i++) {
+                    const it = appConfig.items[i];
+                    const cleanUrl = (it.url || '').trim();
+                    if (!cleanUrl) continue;
+                    const ytId = extractYouTubeId(cleanUrl);
+                    const matchesKey = ytId ? ('yt_' + ytId === entry.key) : (entry.url && entry.url.trim() === cleanUrl);
+                    if (!matchesKey) continue;
+
+                    if (entry.state === 'ready' && entry.localUrl) {
+                        disposeYouTubeSlot(it.id);
+                        mountWarmVideo(it, apiBase + entry.localUrl, false, 'MP4 Hazır', true);
+                    } else if (entry.state === 'queued') {
+                        setItemStatus(it.id, { state: 'loading', label: 'Sırada' });
+                    } else if (entry.state === 'downloading') {
+                        const pct = Number.isFinite(entry.progress) ? Math.round(entry.progress) : 0;
+                        setItemStatus(it.id, { state: 'loading', label: '%' + pct });
+                    } else if (entry.state === 'error') {
+                        setItemStatus(it.id, { state: 'error', label: 'Hata' });
+                    }
+                }
+            }
+
+            function applyServerStatuses(statusMap) {
+                if (!statusMap || typeof statusMap !== 'object') return;
+                const entries = Object.values(statusMap);
+                for (let i = 0; i < entries.length; i++) {
+                    const entry = entries[i];
+                    if (!entry || !entry.key) continue;
+                    serverStatusesByKey.set(entry.key, entry);
+                    if (entry.url) serverStatusesByUrl.set(entry.url.trim(), entry);
+                    syncServerEntryToItems(entry);
+                }
+            }
+
             async function prefetchItem(item) {
                 if (!item) return;
                 const cleanUrl = (item.url || '').trim();
@@ -1530,6 +1624,14 @@
                     disposeYouTubeSlot(item.id);
                     setItemStatus(item.id, { state: 'idle', label: 'Link yok' });
                     return;
+                }
+
+                if (serverOnline) {
+                    const st = findServerStatusForItem(item);
+                    if (st) {
+                        syncServerEntryToItems(st);
+                        return;
+                    }
                 }
 
                 const ytId = extractYouTubeId(cleanUrl);
@@ -1549,7 +1651,7 @@
                 const cacheKey = 'url_' + hashString(cleanUrl);
                 const cached = await MediaDB.get(cacheKey);
                 if (cached && cached.blob && cached.blob.size > 0) {
-                    mountWarmVideo(item, URL.createObjectURL(cached.blob), true, 'Hazır');
+                    mountWarmVideo(item, URL.createObjectURL(cached.blob), true, 'Hazır', false);
                     return;
                 }
 
@@ -1562,23 +1664,28 @@
                 if (!latest || latest.url.trim() !== cleanUrl) return;
 
                 if (blob) {
-                    mountWarmVideo(latest, URL.createObjectURL(blob), true, 'Hazır');
+                    mountWarmVideo(latest, URL.createObjectURL(blob), true, 'Hazır', false);
                 } else {
-                    mountWarmVideo(latest, cleanUrl, false, 'Hazır');
+                    mountWarmVideo(latest, cleanUrl, false, 'Hazır', false);
                 }
             }
 
             async function prefetchAllItems() {
                 const activeIds = new Set();
                 let hasYt = false;
+                const urls = [];
                 for (let i = 0; i < appConfig.items.length; i++) {
                     const it = appConfig.items[i];
                     activeIds.add(it.id);
-                    if (extractYouTubeId(it.url)) hasYt = true;
+                    const cleanUrl = (it.url || '').trim();
+                    if (cleanUrl) {
+                        urls.push(cleanUrl);
+                        if (extractYouTubeId(cleanUrl)) hasYt = true;
+                    }
                 }
 
                 if (els.fileProtocolWarn) {
-                    els.fileProtocolWarn.classList.toggle('hidden', !(hasYt && window.location.protocol === 'file:'));
+                    els.fileProtocolWarn.classList.toggle('hidden', !(!serverOnline && hasYt && window.location.protocol === 'file:'));
                 }
 
                 for (const id of Array.from(videoPool.keys())) {
@@ -1586,6 +1693,13 @@
                 }
                 for (const id of Array.from(ytSlots.keys())) {
                     if (!activeIds.has(id)) disposeYouTubeSlot(id);
+                }
+
+                if (serverOnline && urls.length > 0) {
+                    const res = await serverPost('/api/prefetch', { urls: urls });
+                    if (res && res.statuses) {
+                        applyServerStatuses(res.statuses);
+                    }
                 }
 
                 await Promise.all(appConfig.items.map(prefetchItem));
@@ -1860,8 +1974,11 @@
                 try {
                     while (alertQueue.length > 0) {
                         const alertData = alertQueue.shift();
+                        const poolEntry = videoPool.get(alertData.item.id);
                         const ytId = extractYouTubeId(alertData.item.url);
-                        if (ytId) {
+                        if (poolEntry && poolEntry.fromServer) {
+                            await playHtml5VideoAlert(alertData, alertData.item);
+                        } else if (ytId) {
                             await playYouTubeAlert(alertData, alertData.item, ytId);
                         } else {
                             await playHtml5VideoAlert(alertData, alertData.item);
@@ -2106,8 +2223,19 @@
                 renderPanel();
             }
 
-            function testItemAction(item) {
+            async function testItemAction(item) {
                 if (!item) return;
+                if (serverOnline && isPanelMode) {
+                    const res = await serverPost('/api/test', {
+                        donorName: 'TestBagisci',
+                        amount: item.amount,
+                        item: item
+                    });
+                    if (res && res.deliveredOverlays > 0) {
+                        showToast("OBS'te test oynatılıyor.");
+                        return;
+                    }
+                }
                 enqueueAlert('TestBagisci', item.amount, true, item);
                 if (syncChannel && isPanelMode) {
                     try {
@@ -2157,6 +2285,9 @@
                 els.btnCopyObsUrl.addEventListener('click', copyObsUrl);
                 els.btnStopAll.addEventListener('click', function () {
                     stopAllPlayback();
+                    if (serverOnline) {
+                        serverPost('/api/stop', {});
+                    }
                     if (syncChannel && isPanelMode) {
                         try { syncChannel.postMessage({ type: 'stop_alert', sender: tabClientId }); } catch (_) { }
                     }
@@ -2324,9 +2455,114 @@
                 });
             }
 
+            // ==================== LOCAL SERVER BRIDGE ====================
+            function connectServerEvents() {
+                if (sseSource) {
+                    try { sseSource.close(); } catch (_) { }
+                    sseSource = null;
+                }
+                clearTimeout(sseReconnectTimer);
+                if (!serverOnline || typeof window.EventSource !== 'function') return;
+
+                const role = isPanelMode ? 'panel' : 'overlay';
+                sseSource = new EventSource(apiBase + '/api/events?role=' + role);
+
+                sseSource.addEventListener('hello', function (ev) {
+                    try {
+                        const data = JSON.parse(ev.data);
+                        if (data && data.statuses) applyServerStatuses(data.statuses);
+                    } catch (_) { }
+                });
+
+                sseSource.addEventListener('download', function (ev) {
+                    try {
+                        const entry = JSON.parse(ev.data);
+                        if (entry && entry.key) {
+                            serverStatusesByKey.set(entry.key, entry);
+                            if (entry.url) serverStatusesByUrl.set(entry.url.trim(), entry);
+                            syncServerEntryToItems(entry);
+                        }
+                    } catch (_) { }
+                });
+
+                sseSource.addEventListener('config', function (ev) {
+                    try {
+                        const data = JSON.parse(ev.data);
+                        if (!data || data.sender === tabClientId || !data.config) return;
+                        appConfig = normalizeConfig(data.config);
+                        safeLsSet(STORAGE_KEY, JSON.stringify(appConfig));
+                        if (isPanelMode || els.panelOverlay.classList.contains('is-open')) renderPanel();
+                        if (!isPanelMode) connectStreamlabs(getEffectiveToken());
+                        prefetchAllItems();
+                    } catch (_) { }
+                });
+
+                sseSource.addEventListener('test_alert', function (ev) {
+                    if (isPanelMode) return;
+                    try {
+                        const data = JSON.parse(ev.data);
+                        if (data && data.item) {
+                            enqueueAlert(data.donorName || 'TestBagisci', Number(data.amount) || 0, true, normalizeItem(data.item));
+                        }
+                    } catch (_) { }
+                });
+
+                sseSource.addEventListener('stop_alert', function () {
+                    if (!isPanelMode) stopAllPlayback();
+                });
+
+                sseSource.onerror = function () {
+                    if (sseSource) {
+                        try { sseSource.close(); } catch (_) { }
+                        sseSource = null;
+                    }
+                    clearTimeout(sseReconnectTimer);
+                    sseReconnectTimer = setTimeout(connectServerEvents, 3000);
+                };
+            }
+
+            async function probeLocalServer(importedFromUrl) {
+                const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+                const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 1200) : null;
+                try {
+                    const resp = await fetch(apiBase + '/api/health', ctrl ? { signal: ctrl.signal } : undefined);
+                    if (timer) clearTimeout(timer);
+                    if (!resp.ok) return false;
+                    const health = await resp.json();
+                    if (!health || !health.ok) return false;
+
+                    serverOnline = true;
+                    if (els.serverBadge) els.serverBadge.classList.remove('hidden');
+
+                    const cfgResp = await fetch(apiBase + '/api/config');
+                    if (cfgResp.ok) {
+                        const cfgData = await cfgResp.json();
+                        if (cfgData && cfgData.statuses) {
+                            applyServerStatuses(cfgData.statuses);
+                        }
+                        if (importedFromUrl) {
+                            await serverPost('/api/config', { config: appConfig, sender: tabClientId });
+                        } else if (cfgData && cfgData.config) {
+                            appConfig = normalizeConfig(cfgData.config);
+                            safeLsSet(STORAGE_KEY, JSON.stringify(appConfig));
+                            if (isPanelMode || els.panelOverlay.classList.contains('is-open')) renderPanel();
+                            if (!isPanelMode) connectStreamlabs(getEffectiveToken());
+                        } else {
+                            await serverPost('/api/config', { config: appConfig, sender: tabClientId });
+                        }
+                    }
+
+                    connectServerEvents();
+                    return true;
+                } catch (_) {
+                    if (timer) clearTimeout(timer);
+                    return false;
+                }
+            }
+
             // ==================== INIT ====================
-            function init() {
-                loadInitialConfig();
+            async function init() {
+                const importedFromUrl = loadInitialConfig();
                 bindEvents();
                 bindShortcuts();
                 initCrossTabSync();
@@ -2338,6 +2574,7 @@
                     connectStreamlabs(getEffectiveToken());
                 }
 
+                await probeLocalServer(importedFromUrl);
                 prefetchAllItems();
             }
 
