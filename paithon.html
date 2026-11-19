@@ -1,1507 +1,2083 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Paithon Kedi Sayacı</title>
-  <!-- Non-blocking rounded display & body fonts with clean system fallbacks -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --fur-light: #fbf7f2;
-      --fur-mid: #efe6da;
-      --fur-shade: #dfcfbc;
-      --ink-espresso: #3a2e2a;
-      --rose-nose: #c97a8e;
-      --rose-blush: #e49aa9;
-      --board-top: #272025;
-      --board-bot: #1f1a1d;
-      --lilac-border: rgba(196, 181, 253, 0.5);
-      --lilac-tag: #ddd6fe;
-      --lilac-accent: #c084fc;
-      --purple-live: #a855f7;
-      --font-display: 'Fredoka', 'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI', sans-serif;
-      --font-body: 'Nunito', 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI', sans-serif;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paithon Kedi Sayacı</title>
+    <!-- Rounded high-legibility fonts with clean system fallbacks -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --fur-light: #fbf7f2;
+            --fur-mid: #efe6da;
+            --fur-shade: #e5d8c8;
+            --ink-espresso: #3a2e2a;
+            --rose-nose: #c97a8e;
+            --rose-mid: #e5a9b8;
+            --rose-soft: #f2c6d0;
+            --board-top: #221b1e;
+            --board-bot: #171215;
+            --lilac-border: rgba(185, 151, 245, 0.55);
+            --lilac-border-bright: rgba(216, 180, 254, 0.92);
+            --lilac-reward: #dec4ff;
+            --purple-live: #a855f7;
+            --font-display: 'Fredoka', 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+            --font-body: 'Nunito', 'Fredoka', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
 
-    * {
-      box-sizing: border-box;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    /* 100% transparent background for OBS Browser Source */
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      overflow: hidden;
-      font-family: var(--font-body);
-      color: #fffdf9;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      outline: none;
-    }
+        /* 100% transparent background for direct OBS Browser Source usage */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+            font-family: var(--font-body);
+            color: #fffdfb;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+        }
 
-    .overlay-root {
-      position: relative;
-      width: 384px;
-      max-width: 95vw;
-      user-select: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2px 0 8px;
-    }
+        /*
+      Outer shell reserves transparent room on the left of the cat head
+      so side time pills and their top-right +13 sn badges never clip
+      even when positioned in the top-right corner of an OBS stream.
+    */
+        .overlay-shell {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 14px 10px 14px 180px;
+            max-width: 100vw;
+            user-select: none;
+        }
 
-    /* ==================== CAT HEAD, PARTY HAT & ANIMATIONS ==================== */
-    .cat-head-wrap {
-      position: relative;
-      width: 96%;
-      z-index: 3;
-      filter: drop-shadow(0 12px 18px rgba(15, 10, 16, 0.44));
-      animation: catBreathe 5.4s ease-in-out infinite;
-      transition: filter 0.35s ease;
-    }
+        /* Board (376px) paired with enlarged cat head (332px) for balanced presence */
+        .overlay-root {
+            position: relative;
+            width: 376px;
+            max-width: calc(100vw - 192px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .cat-head-wrap.glow-latte {
-      filter: drop-shadow(0 0 18px rgba(217, 173, 127, 0.56)) drop-shadow(0 12px 18px rgba(15, 10, 16, 0.44));
-    }
+        /* ==================== CAT HEAD + ENLARGED PROPORTION + SIDE NOTIF ANCHOR ==================== */
+        .cat-stage {
+            position: relative;
+            width: 332px;
+            max-width: 92%;
+            z-index: 4;
+            display: flex;
+            justify-content: center;
+        }
 
-    .cat-head-wrap.glow-dollar {
-      filter: drop-shadow(0 0 22px rgba(52, 211, 153, 0.58)) drop-shadow(0 12px 18px rgba(15, 10, 16, 0.44));
-    }
+        .cat-head-wrap {
+            position: relative;
+            width: 100%;
+            filter: drop-shadow(0 10px 16px rgba(14, 9, 14, 0.44));
+            animation: catBreathe 5.4s ease-in-out infinite;
+            transition: filter 0.35s ease;
+        }
 
-    .cat-head-wrap.glow-gold {
-      filter: drop-shadow(0 0 26px rgba(251, 191, 36, 0.72)) drop-shadow(0 12px 18px rgba(15, 10, 16, 0.44));
-    }
+        .cat-head-wrap.glow-latte {
+            filter: drop-shadow(0 0 18px rgba(217, 173, 127, 0.56)) drop-shadow(0 10px 16px rgba(14, 9, 14, 0.44));
+        }
 
-    .cat-svg {
-      display: block;
-      width: 100%;
-      height: auto;
-      overflow: visible;
-    }
+        .cat-head-wrap.glow-dollar {
+            filter: drop-shadow(0 0 22px rgba(52, 211, 153, 0.58)) drop-shadow(0 10px 16px rgba(14, 9, 14, 0.44));
+        }
 
-    @keyframes catBreathe {
-      0%, 100% { transform: translateY(0px) scale(1); }
-      50% { transform: translateY(-2.5px) scale(1.006); }
-    }
+        .cat-head-wrap.glow-gold {
+            filter: drop-shadow(0 0 26px rgba(251, 191, 36, 0.74)) drop-shadow(0 10px 16px rgba(14, 9, 14, 0.44));
+        }
 
-    /* Party hat gentle sparkle & cheerful bounce on donation */
-    @keyframes hatSparkleTwinkle {
-      0%, 70%, 100% { opacity: 0.18; transform: scale(0.72) rotate(0deg); }
-      82% { opacity: 1; transform: scale(1.18) rotate(20deg); }
-      92% { opacity: 0.28; transform: scale(0.86) rotate(40deg); }
-    }
+        .cat-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
 
-    @keyframes hatBobExcited {
-      0%, 100% { transform: translate(200px, 88px) rotate(-7deg); }
-      50% { transform: translate(200px, 82px) rotate(-2.5deg); }
-    }
+        @keyframes catBreathe {
 
-    .party-hat-group {
-      transform: translate(200px, 88px) rotate(-7deg);
-      transition: transform 0.3s ease;
-    }
+            0%,
+            100% {
+                transform: translateY(0px) scale(1);
+            }
 
-    .overlay-root.is-excited .party-hat-group {
-      animation: hatBobExcited 0.52s ease-in-out infinite;
-    }
+            50% {
+                transform: translateY(-2px) scale(1.006);
+            }
+        }
 
-    .hat-sparkle {
-      transform-origin: 18px -69px;
-      animation: hatSparkleTwinkle 4.2s ease-in-out infinite;
-    }
+        /* ==================== SIDE TIME NOTIFICATION + TOP-RIGHT +13 SN BADGE ==================== */
+        .side-notif-stack {
+            position: absolute;
+            right: calc(100% + 8px);
+            top: 56%;
+            transform: translateY(-50%);
+            width: 178px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 14px;
+            pointer-events: none;
+            z-index: 30;
+            overflow: visible;
+        }
 
-    /* Ear twitches */
-    @keyframes earTwitchL {
-      0%, 87%, 100% { transform: rotate(0deg); }
-      90% { transform: rotate(-6deg); }
-      94% { transform: rotate(2deg); }
-      97% { transform: rotate(-1.5deg); }
-    }
+        @keyframes sideNotifLifecycle {
+            0% {
+                opacity: 0;
+                transform: translateX(20px) scale(0.82);
+            }
 
-    @keyframes earTwitchR {
-      0%, 81%, 100% { transform: rotate(0deg); }
-      84% { transform: rotate(5.8deg); }
-      88% { transform: rotate(-2deg); }
-      92% { transform: rotate(1.5deg); }
-    }
+            10% {
+                opacity: 1;
+                transform: translateX(-3px) scale(1.04);
+            }
 
-    @keyframes earExcitedL {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-7.5deg); }
-      50% { transform: rotate(2.5deg); }
-      75% { transform: rotate(-4.5deg); }
-    }
+            16% {
+                opacity: 1;
+                transform: translateX(0px) scale(1);
+            }
 
-    @keyframes earExcitedR {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(7.5deg); }
-      50% { transform: rotate(-2.5deg); }
-      75% { transform: rotate(4.5deg); }
-    }
+            84% {
+                opacity: 1;
+                transform: translateX(0px) scale(1);
+            }
 
-    .ear-left {
-      transform-origin: 108px 136px;
-      animation: earTwitchL 7.6s ease-in-out infinite;
-    }
+            100% {
+                opacity: 0;
+                transform: translateX(-14px) translateY(-6px) scale(0.94);
+            }
+        }
 
-    .ear-right {
-      transform-origin: 292px 136px;
-      animation: earTwitchR 9.2s ease-in-out infinite;
-    }
+        @keyframes badgeSpringPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.25) rotate(-14deg) translateY(6px);
+            }
 
-    .overlay-root.is-excited .ear-left {
-      animation: earExcitedL 0.48s ease-in-out infinite;
-    }
+            58% {
+                opacity: 1;
+                transform: scale(1.16) rotate(5deg) translateY(-2px);
+            }
 
-    .overlay-root.is-excited .ear-right {
-      animation: earExcitedR 0.48s ease-in-out infinite;
-    }
+            80% {
+                opacity: 1;
+                transform: scale(0.95) rotate(-2deg) translateY(0px);
+            }
 
-    /* Natural idle blinking */
-    @keyframes eyeBlink {
-      0%, 90%, 100% { transform: scaleY(0); }
-      94.5% { transform: scaleY(1); }
-      98.5% { transform: scaleY(0); }
-    }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(3deg) translateY(0px);
+            }
+        }
 
-    .eyelid-left {
-      transform-origin: 130px 142px;
-      transform: scaleY(0);
-      animation: eyeBlink 5.2s ease-in-out infinite;
-    }
+        .side-notif {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 108px;
+            padding: 10px 18px;
+            border-radius: 18px;
+            background: linear-gradient(155deg, rgba(34, 27, 30, 0.97) 0%, rgba(23, 18, 21, 0.98) 100%);
+            border: 2px solid rgba(185, 151, 245, 0.8);
+            box-shadow:
+                0 12px 24px rgba(8, 5, 11, 0.65),
+                0 0 18px rgba(168, 85, 247, 0.24),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.16);
+            font-family: var(--font-display);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+            font-size: 25px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.02em;
+            color: #fffdfb;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+            white-space: nowrap;
+            animation: sideNotifLifecycle 4.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
 
-    .eyelid-right {
-      transform-origin: 270px 142px;
-      transform: scaleY(0);
-      animation: eyeBlink 5.2s ease-in-out infinite;
-    }
+        /* Subtle right pointer nub facing the cat's left cheek */
+        .side-notif::after {
+            content: '';
+            position: absolute;
+            right: -7px;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            margin-top: -6px;
+            background: #191317;
+            border-top: 2px solid rgba(185, 151, 245, 0.8);
+            border-right: 2px solid rgba(185, 151, 245, 0.8);
+            border-radius: 0 3px 0 0;
+            transform: rotate(45deg);
+        }
 
-    .eye-group.slot-active .eyelid-left,
-    .eye-group.slot-active .eyelid-right {
-      animation: none;
-      transform: scaleY(0);
-    }
+        .side-notif.tier-latte {
+            border-color: rgba(216, 180, 254, 0.84);
+            box-shadow:
+                0 12px 24px rgba(8, 5, 11, 0.65),
+                0 0 18px rgba(185, 151, 245, 0.3),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.16);
+        }
 
-    .idle-eye-content {
-      transition: opacity 0.24s ease;
-      opacity: 1;
-    }
+        .side-notif.tier-latte::after {
+            border-top-color: rgba(216, 180, 254, 0.84);
+            border-right-color: rgba(216, 180, 254, 0.84);
+        }
 
-    .eye-group.slot-active .idle-eye-content {
-      opacity: 0;
-    }
+        .side-notif.tier-dollar {
+            border-color: rgba(52, 211, 153, 0.88);
+            color: #ecfdf5;
+            box-shadow:
+                0 12px 24px rgba(8, 5, 11, 0.65),
+                0 0 20px rgba(16, 185, 129, 0.34),
+                inset 0 1.5px 0 rgba(209, 250, 229, 0.2);
+        }
 
-    .slot-eye-content {
-      transition: opacity 0.24s ease;
-      opacity: 0;
-    }
+        .side-notif.tier-dollar::after {
+            border-top-color: rgba(52, 211, 153, 0.88);
+            border-right-color: rgba(52, 211, 153, 0.88);
+        }
 
-    .eye-group.slot-active .slot-eye-content {
-      opacity: 1;
-    }
+        .side-notif.tier-gold {
+            border-color: rgba(251, 191, 36, 0.94);
+            color: #fef9c3;
+            box-shadow:
+                0 12px 24px rgba(8, 5, 11, 0.65),
+                0 0 24px rgba(245, 158, 11, 0.42),
+                inset 0 1.5px 0 rgba(254, 240, 138, 0.25);
+        }
 
-    .eye-ring {
-      transition: stroke 0.28s ease;
-    }
+        .side-notif.tier-gold::after {
+            border-top-color: rgba(251, 191, 36, 0.94);
+            border-right-color: rgba(251, 191, 36, 0.94);
+        }
 
-    .eye-group.tier-latte .eye-ring { stroke: #deb88f; }
-    .eye-group.tier-dollar .eye-ring { stroke: #34d399; }
-    .eye-group.tier-gold .eye-ring { stroke: #fbbf24; }
+        /* Separate +13 sn mini badge pinned to the top-right corner of the time pill */
+        .bonus-badge {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            z-index: 4;
+            padding: 3px 9px 4px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #f3d285 0%, #c084fc 100%);
+            border: 2px solid #fffdf9;
+            color: #1f1426;
+            font-family: var(--font-display);
+            font-variant-numeric: tabular-nums;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            box-shadow:
+                0 5px 12px rgba(28, 12, 42, 0.65),
+                0 0 14px rgba(216, 180, 254, 0.6);
+            opacity: 0;
+            transform-origin: center bottom;
+            animation: badgeSpringPop 0.56s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+        }
 
-    /* Satisfying lock-in bounce when each slot eye lands */
-    @keyframes eyeLockPop {
-      0% { transform: scale(1); }
-      45% { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
+        /* ==================== PARTY HAT, EARS & SLOT EYES ANIMATIONS ==================== */
+        @keyframes hatSparkleTwinkle {
 
-    #leftEyeGroup { transform-origin: 130px 180px; }
-    #rightEyeGroup { transform-origin: 270px 180px; }
+            0%,
+            70%,
+            100% {
+                opacity: 0.18;
+                transform: scale(0.72) rotate(0deg);
+            }
 
-    .eye-group.pop-lock {
-      animation: eyeLockPop 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-    }
+            82% {
+                opacity: 1;
+                transform: scale(1.18) rotate(20deg);
+            }
 
-    /* ==================== PAWS & HIGH-READABILITY BOARD ==================== */
-    .board-wrap {
-      position: relative;
-      width: 100%;
-      margin-top: -22px;
-      z-index: 6;
-    }
+            92% {
+                opacity: 0.28;
+                transform: scale(0.86) rotate(40deg);
+            }
+        }
 
-    .paw {
-      position: absolute;
-      top: -21px;
-      width: 68px;
-      height: 52px;
-      z-index: 12;
-      filter: drop-shadow(0 5px 7px rgba(10, 6, 12, 0.52));
-      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-      pointer-events: none;
-    }
+        @keyframes hatBobExcited {
 
-    .paw-left {
-      left: 20px;
-      transform: rotate(-5deg);
-    }
+            0%,
+            100% {
+                transform: translate(200px, 88px) rotate(-7deg);
+            }
 
-    .paw-right {
-      right: 20px;
-      transform: rotate(5deg);
-    }
+            50% {
+                transform: translate(200px, 80px) rotate(-1.5deg);
+            }
+        }
 
-    .overlay-root.is-excited .paw-left {
-      transform: rotate(-10deg) translateY(-3px);
-    }
+        .party-hat-group {
+            transform: translate(200px, 88px) rotate(-7deg);
+            transition: transform 0.3s ease;
+        }
 
-    .overlay-root.is-excited .paw-right {
-      transform: rotate(10deg) translateY(-3px);
-    }
+        .overlay-root.is-excited .party-hat-group {
+            animation: hatBobExcited 0.48s ease-in-out infinite;
+        }
 
-    .board-card {
-      position: relative;
-      background: linear-gradient(168deg, var(--board-top) 0%, var(--board-bot) 100%);
-      border: 2px solid var(--lilac-border);
-      border-radius: 26px;
-      padding: 24px 15px 15px;
-      box-shadow:
-        0 18px 34px rgba(8, 5, 11, 0.65),
-        0 0 0 1px rgba(18, 13, 20, 0.9),
-        inset 0 1.5px 0 rgba(233, 213, 255, 0.18);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
+        .hat-sparkle {
+            transform-origin: 18px -69px;
+            animation: hatSparkleTwinkle 4.2s ease-in-out infinite;
+        }
 
-    .board-card.pulse-add {
-      border-color: rgba(216, 180, 254, 0.92);
-      box-shadow:
-        0 18px 34px rgba(8, 5, 11, 0.65),
-        0 0 24px rgba(168, 85, 247, 0.4),
-        inset 0 1.5px 0 rgba(243, 232, 255, 0.3);
-    }
+        @keyframes earTwitchL {
 
-    /* Floating +MM:SS popup over the timer */
-    .popup-layer {
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 48px;
-      pointer-events: none;
-      z-index: 25;
-    }
+            0%,
+            87%,
+            100% {
+                transform: rotate(0deg);
+            }
 
-    @keyframes floatUpPopup {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, 10px) scale(0.82);
-      }
-      18% {
-        opacity: 1;
-        transform: translate(-50%, -8px) scale(1.06);
-      }
-      76% {
-        opacity: 1;
-        transform: translate(-50%, -24px) scale(1);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-50%, -38px) scale(0.95);
-      }
-    }
+            90% {
+                transform: rotate(-6deg);
+            }
 
-    .time-popup {
-      position: absolute;
-      left: 50%;
-      top: 8px;
-      padding: 4px 15px;
-      border-radius: 999px;
-      font-family: var(--font-display);
-      font-variant-numeric: tabular-nums;
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
-      animation: floatUpPopup 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
+            94% {
+                transform: rotate(2deg);
+            }
 
-    .time-popup.tier-latte {
-      background: rgba(34, 26, 38, 0.97);
-      border: 1.5px solid rgba(216, 180, 254, 0.85);
-      color: #f5f3ff;
-      text-shadow: 0 1px 6px rgba(168, 85, 247, 0.48);
-    }
+            97% {
+                transform: rotate(-1.5deg);
+            }
+        }
 
-    .time-popup.tier-dollar {
-      background: rgba(15, 38, 30, 0.97);
-      border: 1.5px solid rgba(52, 211, 153, 0.85);
-      color: #a7f3d0;
-      text-shadow: 0 1px 6px rgba(16, 185, 129, 0.45);
-    }
+        @keyframes earTwitchR {
 
-    .time-popup.tier-gold {
-      background: rgba(46, 34, 16, 0.97);
-      border: 1.5px solid rgba(251, 191, 36, 0.9);
-      color: #fef08a;
-      text-shadow: 0 1px 6px rgba(245, 158, 11, 0.5);
-    }
+            0%,
+            81%,
+            100% {
+                transform: rotate(0deg);
+            }
 
-    /* Main Timer Container (High-Contrast for small stream corner scaling) */
-    .timer-box {
-      border-radius: 18px;
-      border: 1.5px solid rgba(255, 255, 255, 0.1);
-      background: linear-gradient(180deg, rgba(16, 13, 16, 0.94) 0%, rgba(23, 18, 22, 0.92) 100%);
-      padding: 11px 10px 13px;
-      text-align: center;
-      box-shadow: inset 0 3px 12px rgba(4, 2, 6, 0.78);
-    }
+            84% {
+                transform: rotate(5.8deg);
+            }
 
-    .title-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      margin-bottom: 4px;
-    }
+            88% {
+                transform: rotate(-2deg);
+            }
 
-    /* Glowing Pulsing Purple Live Dot (#A855F7) */
-    .live-dot {
-      position: relative;
-      display: inline-flex;
-      width: 11px;
-      height: 11px;
-      align-items: center;
-      justify-content: center;
-    }
+            92% {
+                transform: rotate(1.5deg);
+            }
+        }
 
-    @keyframes livePulse {
-      0% { transform: scale(0.95); opacity: 0.9; }
-      70% { transform: scale(2.4); opacity: 0; }
-      100% { transform: scale(2.4); opacity: 0; }
-    }
+        @keyframes earExcitedL {
 
-    .live-dot-halo {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: var(--purple-live);
-      animation: livePulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
-    }
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
 
-    .live-dot-core {
-      position: relative;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--purple-live);
-      box-shadow: 0 0 10px rgba(168, 85, 247, 0.95);
-    }
+            25% {
+                transform: rotate(-7.5deg);
+            }
 
-    .title-text {
-      font-family: var(--font-display);
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: #fbf7f2;
-      text-shadow: 0 1px 6px rgba(168, 85, 247, 0.32);
-    }
+            50% {
+                transform: rotate(2.5deg);
+            }
 
-    .timer-value {
-      font-family: var(--font-display);
-      font-variant-numeric: tabular-nums;
-      font-feature-settings: "tnum" 1;
-      font-size: 54px;
-      font-weight: 700;
-      line-height: 1.04;
-      letter-spacing: 0.04em;
-      color: #fffdf9;
-      text-shadow:
-        0 3px 10px rgba(0, 0, 0, 0.72),
-        0 0 18px rgba(216, 180, 254, 0.18);
-    }
+            75% {
+                transform: rotate(-4.5deg);
+            }
+        }
 
-    /* Subtle Lilac Divider */
-    .divider-bar {
-      height: 1.5px;
-      margin: 12px 6px;
-      background: linear-gradient(90deg, transparent 0%, rgba(196, 181, 253, 0.48) 50%, transparent 100%);
-      border-radius: 999px;
-    }
+        @keyframes earExcitedR {
 
-    /* Compact High-Contrast 3-Column Price Table */
-    .price-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      text-align: center;
-    }
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
 
-    .price-cell {
-      border-radius: 14px;
-      border: 1.5px solid rgba(255, 255, 255, 0.11);
-      background: rgba(255, 255, 255, 0.045);
-      padding: 8px 4px 9px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    }
+            25% {
+                transform: rotate(7.5deg);
+            }
 
-    .price-amount {
-      font-family: var(--font-body);
-      font-size: 14.5px;
-      font-weight: 900;
-      line-height: 1.2;
-      color: #fbf7f2;
-      letter-spacing: 0.01em;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
-      white-space: nowrap;
-    }
+            50% {
+                transform: rotate(-2.5deg);
+            }
 
-    .price-duration {
-      margin-top: 3px;
-      font-family: var(--font-display);
-      font-size: 16.5px;
-      font-weight: 700;
-      line-height: 1.15;
-      color: var(--lilac-tag);
-      text-shadow: 0 1px 8px rgba(168, 85, 247, 0.36);
-      white-space: nowrap;
-    }
+            75% {
+                transform: rotate(4.5deg);
+            }
+        }
 
-    @media (max-width: 370px) {
-      .timer-value {
-        font-size: 44px;
-      }
-      .price-amount {
-        font-size: 12.5px;
-      }
-      .price-duration {
-        font-size: 14.5px;
-      }
-    }
-  </style>
+        .ear-left {
+            transform-origin: 108px 136px;
+            animation: earTwitchL 7.6s ease-in-out infinite;
+        }
+
+        .ear-right {
+            transform-origin: 292px 136px;
+            animation: earTwitchR 9.2s ease-in-out infinite;
+        }
+
+        .overlay-root.is-excited .ear-left {
+            animation: earExcitedL 0.48s ease-in-out infinite;
+        }
+
+        .overlay-root.is-excited .ear-right {
+            animation: earExcitedR 0.48s ease-in-out infinite;
+        }
+
+        /* Natural periodic blinking */
+        @keyframes eyeBlink {
+
+            0%,
+            90%,
+            100% {
+                transform: scaleY(0);
+            }
+
+            94.5% {
+                transform: scaleY(1);
+            }
+
+            98.5% {
+                transform: scaleY(0);
+            }
+        }
+
+        .eyelid-left {
+            transform-origin: 130px 142px;
+            transform: scaleY(0);
+            animation: eyeBlink 5.2s ease-in-out infinite;
+        }
+
+        .eyelid-right {
+            transform-origin: 270px 142px;
+            transform: scaleY(0);
+            animation: eyeBlink 5.2s ease-in-out infinite;
+        }
+
+        .eye-group.slot-active .eyelid-left,
+        .eye-group.slot-active .eyelid-right {
+            animation: none;
+            transform: scaleY(0);
+        }
+
+        .idle-eye-content {
+            transition: opacity 0.24s ease;
+            opacity: 1;
+        }
+
+        .eye-group.slot-active .idle-eye-content {
+            opacity: 0;
+        }
+
+        .slot-eye-content {
+            transition: opacity 0.24s ease;
+            opacity: 0;
+        }
+
+        .eye-group.slot-active .slot-eye-content {
+            opacity: 1;
+        }
+
+        .eye-ring {
+            transition: stroke 0.28s ease;
+        }
+
+        .eye-group.tier-latte .eye-ring {
+            stroke: #deb88f;
+        }
+
+        .eye-group.tier-dollar .eye-ring {
+            stroke: #34d399;
+        }
+
+        .eye-group.tier-gold .eye-ring {
+            stroke: #fbbf24;
+        }
+
+        @keyframes eyeLockPop {
+            0% {
+                transform: scale(1);
+            }
+
+            45% {
+                transform: scale(1.08);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        #leftEyeGroup {
+            transform-origin: 130px 180px;
+        }
+
+        #rightEyeGroup {
+            transform-origin: 270px 180px;
+        }
+
+        .eye-group.pop-lock {
+            animation: eyeLockPop 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* ==================== OUTER-CORNER PAWS & ENLARGED HIGH-LEGIBILITY BOARD ==================== */
+        .board-wrap {
+            position: relative;
+            width: 100%;
+            margin-top: -16px;
+            z-index: 6;
+        }
+
+        /* Paws sit at outer top-left / top-right corners so they NEVER overlap PAITHON or digits */
+        .paw {
+            position: absolute;
+            top: -25px;
+            width: 64px;
+            height: 48px;
+            z-index: 12;
+            filter: drop-shadow(0 5px 7px rgba(10, 6, 12, 0.52));
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+
+        .paw-left {
+            left: 12px;
+            transform: rotate(-7deg);
+        }
+
+        .paw-right {
+            right: 12px;
+            transform: rotate(7deg);
+        }
+
+        .overlay-root.is-excited .paw-left {
+            transform: rotate(-12deg) translateY(-3px);
+        }
+
+        .overlay-root.is-excited .paw-right {
+            transform: rotate(12deg) translateY(-3px);
+        }
+
+        .board-card {
+            position: relative;
+            background: linear-gradient(168deg, var(--board-top) 0%, var(--board-bot) 100%);
+            border: 2px solid var(--lilac-border);
+            border-radius: 26px;
+            padding: 18px 14px 14px;
+            box-shadow:
+                0 18px 34px rgba(8, 5, 11, 0.68),
+                0 0 0 1px rgba(18, 13, 20, 0.92),
+                inset 0 1.5px 0 rgba(233, 213, 255, 0.16);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .board-card.pulse-add {
+            border-color: var(--lilac-border-bright);
+            box-shadow:
+                0 18px 34px rgba(8, 5, 11, 0.68),
+                0 0 24px rgba(168, 85, 247, 0.42),
+                inset 0 1.5px 0 rgba(243, 232, 255, 0.28);
+        }
+
+        /* Main Timer Container */
+        .timer-box {
+            border-radius: 18px;
+            border: 1.5px solid rgba(255, 255, 255, 0.09);
+            background: linear-gradient(180deg, rgba(14, 11, 14, 0.95) 0%, rgba(21, 16, 20, 0.93) 100%);
+            padding: 11px 0 8px;
+            text-align: center;
+            box-shadow: inset 0 3px 12px rgba(4, 2, 6, 0.8);
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 0 58px;
+            margin-bottom: 2px;
+        }
+
+        /* Pulsing Purple Live Indicator Dot (#A855F7) */
+        .live-dot {
+            position: relative;
+            display: inline-flex;
+            width: 11px;
+            height: 11px;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes livePulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.92;
+            }
+
+            70% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+        }
+
+        .live-dot-halo {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: var(--purple-live);
+            animation: livePulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+        }
+
+        .live-dot-core {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--purple-live);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.95), 0 0 16px rgba(196, 181, 253, 0.45);
+        }
+
+        /* Enlarged High-Contrast PAITHON Header */
+        .title-text {
+            font-family: var(--font-display);
+            font-size: 21px;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #fff8f2;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65), 0 0 10px rgba(168, 85, 247, 0.25);
+            white-space: nowrap;
+        }
+
+        /* Fixed-height zero-overflow timer stage (never jumps vertically when auto-fitting) */
+        .timer-fit-wrap {
+            width: 100%;
+            height: 78px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .timer-value {
+            display: inline-block;
+            font-family: var(--font-display);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+            font-size: 68px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.025em;
+            color: #fffdfb;
+            white-space: nowrap;
+            text-shadow:
+                0 3px 12px rgba(0, 0, 0, 0.8),
+                0 0 18px rgba(216, 180, 254, 0.16);
+        }
+
+        /* Subtle Lilac Divider */
+        .divider-bar {
+            height: 1.5px;
+            margin: 12px 6px;
+            background: linear-gradient(90deg, transparent 0%, rgba(185, 151, 245, 0.5) 50%, transparent 100%);
+            border-radius: 999px;
+        }
+
+        /* Enlarged, Crisp, Zero-Overflow 3-Column Price Table */
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            text-align: center;
+        }
+
+        .price-cell {
+            min-width: 0;
+            border-radius: 14px;
+            border: 1.5px solid rgba(255, 255, 255, 0.11);
+            background: rgba(255, 255, 255, 0.045);
+            padding: 9px 5px 10px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .price-amount {
+            display: inline-block;
+            max-width: 100%;
+            font-family: var(--font-body);
+            font-size: 16px;
+            font-weight: 900;
+            line-height: 1.18;
+            color: #f6efea;
+            letter-spacing: 0.01em;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+        }
+
+        .price-duration {
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 3px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.15;
+            color: var(--lilac-reward);
+            text-shadow: 0 1px 8px rgba(168, 85, 247, 0.36);
+            white-space: nowrap;
+        }
+
+        /* Responsive adjustments for narrow preview viewports */
+        @media (max-width: 540px) {
+            .overlay-shell {
+                padding: 12px 8px 12px 136px;
+            }
+
+            .overlay-root {
+                width: 318px;
+                max-width: calc(100vw - 146px);
+            }
+
+            .cat-stage {
+                width: 280px;
+            }
+
+            .side-notif-stack {
+                right: calc(100% + 6px);
+                width: 142px;
+            }
+
+            .side-notif {
+                min-width: 88px;
+                padding: 8px 13px;
+                font-size: 19px;
+                border-radius: 15px;
+            }
+
+            .bonus-badge {
+                top: -11px;
+                right: -10px;
+                padding: 2.5px 7px 3px;
+                font-size: 11px;
+            }
+
+            .title-text {
+                font-size: 18px;
+            }
+
+            .timer-fit-wrap {
+                height: 66px;
+            }
+
+            .board-wrap {
+                margin-top: -14px;
+            }
+
+            .paw {
+                width: 54px;
+                height: 41px;
+                top: -21px;
+            }
+        }
+
+        @media (max-width: 410px) {
+            .overlay-shell {
+                padding: 10px 6px 10px 106px;
+            }
+
+            .overlay-root {
+                width: 274px;
+                max-width: calc(100vw - 114px);
+            }
+
+            .cat-stage {
+                width: 242px;
+            }
+
+            .side-notif-stack {
+                right: calc(100% + 4px);
+                width: 118px;
+            }
+
+            .side-notif {
+                min-width: 76px;
+                padding: 7px 10px;
+                font-size: 16px;
+            }
+
+            .title-row {
+                padding: 0 42px;
+            }
+
+            .title-text {
+                font-size: 16px;
+            }
+
+            .timer-fit-wrap {
+                height: 58px;
+            }
+
+            .board-wrap {
+                margin-top: -12px;
+            }
+
+            .paw {
+                width: 46px;
+                height: 35px;
+                top: -18px;
+            }
+        }
+    </style>
 </head>
+
 <body tabindex="0">
-  <main id="overlayRoot" class="overlay-root">
-    <!-- 1. COZY PARTY-HAT CAT HEAD + SLOT MACHINE EYES -->
-    <div id="catHeadWrap" class="cat-head-wrap">
-      <svg class="cat-svg" viewBox="0 0 400 302" aria-label="Paithon Kedi Sayacı">
-        <defs>
-          <!-- Warm Cream-Beige Fur (#FBF7F2 to #EFE6DA) -->
-          <radialGradient id="gradFur" cx="50%" cy="32%" r="68%">
-            <stop offset="0%" stop-color="#fbf7f2" />
-            <stop offset="68%" stop-color="#efe6da" />
-            <stop offset="100%" stop-color="#dfcfbc" />
-          </radialGradient>
+    <div class="overlay-shell">
+        <main id="overlayRoot" class="overlay-root">
+            <!-- 1. COMPACT COZY PARTY-HAT CAT HEAD + LEFT-CHEEK SIDE NOTIFICATION ANCHOR -->
+            <div class="cat-stage">
+                <!-- Floating Time Notification Stack (Pops out beside cat's left cheek, never clips in OBS top-right) -->
+                <div id="sideNotifStack" class="side-notif-stack" aria-live="polite"></div>
 
-          <!-- Soft Chin Shading -->
-          <linearGradient id="gradChinSoft" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#dfcfbc" stop-opacity="0" />
-            <stop offset="100%" stop-color="#cfbda7" stop-opacity="0.44" />
-          </linearGradient>
+                <div id="catHeadWrap" class="cat-head-wrap">
+                    <svg class="cat-svg" viewBox="0 0 400 302" aria-label="Paithon Kedi Sayacı">
+                        <defs>
+                            <!-- Warm Cream-Beige Fur (#FBF7F2 to #EFE6DA with soft #E5D8C8 shade) -->
+                            <radialGradient id="gradFur" cx="50%" cy="32%" r="68%">
+                                <stop offset="0%" stop-color="#fbf7f2" />
+                                <stop offset="68%" stop-color="#efe6da" />
+                                <stop offset="100%" stop-color="#e5d8c8" />
+                            </radialGradient>
 
-          <!-- Soft Dusty Rose Inner Ear -->
-          <linearGradient id="gradEarInner" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#efc1cc" />
-            <stop offset="100%" stop-color="#dd99a9" />
-          </linearGradient>
+                            <!-- Soft Chin Shading -->
+                            <linearGradient id="gradChinSoft" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#e5d8c8" stop-opacity="0" />
+                                <stop offset="100%" stop-color="#d4c2ae" stop-opacity="0.46" />
+                            </linearGradient>
 
-          <!-- Puffy Blush Cheek -->
-          <radialGradient id="gradBlush" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#e49aa9" stop-opacity="0.58" />
-            <stop offset="100%" stop-color="#e49aa9" stop-opacity="0" />
-          </radialGradient>
+                            <!-- Soft Dusty Rose Inner Ear -->
+                            <linearGradient id="gradEarInner" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#f2c6d0" />
+                                <stop offset="100%" stop-color="#e5a9b8" />
+                            </linearGradient>
 
-          <!-- Party Hat Gradients (Soft Lilac, Warm Cream, Antique Gold Trim) -->
-          <linearGradient id="gradHatBase" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fffdf9" />
-            <stop offset="55%" stop-color="#f5ede3" />
-            <stop offset="100%" stop-color="#e6dacd" />
-          </linearGradient>
-          <linearGradient id="gradHatStripe" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#d8b4fe" />
-            <stop offset="55%" stop-color="#c4b5fd" />
-            <stop offset="100%" stop-color="#a78bfa" />
-          </linearGradient>
-          <linearGradient id="gradHatShade" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
-            <stop offset="52%" stop-color="#ffffff" stop-opacity="0" />
-            <stop offset="100%" stop-color="#3a2e2a" stop-opacity="0.18" />
-          </linearGradient>
-          <linearGradient id="gradHatTrimGold" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#fae19c" />
-            <stop offset="55%" stop-color="#dfb155" />
-            <stop offset="100%" stop-color="#b9862c" />
-          </linearGradient>
-          <radialGradient id="gradPomPom" cx="38%" cy="32%" r="68%">
-            <stop offset="0%" stop-color="#fffdf9" />
-            <stop offset="58%" stop-color="#f3e8ff" />
-            <stop offset="100%" stop-color="#d8b4fe" />
-          </radialGradient>
+                            <!-- Rosy Cheek Blush -->
+                            <radialGradient id="gradBlush" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#e5a9b8" stop-opacity="0.68" />
+                                <stop offset="100%" stop-color="#e5a9b8" stop-opacity="0" />
+                            </radialGradient>
 
-          <!-- Party Hat Cone Clip Path -->
-          <clipPath id="clipPartyHat">
-            <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" />
-          </clipPath>
+                            <!-- Cozy Party Hat Gradients (Soft Lilac, Warm Cream, Antique Gold Trim #E6C27A) -->
+                            <linearGradient id="gradHatBase" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#fffdf9" />
+                                <stop offset="58%" stop-color="#f5ede3" />
+                                <stop offset="100%" stop-color="#e6dacd" />
+                            </linearGradient>
+                            <linearGradient id="gradHatStripe" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#d8b4fe" />
+                                <stop offset="55%" stop-color="#c4b5fd" />
+                                <stop offset="100%" stop-color="#b997f5" />
+                            </linearGradient>
+                            <linearGradient id="gradHatShade" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+                                <stop offset="52%" stop-color="#ffffff" stop-opacity="0" />
+                                <stop offset="100%" stop-color="#3a2e2a" stop-opacity="0.18" />
+                            </linearGradient>
+                            <linearGradient id="gradHatTrimGold" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#f6df9e" />
+                                <stop offset="52%" stop-color="#e6c27a" />
+                                <stop offset="100%" stop-color="#be923e" />
+                            </linearGradient>
+                            <radialGradient id="gradPomPom" cx="38%" cy="32%" r="68%">
+                                <stop offset="0%" stop-color="#fffdf9" />
+                                <stop offset="58%" stop-color="#f3e8ff" />
+                                <stop offset="100%" stop-color="#d8b4fe" />
+                            </radialGradient>
 
-          <!-- Glossy Warm Espresso-Amber Idle Cat Eyes -->
-          <radialGradient id="gradSocket" cx="50%" cy="38%" r="62%">
-            <stop offset="0%" stop-color="#3d2a21" />
-            <stop offset="100%" stop-color="#17100d" />
-          </radialGradient>
-          <radialGradient id="gradIris" cx="44%" cy="36%" r="64%">
-            <stop offset="0%" stop-color="#6b4733" />
-            <stop offset="58%" stop-color="#2c1c14" />
-            <stop offset="100%" stop-color="#140c09" />
-          </radialGradient>
-          <linearGradient id="gradAmberGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#c88d59" stop-opacity="0" />
-            <stop offset="100%" stop-color="#d89b62" stop-opacity="0.62" />
-          </linearGradient>
+                            <!-- Party Hat Cone Clip Path -->
+                            <clipPath id="clipPartyHat">
+                                <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" />
+                            </clipPath>
 
-          <!-- Thin Espresso Collar -->
-          <linearGradient id="gradCollar" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#3a2e2a" />
-            <stop offset="50%" stop-color="#53424b" />
-            <stop offset="100%" stop-color="#3a2e2a" />
-          </linearGradient>
+                            <!-- Glossy Warm Espresso-to-Amber Idle Cat Eyes -->
+                            <radialGradient id="gradSocket" cx="50%" cy="38%" r="62%">
+                                <stop offset="0%" stop-color="#3d2a21" />
+                                <stop offset="100%" stop-color="#17100d" />
+                            </radialGradient>
+                            <radialGradient id="gradIris" cx="44%" cy="36%" r="64%">
+                                <stop offset="0%" stop-color="#6b4733" />
+                                <stop offset="58%" stop-color="#2c1c14" />
+                                <stop offset="100%" stop-color="#140c09" />
+                            </radialGradient>
+                            <linearGradient id="gradAmberGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#c88d59" stop-opacity="0" />
+                                <stop offset="100%" stop-color="#dd9f64" stop-opacity="0.65" />
+                            </linearGradient>
 
-          <!-- Glass Eye Sheen -->
-          <linearGradient id="gradEyeSheen" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
-            <stop offset="48%" stop-color="#ffffff" stop-opacity="0" />
-            <stop offset="100%" stop-color="#140b10" stop-opacity="0.22" />
-          </linearGradient>
+                            <!-- Thin Espresso Collar -->
+                            <linearGradient id="gradCollar" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#3a2e2a" />
+                                <stop offset="50%" stop-color="#53424b" />
+                                <stop offset="100%" stop-color="#3a2e2a" />
+                            </linearGradient>
 
-          <!-- Slot Icon Gradients (Unique shared IDs) -->
-          <linearGradient id="gradBillBack" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#10b981" />
-            <stop offset="100%" stop-color="#047857" />
-          </linearGradient>
-          <linearGradient id="gradBillFront" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#34d399" />
-            <stop offset="55%" stop-color="#10b981" />
-            <stop offset="100%" stop-color="#059669" />
-          </linearGradient>
-          <linearGradient id="gradGoldFront" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fde047" />
-            <stop offset="55%" stop-color="#f59e0b" />
-            <stop offset="100%" stop-color="#b45309" />
-          </linearGradient>
-          <linearGradient id="gradGoldTop" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#fef9c3" />
-            <stop offset="100%" stop-color="#fbbf24" />
-          </linearGradient>
+                            <!-- Glass Eye Sheen -->
+                            <linearGradient id="gradEyeSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+                                <stop offset="48%" stop-color="#ffffff" stop-opacity="0" />
+                                <stop offset="100%" stop-color="#140b10" stop-opacity="0.22" />
+                            </linearGradient>
 
-          <!-- Subtle Vertical Motion Blur During Slot Spin -->
-          <filter id="slotMotionBlur" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="0 2.8" />
-          </filter>
+                            <!-- Shared Slot Icon Gradients (Single defs block, zero duplicate IDs) -->
+                            <linearGradient id="gradBillBack" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#10b981" />
+                                <stop offset="100%" stop-color="#047857" />
+                            </linearGradient>
+                            <linearGradient id="gradBillFront" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#34d399" />
+                                <stop offset="55%" stop-color="#10b981" />
+                                <stop offset="100%" stop-color="#059669" />
+                            </linearGradient>
+                            <linearGradient id="gradGoldFront" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#fde047" />
+                                <stop offset="55%" stop-color="#f59e0b" />
+                                <stop offset="100%" stop-color="#b45309" />
+                            </linearGradient>
+                            <linearGradient id="gradGoldTop" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#fef9c3" />
+                                <stop offset="100%" stop-color="#fbbf24" />
+                            </linearGradient>
 
-          <!-- Unique Left & Right Eye Clip Paths -->
-          <clipPath id="clipEyeLeft">
-            <circle cx="130" cy="180" r="35.5" />
-          </clipPath>
-          <clipPath id="clipEyeRight">
-            <circle cx="270" cy="180" r="35.5" />
-          </clipPath>
+                            <!-- Vertical Motion Blur During Fast Slot Spin -->
+                            <filter id="slotMotionBlur" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur in="SourceGraphic" stdDeviation="0 2.8" />
+                            </filter>
 
-          <!-- Shared Slot Machine SVG Icons (Centered at 0,0) -->
-          <!-- 0-10 min: Latte Cup Icon -->
-          <g id="iconLatte">
-            <path d="M -8 -18 Q -11 -22, -7 -27" fill="none" stroke="#f6ece0" stroke-width="2.4" stroke-linecap="round" opacity="0.88" />
-            <path d="M 0 -20 Q -3 -24, 1 -29" fill="none" stroke="#fffbf5" stroke-width="2.5" stroke-linecap="round" opacity="0.96" />
-            <path d="M 8 -18 Q 5 -22, 9 -27" fill="none" stroke="#f6ece0" stroke-width="2.4" stroke-linecap="round" opacity="0.84" />
-            <path d="M 14 -6 C 24 -6, 25 9, 13 10" fill="none" stroke="#f8f1e8" stroke-width="4.4" stroke-linecap="round" />
-            <path d="M -17 -10 L 15 -10 L 12 13 C 11 19, 5 22, -1 22 C -7 22, -13 19, -14 13 Z" fill="#fffbf5" stroke="#8a6b55" stroke-width="2.2" />
-            <ellipse cx="-1" cy="-9.5" rx="15" ry="4.6" fill="#b7794a" />
-            <path d="M -1 -7.2 C -5 -10.2, -5 -12.4, -2.5 -11.9 C -1.5 -11.6, -1 -10.6, -1 -10.6 C -1 -10.6, -0.5 -11.6, 0.5 -11.9 C 3 -12.4, 3 -10.2, -1 -7.2 Z" fill="#fff7ee" />
-            <ellipse cx="-1" cy="23.5" rx="18" ry="3.4" fill="#d9c8b8" />
-          </g>
+                            <!-- Unique Left & Right Eye Clip Paths -->
+                            <clipPath id="clipEyeLeft">
+                                <circle cx="130" cy="180" r="35.5" />
+                            </clipPath>
+                            <clipPath id="clipEyeRight">
+                                <circle cx="270" cy="180" r="35.5" />
+                            </clipPath>
 
-          <!-- 10-60 min: Crisp Dollar Bill Icon -->
-          <g id="iconDollar">
-            <!-- Subtle stacked back bill -->
-            <rect x="-22" y="-17" width="46" height="28" rx="4.5" transform="rotate(-14)" fill="url(#gradBillBack)" stroke="#6ee7b7" stroke-width="1.6" opacity="0.82" />
-            <!-- Main crisp green banknote -->
-            <g transform="rotate(-6)">
-              <rect x="-24" y="-14.5" width="48" height="29" rx="4.8" fill="url(#gradBillFront)" stroke="#d1fae5" stroke-width="2.2" />
-              <rect x="-19.5" y="-10" width="39" height="20" rx="2.6" fill="none" stroke="#a7f3d0" stroke-width="1.3" opacity="0.9" />
-              <circle cx="-15" cy="-6" r="1.5" fill="#d1fae5" />
-              <circle cx="15" cy="-6" r="1.5" fill="#d1fae5" />
-              <circle cx="-15" cy="6" r="1.5" fill="#d1fae5" />
-              <circle cx="15" cy="6" r="1.5" fill="#d1fae5" />
-              <ellipse cx="0" cy="0" rx="9" ry="9.5" fill="#065f46" opacity="0.45" />
-              <text x="0" y="7.5" text-anchor="middle" fill="#ffffff" font-family="Fredoka, Nunito, sans-serif" font-weight="700" font-size="22">$</text>
-            </g>
-          </g>
+                            <!-- Shared Slot Machine SVG Icons (Centered at 0,0) -->
+                            <!-- 0 to <10 min (< 600s): Cozy Latte Cup Icon -->
+                            <g id="iconLatte">
+                                <path d="M -8 -18 Q -11 -22, -7 -27" fill="none" stroke="#f6ece0" stroke-width="2.4"
+                                    stroke-linecap="round" opacity="0.88" />
+                                <path d="M 0 -20 Q -3 -24, 1 -29" fill="none" stroke="#fffbf5" stroke-width="2.5"
+                                    stroke-linecap="round" opacity="0.96" />
+                                <path d="M 8 -18 Q 5 -22, 9 -27" fill="none" stroke="#f6ece0" stroke-width="2.4"
+                                    stroke-linecap="round" opacity="0.84" />
+                                <path d="M 14 -6 C 24 -6, 25 9, 13 10" fill="none" stroke="#f8f1e8" stroke-width="4.4"
+                                    stroke-linecap="round" />
+                                <path d="M -17 -10 L 15 -10 L 12 13 C 11 19, 5 22, -1 22 C -7 22, -13 19, -14 13 Z"
+                                    fill="#fffbf5" stroke="#8a6b55" stroke-width="2.2" />
+                                <ellipse cx="-1" cy="-9.5" rx="15" ry="4.6" fill="#b7794a" />
+                                <path
+                                    d="M -1 -7.2 C -5 -10.2, -5 -12.4, -2.5 -11.9 C -1.5 -11.6, -1 -10.6, -1 -10.6 C -1 -10.6, -0.5 -11.6, 0.5 -11.9 C 3 -12.4, 3 -10.2, -1 -7.2 Z"
+                                    fill="#fff7ee" />
+                                <ellipse cx="-1" cy="23.5" rx="18" ry="3.4" fill="#d9c8b8" />
+                            </g>
 
-          <!-- 60+ min: Gleaming Gold Bar Icon -->
-          <g id="iconGold">
-            <polygon points="-16,-2 16,-2 24,16 -24,16" fill="url(#gradGoldFront)" stroke="#fde68a" stroke-width="2" stroke-linejoin="round" />
-            <polygon points="-11,-10 11,-10 16,-2 -16,-2" fill="url(#gradGoldTop)" stroke="#fef3c7" stroke-width="1.8" stroke-linejoin="round" />
-            <polygon points="-11,-10 -16,-2 -24,16 -15,8" fill="#fef08a" opacity="0.52" />
-            <path d="M 17 -21 L 19.2 -15.5 L 24.5 -13.5 L 19.2 -11.5 L 17 -6 L 14.8 -11.5 L 9.5 -13.5 L 14.8 -15.5 Z" fill="#fef08a" />
-            <path d="M -17 -16 L -15.5 -12.5 L -12 -11 L -15.5 -9.5 L -17 -6 L -18.5 -9.5 L -22 -11 L -18.5 -12.5 Z" fill="#fde68a" opacity="0.95" />
-          </g>
+                            <!-- 10 to <60 min (600s to <3600s): Layered Green Dollar Bill Icon -->
+                            <g id="iconDollar">
+                                <rect x="-22" y="-17" width="46" height="28" rx="4.5" transform="rotate(-14)"
+                                    fill="url(#gradBillBack)" stroke="#6ee7b7" stroke-width="1.6" opacity="0.82" />
+                                <g transform="rotate(-6)">
+                                    <rect x="-24" y="-14.5" width="48" height="29" rx="4.8" fill="url(#gradBillFront)"
+                                        stroke="#d1fae5" stroke-width="2.2" />
+                                    <rect x="-19.5" y="-10" width="39" height="20" rx="2.6" fill="none" stroke="#a7f3d0"
+                                        stroke-width="1.3" opacity="0.9" />
+                                    <circle cx="-15" cy="-6" r="1.5" fill="#d1fae5" />
+                                    <circle cx="15" cy="-6" r="1.5" fill="#d1fae5" />
+                                    <circle cx="-15" cy="6" r="1.5" fill="#d1fae5" />
+                                    <circle cx="15" cy="6" r="1.5" fill="#d1fae5" />
+                                    <ellipse cx="0" cy="0" rx="9" ry="9.5" fill="#065f46" opacity="0.45" />
+                                    <text x="0" y="7.5" text-anchor="middle" fill="#ffffff"
+                                        font-family="Fredoka, Nunito, sans-serif" font-weight="700"
+                                        font-size="22">$</text>
+                                </g>
+                            </g>
 
-          <!-- Reel filler sparkle -->
-          <g id="iconSparkle">
-            <path d="M 0 -21 L 4.8 -4.8 L 21 0 L 4.8 4.8 L 0 21 L -4.8 4.8 L -21 0 L -4.8 -4.8 Z" fill="#ddd6fe" />
-          </g>
-        </defs>
+                            <!-- 60+ min (>= 3600s): Gleaming Gold Bar Icon -->
+                            <g id="iconGold">
+                                <polygon points="-16,-2 16,-2 24,16 -24,16" fill="url(#gradGoldFront)" stroke="#fde68a"
+                                    stroke-width="2" stroke-linejoin="round" />
+                                <polygon points="-11,-10 11,-10 16,-2 -16,-2" fill="url(#gradGoldTop)" stroke="#fef3c7"
+                                    stroke-width="1.8" stroke-linejoin="round" />
+                                <polygon points="-11,-10 -16,-2 -24,16 -15,8" fill="#fef08a" opacity="0.52" />
+                                <path
+                                    d="M 17 -21 L 19.2 -15.5 L 24.5 -13.5 L 19.2 -11.5 L 17 -6 L 14.8 -11.5 L 9.5 -13.5 L 14.8 -15.5 Z"
+                                    fill="#fef08a" />
+                                <path
+                                    d="M -17 -16 L -15.5 -12.5 L -12 -11 L -15.5 -9.5 L -17 -6 L -18.5 -9.5 L -22 -11 L -18.5 -12.5 Z"
+                                    fill="#fde68a" opacity="0.95" />
+                            </g>
 
-        <!-- LEFT EAR + SOFT INNER EAR TUFTS -->
-        <g class="ear-left">
-          <path d="M 74 156 C 62 108, 66 62, 88 51 C 108 41, 146 68, 168 101 Z"
-                fill="url(#gradFur)" stroke="#3a2e2a" stroke-width="4.6" stroke-linejoin="round" />
-          <path d="M 86 136 C 80 104, 84 76, 97 69 C 109 62, 132 81, 146 104 Z"
-                fill="url(#gradEarInner)" opacity="0.94" />
-          <path d="M 89 120 Q 100 114, 108 121 M 95 106 Q 105 102, 111 108"
-                fill="none" stroke="#fbf7f2" stroke-width="3.2" stroke-linecap="round" opacity="0.88" />
-        </g>
+                            <!-- Reel filler sparkle -->
+                            <g id="iconSparkle">
+                                <path d="M 0 -21 L 4.8 -4.8 L 21 0 L 4.8 4.8 L 0 21 L -4.8 4.8 L -21 0 L -4.8 -4.8 Z"
+                                    fill="#ddd6fe" />
+                            </g>
+                        </defs>
 
-        <!-- RIGHT EAR + SOFT INNER EAR TUFTS -->
-        <g class="ear-right">
-          <path d="M 326 156 C 338 108, 334 62, 312 51 C 292 41, 254 68, 232 101 Z"
-                fill="url(#gradFur)" stroke="#3a2e2a" stroke-width="4.6" stroke-linejoin="round" />
-          <path d="M 314 136 C 320 104, 316 76, 303 69 C 291 62, 268 81, 254 104 Z"
-                fill="url(#gradEarInner)" opacity="0.94" />
-          <path d="M 311 120 Q 300 114, 292 121 M 305 106 Q 295 102, 289 108"
-                fill="none" stroke="#fbf7f2" stroke-width="3.2" stroke-linecap="round" opacity="0.88" />
-        </g>
+                        <!-- LEFT EAR + SOFT INNER EAR TUFTS -->
+                        <g class="ear-left">
+                            <path d="M 74 156 C 62 108, 66 62, 88 51 C 108 41, 146 68, 168 101 Z" fill="url(#gradFur)"
+                                stroke="#3a2e2a" stroke-width="4.8" stroke-linejoin="round" />
+                            <path d="M 86 136 C 80 104, 84 76, 97 69 C 109 62, 132 81, 146 104 Z"
+                                fill="url(#gradEarInner)" opacity="0.95" />
+                            <path d="M 89 120 Q 100 114, 108 121 M 95 106 Q 105 102, 111 108" fill="none"
+                                stroke="#fbf7f2" stroke-width="3.2" stroke-linecap="round" opacity="0.9" />
+                        </g>
 
-        <!-- PLUMP COZY CAT HEAD -->
-        <path d="M 200 86
-                 C 280 86, 342 130, 347 192
-                 C 355 200, 354 210, 346 215
-                 C 343 260, 296 287, 200 287
-                 C 104 287, 57 260, 54 215
-                 C 46 210, 45 200, 53 192
-                 C 58 130, 120 86, 200 86 Z"
-              fill="url(#gradFur)" stroke="#3a2e2a" stroke-width="4.8" stroke-linejoin="round" />
+                        <!-- RIGHT EAR + SOFT INNER EAR TUFTS -->
+                        <g class="ear-right">
+                            <path d="M 326 156 C 338 108, 334 62, 312 51 C 292 41, 254 68, 232 101 Z"
+                                fill="url(#gradFur)" stroke="#3a2e2a" stroke-width="4.8" stroke-linejoin="round" />
+                            <path d="M 314 136 C 320 104, 316 76, 303 69 C 291 62, 268 81, 254 104 Z"
+                                fill="url(#gradEarInner)" opacity="0.95" />
+                            <path d="M 311 120 Q 300 114, 292 121 M 305 106 Q 295 102, 289 108" fill="none"
+                                stroke="#fbf7f2" stroke-width="3.2" stroke-linecap="round" opacity="0.9" />
+                        </g>
 
-        <!-- Soft Lower Cheek Depth -->
-        <path d="M 66 226 C 92 272, 144 283, 200 283 C 256 283, 308 272, 334 226 C 306 254, 256 266, 200 266 C 144 266, 94 254, 66 226 Z"
-              fill="url(#gradChinSoft)" />
+                        <!-- PLUMP COZY CAT HEAD -->
+                        <path d="M 200 86
+                     C 280 86, 342 130, 347 192
+                     C 355 200, 354 210, 346 215
+                     C 343 260, 296 287, 200 287
+                     C 104 287, 57 260, 54 215
+                     C 46 210, 45 200, 53 192
+                     C 58 130, 120 86, 200 86 Z" fill="url(#gradFur)" stroke="#3a2e2a" stroke-width="5"
+                            stroke-linejoin="round" />
 
-        <!-- STYLISH COZY PARTY HAT (Lilac & Cream Diagonal Stripes, Antique Gold Scalloped Trim, Fluffy Pom-Pom) -->
-        <g class="party-hat-group">
-          <!-- Soft Shadow on Cat's Forehead -->
-          <ellipse cx="0" cy="11.5" rx="34" ry="5.5" fill="#d5c1ac" opacity="0.6" />
+                        <!-- Soft Lower Cheek Depth -->
+                        <path
+                            d="M 66 226 C 92 272, 144 283, 200 283 C 256 283, 308 272, 334 226 C 306 254, 256 266, 200 266 C 144 266, 94 254, 66 226 Z"
+                            fill="url(#gradChinSoft)" />
 
-          <!-- Cone Body + Clipped Diagonal Lilac Stripes & Delicate Gold Dots -->
-          <g clip-path="url(#clipPartyHat)">
-            <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" fill="url(#gradHatBase)" />
-            <!-- Soft Lilac Diagonal Stripes -->
-            <g transform="rotate(-24)">
-              <rect x="-46" y="-58" width="92" height="10" fill="url(#gradHatStripe)" opacity="0.92" />
-              <rect x="-46" y="-34" width="92" height="10" fill="url(#gradHatStripe)" opacity="0.92" />
-              <rect x="-46" y="-10" width="92" height="10" fill="url(#gradHatStripe)" opacity="0.92" />
-              <rect x="-46" y="14" width="92" height="10" fill="url(#gradHatStripe)" opacity="0.92" />
-            </g>
-            <!-- Delicate Antique Gold Accents on Cream Bands -->
-            <circle cx="-11" cy="-21" r="2.1" fill="#dfb155" opacity="0.9" />
-            <circle cx="9" cy="-31" r="2.0" fill="#dfb155" opacity="0.9" />
-            <circle cx="14" cy="-6" r="2.2" fill="#dfb155" opacity="0.9" />
-            <circle cx="-16" cy="-1" r="2.1" fill="#dfb155" opacity="0.9" />
-            <circle cx="-2" cy="-44" r="1.8" fill="#dfb155" opacity="0.88" />
-            <!-- Cylindrical Cone Shading -->
-            <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" fill="url(#gradHatShade)" />
-          </g>
+                        <!-- COZY PARTY HAT (Soft Lilac & Cream Stripes, Scalloped Antique Gold Rim, Cream-Lilac Pom-Pom) -->
+                        <g class="party-hat-group">
+                            <ellipse cx="0" cy="11.5" rx="34" ry="5.5" fill="#d5c1ac" opacity="0.6" />
 
-          <!-- Crisp Espresso Cone Outline -->
-          <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z"
-                fill="none" stroke="#3a2e2a" stroke-width="3.2" stroke-linejoin="round" />
+                            <g clip-path="url(#clipPartyHat)">
+                                <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" fill="url(#gradHatBase)" />
+                                <g transform="rotate(-24)">
+                                    <rect x="-46" y="-58" width="92" height="10" fill="url(#gradHatStripe)"
+                                        opacity="0.92" />
+                                    <rect x="-46" y="-34" width="92" height="10" fill="url(#gradHatStripe)"
+                                        opacity="0.92" />
+                                    <rect x="-46" y="-10" width="92" height="10" fill="url(#gradHatStripe)"
+                                        opacity="0.92" />
+                                    <rect x="-46" y="14" width="92" height="10" fill="url(#gradHatStripe)"
+                                        opacity="0.92" />
+                                </g>
+                                <circle cx="-11" cy="-21" r="2.1" fill="#e6c27a" opacity="0.94" />
+                                <circle cx="9" cy="-31" r="2.0" fill="#e6c27a" opacity="0.94" />
+                                <circle cx="14" cy="-6" r="2.2" fill="#e6c27a" opacity="0.94" />
+                                <circle cx="-16" cy="-1" r="2.1" fill="#e6c27a" opacity="0.94" />
+                                <circle cx="-2" cy="-44" r="1.8" fill="#e6c27a" opacity="0.9" />
+                                <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" fill="url(#gradHatShade)" />
+                            </g>
 
-          <!-- Delicate Antique Gold Scalloped / Ruffled Rim -->
-          <path d="M -33 3.5
-                   C -34.5 9.5, -26.5 12.5, -22.5 8.5
-                   C -19.5 14, -10.5 15, -7.5 10.5
-                   C -4.5 16, 4.5 16, 7.5 10.5
-                   C 10.5 15, 19.5 14, 22.5 8.5
-                   C 26.5 12.5, 34.5 9.5, 33 3.5
-                   C 29 0.5, 25 2, 22 4.5
-                   C 17 2.5, 12 4, 8 6.5
-                   C 3 4.5, -3 4.5, -8 6.5
-                   C -12 4, -17 2.5, -22 4.5
-                   C -25 2, -29 0.5, -33 3.5 Z"
-                fill="url(#gradHatTrimGold)" stroke="#3a2e2a" stroke-width="2.4" stroke-linejoin="round" />
+                            <path d="M -30 4 L 0 -63 L 30 4 Q 0 13, -30 4 Z" fill="none" stroke="#3a2e2a"
+                                stroke-width="3.2" stroke-linejoin="round" />
 
-          <!-- Tiny Highlight Dots Along Gold Scallops -->
-          <circle cx="-15" cy="9.5" r="1.2" fill="#fffbeb" opacity="0.85" />
-          <circle cx="0" cy="11.2" r="1.3" fill="#fffbeb" opacity="0.9" />
-          <circle cx="15" cy="9.5" r="1.2" fill="#fffbeb" opacity="0.85" />
+                            <!-- Scalloped Antique Gold Rim (#E6C27A) -->
+                            <path d="M -33 3.5
+                       C -34.5 9.5, -26.5 12.5, -22.5 8.5
+                       C -19.5 14, -10.5 15, -7.5 10.5
+                       C -4.5 16, 4.5 16, 7.5 10.5
+                       C 10.5 15, 19.5 14, 22.5 8.5
+                       C 26.5 12.5, 34.5 9.5, 33 3.5
+                       C 29 0.5, 25 2, 22 4.5
+                       C 17 2.5, 12 4, 8 6.5
+                       C 3 4.5, -3 4.5, -8 6.5
+                       C -12 4, -17 2.5, -22 4.5
+                       C -25 2, -29 0.5, -33 3.5 Z" fill="url(#gradHatTrimGold)" stroke="#3a2e2a" stroke-width="2.4"
+                                stroke-linejoin="round" />
 
-          <!-- Fluffy Warm Cream & Lilac Pom-Pom -->
-          <g transform="translate(0, -65)">
-            <path d="M -2.5 -10.5
-                     C 2.5 -13, 8 -10, 8.5 -5.5
-                     C 13 -3.5, 13 3, 8.5 5.5
-                     C 8 10, 2.5 12, -2 9.5
-                     C -7 12, -12 8.5, -10 3.5
-                     C -13.5 0, -12 -6.5, -7.5 -7.5
-                     C -7.5 -11, -5 -11.5, -2.5 -10.5 Z"
-                  fill="url(#gradPomPom)" stroke="#3a2e2a" stroke-width="2.6" stroke-linejoin="round" />
-            <!-- Soft Fluff Shine -->
-            <ellipse cx="-3.2" cy="-4.5" rx="3.2" ry="2" transform="rotate(-24 -3.2 -4.5)" fill="#ffffff" opacity="0.9" />
-            <circle cx="3.5" cy="-1.5" r="1.3" fill="#ffffff" opacity="0.72" />
-          </g>
+                            <circle cx="-15" cy="9.5" r="1.2" fill="#fffbeb" opacity="0.88" />
+                            <circle cx="0" cy="11.2" r="1.3" fill="#fffbeb" opacity="0.92" />
+                            <circle cx="15" cy="9.5" r="1.2" fill="#fffbeb" opacity="0.88" />
 
-          <!-- Gentle Twinkling Sparkle Near Pom-Pom -->
-          <path class="hat-sparkle" d="M 18 -77 L 19.8 -70.8 L 26 -69 L 19.8 -67.2 L 18 -61 L 16.2 -67.2 L 10 -69 L 16.2 -70.8 Z"
-                fill="#fffbeb" />
-        </g>
+                            <!-- Fluffy Cream-Lilac Pom-Pom -->
+                            <g transform="translate(0, -65)">
+                                <path d="M -2.5 -10.5
+                         C 2.5 -13, 8 -10, 8.5 -5.5
+                         C 13 -3.5, 13 3, 8.5 5.5
+                         C 8 10, 2.5 12, -2 9.5
+                         C -7 12, -12 8.5, -10 3.5
+                         C -13.5 0, -12 -6.5, -7.5 -7.5
+                         C -7.5 -11, -5 -11.5, -2.5 -10.5 Z" fill="url(#gradPomPom)" stroke="#3a2e2a"
+                                    stroke-width="2.6" stroke-linejoin="round" />
+                                <ellipse cx="-3.2" cy="-4.5" rx="3.2" ry="2" transform="rotate(-24 -3.2 -4.5)"
+                                    fill="#ffffff" opacity="0.92" />
+                                <circle cx="3.5" cy="-1.5" r="1.3" fill="#ffffff" opacity="0.74" />
+                            </g>
 
-        <!-- Soft Forehead Tabby Hints -->
-        <g stroke="#d1bca5" stroke-width="4" stroke-linecap="round" opacity="0.7">
-          <line x1="200" y1="103" x2="200" y2="115" />
-          <line x1="184" y1="105" x2="187" y2="114" />
-          <line x1="216" y1="105" x2="213" y2="114" />
-        </g>
+                            <path class="hat-sparkle"
+                                d="M 18 -77 L 19.8 -70.8 L 26 -69 L 19.8 -67.2 L 18 -61 L 16.2 -67.2 L 10 -69 L 16.2 -70.8 Z"
+                                fill="#fffbeb" />
+                        </g>
 
-        <!-- Puffy Blush Cheeks + Tiny Shine Lines -->
-        <ellipse cx="86" cy="224" rx="26" ry="14" fill="url(#gradBlush)" />
-        <g stroke="#fff2f5" stroke-width="2.1" stroke-linecap="round" opacity="0.68">
-          <line x1="77" y1="226" x2="82" y2="221" />
-          <line x1="86" y1="227" x2="91" y2="222" />
-        </g>
+                        <!-- Soft Forehead Tabby Hints -->
+                        <g stroke="#d1bca5" stroke-width="4" stroke-linecap="round" opacity="0.68">
+                            <line x1="200" y1="103" x2="200" y2="115" />
+                            <line x1="184" y1="105" x2="187" y2="114" />
+                            <line x1="216" y1="105" x2="213" y2="114" />
+                        </g>
 
-        <ellipse cx="314" cy="224" rx="26" ry="14" fill="url(#gradBlush)" />
-        <g stroke="#fff2f5" stroke-width="2.1" stroke-linecap="round" opacity="0.68">
-          <line x1="309" y1="227" x2="314" y2="222" />
-          <line x1="318" y1="226" x2="323" y2="221" />
-        </g>
+                        <!-- Rosy Cheeks + Tiny Highlight Strokes -->
+                        <ellipse cx="86" cy="224" rx="26" ry="14" fill="url(#gradBlush)" />
+                        <g stroke="#fff2f5" stroke-width="2.1" stroke-linecap="round" opacity="0.72">
+                            <line x1="77" y1="226" x2="82" y2="221" />
+                            <line x1="86" y1="227" x2="91" y2="222" />
+                        </g>
 
-        <!-- Dark Espresso Whiskers -->
-        <g stroke="#3a2e2a" stroke-width="3" stroke-linecap="round" opacity="0.88">
-          <path d="M 56 202 Q 32 196, 15 198" fill="none" />
-          <path d="M 54 217 Q 30 218, 12 223" fill="none" />
-          <path d="M 59 232 Q 37 237, 22 245" fill="none" />
-        </g>
-        <g stroke="#3a2e2a" stroke-width="3" stroke-linecap="round" opacity="0.88">
-          <path d="M 344 202 Q 368 196, 385 198" fill="none" />
-          <path d="M 346 217 Q 370 218, 388 223" fill="none" />
-          <path d="M 341 232 Q 363 237, 378 245" fill="none" />
-        </g>
+                        <ellipse cx="314" cy="224" rx="26" ry="14" fill="url(#gradBlush)" />
+                        <g stroke="#fff2f5" stroke-width="2.1" stroke-linecap="round" opacity="0.72">
+                            <line x1="309" y1="227" x2="314" y2="222" />
+                            <line x1="318" y1="226" x2="323" y2="221" />
+                        </g>
 
-        <!-- LEFT EYE (Glossy Espresso-Amber + Slot Machine Reel) -->
-        <g id="leftEyeGroup" class="eye-group">
-          <circle cx="130" cy="180" r="36" fill="url(#gradSocket)" />
-          <g clip-path="url(#clipEyeLeft)">
-            <g class="idle-eye-content">
-              <ellipse cx="130" cy="181" rx="27" ry="29" fill="url(#gradIris)" />
-              <ellipse cx="130" cy="194" rx="19" ry="12" fill="url(#gradAmberGlow)" />
-              <circle cx="118.5" cy="165.5" r="8.8" fill="#ffffff" opacity="0.98" />
-              <circle cx="141.5" cy="194.5" r="3.9" fill="#ffe7cc" opacity="0.88" />
-              <circle cx="132" cy="163" r="2.1" fill="#ffffff" opacity="0.72" />
-            </g>
-            <g class="slot-eye-content">
-              <g id="leftReelTrack"></g>
-            </g>
-            <g class="eyelid-left">
-              <rect x="92" y="142" width="76" height="76" fill="#efe6da" />
-              <path d="M 96 213 Q 130 222, 164 213" fill="none" stroke="#3a2e2a" stroke-width="3.4" stroke-linecap="round" />
-            </g>
-            <circle cx="130" cy="180" r="36" fill="url(#gradEyeSheen)" />
-          </g>
-          <circle class="eye-ring" cx="130" cy="180" r="36" fill="none" stroke="#3a2e2a" stroke-width="3.8" />
-          <path d="M 95 169 Q 89 165, 87 161" fill="none" stroke="#3a2e2a" stroke-width="3.2" stroke-linecap="round" />
-        </g>
+                        <!-- Delicate Espresso Whiskers (3 per side) -->
+                        <g stroke="#3a2e2a" stroke-width="3.2" stroke-linecap="round" opacity="0.9">
+                            <path d="M 56 202 Q 32 196, 15 198" fill="none" />
+                            <path d="M 54 217 Q 30 218, 12 223" fill="none" />
+                            <path d="M 59 232 Q 37 237, 22 245" fill="none" />
+                        </g>
+                        <g stroke="#3a2e2a" stroke-width="3.2" stroke-linecap="round" opacity="0.9">
+                            <path d="M 344 202 Q 368 196, 385 198" fill="none" />
+                            <path d="M 346 217 Q 370 218, 388 223" fill="none" />
+                            <path d="M 341 232 Q 363 237, 378 245" fill="none" />
+                        </g>
 
-        <!-- RIGHT EYE (Glossy Espresso-Amber + Slot Machine Reel) -->
-        <g id="rightEyeGroup" class="eye-group">
-          <circle cx="270" cy="180" r="36" fill="url(#gradSocket)" />
-          <g clip-path="url(#clipEyeRight)">
-            <g class="idle-eye-content">
-              <ellipse cx="270" cy="181" rx="27" ry="29" fill="url(#gradIris)" />
-              <ellipse cx="270" cy="194" rx="19" ry="12" fill="url(#gradAmberGlow)" />
-              <circle cx="258.5" cy="165.5" r="8.8" fill="#ffffff" opacity="0.98" />
-              <circle cx="281.5" cy="194.5" r="3.9" fill="#ffe7cc" opacity="0.88" />
-              <circle cx="272" cy="163" r="2.1" fill="#ffffff" opacity="0.72" />
-            </g>
-            <g class="slot-eye-content">
-              <g id="rightReelTrack"></g>
-            </g>
-            <g class="eyelid-right">
-              <rect x="232" y="142" width="76" height="76" fill="#efe6da" />
-              <path d="M 236 213 Q 270 222, 304 213" fill="none" stroke="#3a2e2a" stroke-width="3.4" stroke-linecap="round" />
-            </g>
-            <circle cx="270" cy="180" r="36" fill="url(#gradEyeSheen)" />
-          </g>
-          <circle class="eye-ring" cx="270" cy="180" r="36" fill="none" stroke="#3a2e2a" stroke-width="3.8" />
-          <path d="M 305 169 Q 311 165, 313 161" fill="none" stroke="#3a2e2a" stroke-width="3.2" stroke-linecap="round" />
-        </g>
+                        <!-- LEFT EYE (Glossy Espresso-Amber + Slot Machine Reel) -->
+                        <g id="leftEyeGroup" class="eye-group">
+                            <circle cx="130" cy="180" r="36" fill="url(#gradSocket)" />
+                            <g clip-path="url(#clipEyeLeft)">
+                                <g class="idle-eye-content">
+                                    <ellipse cx="130" cy="181" rx="27" ry="29" fill="url(#gradIris)" />
+                                    <ellipse cx="130" cy="194" rx="19" ry="12" fill="url(#gradAmberGlow)" />
+                                    <circle cx="118.5" cy="165.5" r="8.8" fill="#ffffff" opacity="0.98" />
+                                    <circle cx="141.5" cy="194.5" r="3.9" fill="#ffe7cc" opacity="0.88" />
+                                    <circle cx="132" cy="163" r="2.1" fill="#ffffff" opacity="0.72" />
+                                </g>
+                                <g class="slot-eye-content">
+                                    <g id="leftReelTrack"></g>
+                                </g>
+                                <g class="eyelid-left">
+                                    <rect x="92" y="142" width="76" height="76" fill="#efe6da" />
+                                    <path d="M 96 213 Q 130 222, 164 213" fill="none" stroke="#3a2e2a"
+                                        stroke-width="3.4" stroke-linecap="round" />
+                                </g>
+                                <circle cx="130" cy="180" r="36" fill="url(#gradEyeSheen)" />
+                            </g>
+                            <circle class="eye-ring" cx="130" cy="180" r="36" fill="none" stroke="#3a2e2a"
+                                stroke-width="4" />
+                            <path d="M 95 169 Q 89 165, 87 161" fill="none" stroke="#3a2e2a" stroke-width="3.4"
+                                stroke-linecap="round" />
+                        </g>
 
-        <!-- HEART-SHAPED DUSTY ROSE NOSE (#C97A8E) & CUTE :3 MOUTH -->
-        <g transform="translate(200, 217)">
-          <path d="M 0 7.6 C -1.8 5.8, -9.8 1.5, -9.8 -3.5 C -9.8 -6.9, -6.5 -9.0, -3.2 -8.3 C -1.5 -7.9, -0.5 -6.6, 0 -5.2 C 0.5 -6.6, 1.5 -7.9, 3.2 -8.3 C 6.5 -9.0, 9.8 -6.9, 9.8 -3.5 C 9.8 1.5, 1.8 5.8, 0 7.6 Z"
-                fill="#c97a8e" stroke="#3a2e2a" stroke-width="1.6" stroke-linejoin="round" />
-          <!-- Tiny White Specular Highlight Dot -->
-          <ellipse cx="-4.2" cy="-4.5" rx="2.2" ry="1.3" transform="rotate(-24 -4.2 -4.5)" fill="#ffffff" opacity="0.92" />
-          <!-- Cute :3 Mouth -->
-          <path d="M 0 7.2 L 0 12.2 M -15.5 13 Q -7.8 22.5, 0 12.2 Q 7.8 22.5, 15.5 13"
-                fill="none" stroke="#3a2e2a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
-        </g>
+                        <!-- RIGHT EYE (Glossy Espresso-Amber + Slot Machine Reel) -->
+                        <g id="rightEyeGroup" class="eye-group">
+                            <circle cx="270" cy="180" r="36" fill="url(#gradSocket)" />
+                            <g clip-path="url(#clipEyeRight)">
+                                <g class="idle-eye-content">
+                                    <ellipse cx="270" cy="181" rx="27" ry="29" fill="url(#gradIris)" />
+                                    <ellipse cx="270" cy="194" rx="19" ry="12" fill="url(#gradAmberGlow)" />
+                                    <circle cx="258.5" cy="165.5" r="8.8" fill="#ffffff" opacity="0.98" />
+                                    <circle cx="281.5" cy="194.5" r="3.9" fill="#ffe7cc" opacity="0.88" />
+                                    <circle cx="272" cy="163" r="2.1" fill="#ffffff" opacity="0.72" />
+                                </g>
+                                <g class="slot-eye-content">
+                                    <g id="rightReelTrack"></g>
+                                </g>
+                                <g class="eyelid-right">
+                                    <rect x="232" y="142" width="76" height="76" fill="#efe6da" />
+                                    <path d="M 236 213 Q 270 222, 304 213" fill="none" stroke="#3a2e2a"
+                                        stroke-width="3.4" stroke-linecap="round" />
+                                </g>
+                                <circle cx="270" cy="180" r="36" fill="url(#gradEyeSheen)" />
+                            </g>
+                            <circle class="eye-ring" cx="270" cy="180" r="36" fill="none" stroke="#3a2e2a"
+                                stroke-width="4" />
+                            <path d="M 305 169 Q 311 165, 313 161" fill="none" stroke="#3a2e2a" stroke-width="3.4"
+                                stroke-linecap="round" />
+                        </g>
 
-        <!-- THIN COLLAR & TINY LILAC CHARM -->
-        <g transform="translate(0, 2)">
-          <path d="M 136 272 Q 200 289, 264 272" fill="none" stroke="url(#gradCollar)" stroke-width="5.4" stroke-linecap="round" />
-          <circle cx="200" cy="284" r="6.6" fill="#c084fc" stroke="#3a2e2a" stroke-width="2.2" />
-          <circle cx="198" cy="282" r="1.9" fill="#ffffff" opacity="0.9" />
-        </g>
-      </svg>
+                        <!-- HEART-SHAPED DUSTY ROSE NOSE (#C97A8E) WITH SHINE DOT & :3 MOUTH -->
+                        <g transform="translate(200, 217)">
+                            <path
+                                d="M 0 7.6 C -1.8 5.8, -9.8 1.5, -9.8 -3.5 C -9.8 -6.9, -6.5 -9.0, -3.2 -8.3 C -1.5 -7.9, -0.5 -6.6, 0 -5.2 C 0.5 -6.6, 1.5 -7.9, 3.2 -8.3 C 6.5 -9.0, 9.8 -6.9, 9.8 -3.5 C 9.8 1.5, 1.8 5.8, 0 7.6 Z"
+                                fill="#c97a8e" stroke="#3a2e2a" stroke-width="1.6" stroke-linejoin="round" />
+                            <ellipse cx="-4.2" cy="-4.5" rx="2.2" ry="1.3" transform="rotate(-24 -4.2 -4.5)"
+                                fill="#ffffff" opacity="0.94" />
+                            <path d="M 0 7.2 L 0 12.2 M -15.5 13 Q -7.8 22.5, 0 12.2 Q 7.8 22.5, 15.5 13" fill="none"
+                                stroke="#3a2e2a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+                        </g>
+
+                        <!-- THIN COLLAR & TINY LILAC CHARM -->
+                        <g transform="translate(0, 2)">
+                            <path d="M 136 272 Q 200 289, 264 272" fill="none" stroke="url(#gradCollar)"
+                                stroke-width="5.6" stroke-linecap="round" />
+                            <circle cx="200" cy="284" r="6.8" fill="#c084fc" stroke="#3a2e2a" stroke-width="2.2" />
+                            <circle cx="198" cy="282" r="2" fill="#ffffff" opacity="0.92" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 2. FLUFFY PAWS GRIPPING OUTER CORNERS OF THE ENLARGED PAITHON BOARD -->
+            <div class="board-wrap">
+                <!-- LEFT PAW (Outer corner — never overlaps header or digits) -->
+                <svg class="paw paw-left" viewBox="0 0 72 54" aria-hidden="true">
+                    <path d="M 11 9 C 6 24, 11 45, 29 47 C 47 49, 61 38, 61 20 C 61 9, 50 4, 36 4 C 22 4, 13 4, 11 9 Z"
+                        fill="#f7efe5" stroke="#3a2e2a" stroke-width="4" stroke-linejoin="round" />
+                    <path d="M 25 44 L 27 30 M 39 45 L 40 30 M 51 39 L 50 28" stroke="#c9b6a4" stroke-width="2.8"
+                        stroke-linecap="round" />
+                    <ellipse cx="36" cy="19.5" rx="10.5" ry="5.6" fill="#e5a9b8" opacity="0.92" />
+                    <circle cx="23" cy="25" r="2.5" fill="#e5a9b8" opacity="0.8" />
+                    <circle cx="49" cy="25" r="2.5" fill="#e5a9b8" opacity="0.8" />
+                </svg>
+
+                <!-- RIGHT PAW (Outer corner — never overlaps header or digits) -->
+                <svg class="paw paw-right" viewBox="0 0 72 54" aria-hidden="true">
+                    <path d="M 61 9 C 66 24, 61 45, 43 47 C 25 49, 11 38, 11 20 C 11 9, 22 4, 36 4 C 50 4, 59 4, 61 9 Z"
+                        fill="#f7efe5" stroke="#3a2e2a" stroke-width="4" stroke-linejoin="round" />
+                    <path d="M 47 44 L 45 30 M 33 45 L 32 30 M 21 39 L 22 28" stroke="#c9b6a4" stroke-width="2.8"
+                        stroke-linecap="round" />
+                    <ellipse cx="36" cy="19.5" rx="10.5" ry="5.6" fill="#e5a9b8" opacity="0.92" />
+                    <circle cx="49" cy="25" r="2.5" fill="#e5a9b8" opacity="0.8" />
+                    <circle cx="23" cy="25" r="2.5" fill="#e5a9b8" opacity="0.8" />
+                </svg>
+
+                <!-- DARK ESPRESSO-CHARCOAL BOARD CARD WITH THIN LILAC RIM -->
+                <div id="boardCard" class="board-card">
+                    <!-- PAITHON HEADER + AUTO-FITTING ZERO-OVERFLOW COUNTDOWN -->
+                    <div class="timer-box">
+                        <div class="title-row">
+                            <span class="live-dot" aria-hidden="true">
+                                <span class="live-dot-halo"></span>
+                                <span class="live-dot-core"></span>
+                            </span>
+                            <span class="title-text">PAITHON</span>
+                        </div>
+                        <div id="timerFitWrap" class="timer-fit-wrap">
+                            <span id="timerDisplay" class="timer-value">02:00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- SUBTLE LILAC DIVIDER -->
+                    <div class="divider-bar" aria-hidden="true"></div>
+
+                    <!-- ENLARGED ZERO-OVERFLOW 3-COLUMN PRICE TABLE -->
+                    <div class="price-grid">
+                        <div class="price-cell">
+                            <span class="price-amount">1 Sub</span>
+                            <span class="price-duration">+30 dk</span>
+                        </div>
+                        <div class="price-cell">
+                            <span class="price-amount">100 TL</span>
+                            <span class="price-duration">+15 dk</span>
+                        </div>
+                        <div class="price-cell">
+                            <span class="price-amount">100 Kicks</span>
+                            <span class="price-duration">+5 dk</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- 2. PUFFY PAWS GRIPPING THE PAITHON TIMER & PRICE BOARD -->
-    <div class="board-wrap">
-      <!-- LEFT PAW -->
-      <svg class="paw paw-left" viewBox="0 0 72 54" aria-hidden="true">
-        <path d="M 11 9 C 6 24, 11 45, 29 47 C 47 49, 61 38, 61 20 C 61 9, 50 4, 36 4 C 22 4, 13 4, 11 9 Z"
-              fill="#f7efe5" stroke="#3a2e2a" stroke-width="3.8" stroke-linejoin="round" />
-        <path d="M 25 44 L 27 30 M 39 45 L 40 30 M 51 39 L 50 28"
-              stroke="#c9b6a4" stroke-width="2.8" stroke-linecap="round" />
-        <ellipse cx="36" cy="19.5" rx="10.5" ry="5.6" fill="#e49aa9" opacity="0.88" />
-        <circle cx="23" cy="25" r="2.4" fill="#e49aa9" opacity="0.72" />
-        <circle cx="49" cy="25" r="2.4" fill="#e49aa9" opacity="0.72" />
-      </svg>
+    <script>
+        (function () {
+            'use strict';
 
-      <!-- RIGHT PAW -->
-      <svg class="paw paw-right" viewBox="0 0 72 54" aria-hidden="true">
-        <path d="M 61 9 C 66 24, 61 45, 43 47 C 25 49, 11 38, 11 20 C 11 9, 22 4, 36 4 C 50 4, 59 4, 61 9 Z"
-              fill="#f7efe5" stroke="#3a2e2a" stroke-width="3.8" stroke-linejoin="round" />
-        <path d="M 47 44 L 45 30 M 33 45 L 32 30 M 21 39 L 22 28"
-              stroke="#c9b6a4" stroke-width="2.8" stroke-linecap="round" />
-        <ellipse cx="36" cy="19.5" rx="10.5" ry="5.6" fill="#e49aa9" opacity="0.88" />
-        <circle cx="49" cy="25" r="2.4" fill="#e49aa9" opacity="0.72" />
-        <circle cx="23" cy="25" r="2.4" fill="#e49aa9" opacity="0.72" />
-      </svg>
+            // ==================== CONFIGURATION ====================
+            // Supported URL params: ?token=STREAMLABS_SOCKET_TOKEN&minutes=120&reset=1
+            const CONFIG = {
+                initialMinutes: 120,
+                streamlabsToken: '',
+                storageKey: 'paithon_cat_timer_v6',
+                // Exact tariff rates (seconds added per 1 unit)
+                secondsPerUnit: {
+                    SUB: 1800,  // 1 Sub = 30 dk (1800 sn)
+                    TRY: 9,     // 100 TL = 15 dk (900 sn / 100 = 9 sn)
+                    KICKS: 3    // 100 Kicks = 5 dk (300 sn / 100 = 3 sn)
+                },
+                bonusMultiple: 13,
+                bonusSeconds: 13,
+                sideNotifDurationMs: 4600,
+                eyeHoldDurationMs: 6000,
+                queuedHoldDurationMs: 2200,
+                maxSeenEvents: 500,
+                // Timer auto-fit typography bounds
+                timerMaxFontPx: 68,
+                timerMinFontPx: 22,
+                timerHorizontalMarginPx: 28
+            };
 
-      <!-- CHARCOAL-ESPRESSO BOARD CARD -->
-      <div id="boardCard" class="board-card">
-        <div id="popupLayer" class="popup-layer"></div>
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const EYE_STEP_PX = 82;
+            const LEFT_EYE_CENTER = { x: 130, y: 180 };
+            const RIGHT_EYE_CENTER = { x: 270, y: 180 };
 
-        <!-- PAITHON HEADER + BIG COUNTDOWN TIMER -->
-        <div class="timer-box">
-          <div class="title-row">
-            <span class="live-dot" aria-hidden="true">
-              <span class="live-dot-halo"></span>
-              <span class="live-dot-core"></span>
-            </span>
-            <span class="title-text">PAITHON</span>
-          </div>
-          <div id="timerDisplay" class="timer-value">02:00:00</div>
-        </div>
+            // ==================== STATE ====================
+            let targetEndTimestamp = 0;
+            let lastRenderedSecond = -1;
+            let lastFormattedLength = -1;
+            let streamlabsSocket = null;
+            const seenEventIds = new Set();
+            const eyeQueue = [];
+            let isSpinningEyes = false;
+            let activeHoldTimer = null;
+            let activeHoldDone = null;
 
-        <!-- SUBTLE LILAC DIVIDER -->
-        <div class="divider-bar" aria-hidden="true"></div>
+            // ==================== DOM REFERENCES ====================
+            const els = {
+                overlayRoot: document.getElementById('overlayRoot'),
+                sideNotifStack: document.getElementById('sideNotifStack'),
+                catHeadWrap: document.getElementById('catHeadWrap'),
+                leftEyeGroup: document.getElementById('leftEyeGroup'),
+                rightEyeGroup: document.getElementById('rightEyeGroup'),
+                leftReelTrack: document.getElementById('leftReelTrack'),
+                rightReelTrack: document.getElementById('rightReelTrack'),
+                boardCard: document.getElementById('boardCard'),
+                timerFitWrap: document.getElementById('timerFitWrap'),
+                timerDisplay: document.getElementById('timerDisplay'),
+                priceCells: Array.prototype.slice.call(document.querySelectorAll('.price-cell'))
+            };
 
-        <!-- COMPACT HIGH-CONTRAST PRICE TABLE -->
-        <div class="price-grid">
-          <div class="price-cell">
-            <div id="priceTryLabel" class="price-amount">10 TRY</div>
-            <div id="priceTryTime" class="price-duration">+1 dk</div>
-          </div>
-          <div class="price-cell">
-            <div id="priceKicksLabel" class="price-amount">100 Kicks</div>
-            <div id="priceKicksTime" class="price-duration">+1 dk</div>
-          </div>
-          <div class="price-cell">
-            <div id="priceSubLabel" class="price-amount">1 Sub</div>
-            <div id="priceSubTime" class="price-duration">+5 dk</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+            // ==================== ZERO-OVERFLOW AUTO-FIT ENGINE ====================
+            /**
+             * Guarantees the main countdown digits NEVER overflow or wrap,
+             * whether showing 02:00:00, 125:34:56, 1234:56:00, or 12345:00:00.
+             * Uses binary search + exact safety decrement against available container width.
+             */
+            function fitTimerText() {
+                const container = els.timerFitWrap;
+                const textEl = els.timerDisplay;
+                if (!container || !textEl) return;
 
-  <script>
-    (function () {
-      'use strict';
+                const containerWidth = container.clientWidth;
+                if (!containerWidth || containerWidth <= 0) return;
 
-      // ==================== CONFIGURATION ====================
-      // Supported URL params: ?token=STREAMLABS_TOKEN&minutes=120&reset=1
-      const CONFIG = {
-        initialMinutes: 120,
-        streamlabsToken: '',
-        storageKey: 'paithon_cat_timer_v4',
-        rates: {
-          tryPerMinute: 10,    // 10 TRY = +1 dk (6 sec / TRY)
-          kicksPerMinute: 100, // 100 Kicks = +1 dk (0.6 sec / Kick)
-          subMinutes: 5        // 1 Sub = +5 dk (300 sec / Sub)
-        },
-        eyeHoldDurationMs: 6000,
-        queuedHoldDurationMs: 2500,
-        maxSeenEvents: 500
-      };
+                const availableWidth = Math.max(40, containerWidth - CONFIG.timerHorizontalMarginPx);
+                const maxPx = CONFIG.timerMaxFontPx;
+                const minPx = CONFIG.timerMinFontPx;
 
-      const SVG_NS = 'http://www.w3.org/2000/svg';
-      const EYE_STEP_PX = 82;
-      const LEFT_EYE_CENTER = { x: 130, y: 180 };
-      const RIGHT_EYE_CENTER = { x: 270, y: 180 };
+                // Fast path: check if max font size already fits comfortably
+                textEl.style.fontSize = maxPx + 'px';
+                if (textEl.scrollWidth <= availableWidth) {
+                    return;
+                }
 
-      // ==================== STATE ====================
-      let targetEndTimestamp = 0;
-      let lastRenderedSecond = -1;
-      let streamlabsSocket = null;
-      const seenEventIds = new Set();
-      const eyeQueue = [];
-      let isSpinningEyes = false;
-      let activeHoldTimer = null;
-      let activeHoldDone = null;
+                // Binary search for the largest font size (0.5px precision) that fits cleanly
+                let low = minPx;
+                let high = maxPx;
+                let best = minPx;
 
-      // ==================== DOM REFERENCES ====================
-      const els = {
-        overlayRoot: document.getElementById('overlayRoot'),
-        catHeadWrap: document.getElementById('catHeadWrap'),
-        leftEyeGroup: document.getElementById('leftEyeGroup'),
-        rightEyeGroup: document.getElementById('rightEyeGroup'),
-        leftReelTrack: document.getElementById('leftReelTrack'),
-        rightReelTrack: document.getElementById('rightReelTrack'),
-        boardCard: document.getElementById('boardCard'),
-        popupLayer: document.getElementById('popupLayer'),
-        timerDisplay: document.getElementById('timerDisplay'),
-        priceTryLabel: document.getElementById('priceTryLabel'),
-        priceTryTime: document.getElementById('priceTryTime'),
-        priceKicksLabel: document.getElementById('priceKicksLabel'),
-        priceKicksTime: document.getElementById('priceKicksTime'),
-        priceSubLabel: document.getElementById('priceSubLabel'),
-        priceSubTime: document.getElementById('priceSubTime')
-      };
+                for (let i = 0; i < 12; i++) {
+                    const mid = (low + high) / 2;
+                    textEl.style.fontSize = mid.toFixed(2) + 'px';
+                    if (textEl.scrollWidth <= availableWidth) {
+                        best = mid;
+                        low = mid;
+                    } else {
+                        high = mid;
+                    }
+                }
 
-      // ==================== SAFE LOCALSTORAGE PERSISTENCE ====================
-      function safeGetStorage(key) {
-        try {
-          return window.localStorage.getItem(key);
-        } catch (err) {
-          return null;
-        }
-      }
+                // Floor to 0.5px and perform a final guard step to ensure zero subpixel overflow
+                let finalPx = Math.max(minPx, Math.floor(best * 2) / 2);
+                textEl.style.fontSize = finalPx + 'px';
 
-      function safeSetStorage(key, value) {
-        try {
-          window.localStorage.setItem(key, value);
-        } catch (err) {
-          // Silently continue in restricted OBS/iframe contexts
-        }
-      }
-
-      function safeRemoveStorage(key) {
-        try {
-          window.localStorage.removeItem(key);
-        } catch (err) {
-          // Ignore storage removal errors
-        }
-      }
-
-      function getRemainingMs() {
-        return Math.max(0, targetEndTimestamp - Date.now());
-      }
-
-      function saveTimerState() {
-        safeSetStorage(CONFIG.storageKey, JSON.stringify({
-          targetEndTimestamp: targetEndTimestamp,
-          remainingMs: getRemainingMs(),
-          savedAt: Date.now()
-        }));
-      }
-
-      function loadSavedRemainingMs() {
-        const raw = safeGetStorage(CONFIG.storageKey);
-        if (!raw) return null;
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed && Number.isFinite(parsed.targetEndTimestamp)) {
-            return Math.max(0, parsed.targetEndTimestamp - Date.now());
-          }
-          if (parsed && Number.isFinite(parsed.remainingMs)) {
-            return Math.max(0, parsed.remainingMs);
-          }
-        } catch (err) {
-          return null;
-        }
-        return null;
-      }
-
-      // ==================== SAFE NUMBER PARSING & TIME FORMATTING ====================
-      function parseNumericAmount(value) {
-        if (typeof value === 'number') {
-          return Number.isFinite(value) ? value : NaN;
-        }
-        if (typeof value !== 'string') return NaN;
-
-        const cleaned = value.trim().replace(/[^\d.,-]/g, '');
-        if (!cleaned) return NaN;
-
-        const lastComma = cleaned.lastIndexOf(',');
-        const lastDot = cleaned.lastIndexOf('.');
-        let normalized = cleaned;
-
-        if (lastComma > -1 && lastDot > -1) {
-          if (lastComma > lastDot) {
-            // e.g. "1.250,50" -> "1250.50"
-            normalized = cleaned.replace(/\./g, '').replace(',', '.');
-          } else {
-            // e.g. "1,250.50" -> "1250.50"
-            normalized = cleaned.replace(/,/g, '');
-          }
-        } else if (lastComma > -1) {
-          const decimals = cleaned.length - lastComma - 1;
-          normalized = decimals === 3 ? cleaned.replace(/,/g, '') : cleaned.replace(',', '.');
-        }
-
-        const num = parseFloat(normalized);
-        return Number.isFinite(num) ? num : NaN;
-      }
-
-      function formatClock(totalSeconds) {
-        const clamped = Math.max(0, Math.floor(totalSeconds));
-        const hrs = Math.floor(clamped / 3600);
-        const mins = Math.floor((clamped % 3600) / 60);
-        const secs = clamped % 60;
-        return (
-          String(hrs).padStart(2, '0') + ':' +
-          String(mins).padStart(2, '0') + ':' +
-          String(secs).padStart(2, '0')
-        );
-      }
-
-      function formatPopupDuration(totalSeconds) {
-        const sec = Math.max(0, Math.round(totalSeconds));
-        const hrs = Math.floor(sec / 3600);
-        const mins = Math.floor((sec % 3600) / 60);
-        const remSecs = sec % 60;
-        if (hrs > 0) {
-          return '+' + hrs + ':' + String(mins).padStart(2, '0') + ':' + String(remSecs).padStart(2, '0');
-        }
-        return '+' + String(mins).padStart(2, '0') + ':' + String(remSecs).padStart(2, '0');
-      }
-
-      function formatShortMinutes(minutes) {
-        const totalSec = Math.round(minutes * 60);
-        if (totalSec >= 3600 && totalSec % 3600 === 0) return '+' + (totalSec / 3600) + ' sa';
-        if (totalSec >= 60 && totalSec % 60 === 0) return '+' + (totalSec / 60) + ' dk';
-        if (totalSec >= 60) return '+' + Math.floor(totalSec / 60) + ' dk ' + (totalSec % 60) + ' sn';
-        return '+' + totalSec + ' sn';
-      }
-
-      // ==================== UI RENDERING ====================
-      function renderTimer(force) {
-        const remainingSeconds = Math.ceil(getRemainingMs() / 1000);
-        if (!force && remainingSeconds === lastRenderedSecond) return;
-        lastRenderedSecond = remainingSeconds;
-        els.timerDisplay.textContent = formatClock(remainingSeconds);
-      }
-
-      function renderPricingTable() {
-        els.priceTryLabel.textContent = CONFIG.rates.tryPerMinute + ' TRY';
-        els.priceTryTime.textContent = '+1 dk';
-
-        els.priceKicksLabel.textContent = CONFIG.rates.kicksPerMinute + ' Kicks';
-        els.priceKicksTime.textContent = '+1 dk';
-
-        els.priceSubLabel.textContent = '1 Sub';
-        els.priceSubTime.textContent = formatShortMinutes(CONFIG.rates.subMinutes);
-      }
-
-      function spawnPopup(addedSeconds, tier) {
-        const el = document.createElement('div');
-        el.className = 'time-popup tier-' + tier;
-        el.textContent = formatPopupDuration(addedSeconds);
-        els.popupLayer.appendChild(el);
-        setTimeout(function () {
-          if (el.parentNode) el.parentNode.removeChild(el);
-        }, 2250);
-      }
-
-      function pulseBoard() {
-        els.boardCard.classList.remove('pulse-add');
-        void els.boardCard.offsetWidth;
-        els.boardCard.classList.add('pulse-add');
-        setTimeout(function () {
-          els.boardCard.classList.remove('pulse-add');
-        }, 860);
-      }
-
-      function triggerEyeBounce(eyeGroupEl) {
-        eyeGroupEl.classList.remove('pop-lock');
-        void eyeGroupEl.getBoundingClientRect();
-        eyeGroupEl.classList.add('pop-lock');
-        setTimeout(function () {
-          eyeGroupEl.classList.remove('pop-lock');
-        }, 380);
-      }
-
-      // ==================== SLOT MACHINE EYE REEL ENGINE ====================
-      function getIconHref(tier) {
-        if (tier === 'gold') return '#iconGold';
-        if (tier === 'dollar') return '#iconDollar';
-        return '#iconLatte';
-      }
-
-      function populateReel(trackEl, finalTier, totalSteps) {
-        while (trackEl.firstChild) {
-          trackEl.removeChild(trackEl.firstChild);
-        }
-        const pool = ['#iconLatte', '#iconDollar', '#iconGold', '#iconSparkle'];
-        const finalHref = getIconHref(finalTier);
-
-        for (let i = 0; i <= totalSteps; i++) {
-          const href = i === totalSteps ? finalHref : pool[i % pool.length];
-          const useEl = document.createElementNS(SVG_NS, 'use');
-          useEl.setAttribute('href', href);
-          useEl.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
-          useEl.setAttribute('x', '0');
-          useEl.setAttribute('y', String(i * EYE_STEP_PX));
-          trackEl.appendChild(useEl);
-        }
-      }
-
-      function animateSingleReel(trackEl, eyeCenter, totalSteps, durationMs) {
-        return new Promise(function (resolve) {
-          const startY = eyeCenter.y;
-          const endY = eyeCenter.y - totalSteps * EYE_STEP_PX;
-          const distance = endY - startY;
-          const startTime = performance.now();
-
-          trackEl.setAttribute('filter', 'url(#slotMotionBlur)');
-
-          function frame(now) {
-            const elapsed = now - startTime;
-            const t = Math.min(1, elapsed / durationMs);
-            const eased = 1 - Math.pow(1 - t, 4.2);
-            const currentY = startY + distance * eased;
-
-            trackEl.setAttribute('transform', 'translate(' + eyeCenter.x + ', ' + currentY.toFixed(2) + ')');
-
-            if (t > 0.78 && trackEl.hasAttribute('filter')) {
-              trackEl.removeAttribute('filter');
+                while (finalPx > minPx && textEl.scrollWidth > availableWidth) {
+                    finalPx = Math.max(minPx, finalPx - 0.5);
+                    textEl.style.fontSize = finalPx + 'px';
+                }
             }
 
-            if (t < 1) {
-              requestAnimationFrame(frame);
-            } else {
-              trackEl.removeAttribute('filter');
-              trackEl.setAttribute('transform', 'translate(' + eyeCenter.x + ', ' + endY + ')');
-              resolve();
+            /**
+             * Guarantees price table labels ("1 Sub", "100 TL", "100 Kicks", "+30 dk", etc.)
+             * remain as large and crisp as possible with zero wrapping or clipping on any width.
+             */
+            function fitPriceCells() {
+                els.priceCells.forEach(function (cell) {
+                    const available = Math.max(30, cell.clientWidth - 8);
+                    const amountEl = cell.querySelector('.price-amount');
+                    const durationEl = cell.querySelector('.price-duration');
+
+                    if (amountEl) {
+                        let size = 16;
+                        amountEl.style.fontSize = size + 'px';
+                        while (size > 10 && amountEl.scrollWidth > available) {
+                            size -= 0.5;
+                            amountEl.style.fontSize = size + 'px';
+                        }
+                    }
+
+                    if (durationEl) {
+                        let size = 18;
+                        durationEl.style.fontSize = size + 'px';
+                        while (size > 11 && durationEl.scrollWidth > available) {
+                            size -= 0.5;
+                            durationEl.style.fontSize = size + 'px';
+                        }
+                    }
+                });
             }
-          }
 
-          requestAnimationFrame(frame);
-        });
-      }
+            function setupAutoFitObservers() {
+                if (typeof window.ResizeObserver === 'function') {
+                    try {
+                        const ro = new window.ResizeObserver(function () {
+                            fitTimerText();
+                            fitPriceCells();
+                        });
+                        if (els.timerFitWrap) ro.observe(els.timerFitWrap);
+                        if (els.boardCard) ro.observe(els.boardCard);
+                    } catch (err) {
+                        // Fall back to window resize listener below
+                    }
+                }
 
-      function waitHold(ms) {
-        return new Promise(function (resolve) {
-          activeHoldDone = resolve;
-          activeHoldTimer = setTimeout(function () {
-            activeHoldTimer = null;
-            activeHoldDone = null;
-            resolve();
-          }, ms);
-        });
-      }
+                window.addEventListener('resize', function () {
+                    fitTimerText();
+                    fitPriceCells();
+                });
 
-      function shortenActiveHoldIfQueued() {
-        if (activeHoldTimer && activeHoldDone) {
-          clearTimeout(activeHoldTimer);
-          activeHoldTimer = setTimeout(function () {
-            const done = activeHoldDone;
-            activeHoldTimer = null;
-            activeHoldDone = null;
-            if (done) done();
-          }, 550);
-        }
-      }
-
-      function clearEyeTierClasses() {
-        els.catHeadWrap.classList.remove('glow-latte', 'glow-dollar', 'glow-gold');
-        els.leftEyeGroup.classList.remove('tier-latte', 'tier-dollar', 'tier-gold');
-        els.rightEyeGroup.classList.remove('tier-latte', 'tier-dollar', 'tier-gold');
-      }
-
-      async function processEyeQueue() {
-        if (isSpinningEyes) return;
-        isSpinningEyes = true;
-
-        try {
-          while (eyeQueue.length > 0) {
-            const tier = eyeQueue.shift();
-
-            clearEyeTierClasses();
-            els.overlayRoot.classList.add('is-excited');
-            els.leftEyeGroup.classList.add('slot-active');
-            els.rightEyeGroup.classList.add('slot-active');
-
-            const leftSteps = 12;
-            const rightSteps = 15;
-            populateReel(els.leftReelTrack, tier, leftSteps);
-            populateReel(els.rightReelTrack, tier, rightSteps);
-
-            // Left eye locks slightly before right eye
-            const leftSpin = animateSingleReel(els.leftReelTrack, LEFT_EYE_CENTER, leftSteps, 1050);
-            const rightSpin = animateSingleReel(els.rightReelTrack, RIGHT_EYE_CENTER, rightSteps, 1320);
-
-            await leftSpin;
-            els.leftEyeGroup.classList.add('tier-' + tier);
-            triggerEyeBounce(els.leftEyeGroup);
-
-            await rightSpin;
-            els.rightEyeGroup.classList.add('tier-' + tier);
-            els.catHeadWrap.classList.add('glow-' + tier);
-            triggerEyeBounce(els.rightEyeGroup);
-
-            const holdMs = eyeQueue.length > 0 ? CONFIG.queuedHoldDurationMs : CONFIG.eyeHoldDurationMs;
-            await waitHold(holdMs);
-          }
-        } finally {
-          els.leftEyeGroup.classList.remove('slot-active');
-          els.rightEyeGroup.classList.remove('slot-active');
-          clearEyeTierClasses();
-          els.overlayRoot.classList.remove('is-excited');
-          isSpinningEyes = false;
-        }
-      }
-
-      function enqueueEyeSpin(tier) {
-        eyeQueue.push(tier);
-        if (isSpinningEyes) {
-          shortenActiveHoldIfQueued();
-        } else {
-          processEyeQueue();
-        }
-      }
-
-      // ==================== DONATION PROCESSING & SILENT 13x RULE ====================
-      function getSecondsPerUnit(currencyType) {
-        if (currencyType === 'TRY') {
-          return CONFIG.rates.tryPerMinute > 0 ? 60 / CONFIG.rates.tryPerMinute : 0;
-        }
-        if (currencyType === 'KICKS') {
-          return CONFIG.rates.kicksPerMinute > 0 ? 60 / CONFIG.rates.kicksPerMinute : 0;
-        }
-        if (currencyType === 'SUB') {
-          return CONFIG.rates.subMinutes > 0 ? CONFIG.rates.subMinutes * 60 : 0;
-        }
-        return 0;
-      }
-
-      function processDonation(currencyType, rawAmount) {
-        const type = String(currencyType || '').toUpperCase();
-        const amount = parseNumericAmount(rawAmount);
-        if (!Number.isFinite(amount) || amount <= 0) return;
-
-        const secPerUnit = getSecondsPerUnit(type);
-        if (!Number.isFinite(secPerUnit) || secPerUnit <= 0) return;
-
-        const baseSeconds = Math.round(amount * secPerUnit);
-        // Silently add 13 seconds whenever the donated amount is a positive integer multiple of 13
-        const isMultipleOf13 =
-          amount > 0 &&
-          Math.abs(amount - Math.round(amount)) < 1e-9 &&
-          Math.round(amount) % 13 === 0;
-        const extraSeconds = isMultipleOf13 ? 13 : 0;
-        const totalAddedSeconds = baseSeconds + extraSeconds;
-
-        if (totalAddedSeconds <= 0) return;
-
-        // Drift-free timer update (cleanly resumes if countdown reached 00:00:00)
-        const now = Date.now();
-        const baseEnd = targetEndTimestamp > now ? targetEndTimestamp : now;
-        targetEndTimestamp = baseEnd + totalAddedSeconds * 1000;
-        saveTimerState();
-        renderTimer(true);
-
-        // Eye tier: 0-10 min (<=600s) Latte | 10-60 min (<=3600s) Dollar | 60+ min (>3600s) Gold
-        let tier = 'latte';
-        if (totalAddedSeconds > 3600) {
-          tier = 'gold';
-        } else if (totalAddedSeconds > 600) {
-          tier = 'dollar';
-        }
-
-        pulseBoard();
-        spawnPopup(totalAddedSeconds, tier);
-        enqueueEyeSpin(tier);
-      }
-
-      // ==================== STREAMLABS SOCKET INTEGRATION ====================
-      function isDuplicateEvent(eventId) {
-        if (!eventId) return false;
-        const key = String(eventId);
-        if (seenEventIds.has(key)) return true;
-        seenEventIds.add(key);
-        if (seenEventIds.size > CONFIG.maxSeenEvents) {
-          const oldest = seenEventIds.values().next().value;
-          seenEventIds.delete(oldest);
-        }
-        return false;
-      }
-
-      function handleStreamlabsEvent(eventData) {
-        if (!eventData || typeof eventData !== 'object') return;
-        const type = String(eventData.type || '').toLowerCase();
-        const messages = Array.isArray(eventData.message)
-          ? eventData.message
-          : (eventData.message ? [eventData.message] : []);
-
-        messages.forEach(function (msg) {
-          if (!msg || typeof msg !== 'object') return;
-          const eventId = msg._id || msg.id || msg.event_id || eventData.event_id;
-          if (isDuplicateEvent(eventId)) return;
-
-          // 1. Monetary Donation / Tip (TRY)
-          if (type === 'donation' || type === 'tip') {
-            const amount = parseNumericAmount(msg.amount != null ? msg.amount : msg.formatted_amount);
-            if (Number.isFinite(amount) && amount > 0) {
-              processDonation('TRY', amount);
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(function () {
+                        fitTimerText();
+                        fitPriceCells();
+                    }).catch(function () { });
+                }
             }
-            return;
-          }
 
-          // 2. Subscriptions & Gift Subscriptions (Sub)
-          if (
-            type === 'subscription' ||
-            type === 'sub' ||
-            type === 'resub' ||
-            type === 'gift' ||
-            type === 'submysterygift' ||
-            type === 'gift_subscription' ||
-            type === 'kick_subscription'
-          ) {
-            const subCount = parseNumericAmount(
-              msg.gift_count || msg.mass_gift_count || msg.sub_count || msg.amount || 1
-            );
-            processDonation('SUB', Number.isFinite(subCount) && subCount > 0 ? subCount : 1);
-            return;
-          }
-
-          // 3. Kicks / Bits / Cheers
-          if (
-            type === 'kick' ||
-            type === 'kicks' ||
-            type === 'kick_gift' ||
-            type === 'bits' ||
-            type === 'cheer'
-          ) {
-            const kicksAmount = parseNumericAmount(msg.amount != null ? msg.amount : msg.bits);
-            if (Number.isFinite(kicksAmount) && kicksAmount > 0) {
-              processDonation('KICKS', kicksAmount);
+            // ==================== SAFE LOCALSTORAGE PERSISTENCE ====================
+            function safeGetStorage(key) {
+                try {
+                    return window.localStorage.getItem(key);
+                } catch (err) {
+                    return null;
+                }
             }
-          }
-        });
-      }
 
-      // Exposed for console or external payload testing
-      window.handleStreamlabsPayload = handleStreamlabsEvent;
-
-      // Dynamically load Socket.IO v2.5.0 ONLY when a Streamlabs token is configured
-      function connectStreamlabs(token) {
-        if (!token || typeof token !== 'string') return;
-        const cleanToken = token.trim();
-        if (!cleanToken) return;
-
-        function initSocket() {
-          if (typeof window.io !== 'function') return;
-          try {
-            if (streamlabsSocket) {
-              streamlabsSocket.disconnect();
+            function safeSetStorage(key, value) {
+                try {
+                    window.localStorage.setItem(key, value);
+                } catch (err) {
+                    // Silently continue in restricted OBS/iframe environments
+                }
             }
-            streamlabsSocket = window.io('https://sockets.streamlabs.com?token=' + encodeURIComponent(cleanToken), {
-              transports: ['websocket']
+
+            function safeRemoveStorage(key) {
+                try {
+                    window.localStorage.removeItem(key);
+                } catch (err) {
+                    // Ignore storage removal errors
+                }
+            }
+
+            function getRemainingMs() {
+                return Math.max(0, targetEndTimestamp - Date.now());
+            }
+
+            function saveTimerState() {
+                safeSetStorage(CONFIG.storageKey, JSON.stringify({
+                    targetEndTimestamp: targetEndTimestamp,
+                    remainingMs: getRemainingMs(),
+                    savedAt: Date.now()
+                }));
+            }
+
+            function loadSavedRemainingMs() {
+                const raw = safeGetStorage(CONFIG.storageKey);
+                if (!raw) return null;
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && Number.isFinite(parsed.targetEndTimestamp)) {
+                        return Math.max(0, parsed.targetEndTimestamp - Date.now());
+                    }
+                    if (parsed && Number.isFinite(parsed.remainingMs)) {
+                        return Math.max(0, parsed.remainingMs);
+                    }
+                } catch (err) {
+                    return null;
+                }
+                return null;
+            }
+
+            // ==================== ROBUST NUMBER PARSING & TIME FORMATTING ====================
+            /**
+             * Parses numeric amounts from numbers or formatted strings such as:
+             * "1,000.00", "₺130,00", "1.250,50", "130 TRY".
+             */
+            function parseNumericAmount(value) {
+                if (typeof value === 'number') {
+                    return Number.isFinite(value) ? value : NaN;
+                }
+                if (typeof value !== 'string') return NaN;
+
+                const cleaned = value.trim().replace(/[^\d.,-]/g, '');
+                if (!cleaned) return NaN;
+
+                const lastComma = cleaned.lastIndexOf(',');
+                const lastDot = cleaned.lastIndexOf('.');
+                let normalized = cleaned;
+
+                if (lastComma > -1 && lastDot > -1) {
+                    if (lastComma > lastDot) {
+                        normalized = cleaned.replace(/\./g, '').replace(',', '.');
+                    } else {
+                        normalized = cleaned.replace(/,/g, '');
+                    }
+                } else if (lastComma > -1) {
+                    const decimals = cleaned.length - lastComma - 1;
+                    normalized = decimals === 3 ? cleaned.replace(/,/g, '') : cleaned.replace(',', '.');
+                }
+
+                const num = parseFloat(normalized);
+                return Number.isFinite(num) ? num : NaN;
+            }
+
+            function formatClock(totalSeconds) {
+                const clamped = Math.max(0, Math.floor(totalSeconds));
+                const hrs = Math.floor(clamped / 3600);
+                const mins = Math.floor((clamped % 3600) / 60);
+                const secs = clamped % 60;
+                return (
+                    String(hrs).padStart(2, '0') + ':' +
+                    String(mins).padStart(2, '0') + ':' +
+                    String(secs).padStart(2, '0')
+                );
+            }
+
+            /**
+             * Formats base added duration for the side notification pill:
+             * e.g., 300 -> "+05:00", 1170 -> "+19:30", 3600 -> "+1:00:00", 360000 -> "+100:00:00"
+             */
+            function formatSideDuration(totalSeconds) {
+                const sec = Math.max(0, Math.round(totalSeconds));
+                const hrs = Math.floor(sec / 3600);
+                const mins = Math.floor((sec % 3600) / 60);
+                const remSecs = sec % 60;
+                if (hrs > 0) {
+                    return '+' + hrs + ':' + String(mins).padStart(2, '0') + ':' + String(remSecs).padStart(2, '0');
+                }
+                return '+' + String(mins).padStart(2, '0') + ':' + String(remSecs).padStart(2, '0');
+            }
+
+            // ==================== TIMER RENDER & SIDE NOTIFICATION ====================
+            function renderTimer(force) {
+                const remainingSeconds = Math.ceil(getRemainingMs() / 1000);
+                if (!force && remainingSeconds === lastRenderedSecond) return;
+
+                lastRenderedSecond = remainingSeconds;
+                const formatted = formatClock(remainingSeconds);
+                els.timerDisplay.textContent = formatted;
+
+                if (force || formatted.length !== lastFormattedLength) {
+                    lastFormattedLength = formatted.length;
+                    fitTimerText();
+                }
+            }
+
+            /**
+             * Spawns the floating side duration pill next to the cat's left cheek.
+             * Shows ONLY base added time (zero donor name or message).
+             * Attaches a separate "+13 sn" badge to the pill's top-right corner when bonus applies.
+             */
+            function spawnSideNotification(baseSeconds, bonusSeconds, tier) {
+                const pill = document.createElement('div');
+                pill.className = 'side-notif tier-' + tier;
+
+                const durationText = formatSideDuration(baseSeconds);
+                const durationSpan = document.createElement('span');
+                durationSpan.textContent = durationText;
+                pill.appendChild(durationSpan);
+
+                // Keep very long hour notifications (e.g. +100:00:00) sleek and unclipped
+                if (durationText.length >= 9) {
+                    pill.style.fontSize = '21px';
+                    pill.style.padding = '9px 14px';
+                }
+
+                if (bonusSeconds > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'bonus-badge';
+                    badge.textContent = '+' + bonusSeconds + ' sn';
+                    pill.appendChild(badge);
+                }
+
+                while (els.sideNotifStack.children.length >= 3) {
+                    els.sideNotifStack.removeChild(els.sideNotifStack.firstChild);
+                }
+
+                els.sideNotifStack.appendChild(pill);
+
+                setTimeout(function () {
+                    if (pill.parentNode) {
+                        pill.parentNode.removeChild(pill);
+                    }
+                }, CONFIG.sideNotifDurationMs + 80);
+            }
+
+            function pulseBoard() {
+                els.boardCard.classList.remove('pulse-add');
+                void els.boardCard.offsetWidth;
+                els.boardCard.classList.add('pulse-add');
+                setTimeout(function () {
+                    els.boardCard.classList.remove('pulse-add');
+                }, 860);
+            }
+
+            function triggerEyeBounce(eyeGroupEl) {
+                eyeGroupEl.classList.remove('pop-lock');
+                void eyeGroupEl.getBoundingClientRect();
+                eyeGroupEl.classList.add('pop-lock');
+                setTimeout(function () {
+                    eyeGroupEl.classList.remove('pop-lock');
+                }, 380);
+            }
+
+            // ==================== SLOT MACHINE EYE REEL ENGINE ====================
+            function getIconHref(tier) {
+                if (tier === 'gold') return '#iconGold';
+                if (tier === 'dollar') return '#iconDollar';
+                return '#iconLatte';
+            }
+
+            function populateReel(trackEl, finalTier, totalSteps) {
+                while (trackEl.firstChild) {
+                    trackEl.removeChild(trackEl.firstChild);
+                }
+                const pool = ['#iconLatte', '#iconDollar', '#iconGold', '#iconSparkle'];
+                const finalHref = getIconHref(finalTier);
+
+                for (let i = 0; i <= totalSteps; i++) {
+                    const href = i === totalSteps ? finalHref : pool[i % pool.length];
+                    const useEl = document.createElementNS(SVG_NS, 'use');
+                    useEl.setAttribute('href', href);
+                    useEl.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
+                    useEl.setAttribute('x', '0');
+                    useEl.setAttribute('y', String(i * EYE_STEP_PX));
+                    trackEl.appendChild(useEl);
+                }
+            }
+
+            function animateSingleReel(trackEl, eyeCenter, totalSteps, durationMs) {
+                return new Promise(function (resolve) {
+                    const startY = eyeCenter.y;
+                    const endY = eyeCenter.y - totalSteps * EYE_STEP_PX;
+                    const distance = endY - startY;
+                    const startTime = performance.now();
+
+                    trackEl.setAttribute('filter', 'url(#slotMotionBlur)');
+
+                    function frame(now) {
+                        const elapsed = now - startTime;
+                        const t = Math.min(1, elapsed / durationMs);
+                        const eased = 1 - Math.pow(1 - t, 4.2);
+                        const currentY = startY + distance * eased;
+
+                        trackEl.setAttribute('transform', 'translate(' + eyeCenter.x + ', ' + currentY.toFixed(2) + ')');
+
+                        if (t > 0.78 && trackEl.hasAttribute('filter')) {
+                            trackEl.removeAttribute('filter');
+                        }
+
+                        if (t < 1) {
+                            requestAnimationFrame(frame);
+                        } else {
+                            trackEl.removeAttribute('filter');
+                            trackEl.setAttribute('transform', 'translate(' + eyeCenter.x + ', ' + endY + ')');
+                            resolve();
+                        }
+                    }
+
+                    requestAnimationFrame(frame);
+                });
+            }
+
+            function waitHold(ms) {
+                return new Promise(function (resolve) {
+                    activeHoldDone = resolve;
+                    activeHoldTimer = setTimeout(function () {
+                        activeHoldTimer = null;
+                        activeHoldDone = null;
+                        resolve();
+                    }, ms);
+                });
+            }
+
+            function shortenActiveHoldIfQueued() {
+                if (activeHoldTimer && activeHoldDone) {
+                    clearTimeout(activeHoldTimer);
+                    activeHoldTimer = setTimeout(function () {
+                        const done = activeHoldDone;
+                        activeHoldTimer = null;
+                        activeHoldDone = null;
+                        if (done) done();
+                    }, 520);
+                }
+            }
+
+            function clearEyeTierClasses() {
+                els.catHeadWrap.classList.remove('glow-latte', 'glow-dollar', 'glow-gold');
+                els.leftEyeGroup.classList.remove('tier-latte', 'tier-dollar', 'tier-gold');
+                els.rightEyeGroup.classList.remove('tier-latte', 'tier-dollar', 'tier-gold');
+            }
+
+            async function processEyeQueue() {
+                if (isSpinningEyes) return;
+                isSpinningEyes = true;
+
+                try {
+                    while (eyeQueue.length > 0) {
+                        const tier = eyeQueue.shift();
+
+                        clearEyeTierClasses();
+                        els.overlayRoot.classList.add('is-excited');
+                        els.leftEyeGroup.classList.add('slot-active');
+                        els.rightEyeGroup.classList.add('slot-active');
+
+                        const leftSteps = 12;
+                        const rightSteps = 15;
+                        populateReel(els.leftReelTrack, tier, leftSteps);
+                        populateReel(els.rightReelTrack, tier, rightSteps);
+
+                        // Staggered lock-in: left eye settles, then right eye ~260ms later
+                        const leftSpin = animateSingleReel(els.leftReelTrack, LEFT_EYE_CENTER, leftSteps, 1020);
+                        const rightSpin = animateSingleReel(els.rightReelTrack, RIGHT_EYE_CENTER, rightSteps, 1280);
+
+                        await leftSpin;
+                        els.leftEyeGroup.classList.add('tier-' + tier);
+                        triggerEyeBounce(els.leftEyeGroup);
+
+                        await rightSpin;
+                        els.rightEyeGroup.classList.add('tier-' + tier);
+                        els.catHeadWrap.classList.add('glow-' + tier);
+                        triggerEyeBounce(els.rightEyeGroup);
+
+                        const holdMs = eyeQueue.length > 0 ? CONFIG.queuedHoldDurationMs : CONFIG.eyeHoldDurationMs;
+                        await waitHold(holdMs);
+                    }
+                } finally {
+                    els.leftEyeGroup.classList.remove('slot-active');
+                    els.rightEyeGroup.classList.remove('slot-active');
+                    clearEyeTierClasses();
+                    els.overlayRoot.classList.remove('is-excited');
+                    isSpinningEyes = false;
+                }
+            }
+
+            function enqueueEyeSpin(tier) {
+                eyeQueue.push(tier);
+                if (isSpinningEyes) {
+                    shortenActiveHoldIfQueued();
+                } else {
+                    processEyeQueue();
+                }
+            }
+
+            // ==================== DONATION PROCESSING & +13 SN BONUS RULE ====================
+            function isPositiveMultipleOf13(amount) {
+                if (!Number.isFinite(amount) || amount <= 0) return false;
+                const rounded = Math.round(amount);
+                return (
+                    Number.isInteger(rounded) &&
+                    rounded > 0 &&
+                    Math.abs(amount - rounded) < 1e-6 &&
+                    rounded % CONFIG.bonusMultiple === 0
+                );
+            }
+
+            /**
+             * Processes a donation in TRY, KICKS, or SUB:
+             * - Immediately adds baseSeconds + bonusSeconds to the drift-free countdown timer
+             * - Displays ONLY base duration on the side pill + separate "+13 sn" top-right badge when applicable
+             * - Spins slot eyes based on total added seconds (<600s Latte, 600-3599s Dollar, >=3600s Gold)
+             */
+            function processDonation(currencyType, rawAmount) {
+                const type = String(currencyType || '').toUpperCase();
+                const amount = parseNumericAmount(rawAmount);
+                if (!Number.isFinite(amount) || amount <= 0) return;
+
+                const secPerUnit = CONFIG.secondsPerUnit[type];
+                if (!Number.isFinite(secPerUnit) || secPerUnit <= 0) return;
+
+                const baseSeconds = Math.round(amount * secPerUnit);
+                const bonusSeconds = isPositiveMultipleOf13(amount) ? CONFIG.bonusSeconds : 0;
+                const totalAddedSeconds = baseSeconds + bonusSeconds;
+
+                if (totalAddedSeconds <= 0) return;
+
+                // Drift-free timer update (smoothly resumes from now if timer reached 00:00:00)
+                const now = Date.now();
+                const baseEnd = targetEndTimestamp > now ? targetEndTimestamp : now;
+                targetEndTimestamp = baseEnd + totalAddedSeconds * 1000;
+                saveTimerState();
+                renderTimer(true);
+
+                // Prize eye tier based on total added duration
+                let tier = 'latte';
+                if (totalAddedSeconds >= 3600) {
+                    tier = 'gold';
+                } else if (totalAddedSeconds >= 600) {
+                    tier = 'dollar';
+                }
+
+                pulseBoard();
+                spawnSideNotification(baseSeconds, bonusSeconds, tier);
+                enqueueEyeSpin(tier);
+            }
+
+            function resetTimerToDefault() {
+                safeRemoveStorage(CONFIG.storageKey);
+                targetEndTimestamp = Date.now() + Math.round(CONFIG.initialMinutes * 60 * 1000);
+                saveTimerState();
+                renderTimer(true);
+                pulseBoard();
+            }
+
+            // ==================== STREAMLABS SOCKET & PAYLOAD PARSER ====================
+            function isDuplicateEvent(eventId) {
+                if (!eventId) return false;
+                const key = String(eventId);
+                if (seenEventIds.has(key)) return true;
+                seenEventIds.add(key);
+                if (seenEventIds.size > CONFIG.maxSeenEvents) {
+                    const oldest = seenEventIds.values().next().value;
+                    seenEventIds.delete(oldest);
+                }
+                return false;
+            }
+
+            function handleStreamlabsPayload(eventData) {
+                if (!eventData || typeof eventData !== 'object') return;
+                const type = String(eventData.type || '').toLowerCase();
+                const messages = Array.isArray(eventData.message)
+                    ? eventData.message
+                    : (eventData.message ? [eventData.message] : []);
+
+                messages.forEach(function (msg) {
+                    if (!msg || typeof msg !== 'object') return;
+
+                    const eventId = msg._id || msg.id || msg.event_id || eventData.event_id;
+                    if (isDuplicateEvent(eventId)) return;
+
+                    const msgCurrency = String(msg.currency || '').trim().toUpperCase();
+
+                    // 1. Kicks / Bits / Kick gift payloads
+                    if (
+                        type === 'bits' ||
+                        type === 'kicks' ||
+                        type === 'kick_kicks' ||
+                        type === 'kick' ||
+                        type === 'kick_gift' ||
+                        msgCurrency === 'KICKS'
+                    ) {
+                        const kicksAmount = parseNumericAmount(
+                            msg.amount != null ? msg.amount :
+                                (msg.kicks != null ? msg.kicks :
+                                    (msg.bits != null ? msg.bits :
+                                        (msg.quantity != null ? msg.quantity : msg.count)))
+                        );
+                        if (Number.isFinite(kicksAmount) && kicksAmount > 0) {
+                            processDonation('KICKS', kicksAmount);
+                        }
+                        return;
+                    }
+
+                    // 2. Monetary Donations / Tips (TRY / TL)
+                    if (type === 'donation' || type === 'tip') {
+                        if (!msgCurrency || msgCurrency === 'TRY' || msgCurrency === 'TL') {
+                            const amount = parseNumericAmount(msg.amount != null ? msg.amount : msg.formatted_amount);
+                            if (Number.isFinite(amount) && amount > 0) {
+                                processDonation('TRY', amount);
+                            }
+                        }
+                        return;
+                    }
+
+                    // 3. Subscriptions / Resubs / Mystery Gift Subs / Kick Subscriptions
+                    if (
+                        type === 'subscription' ||
+                        type === 'resub' ||
+                        type === 'sub' ||
+                        type === 'submysterygift' ||
+                        type === 'gift_sub' ||
+                        type === 'gift_subscription' ||
+                        type === 'kick_sub' ||
+                        type === 'kick_subscription' ||
+                        type === 'gift'
+                    ) {
+                        const rawCount =
+                            msg.quantity != null ? msg.quantity :
+                                (msg.sub_count != null ? msg.sub_count :
+                                    (msg.gift_count != null ? msg.gift_count :
+                                        (msg.mass_gift_count != null ? msg.mass_gift_count :
+                                            (msg.count != null ? msg.count : 1))));
+                        const subCount = parseNumericAmount(rawCount);
+                        processDonation('SUB', Number.isFinite(subCount) && subCount > 0 ? subCount : 1);
+                    }
+                });
+            }
+
+            // Exposed for easy console / automated Streamlabs payload testing
+            window.handleStreamlabsPayload = handleStreamlabsPayload;
+            window.handleStreamlabsEvent = handleStreamlabsPayload;
+
+            // Dynamically load Socket.IO v2.5.0 ONLY when a Streamlabs token is present
+            function connectStreamlabs(token) {
+                if (!token || typeof token !== 'string') return;
+                const cleanToken = token.trim();
+                if (!cleanToken) return;
+
+                function initSocket() {
+                    if (typeof window.io !== 'function') return;
+                    try {
+                        if (streamlabsSocket) {
+                            streamlabsSocket.disconnect();
+                        }
+                        streamlabsSocket = window.io('https://sockets.streamlabs.com?token=' + encodeURIComponent(cleanToken), {
+                            transports: ['websocket']
+                        });
+                        streamlabsSocket.on('event', handleStreamlabsPayload);
+                    } catch (err) {
+                        // Socket failures never disrupt the countdown display
+                    }
+                }
+
+                if (typeof window.io === 'function') {
+                    initSocket();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.js';
+                script.async = true;
+                script.onload = initSocket;
+                document.head.appendChild(script);
+            }
+
+            // ==================== HIDDEN KEYBOARD TEST SHORTCUTS (1 - 6, R) ====================
+            window.addEventListener('pointerdown', function () {
+                if (document.body && typeof document.body.focus === 'function') {
+                    document.body.focus();
+                }
             });
-            streamlabsSocket.on('event', handleStreamlabsEvent);
-          } catch (err) {
-            // Connection failures never interrupt the timer
-          }
-        }
 
-        if (typeof window.io === 'function') {
-          initSocket();
-          return;
-        }
+            window.addEventListener('keydown', function (e) {
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+                const key = e.key;
+                if (key === '1') {
+                    processDonation('KICKS', 100);  // +05:00 -> Latte eyes
+                } else if (key === '2') {
+                    processDonation('TRY', 100);    // +15:00 -> Dollar eyes
+                } else if (key === '3') {
+                    processDonation('SUB', 2);      // +1:00:00 -> Gold eyes
+                } else if (key === '4') {
+                    processDonation('TRY', 130);    // +19:30 + top-right "+13 sn" badge -> Dollar eyes
+                } else if (key === '5') {
+                    processDonation('KICKS', 130);  // +06:30 + top-right "+13 sn" badge -> Latte eyes
+                } else if (key === '6') {
+                    processDonation('SUB', 200);    // +100:00:00 -> Gold eyes (tests 3-4+ digit auto-fit)
+                } else if (key === 'r' || key === 'R') {
+                    resetTimerToDefault();          // Reset to default 02:00:00
+                }
+            });
 
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.js';
-        script.async = true;
-        script.onload = initSocket;
-        document.head.appendChild(script);
-      }
+            // ==================== INITIALIZATION ====================
+            function startCountdownLoop() {
+                function tick() {
+                    renderTimer(false);
+                    requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
+            }
 
-      // ==================== KEYBOARD TEST SHORTCUTS (1 - 4) ====================
-      window.addEventListener('pointerdown', function () {
-        if (document.body && typeof document.body.focus === 'function') {
-          document.body.focus();
-        }
-      });
+            function init() {
+                const params = new URLSearchParams(window.location.search);
+                const urlToken = params.get('token');
+                const urlMinutes = parseFloat(params.get('minutes'));
+                const shouldReset = params.get('reset') === '1' || params.get('reset') === 'true';
 
-      window.addEventListener('keydown', function (e) {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.key === '1') {
-          processDonation('TRY', 50);     // +05:00 -> Latte eyes
-        } else if (e.key === '2') {
-          processDonation('SUB', 5);      // +25:00 -> Dollar bill eyes
-        } else if (e.key === '3') {
-          processDonation('SUB', 15);     // +1:15:00 -> Gold bar eyes
-        } else if (e.key === '4') {
-          processDonation('TRY', 130);    // +13:13 (with silent 13s) -> Dollar bill eyes
-        }
-      });
+                if (shouldReset) {
+                    safeRemoveStorage(CONFIG.storageKey);
+                }
 
-      // ==================== INITIALIZATION ====================
-      function startCountdownLoop() {
-        function tick() {
-          renderTimer(false);
-          requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-      }
+                const savedRemaining = shouldReset ? null : loadSavedRemainingMs();
+                if (Number.isFinite(urlMinutes) && urlMinutes >= 0 && (shouldReset || savedRemaining === null)) {
+                    targetEndTimestamp = Date.now() + Math.round(urlMinutes * 60 * 1000);
+                } else if (savedRemaining !== null) {
+                    targetEndTimestamp = Date.now() + savedRemaining;
+                } else {
+                    targetEndTimestamp = Date.now() + Math.round(CONFIG.initialMinutes * 60 * 1000);
+                }
 
-      function init() {
-        const params = new URLSearchParams(window.location.search);
-        const urlToken = params.get('token');
-        const urlMinutes = parseFloat(params.get('minutes'));
-        const shouldReset = params.get('reset') === '1' || params.get('reset') === 'true';
+                saveTimerState();
+                setupAutoFitObservers();
+                renderTimer(true);
+                fitPriceCells();
+                startCountdownLoop();
 
-        if (shouldReset) {
-          safeRemoveStorage(CONFIG.storageKey);
-        }
+                const token = urlToken || CONFIG.streamlabsToken;
+                if (token) {
+                    connectStreamlabs(token);
+                }
+            }
 
-        renderPricingTable();
-
-        const savedRemaining = shouldReset ? null : loadSavedRemainingMs();
-        if (Number.isFinite(urlMinutes) && urlMinutes >= 0 && (shouldReset || savedRemaining === null)) {
-          targetEndTimestamp = Date.now() + Math.round(urlMinutes * 60 * 1000);
-        } else if (savedRemaining !== null) {
-          targetEndTimestamp = Date.now() + savedRemaining;
-        } else {
-          targetEndTimestamp = Date.now() + Math.round(CONFIG.initialMinutes * 60 * 1000);
-        }
-
-        saveTimerState();
-        renderTimer(true);
-        startCountdownLoop();
-
-        const token = urlToken || CONFIG.streamlabsToken;
-        if (token) {
-          connectStreamlabs(token);
-        }
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-      } else {
-        init();
-      }
-    })();
-  </script>
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
 </body>
+
 </html>
