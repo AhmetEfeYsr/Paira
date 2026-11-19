@@ -47,6 +47,9 @@
             color: #fffdfb;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            text-rendering: geometricPrecision;
+            font-optical-sizing: auto;
+            font-synthesis: none;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -608,9 +611,10 @@
         .timer-box {
             position: relative;
             overflow: hidden;
+            isolation: isolate;
             border-radius: 18px;
             border: 1.5px solid rgba(255, 255, 255, 0.09);
-            background: linear-gradient(180deg, rgba(14, 11, 14, 0.95) 0%, rgba(21, 16, 20, 0.93) 100%);
+            background: linear-gradient(180deg, #100c10 0%, #161115 100%);
             padding: 11px 0 8px;
             text-align: center;
             box-shadow: inset 0 3px 12px rgba(4, 2, 6, 0.8);
@@ -746,7 +750,10 @@
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #fff8f2;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65), 0 0 10px rgba(168, 85, 247, 0.25);
+            text-shadow:
+                0 0 0.8px rgba(255, 248, 242, 0.24),
+                0 2px 8px rgba(0, 0, 0, 0.65),
+                0 0 10px rgba(168, 85, 247, 0.25);
             white-space: nowrap;
         }
 
@@ -775,6 +782,7 @@
             color: var(--lilac-reward);
             white-space: nowrap;
             text-shadow:
+                0 0 1px rgba(222, 196, 255, 0.35),
                 0 2px 10px rgba(0, 0, 0, 0.85),
                 0 0 10px rgba(222, 196, 255, 0.65),
                 0 0 22px rgba(168, 85, 247, 0.55),
@@ -801,8 +809,8 @@
             min-width: 0;
             border-radius: 14px;
             border: 1.5px solid rgba(255, 255, 255, 0.11);
-            background: rgba(255, 255, 255, 0.045);
-            padding: 9px 5px 10px;
+            background: #241d21;
+            padding: 9px 4px 10px;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
             display: flex;
             flex-direction: column;
@@ -815,12 +823,14 @@
             display: inline-block;
             max-width: 100%;
             font-family: var(--font-body);
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 900;
             line-height: 1.18;
             color: #f6efea;
             letter-spacing: 0.01em;
-            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+            text-shadow:
+                0 0 0.7px rgba(246, 239, 234, 0.22),
+                0 1px 4px rgba(0, 0, 0, 0.6);
             white-space: nowrap;
         }
 
@@ -829,11 +839,13 @@
             max-width: 100%;
             margin-top: 3px;
             font-family: var(--font-display);
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
             line-height: 1.15;
             color: var(--lilac-reward);
-            text-shadow: 0 1px 8px rgba(168, 85, 247, 0.36);
+            text-shadow:
+                0 0 0.8px rgba(222, 196, 255, 0.28),
+                0 1px 8px rgba(168, 85, 247, 0.36);
             white-space: nowrap;
         }
 
@@ -1525,12 +1537,12 @@
                     }
                 }
 
-                // Floor to 0.5px and perform a final guard step to ensure zero subpixel overflow
-                let finalPx = Math.max(minPx, Math.floor(best * 2) / 2);
+                // Floor to integer px for crisp font rasterization and zero subpixel overflow
+                let finalPx = Math.max(minPx, Math.floor(best));
                 textEl.style.fontSize = finalPx + 'px';
 
                 while (finalPx > minPx && textEl.scrollWidth > availableWidth) {
-                    finalPx = Math.max(minPx, finalPx - 0.5);
+                    finalPx = Math.max(minPx, finalPx - 1);
                     textEl.style.fontSize = finalPx + 'px';
                 }
             }
@@ -1540,28 +1552,40 @@
              * remain as large and crisp as possible with zero wrapping or clipping on any width.
              */
             function fitPriceCells() {
+                let minAmountSize = 18;
+                let minDurationSize = 20;
+
                 els.priceCells.forEach(function (cell) {
-                    const available = Math.max(30, cell.clientWidth - 8);
+                    const available = Math.max(30, cell.clientWidth - 6);
                     const amountEl = cell.querySelector('.price-amount');
                     const durationEl = cell.querySelector('.price-duration');
 
                     if (amountEl) {
-                        let size = 16;
+                        let size = 18;
                         amountEl.style.fontSize = size + 'px';
-                        while (size > 10 && amountEl.scrollWidth > available) {
-                            size -= 0.5;
+                        while (size > 11 && amountEl.scrollWidth > available) {
+                            size -= 1;
                             amountEl.style.fontSize = size + 'px';
                         }
+                        if (size < minAmountSize) minAmountSize = size;
                     }
 
                     if (durationEl) {
-                        let size = 18;
+                        let size = 20;
                         durationEl.style.fontSize = size + 'px';
-                        while (size > 11 && durationEl.scrollWidth > available) {
-                            size -= 0.5;
+                        while (size > 12 && durationEl.scrollWidth > available) {
+                            size -= 1;
                             durationEl.style.fontSize = size + 'px';
                         }
+                        if (size < minDurationSize) minDurationSize = size;
                     }
+                });
+
+                els.priceCells.forEach(function (cell) {
+                    const amountEl = cell.querySelector('.price-amount');
+                    const durationEl = cell.querySelector('.price-duration');
+                    if (amountEl) amountEl.style.fontSize = minAmountSize + 'px';
+                    if (durationEl) durationEl.style.fontSize = minDurationSize + 'px';
                 });
             }
 
