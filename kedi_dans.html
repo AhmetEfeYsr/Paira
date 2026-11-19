@@ -287,7 +287,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: min(920px, calc(100vw - 32px));
+            width: min(1040px, calc(100vw - 32px));
             max-height: calc(100vh - 32px);
             z-index: 80;
             display: none;
@@ -311,7 +311,7 @@
             transform: none;
             display: flex;
             width: 100%;
-            max-width: 920px;
+            max-width: 1040px;
             max-height: none;
             margin: 0 auto;
             border-radius: 0;
@@ -521,7 +521,7 @@
 
         .list-col-headers {
             display: grid;
-            grid-template-columns: 110px minmax(180px, 1fr) 128px 86px 96px 76px;
+            grid-template-columns: 130px 104px minmax(170px, 1fr) 120px 80px 92px 72px;
             gap: 8px;
             padding: 0 10px;
             font-size: 11.5px;
@@ -539,7 +539,7 @@
 
         .tier-row {
             display: grid;
-            grid-template-columns: 110px minmax(180px, 1fr) 128px 86px 96px 76px;
+            grid-template-columns: 130px 104px minmax(170px, 1fr) 120px 80px 92px 72px;
             gap: 8px;
             align-items: center;
             padding: 8px 10px;
@@ -548,7 +548,12 @@
             border: 1.5px solid rgba(185, 151, 245, 0.22);
         }
 
-        @media (max-width: 780px) {
+        .tier-row.is-donor-special {
+            border-color: rgba(216, 180, 254, 0.5);
+            background: linear-gradient(145deg, rgba(168, 85, 247, 0.14), rgba(34, 26, 37, 0.94));
+        }
+
+        @media (max-width: 820px) {
             .list-col-headers {
                 display: none;
             }
@@ -624,6 +629,11 @@
         .dl-badge.err {
             background: rgba(244, 63, 94, 0.2);
             color: #fecdd3;
+            cursor: pointer;
+        }
+
+        .dl-badge.err:hover {
+            background: rgba(244, 63, 94, 0.32);
         }
 
         .row-btns {
@@ -747,6 +757,7 @@
 
             <section class="card">
                 <div class="list-col-headers">
+                    <span>Bağışçı (Özel)</span>
                     <span>Tutar (TL+)</span>
                     <span>YouTube veya MP4 Linki</span>
                     <span>Konum</span>
@@ -759,7 +770,7 @@
 
                 <div class="list-footer">
                     <button id="btnAddItem" class="btn btn-primary btn-sm" type="button">+ Video Ekle</button>
-                    <span class="hint-text">Bağış tutarından küçük/eşit en yüksek tutarlı video oynatılır.</span>
+                    <span class="hint-text">Şartları sağlıyorsa bağışçıya özel video önceliklidir; aksi halde en yüksek tutarlı genel video oynar.</span>
                 </div>
             </section>
         </div>
@@ -782,6 +793,8 @@
             const SYNC_CHANNEL_NAME = 'kedi_dans_sync_v1';
             const FADE_OUT_MS = 380;
             const MAX_SEEN_EVENTS = 500;
+            const MAX_WARM_VIDEOS = 12;
+            const MAX_QUEUE_LEN = 100;
             const YT_ID_RE = /^[A-Za-z0-9_-]{11}$/;
             const YT_HOSTS = new Set([
                 'youtube.com',
@@ -818,6 +831,7 @@
             const forceMuted = urlParams.get('muted') === '1' || urlParams.get('muted') === 'true';
             const showCaption = urlParams.get('caption') !== '0' && urlParams.get('caption') !== 'false';
             const urlConfigParam = (urlParams.get('config') || '').trim();
+            const forceLocalSync = urlParams.get('sync') === 'local' || urlParams.get('sync') === '1';
             const customApiParam = (urlParams.get('api') || '').trim().replace(/\/+$/, '');
             const apiBase = customApiParam || (
                 (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port
@@ -836,12 +850,14 @@
             let serverOnline = false;
             let sseSource = null;
             let sseReconnectTimer = null;
+            let serverProbeTimer = null;
+            let serverProbeDelayMs = 10000;
             let serverSaveTimer = null;
             const serverStatusesByKey = new Map();
             const serverStatusesByUrl = new Map();
 
             const mediaStatuses = new Map(); // itemId -> { state, label }
-            const videoPool = new Map();     // itemId -> { videoEl, srcUrl, isObjectUrl, naturalRatio, fullSig, fromServer }
+            const videoPool = new Map();     // itemId -> { videoEl, srcUrl, isObjectUrl, naturalRatio, fullSig, fromServer, lastUsedAt }
             const ytSlots = new Map();       // itemId -> { slotEl, player, videoId, playerReady, warmState, onPlaybackEnd, onPlaybackError }
             const directFetchInFlight = new Map();
             const ytWarmQueue = [];
@@ -1022,6 +1038,7 @@
             function createDefaultItem(overrides) {
                 const base = {
                     id: 'item_default',
+                    donor: '',
                     amount: 1000,
                     url: DEFAULT_R2_VIDEO,
                     position: 'center',
@@ -1044,6 +1061,7 @@
                 const sizeNum = Number(r.size);
                 return {
                     id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : uid('item_'),
+                    donor: typeof r.donor === 'string' ? r.donor.trim() : '',
                     amount: Number.isFinite(amt) && amt >= 0 ? amt : 0,
                     url: typeof r.url === 'string' ? r.url.trim() : '',
                     position: pos,
@@ -1051,14 +1069,45 @@
                 };
             }
 
+            function sortItems(items) {
+                if (!Array.isArray(items)) return items;
+                items.sort(function (a, b) {
+                    const aHas = Boolean(a.donor && a.donor.trim());
+                    const bHas = Boolean(b.donor && b.donor.trim());
+                    if (aHas !== bHas) return aHas ? 1 : -1;
+                    if (aHas && bHas) {
+                        const cmp = a.donor.toLocaleLowerCase('tr-TR').localeCompare(b.donor.toLocaleLowerCase('tr-TR'), 'tr-TR');
+                        if (cmp !== 0) return cmp;
+                    }
+                    return (Number(a.amount) || 0) - (Number(b.amount) || 0);
+                });
+                return items;
+            }
+
             function normalizeConfig(raw) {
                 const c = raw && typeof raw === 'object' ? raw : {};
                 const items = Array.isArray(c.items) ? c.items.map(normalizeItem) : [createDefaultItem()];
-                items.sort(function (a, b) { return a.amount - b.amount; });
+                sortItems(items);
                 return {
                     streamlabsToken: typeof c.streamlabsToken === 'string' ? c.streamlabsToken.trim() : '',
                     items: items
                 };
+            }
+
+            function normalizeDonorKey(name) {
+                if (typeof name !== 'string') return '';
+                return name.trim().replace(/^@+/, '').replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR');
+            }
+
+            function donorMatchesItem(donorName, itemDonorField) {
+                const target = normalizeDonorKey(donorName);
+                if (!target || typeof itemDonorField !== 'string' || !itemDonorField.trim()) return false;
+                const tokens = itemDonorField.split(',');
+                for (let i = 0; i < tokens.length; i++) {
+                    const tok = normalizeDonorKey(tokens[i]);
+                    if (tok && tok === target) return true;
+                }
+                return false;
             }
 
             function safeLsGet(key) {
@@ -1151,21 +1200,31 @@
                 }
             }
 
-            function findMatchingItem(donationAmount, items) {
+            function findMatchingItem(donationAmount, donorName, items) {
                 if (!Number.isFinite(donationAmount) || !Array.isArray(items)) return null;
-                let best = null;
+                let bestSpecial = null;
+                let bestGeneral = null;
+
                 for (let i = 0; i < items.length; i++) {
                     const it = items[i];
                     if (!it || typeof it.url !== 'string' || !it.url.trim()) continue;
                     const minAmt = Number(it.amount);
-                    if (!Number.isFinite(minAmt) || minAmt < 0) continue;
-                    if (donationAmount >= minAmt) {
-                        if (!best || minAmt > Number(best.amount)) {
-                            best = it;
+                    if (!Number.isFinite(minAmt) || minAmt < 0 || donationAmount < minAmt) continue;
+
+                    const hasDonorRule = Boolean(it.donor && it.donor.trim());
+                    if (hasDonorRule) {
+                        if (donorMatchesItem(donorName, it.donor)) {
+                            if (!bestSpecial || minAmt > Number(bestSpecial.amount)) {
+                                bestSpecial = it;
+                            }
+                        }
+                    } else {
+                        if (!bestGeneral || minAmt > Number(bestGeneral.amount)) {
+                            bestGeneral = it;
                         }
                     }
                 }
-                return best;
+                return bestSpecial || bestGeneral;
             }
 
             function getEffectiveToken() {
@@ -1280,14 +1339,34 @@
                 videoPool.delete(itemId);
             }
 
+            function evictIdleWarmVideosIfNeeded(keepItemId) {
+                while (videoPool.size >= MAX_WARM_VIDEOS) {
+                    let oldestId = null;
+                    let oldestTime = Infinity;
+                    for (const [id, entry] of videoPool.entries()) {
+                        if (id === keepItemId) continue;
+                        if (entry.videoEl && entry.videoEl.classList.contains('is-current')) continue;
+                        const ts = entry.lastUsedAt || 0;
+                        if (ts < oldestTime) {
+                            oldestTime = ts;
+                            oldestId = id;
+                        }
+                    }
+                    if (!oldestId) break;
+                    disposeVideoPoolEntry(oldestId);
+                }
+            }
+
             function mountWarmVideo(item, srcUrl, isObjectUrl, label, fromServer) {
                 const sig = item.url.trim() + '|' + srcUrl;
                 const existing = videoPool.get(item.id);
                 if (existing && existing.fullSig === sig) {
+                    existing.lastUsedAt = Date.now();
                     setItemStatus(item.id, { state: 'ready', label: label });
                     return;
                 }
                 disposeVideoPoolEntry(item.id);
+                evictIdleWarmVideosIfNeeded(item.id);
 
                 const video = document.createElement('video');
                 video.className = 'pooled-video';
@@ -1301,7 +1380,8 @@
                     isObjectUrl: Boolean(isObjectUrl),
                     naturalRatio: 16 / 9,
                     fullSig: sig,
-                    fromServer: Boolean(fromServer)
+                    fromServer: Boolean(fromServer),
+                    lastUsedAt: Date.now()
                 };
 
                 video.addEventListener('loadedmetadata', function () {
@@ -1419,8 +1499,7 @@
                 ytSlots.delete(itemId);
             }
 
-            function enqueueYtWarm(fn) {
-                ytWarmQueue.push(fn);
+            function pumpYtWarmQueue() {
                 while (ytWarmActiveCount < 2 && ytWarmQueue.length > 0) {
                     const job = ytWarmQueue.shift();
                     ytWarmActiveCount++;
@@ -1429,9 +1508,14 @@
                         .catch(function () { })
                         .finally(function () {
                             ytWarmActiveCount = Math.max(0, ytWarmActiveCount - 1);
-                            if (ytWarmQueue.length > 0) enqueueYtWarm(ytWarmQueue.shift());
+                            pumpYtWarmQueue();
                         });
                 }
+            }
+
+            function enqueueYtWarm(fn) {
+                ytWarmQueue.push(fn);
+                pumpYtWarmQueue();
             }
 
             async function prepareYouTubeItem(item, videoId) {
@@ -1813,6 +1897,10 @@
                     }
 
                     const video = poolEntry.videoEl;
+                    poolEntry.lastUsedAt = Date.now();
+                    if (video.error) {
+                        try { video.load(); } catch (_) { }
+                    }
                     const stageW = window.innerWidth || 1920;
                     const stageH = window.innerHeight || 1080;
                     const place = computePlacement(item, poolEntry.naturalRatio, stageW, stageH);
@@ -1828,10 +1916,16 @@
                     els.alertBox.classList.toggle('is-audio-only', place.sizePct <= 0);
 
                     let settled = false;
+                    let watchdog = null;
+                    const startedAt = Date.now();
+                    let lastPos = -1;
+                    let lastProgressAt = startedAt;
+
                     function finish(immediate) {
                         if (settled) return;
                         settled = true;
                         activeStopFn = null;
+                        clearInterval(watchdog);
                         video.removeEventListener('ended', onEnded);
                         video.removeEventListener('error', onError);
                         els.alertBox.classList.remove('is-active', 'is-audio-only');
@@ -1858,6 +1952,23 @@
 
                     video.addEventListener('ended', onEnded);
                     video.addEventListener('error', onError);
+
+                    watchdog = setInterval(function () {
+                        if (settled) return;
+                        const now = Date.now();
+                        const cur = Number(video.currentTime) || 0;
+                        if (cur !== lastPos) {
+                            lastPos = cur;
+                            lastProgressAt = now;
+                        }
+                        if (now - startedAt > 8000 && cur < 0.05 && !video.ended) {
+                            finish(false);
+                        } else if (now - lastProgressAt > 12000 && !video.ended) {
+                            finish(false);
+                        } else if (now - startedAt > 10 * 60 * 1000) {
+                            finish(false);
+                        }
+                    }, 1000);
 
                     els.alertBox.classList.add('is-active');
                     positionCaptionForPlacement(place, alertData, stageW, stageH);
@@ -1974,14 +2085,18 @@
                 try {
                     while (alertQueue.length > 0) {
                         const alertData = alertQueue.shift();
-                        const poolEntry = videoPool.get(alertData.item.id);
-                        const ytId = extractYouTubeId(alertData.item.url);
-                        if (poolEntry && poolEntry.fromServer) {
-                            await playHtml5VideoAlert(alertData, alertData.item);
-                        } else if (ytId) {
-                            await playYouTubeAlert(alertData, alertData.item, ytId);
-                        } else {
-                            await playHtml5VideoAlert(alertData, alertData.item);
+                        try {
+                            const poolEntry = videoPool.get(alertData.item.id);
+                            const ytId = extractYouTubeId(alertData.item.url);
+                            if (poolEntry && poolEntry.fromServer) {
+                                await playHtml5VideoAlert(alertData, alertData.item);
+                            } else if (ytId) {
+                                await playYouTubeAlert(alertData, alertData.item, ytId);
+                            } else {
+                                await playHtml5VideoAlert(alertData, alertData.item);
+                            }
+                        } catch (err) {
+                            console.warn('[KediDans] Video oynatma hatası:', err);
                         }
                         if (alertQueue.length > 0) await sleep(350);
                     }
@@ -1991,10 +2106,13 @@
             }
 
             function enqueueAlert(donorName, amount, isTest, explicitItem) {
-                const item = explicitItem || findMatchingItem(amount, appConfig.items);
+                const item = explicitItem || findMatchingItem(amount, donorName, appConfig.items);
                 if (!item || !item.url) {
                     if (isTest) showToast('Önce geçerli bir video linki ekleyin.');
                     return;
+                }
+                if (alertQueue.length >= MAX_QUEUE_LEN) {
+                    alertQueue.shift();
                 }
                 alertQueue.push({
                     donorName: donorName,
@@ -2057,42 +2175,85 @@
             window.handleStreamlabsPayload = handleStreamlabsPayload;
 
             function connectStreamlabs(token) {
+                const cleanToken = (typeof token === 'string') ? token.trim() : '';
+                if (!cleanToken) {
+                    if (streamlabsConn) {
+                        streamlabsConn.close();
+                        streamlabsConn = null;
+                    }
+                    return;
+                }
+                if (streamlabsConn && streamlabsConn.token === cleanToken) {
+                    return;
+                }
                 if (streamlabsConn) {
                     streamlabsConn.close();
                     streamlabsConn = null;
                 }
-                if (!token || typeof token !== 'string') return;
-                const cleanToken = token.trim();
-                if (!cleanToken) return;
 
                 let ws = null;
                 let pingTimer = null;
+                let watchdogTimer = null;
                 let reconnectTimer = null;
                 let reconnectDelay = 2000;
+                let pingIntervalMs = 25000;
+                let pingTimeoutMs = 20000;
+                let lastActivityAt = Date.now();
                 let closed = false;
 
                 function clearTimers() {
                     if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+                    if (watchdogTimer) { clearInterval(watchdogTimer); watchdogTimer = null; }
                     if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+                }
+
+                function scheduleReconnect(immediate) {
+                    if (closed || reconnectTimer) return;
+                    const jitter = 0.8 + Math.random() * 0.4;
+                    const waitMs = immediate ? 300 : Math.round(reconnectDelay * jitter);
+                    reconnectTimer = setTimeout(function () {
+                        reconnectTimer = null;
+                        connect();
+                    }, waitMs);
+                    if (!immediate) {
+                        reconnectDelay = Math.min(Math.round(reconnectDelay * 1.5), 15000);
+                    }
                 }
 
                 function connect() {
                     if (closed) return;
+                    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+                    clearTimers();
                     const wsUrl = 'wss://sockets.streamlabs.com/socket.io/?token=' +
                         encodeURIComponent(cleanToken) + '&EIO=3&transport=websocket';
-                    try { ws = new WebSocket(wsUrl); } catch (_) { return; }
+                    try { ws = new WebSocket(wsUrl); } catch (_) { scheduleReconnect(false); return; }
 
-                    ws.onopen = function () { reconnectDelay = 2000; };
+                    lastActivityAt = Date.now();
+
+                    ws.onopen = function () {
+                        reconnectDelay = 2000;
+                        lastActivityAt = Date.now();
+                        watchdogTimer = setInterval(function () {
+                            if (closed || !ws || ws.readyState !== WebSocket.OPEN) return;
+                            if (Date.now() - lastActivityAt > pingIntervalMs + pingTimeoutMs + 10000) {
+                                try { ws.close(); } catch (_) { }
+                            }
+                        }, 5000);
+                    };
+
                     ws.onmessage = function (ev) {
+                        lastActivityAt = Date.now();
                         const msg = typeof ev.data === 'string' ? ev.data : '';
                         if (!msg) return;
                         if (msg.charAt(0) === '0') {
                             try {
                                 const meta = JSON.parse(msg.slice(1));
+                                pingIntervalMs = Number(meta.pingInterval) || 25000;
+                                pingTimeoutMs = Number(meta.pingTimeout) || 20000;
                                 clearInterval(pingTimer);
                                 pingTimer = setInterval(function () {
                                     if (ws && ws.readyState === WebSocket.OPEN) ws.send('2');
-                                }, Number(meta.pingInterval) || 25000);
+                                }, pingIntervalMs);
                             } catch (_) { }
                             return;
                         }
@@ -2112,18 +2273,33 @@
                         }
                     };
                     ws.onclose = function () {
-                        clearInterval(pingTimer);
-                        pingTimer = null;
+                        clearTimers();
+                        ws = null;
                         if (closed) return;
-                        reconnectTimer = setTimeout(connect, reconnectDelay);
-                        reconnectDelay = Math.min(Math.round(reconnectDelay * 1.5), 15000);
+                        scheduleReconnect(false);
+                    };
+                    ws.onerror = function () {
+                        if (ws) { try { ws.close(); } catch (_) { } }
                     };
                 }
 
+                function onOnline() {
+                    if (closed) return;
+                    if (!ws || ws.readyState === WebSocket.CLOSED) {
+                        reconnectDelay = 2000;
+                        clearTimeout(reconnectTimer);
+                        reconnectTimer = null;
+                        scheduleReconnect(true);
+                    }
+                }
+                window.addEventListener('online', onOnline);
+
                 connect();
                 streamlabsConn = {
+                    token: cleanToken,
                     close: function () {
                         closed = true;
+                        window.removeEventListener('online', onOnline);
                         clearTimers();
                         if (ws) { try { ws.close(); } catch (_) { } }
                     }
@@ -2155,10 +2331,13 @@
                     const st = mediaStatuses.get(it.id) || { state: 'idle', label: it.url ? 'Bekliyor' : 'Link yok' };
 
                     const row = document.createElement('div');
-                    row.className = 'tier-row';
+                    const isSpecial = Boolean(it.donor && it.donor.trim());
+                    row.className = 'tier-row' + (isSpecial ? ' is-donor-special' : '');
                     row.setAttribute('data-item-id', it.id);
 
+                    const errTitle = st.state === 'error' ? ' title="Tekrar denemek için tıklayın"' : '';
                     row.innerHTML =
+                        '<input class="field-input tier-donor-input" type="text" placeholder="Herkes (boş)" value="' + escapeHtml(it.donor || '') + '" title="Özel bağışçı adı (virgülle birden fazla yazılabilir)" />' +
                         '<div class="suffix-box">' +
                             '<input class="suffix-input tier-amt-input" type="number" min="0" step="1" value="' + escapeHtml(it.amount) + '" title="Minimum bağış tutarı (TL)" />' +
                             '<span class="suffix-tag">TL+</span>' +
@@ -2169,7 +2348,7 @@
                             '<input class="suffix-input tier-size-input" type="number" min="0" max="100" step="1" value="' + escapeHtml(it.size) + '" title="Boyut (0-100)" />' +
                             '<span class="suffix-tag">%</span>' +
                         '</div>' +
-                        '<span class="dl-badge ' + getBadgeClass(st.state) + '">' + escapeHtml(st.label) + '</span>' +
+                        '<span class="dl-badge ' + getBadgeClass(st.state) + '"' + errTitle + '>' + escapeHtml(st.label) + '</span>' +
                         '<div class="row-btns">' +
                             '<button class="btn btn-primary btn-sm tier-btn-test" type="button" title="Test Et">▶</button>' +
                             '<button class="btn btn-danger btn-sm tier-btn-del" type="button" title="Sil">×</button>' +
@@ -2200,12 +2379,13 @@
                 }
                 const item = createDefaultItem({
                     id: uid('item_'),
+                    donor: '',
                     amount: nextAmt,
                     url: ''
                 });
                 appConfig.items.push(item);
-                appConfig.items.sort(function (a, b) { return a.amount - b.amount; });
-                saveConfig({ reprefetch: false });
+                sortItems(appConfig.items);
+                saveConfig({ reprefetch: false, immediate: true });
                 renderPanel();
 
                 const rowInput = els.itemsList.querySelector('[data-item-id="' + item.id + '"] .tier-url-input');
@@ -2219,15 +2399,20 @@
                 disposeYouTubeSlot(itemId);
                 mediaStatuses.delete(itemId);
                 appConfig.items.splice(idx, 1);
-                saveConfig({ reprefetch: false });
+                saveConfig({ reprefetch: false, immediate: true });
                 renderPanel();
             }
 
             async function testItemAction(item) {
                 if (!item) return;
+                let testDonor = 'TestBagisci';
+                if (item.donor && item.donor.trim()) {
+                    const firstAlias = item.donor.split(',')[0].trim();
+                    if (firstAlias) testDonor = firstAlias;
+                }
                 if (serverOnline && isPanelMode) {
                     const res = await serverPost('/api/test', {
-                        donorName: 'TestBagisci',
+                        donorName: testDonor,
                         amount: item.amount,
                         item: item
                     });
@@ -2236,13 +2421,13 @@
                         return;
                     }
                 }
-                enqueueAlert('TestBagisci', item.amount, true, item);
+                enqueueAlert(testDonor, item.amount, true, item);
                 if (syncChannel && isPanelMode) {
                     try {
                         syncChannel.postMessage({
                             type: 'test_alert',
                             sender: tabClientId,
-                            donorName: 'TestBagisci',
+                            donorName: testDonor,
                             amount: item.amount,
                             item: item
                         });
@@ -2251,9 +2436,26 @@
             }
 
             async function copyObsUrl() {
-                const encoded = encodeBase64Url(JSON.stringify(appConfig));
                 const base = window.location.href.split('?')[0].split('#')[0];
-                const url = base + '?config=' + encoded;
+                let url = '';
+                let successMsg = 'OBS Linki panoya kopyalandı!';
+
+                if (serverOnline) {
+                    const isLocalOrigin = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port;
+                    if (isLocalOrigin) {
+                        url = window.location.origin + '/' + (customApiParam ? ('?api=' + encodeURIComponent(customApiParam)) : '');
+                    } else {
+                        url = base + '?sync=local' + (customApiParam ? ('&api=' + encodeURIComponent(customApiParam)) : '');
+                    }
+                    successMsg = 'Sabit OBS Linki kopyalandı! (Video ekledikçe link değişmez)';
+                } else {
+                    const encoded = encodeBase64Url(JSON.stringify(appConfig));
+                    url = base + '?config=' + encoded;
+                    if (url.length > 8000) {
+                        successMsg = 'Link kopyalandı (Çok uzun! KediDansServer.exe açarsanız sabit kısa link alabilirsiniz).';
+                    }
+                }
+
                 try {
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         await navigator.clipboard.writeText(url);
@@ -2265,7 +2467,7 @@
                         document.execCommand('copy');
                         document.body.removeChild(ta);
                     }
-                    showToast('OBS Linki panoya kopyalandı!');
+                    showToast(successMsg);
                 } catch (_) {
                     window.prompt('OBS Tarayıcı Kaynağı Linki:', url);
                 }
@@ -2322,6 +2524,15 @@
                         testItemAction(item);
                     } else if (e.target.closest('.tier-btn-del')) {
                         deleteItem(id);
+                    } else if (e.target.closest('.dl-badge.err')) {
+                        if (serverOnline && item.url) {
+                            setItemStatus(id, { state: 'loading', label: 'Yeniden...' });
+                            serverPost('/api/prefetch', { urls: [item.url], force: true }).then(function (res) {
+                                if (res && res.statuses) applyServerStatuses(res.statuses);
+                            });
+                        } else {
+                            prefetchItem(item);
+                        }
                     }
                 });
 
@@ -2332,7 +2543,11 @@
                     const item = appConfig.items.find(function (it) { return it.id === id; });
                     if (!item) return;
 
-                    if (e.target.classList.contains('tier-amt-input')) {
+                    if (e.target.classList.contains('tier-donor-input')) {
+                        item.donor = e.target.value.trim();
+                        row.classList.toggle('is-donor-special', Boolean(item.donor));
+                        saveConfig({ reprefetch: false });
+                    } else if (e.target.classList.contains('tier-amt-input')) {
                         const v = parseFloat(e.target.value);
                         item.amount = Number.isFinite(v) && v >= 0 ? v : 0;
                         saveConfig({ reprefetch: false });
@@ -2358,9 +2573,14 @@
                     const item = appConfig.items.find(function (it) { return it.id === id; });
                     if (!item) return;
 
-                    if (e.target.classList.contains('tier-amt-input')) {
-                        appConfig.items.sort(function (a, b) { return a.amount - b.amount; });
-                        saveConfig({ reprefetch: false });
+                    if (e.target.classList.contains('tier-donor-input')) {
+                        item.donor = e.target.value.trim();
+                        sortItems(appConfig.items);
+                        saveConfig({ reprefetch: false, immediate: true });
+                        renderPanel();
+                    } else if (e.target.classList.contains('tier-amt-input')) {
+                        sortItems(appConfig.items);
+                        saveConfig({ reprefetch: false, immediate: true });
                         renderPanel();
                     } else if (e.target.classList.contains('tier-url-input')) {
                         clearTimeout(urlTimers.get(id));
@@ -2368,12 +2588,12 @@
                         saveConfig({ reprefetch: true });
                     } else if (e.target.classList.contains('tier-pos-select')) {
                         item.position = VALID_POSITIONS.has(e.target.value) ? e.target.value : 'center';
-                        saveConfig({ reprefetch: false });
+                        saveConfig({ reprefetch: false, immediate: true });
                     } else if (e.target.classList.contains('tier-size-input')) {
                         const s = parseFloat(e.target.value);
                         item.size = Math.round(clamp(Number.isFinite(s) ? s : 65, 0, 100));
                         e.target.value = String(item.size);
-                        saveConfig({ reprefetch: false });
+                        saveConfig({ reprefetch: false, immediate: true });
                     }
                 });
             }
@@ -2456,6 +2676,19 @@
             }
 
             // ==================== LOCAL SERVER BRIDGE ====================
+            function setServerBadgeState(state) {
+                if (!els.serverBadge) return;
+                if (state === 'ok') {
+                    els.serverBadge.textContent = 'Yerel MP4';
+                    els.serverBadge.className = 'status-pill is-ok';
+                } else if (state === 'reconnecting') {
+                    els.serverBadge.textContent = 'Sunucu Bekleniyor...';
+                    els.serverBadge.className = 'status-pill is-warn';
+                } else {
+                    els.serverBadge.className = 'status-pill is-ok hidden';
+                }
+            }
+
             function connectServerEvents() {
                 if (sseSource) {
                     try { sseSource.close(); } catch (_) { }
@@ -2468,10 +2701,23 @@
                 sseSource = new EventSource(apiBase + '/api/events?role=' + role);
 
                 sseSource.addEventListener('hello', function (ev) {
+                    setServerBadgeState('ok');
                     try {
                         const data = JSON.parse(ev.data);
                         if (data && data.statuses) applyServerStatuses(data.statuses);
                     } catch (_) { }
+                    fetch(apiBase + '/api/config').then(function (r) {
+                        return r.ok ? r.json() : null;
+                    }).then(function (cfgData) {
+                        if (!cfgData) return;
+                        if (cfgData.statuses) applyServerStatuses(cfgData.statuses);
+                        if (cfgData.config) {
+                            appConfig = normalizeConfig(cfgData.config);
+                            safeLsSet(STORAGE_KEY, JSON.stringify(appConfig));
+                            if (isPanelMode || els.panelOverlay.classList.contains('is-open')) renderPanel();
+                            if (!isPanelMode) connectStreamlabs(getEffectiveToken());
+                        }
+                    }).catch(function () { });
                 });
 
                 sseSource.addEventListener('download', function (ev) {
@@ -2516,6 +2762,7 @@
                         try { sseSource.close(); } catch (_) { }
                         sseSource = null;
                     }
+                    setServerBadgeState('reconnecting');
                     clearTimeout(sseReconnectTimer);
                     sseReconnectTimer = setTimeout(connectServerEvents, 3000);
                 };
@@ -2532,7 +2779,9 @@
                     if (!health || !health.ok) return false;
 
                     serverOnline = true;
-                    if (els.serverBadge) els.serverBadge.classList.remove('hidden');
+                    clearTimeout(serverProbeTimer);
+                    serverProbeTimer = null;
+                    setServerBadgeState('ok');
 
                     const cfgResp = await fetch(apiBase + '/api/config');
                     if (cfgResp.ok) {
@@ -2540,14 +2789,14 @@
                         if (cfgData && cfgData.statuses) {
                             applyServerStatuses(cfgData.statuses);
                         }
-                        if (importedFromUrl) {
+                        if (importedFromUrl && !forceLocalSync) {
                             await serverPost('/api/config', { config: appConfig, sender: tabClientId });
                         } else if (cfgData && cfgData.config) {
                             appConfig = normalizeConfig(cfgData.config);
                             safeLsSet(STORAGE_KEY, JSON.stringify(appConfig));
                             if (isPanelMode || els.panelOverlay.classList.contains('is-open')) renderPanel();
                             if (!isPanelMode) connectStreamlabs(getEffectiveToken());
-                        } else {
+                        } else if (!forceLocalSync) {
                             await serverPost('/api/config', { config: appConfig, sender: tabClientId });
                         }
                     }
@@ -2558,6 +2807,20 @@
                     if (timer) clearTimeout(timer);
                     return false;
                 }
+            }
+
+            function scheduleServerProbe() {
+                if (serverOnline || serverProbeTimer) return;
+                serverProbeTimer = setTimeout(async function () {
+                    serverProbeTimer = null;
+                    const ok = await probeLocalServer(false);
+                    if (ok) {
+                        prefetchAllItems();
+                    } else {
+                        serverProbeDelayMs = Math.min(20000, serverProbeDelayMs + 5000);
+                        scheduleServerProbe();
+                    }
+                }, serverProbeDelayMs);
             }
 
             // ==================== INIT ====================
@@ -2574,7 +2837,10 @@
                     connectStreamlabs(getEffectiveToken());
                 }
 
-                await probeLocalServer(importedFromUrl);
+                const ok = await probeLocalServer(importedFromUrl);
+                if (!ok) {
+                    scheduleServerProbe();
+                }
                 prefetchAllItems();
             }
 
