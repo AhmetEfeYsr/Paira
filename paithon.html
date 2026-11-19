@@ -764,15 +764,131 @@
             color: #c4b5fd;
         }
 
-        .timer-paw.p1 { left: 4%;  width: 28px; height: 28px; --paw-dur: 11.5s; --paw-delay: -1.8s;  --paw-alpha: 0.28; --rot-start: -18deg; --rot-mid: -4deg; --rot-end: -15deg; --drift-x: 8px;  --drift-x-end: -4px; }
-        .timer-paw.p2 { left: 15%; width: 22px; height: 22px; --paw-dur: 13.8s; --paw-delay: -7.4s;  --paw-alpha: 0.24; --rot-start: 14deg;  --rot-mid: -2deg; --rot-end: 12deg;  --drift-x: -7px; --drift-x-end: 5px;  }
-        .timer-paw.p3 { left: 26%; width: 30px; height: 30px; --paw-dur: 12.4s; --paw-delay: -4.2s;  --paw-alpha: 0.28; --rot-start: -12deg; --rot-mid: 8deg;  --rot-end: -8deg;  --drift-x: 10px; --drift-x-end: -6px; }
-        .timer-paw.p4 { left: 38%; width: 23px; height: 23px; --paw-dur: 14.6s; --paw-delay: -10.6s; --paw-alpha: 0.23; --rot-start: 16deg;  --rot-mid: 2deg;  --rot-end: 18deg;  --drift-x: -8px; --drift-x-end: 4px;  }
-        .timer-paw.p5 { left: 50%; width: 27px; height: 27px; --paw-dur: 11.8s; --paw-delay: -2.6s;  --paw-alpha: 0.24; --rot-start: -15deg; --rot-mid: 5deg;  --rot-end: -12deg; --drift-x: 7px;  --drift-x-end: -5px; }
-        .timer-paw.p6 { left: 62%; width: 32px; height: 32px; --paw-dur: 13.2s; --paw-delay: -8.9s;  --paw-alpha: 0.27; --rot-start: 12deg;  --rot-mid: -6deg; --rot-end: 14deg;  --drift-x: -9px; --drift-x-end: 6px;  }
-        .timer-paw.p7 { left: 74%; width: 22px; height: 22px; --paw-dur: 12.0s; --paw-delay: -5.3s;  --paw-alpha: 0.25; --rot-start: -20deg; --rot-mid: -4deg; --rot-end: -16deg; --drift-x: 8px;  --drift-x-end: -4px; }
-        .timer-paw.p8 { left: 85%; width: 29px; height: 29px; --paw-dur: 14.2s; --paw-delay: -11.8s; --paw-alpha: 0.28; --rot-start: 15deg;  --rot-mid: -3deg; --rot-end: 12deg;  --drift-x: -8px; --drift-x-end: 5px;  }
-        .timer-paw.p9 { left: 92%; width: 24px; height: 24px; --paw-dur: 12.8s; --paw-delay: -3.5s;  --paw-alpha: 0.25; --rot-start: -10deg; --rot-mid: 6deg;  --rot-end: -14deg; --drift-x: -6px; --drift-x-end: 3px;  }
+        .timer-paw.p1 {
+            left: 4%;
+            width: 28px;
+            height: 28px;
+            --paw-dur: 11.5s;
+            --paw-delay: -1.8s;
+            --paw-alpha: 0.28;
+            --rot-start: -18deg;
+            --rot-mid: -4deg;
+            --rot-end: -15deg;
+            --drift-x: 8px;
+            --drift-x-end: -4px;
+        }
+
+        .timer-paw.p2 {
+            left: 15%;
+            width: 22px;
+            height: 22px;
+            --paw-dur: 13.8s;
+            --paw-delay: -7.4s;
+            --paw-alpha: 0.24;
+            --rot-start: 14deg;
+            --rot-mid: -2deg;
+            --rot-end: 12deg;
+            --drift-x: -7px;
+            --drift-x-end: 5px;
+        }
+
+        .timer-paw.p3 {
+            left: 26%;
+            width: 30px;
+            height: 30px;
+            --paw-dur: 12.4s;
+            --paw-delay: -4.2s;
+            --paw-alpha: 0.28;
+            --rot-start: -12deg;
+            --rot-mid: 8deg;
+            --rot-end: -8deg;
+            --drift-x: 10px;
+            --drift-x-end: -6px;
+        }
+
+        .timer-paw.p4 {
+            left: 38%;
+            width: 23px;
+            height: 23px;
+            --paw-dur: 14.6s;
+            --paw-delay: -10.6s;
+            --paw-alpha: 0.23;
+            --rot-start: 16deg;
+            --rot-mid: 2deg;
+            --rot-end: 18deg;
+            --drift-x: -8px;
+            --drift-x-end: 4px;
+        }
+
+        .timer-paw.p5 {
+            left: 50%;
+            width: 27px;
+            height: 27px;
+            --paw-dur: 11.8s;
+            --paw-delay: -2.6s;
+            --paw-alpha: 0.24;
+            --rot-start: -15deg;
+            --rot-mid: 5deg;
+            --rot-end: -12deg;
+            --drift-x: 7px;
+            --drift-x-end: -5px;
+        }
+
+        .timer-paw.p6 {
+            left: 62%;
+            width: 32px;
+            height: 32px;
+            --paw-dur: 13.2s;
+            --paw-delay: -8.9s;
+            --paw-alpha: 0.27;
+            --rot-start: 12deg;
+            --rot-mid: -6deg;
+            --rot-end: 14deg;
+            --drift-x: -9px;
+            --drift-x-end: 6px;
+        }
+
+        .timer-paw.p7 {
+            left: 74%;
+            width: 22px;
+            height: 22px;
+            --paw-dur: 12.0s;
+            --paw-delay: -5.3s;
+            --paw-alpha: 0.25;
+            --rot-start: -20deg;
+            --rot-mid: -4deg;
+            --rot-end: -16deg;
+            --drift-x: 8px;
+            --drift-x-end: -4px;
+        }
+
+        .timer-paw.p8 {
+            left: 85%;
+            width: 29px;
+            height: 29px;
+            --paw-dur: 14.2s;
+            --paw-delay: -11.8s;
+            --paw-alpha: 0.28;
+            --rot-start: 15deg;
+            --rot-mid: -3deg;
+            --rot-end: 12deg;
+            --drift-x: -8px;
+            --drift-x-end: 5px;
+        }
+
+        .timer-paw.p9 {
+            left: 92%;
+            width: 24px;
+            height: 24px;
+            --paw-dur: 12.8s;
+            --paw-delay: -3.5s;
+            --paw-alpha: 0.25;
+            --rot-start: -10deg;
+            --rot-mid: 6deg;
+            --rot-end: -14deg;
+            --drift-x: -6px;
+            --drift-x-end: 3px;
+        }
 
         .title-row {
             position: relative;
@@ -1058,6 +1174,224 @@
                 height: 35px;
                 top: -18px;
             }
+        }
+
+        /* ==================== PAUSE STATUS BANNER (BOTTOM-LEFT) ==================== */
+        .overlay-root.is-paused .live-dot-halo {
+            animation: none;
+            opacity: 0.35;
+            transform: scale(1.35);
+        }
+
+        .overlay-root.is-paused .live-dot-core {
+            background: #c4b5fd;
+            box-shadow: 0 0 8px rgba(196, 181, 253, 0.75);
+        }
+
+        .pause-banner {
+            position: fixed;
+            left: 26px;
+            bottom: 22px;
+            z-index: 40;
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            padding: 15px 24px 15px 18px;
+            border-radius: 22px;
+            background: linear-gradient(155deg, #241c21 0%, #161116 100%);
+            border: 2px solid rgba(185, 151, 245, 0.85);
+            box-shadow:
+                0 14px 28px rgba(8, 5, 11, 0.72),
+                0 0 24px rgba(168, 85, 247, 0.28),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.14);
+            color: #fffdfb;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate3d(-24px, 10px, 0);
+            transition:
+                opacity 380ms cubic-bezier(0.22, 1, 0.36, 1),
+                transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .pause-banner.is-visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .pause-banner-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: rgba(168, 85, 247, 0.18);
+            border: 1.5px solid rgba(216, 180, 254, 0.45);
+            color: var(--lilac-reward);
+            flex-shrink: 0;
+            animation: pauseIconPulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes pauseIconPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(168, 85, 247, 0.28);
+            }
+
+            50% {
+                transform: scale(1.06);
+                box-shadow: 0 0 18px rgba(216, 180, 254, 0.5);
+            }
+        }
+
+        .pause-banner-text {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: 0.01em;
+            color: #f8f2fc;
+            text-shadow:
+                0 0 0.7px rgba(248, 242, 252, 0.22),
+                0 2px 8px rgba(0, 0, 0, 0.75);
+            white-space: nowrap;
+        }
+
+        .pause-banner-text strong {
+            color: var(--lilac-reward);
+            font-weight: 700;
+        }
+
+        /* ==================== HIDDEN OBS INTERACT CONTROL PANEL ==================== */
+        .admin-panel {
+            position: fixed;
+            left: 26px;
+            top: 22px;
+            z-index: 90;
+            width: 340px;
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(23, 18, 21, 0.97);
+            border: 2px solid rgba(185, 151, 245, 0.85);
+            box-shadow:
+                0 18px 36px rgba(6, 3, 9, 0.82),
+                0 0 24px rgba(168, 85, 247, 0.3);
+            color: #fffdfb;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            user-select: none;
+        }
+
+        .admin-panel.is-open {
+            display: flex;
+        }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .admin-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: var(--lilac-reward);
+            text-transform: uppercase;
+        }
+
+        .admin-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fffdfb;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .admin-close:hover {
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .admin-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .admin-btn {
+            flex: 1 1 auto;
+            padding: 9px 10px;
+            border-radius: 11px;
+            border: 1.5px solid rgba(185, 151, 245, 0.45);
+            background: #241d21;
+            color: #fffdfb;
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .admin-btn:hover {
+            background: #31262d;
+            border-color: rgba(216, 180, 254, 0.85);
+        }
+
+        .admin-btn.primary {
+            background: rgba(168, 85, 247, 0.28);
+            border-color: rgba(216, 180, 254, 0.85);
+            color: #faf5ff;
+        }
+
+        .admin-btn.primary.is-paused {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: rgba(52, 211, 153, 0.85);
+            color: #ecfdf5;
+        }
+
+        .admin-btn.danger {
+            border-color: rgba(244, 114, 182, 0.5);
+            color: #fbcfe8;
+        }
+
+        .admin-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .admin-input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 11px;
+            border-radius: 11px;
+            border: 1.5px solid rgba(185, 151, 245, 0.42);
+            background: #120d13;
+            color: #fffdfb;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 800;
+            outline: none;
+        }
+
+        .admin-input:focus {
+            border-color: var(--lilac-border-bright);
+        }
+
+        .admin-hint {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: rgba(244, 236, 247, 0.65);
+            line-height: 1.35;
         }
     </style>
 </head>
@@ -1494,23 +1828,46 @@
                             <svg width="0" height="0" style="position:absolute" aria-hidden="true">
                                 <defs>
                                     <g id="timerPawPrint" fill="currentColor">
-                                        <path d="M 24 22.5 C 18.2 22.5, 13 27.6, 13.4 33.4 C 13.7 37.6, 17.4 39.8, 21.1 38.7 C 22.8 38.2, 25.2 38.2, 26.9 38.7 C 30.6 39.8, 34.3 37.6, 34.6 33.4 C 35 27.6, 29.8 22.5, 24 22.5 Z" />
-                                        <ellipse cx="10.2" cy="21.5" rx="4.2" ry="5.5" transform="rotate(-28 10.2 21.5)" />
-                                        <ellipse cx="18.6" cy="13.8" rx="4.4" ry="5.9" transform="rotate(-10 18.6 13.8)" />
-                                        <ellipse cx="29.4" cy="13.8" rx="4.4" ry="5.9" transform="rotate(10 29.4 13.8)" />
-                                        <ellipse cx="37.8" cy="21.5" rx="4.2" ry="5.5" transform="rotate(28 37.8 21.5)" />
+                                        <path
+                                            d="M 24 22.5 C 18.2 22.5, 13 27.6, 13.4 33.4 C 13.7 37.6, 17.4 39.8, 21.1 38.7 C 22.8 38.2, 25.2 38.2, 26.9 38.7 C 30.6 39.8, 34.3 37.6, 34.6 33.4 C 35 27.6, 29.8 22.5, 24 22.5 Z" />
+                                        <ellipse cx="10.2" cy="21.5" rx="4.2" ry="5.5"
+                                            transform="rotate(-28 10.2 21.5)" />
+                                        <ellipse cx="18.6" cy="13.8" rx="4.4" ry="5.9"
+                                            transform="rotate(-10 18.6 13.8)" />
+                                        <ellipse cx="29.4" cy="13.8" rx="4.4" ry="5.9"
+                                            transform="rotate(10 29.4 13.8)" />
+                                        <ellipse cx="37.8" cy="21.5" rx="4.2" ry="5.5"
+                                            transform="rotate(28 37.8 21.5)" />
                                     </g>
                                 </defs>
                             </svg>
-                            <svg class="timer-paw p1" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p2" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p3" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p4" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p5" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p6" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p7" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p8" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
-                            <svg class="timer-paw p9" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p1" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p2" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p3" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p4" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p5" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p6" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p7" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p8" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
+                            <svg class="timer-paw p9" viewBox="0 0 48 48">
+                                <use href="#timerPawPrint" />
+                            </svg>
                         </div>
                         <div class="title-row">
                             <span class="live-dot" aria-hidden="true">
@@ -1546,6 +1903,48 @@
             </div>
         </main>
     </div>
+
+    <!-- Bottom-Left Pause Status Banner -->
+    <div id="pauseBanner" class="pause-banner" role="status" aria-live="polite">
+        <span class="pause-banner-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4.5" width="4.5" height="15" rx="2" />
+                <rect x="13.5" y="4.5" width="4.5" height="15" rx="2" />
+            </svg>
+        </span>
+        <span class="pause-banner-text">Yayıncımız dinleniyor, o sırada <strong>sayaç duraklatıldı</strong></span>
+    </div>
+
+    <!-- Hidden OBS Interact Control Panel (Toggle via M or Double-Click) -->
+    <aside id="adminPanel" class="admin-panel" aria-label="Sayaç Kontrol Paneli">
+        <div class="admin-header">
+            <span class="admin-title">Paithon Kontrol</span>
+            <button id="btnAdminClose" class="admin-close" type="button" title="Kapat (M)">×</button>
+        </div>
+        <div class="admin-row">
+            <button id="btnTogglePause" class="admin-btn primary" type="button">Duraklat (Space)</button>
+            <button id="btnResetTimer" class="admin-btn danger" type="button">Sıfırla (R)</button>
+        </div>
+        <div class="admin-row">
+            <button class="admin-btn" type="button" data-delta-min="1">+1 dk</button>
+            <button class="admin-btn" type="button" data-delta-min="5">+5 dk</button>
+            <button class="admin-btn" type="button" data-delta-min="15">+15 dk</button>
+            <button class="admin-btn" type="button" data-delta-min="30">+30 dk</button>
+        </div>
+        <div class="admin-row">
+            <button class="admin-btn" type="button" data-delta-min="-1">-1 dk</button>
+            <button class="admin-btn" type="button" data-delta-min="-5">-5 dk</button>
+            <button class="admin-btn" type="button" data-delta-min="-15">-15 dk</button>
+        </div>
+        <form id="manualTimeForm" class="admin-input-group">
+            <input id="manualTimeInput" class="admin-input" type="text" placeholder="SS:DD:SS veya dakika (ör. 180)"
+                autocomplete="off" />
+            <button class="admin-btn primary" type="submit" style="flex:0 0 auto;">Uygula</button>
+        </form>
+        <div class="admin-hint">
+            Kısayollar: <strong>Space / P</strong> Durdur-Devam • <strong>M / Çift Tık</strong> Panel • <strong>↑ / ↓</strong> ±1 dk
+        </div>
+    </aside>
 
     <script>
         (function () {
@@ -1587,6 +1986,8 @@
 
             // ==================== STATE ====================
             let targetEndTimestamp = 0;
+            let isPaused = false;
+            let pausedRemainingMs = 0;
             let activeUrlMinutes = null;
             let lastRenderedSecond = -1;
             let lastFormattedLength = -1;
@@ -1607,7 +2008,14 @@
                 boardCard: document.getElementById('boardCard'),
                 timerFitWrap: document.getElementById('timerFitWrap'),
                 timerDisplay: document.getElementById('timerDisplay'),
-                priceCells: Array.prototype.slice.call(document.querySelectorAll('.price-cell'))
+                priceCells: Array.prototype.slice.call(document.querySelectorAll('.price-cell')),
+                pauseBanner: document.getElementById('pauseBanner'),
+                adminPanel: document.getElementById('adminPanel'),
+                btnAdminClose: document.getElementById('btnAdminClose'),
+                btnTogglePause: document.getElementById('btnTogglePause'),
+                btnResetTimer: document.getElementById('btnResetTimer'),
+                manualTimeForm: document.getElementById('manualTimeForm'),
+                manualTimeInput: document.getElementById('manualTimeInput')
             };
 
             // ==================== ZERO-OVERFLOW AUTO-FIT ENGINE ====================
@@ -1755,13 +2163,31 @@
             }
 
             function getRemainingMs() {
+                if (isPaused) {
+                    return Math.max(0, pausedRemainingMs);
+                }
                 return Math.max(0, targetEndTimestamp - Date.now());
+            }
+
+            function syncPauseUI() {
+                if (els.overlayRoot) {
+                    els.overlayRoot.classList.toggle('is-paused', isPaused);
+                }
+                if (els.pauseBanner) {
+                    els.pauseBanner.classList.toggle('is-visible', isPaused);
+                }
+                if (els.btnTogglePause) {
+                    els.btnTogglePause.textContent = isPaused ? 'Devam Et (Space)' : 'Duraklat (Space)';
+                    els.btnTogglePause.classList.toggle('is-paused', isPaused);
+                }
             }
 
             function saveTimerState() {
                 safeSetStorage(CONFIG.storageKey, JSON.stringify({
                     targetEndTimestamp: targetEndTimestamp,
                     remainingMs: getRemainingMs(),
+                    isPaused: isPaused,
+                    pausedRemainingMs: isPaused ? pausedRemainingMs : null,
                     urlMinutes: activeUrlMinutes,
                     savedAt: Date.now()
                 }));
@@ -1774,15 +2200,25 @@
                     const parsed = JSON.parse(raw);
                     if (!parsed || typeof parsed !== 'object') return null;
                     const savedUrlMinutes = Number.isFinite(parsed.urlMinutes) ? parsed.urlMinutes : null;
+                    const savedIsPaused = parsed.isPaused === true;
+                    if (savedIsPaused && Number.isFinite(parsed.pausedRemainingMs)) {
+                        return {
+                            remainingMs: Math.max(0, parsed.pausedRemainingMs),
+                            isPaused: true,
+                            urlMinutes: savedUrlMinutes
+                        };
+                    }
                     if (Number.isFinite(parsed.targetEndTimestamp)) {
                         return {
                             remainingMs: Math.max(0, parsed.targetEndTimestamp - Date.now()),
+                            isPaused: false,
                             urlMinutes: savedUrlMinutes
                         };
                     }
                     if (Number.isFinite(parsed.remainingMs)) {
                         return {
                             remainingMs: Math.max(0, parsed.remainingMs),
+                            isPaused: savedIsPaused,
                             urlMinutes: savedUrlMinutes
                         };
                     }
@@ -2123,11 +2559,7 @@
                         const item = donationQueue.shift();
 
                         // 1. Add time to drift-free countdown ONLY when this donation activates
-                        const now = Date.now();
-                        const baseEnd = targetEndTimestamp > now ? targetEndTimestamp : now;
-                        targetEndTimestamp = baseEnd + item.totalAddedSeconds * 1000;
-                        saveTimerState();
-                        renderTimer(true);
+                        addRemainingMs(item.totalAddedSeconds * 1000);
                         pulseBoard();
 
                         // 2. Spin cat slot eyes + mount single banner emerging from behind the cat
@@ -2219,10 +2651,93 @@
                 processDonationQueue();
             }
 
+            function addRemainingMs(deltaMs) {
+                if (!Number.isFinite(deltaMs) || deltaMs === 0) return;
+                if (isPaused) {
+                    pausedRemainingMs = Math.max(0, pausedRemainingMs + deltaMs);
+                } else {
+                    const now = Date.now();
+                    const baseEnd = targetEndTimestamp > now ? targetEndTimestamp : now;
+                    targetEndTimestamp = Math.max(now, baseEnd + deltaMs);
+                }
+                saveTimerState();
+                renderTimer(true);
+            }
+
+            function setRemainingMs(ms) {
+                const clamped = Math.max(0, Math.round(ms));
+                if (isPaused) {
+                    pausedRemainingMs = clamped;
+                } else {
+                    targetEndTimestamp = Date.now() + clamped;
+                }
+                saveTimerState();
+                renderTimer(true);
+                pulseBoard();
+            }
+
+            function pauseTimer() {
+                if (isPaused) return;
+                pausedRemainingMs = getRemainingMs();
+                isPaused = true;
+                syncPauseUI();
+                saveTimerState();
+                renderTimer(true);
+            }
+
+            function resumeTimer() {
+                if (!isPaused) return;
+                targetEndTimestamp = Date.now() + Math.max(0, pausedRemainingMs);
+                isPaused = false;
+                syncPauseUI();
+                saveTimerState();
+                renderTimer(true);
+            }
+
+            function togglePause() {
+                if (isPaused) {
+                    resumeTimer();
+                } else {
+                    pauseTimer();
+                }
+            }
+
+            function parseManualTimeInput(raw) {
+                const text = String(raw || '').trim();
+                if (!text) return NaN;
+                if (text.indexOf(':') !== -1) {
+                    const parts = text.split(':').map(function (p) { return parseInt(p.trim(), 10); });
+                    if (parts.some(function (n) { return !Number.isFinite(n) || n < 0; })) return NaN;
+                    if (parts.length === 2) {
+                        return (parts[0] * 60 + parts[1]) * 1000;
+                    }
+                    if (parts.length === 3) {
+                        return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
+                    }
+                    return NaN;
+                }
+                const mins = parseFloat(text.replace(',', '.'));
+                if (!Number.isFinite(mins) || mins < 0) return NaN;
+                return Math.round(mins * 60 * 1000);
+            }
+
+            function toggleAdminPanel(forceOpen) {
+                if (!els.adminPanel) return;
+                const open = typeof forceOpen === 'boolean'
+                    ? forceOpen
+                    : !els.adminPanel.classList.contains('is-open');
+                els.adminPanel.classList.toggle('is-open', open);
+            }
+
             function resetTimerToDefault() {
                 const resetMinutes = Number.isFinite(activeUrlMinutes) ? activeUrlMinutes : CONFIG.initialMinutes;
                 safeRemoveStorage(CONFIG.storageKey);
-                targetEndTimestamp = Date.now() + Math.round(resetMinutes * 60 * 1000);
+                const resetMs = Math.round(resetMinutes * 60 * 1000);
+                if (isPaused) {
+                    pausedRemainingMs = resetMs;
+                } else {
+                    targetEndTimestamp = Date.now() + resetMs;
+                }
                 saveTimerState();
                 renderTimer(true);
                 pulseBoard();
@@ -2366,17 +2881,94 @@
                 document.head.appendChild(script);
             }
 
-            // ==================== HIDDEN KEYBOARD TEST SHORTCUTS (1 - 6, R) ====================
-            window.addEventListener('pointerdown', function () {
+            // ==================== HIDDEN KEYBOARD & OBS INTERACT CONTROLS ====================
+            window.addEventListener('pointerdown', function (e) {
+                if (e.target && e.target.closest && e.target.closest('#adminPanel')) {
+                    return;
+                }
                 if (document.body && typeof document.body.focus === 'function') {
                     document.body.focus();
                 }
             });
 
+            if (els.overlayRoot) {
+                els.overlayRoot.addEventListener('dblclick', function () {
+                    toggleAdminPanel();
+                });
+            }
+
+            if (els.btnAdminClose) {
+                els.btnAdminClose.addEventListener('click', function () {
+                    toggleAdminPanel(false);
+                });
+            }
+
+            if (els.btnTogglePause) {
+                els.btnTogglePause.addEventListener('click', function () {
+                    togglePause();
+                });
+            }
+
+            if (els.btnResetTimer) {
+                els.btnResetTimer.addEventListener('click', function () {
+                    resetTimerToDefault();
+                });
+            }
+
+            if (els.adminPanel) {
+                els.adminPanel.addEventListener('click', function (e) {
+                    const btn = e.target && e.target.closest ? e.target.closest('[data-delta-min]') : null;
+                    if (!btn) return;
+                    const deltaMin = parseFloat(btn.getAttribute('data-delta-min'));
+                    if (Number.isFinite(deltaMin) && deltaMin !== 0) {
+                        addRemainingMs(Math.round(deltaMin * 60 * 1000));
+                        pulseBoard();
+                    }
+                });
+            }
+
+            if (els.manualTimeForm) {
+                els.manualTimeForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const ms = parseManualTimeInput(els.manualTimeInput ? els.manualTimeInput.value : '');
+                    if (Number.isFinite(ms) && ms >= 0) {
+                        setRemainingMs(ms);
+                        if (els.manualTimeInput) els.manualTimeInput.value = '';
+                    }
+                });
+            }
+
             window.addEventListener('keydown', function (e) {
                 if (e.ctrlKey || e.metaKey || e.altKey) return;
+                const activeTag = document.activeElement && document.activeElement.tagName
+                    ? document.activeElement.tagName.toUpperCase()
+                    : '';
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+                    if (e.key === 'Escape') {
+                        toggleAdminPanel(false);
+                        document.activeElement.blur();
+                    }
+                    return;
+                }
+
                 const key = e.key;
-                if (key === '1') {
+                if (key === ' ' || key === 'p' || key === 'P') {
+                    e.preventDefault();
+                    togglePause();
+                } else if (key === 'm' || key === 'M') {
+                    e.preventDefault();
+                    toggleAdminPanel();
+                } else if (key === 'Escape') {
+                    toggleAdminPanel(false);
+                } else if (key === 'ArrowUp') {
+                    e.preventDefault();
+                    addRemainingMs(60 * 1000);
+                    pulseBoard();
+                } else if (key === 'ArrowDown') {
+                    e.preventDefault();
+                    addRemainingMs(-60 * 1000);
+                    pulseBoard();
+                } else if (key === '1') {
                     processDonation('KICKS', 100, {
                         donorName: 'Mırmır',
                         message: 'Kediye mama parası, iyi yayınlar!'
@@ -2436,15 +3028,26 @@
 
                 if (hasUrlMinutes && (shouldReset || !savedState || urlMinutesChanged)) {
                     activeUrlMinutes = urlMinutes;
+                    isPaused = false;
+                    pausedRemainingMs = 0;
                     targetEndTimestamp = Date.now() + Math.round(urlMinutes * 60 * 1000);
                 } else if (savedState) {
                     activeUrlMinutes = savedState.urlMinutes;
-                    targetEndTimestamp = Date.now() + savedState.remainingMs;
+                    isPaused = Boolean(savedState.isPaused);
+                    if (isPaused) {
+                        pausedRemainingMs = savedState.remainingMs;
+                        targetEndTimestamp = Date.now() + savedState.remainingMs;
+                    } else {
+                        targetEndTimestamp = Date.now() + savedState.remainingMs;
+                    }
                 } else {
                     activeUrlMinutes = null;
+                    isPaused = false;
+                    pausedRemainingMs = 0;
                     targetEndTimestamp = Date.now() + Math.round(CONFIG.initialMinutes * 60 * 1000);
                 }
 
+                syncPauseUI();
                 saveTimerState();
                 setupAutoFitObservers();
                 renderTimer(true);
