@@ -150,38 +150,6 @@
             overflow: hidden;
         }
 
-        @keyframes sideNotifLifecycle {
-            0% {
-                opacity: 0;
-                transform: translate3d(100%, 0, 0);
-            }
-
-            9% {
-                opacity: 1;
-                transform: translate3d(-6px, 0, 0);
-            }
-
-            14% {
-                opacity: 1;
-                transform: translate3d(0px, 0, 0);
-            }
-
-            87% {
-                opacity: 1;
-                transform: translate3d(0px, 0, 0);
-            }
-
-            94% {
-                opacity: 0.9;
-                transform: translate3d(16%, 0, 0);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate3d(100%, 0, 0);
-            }
-        }
-
         @keyframes badgeSpringPop {
             0% {
                 opacity: 0;
@@ -224,7 +192,24 @@
                 inset 0 1.5px 0 rgba(255, 255, 255, 0.14);
             color: #fffdfb;
             will-change: transform, opacity;
-            animation: sideNotifLifecycle 6.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            transform: translate3d(100%, 0, 0);
+            opacity: 0;
+            transition:
+                transform 680ms cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 420ms ease-out;
+        }
+
+        .side-notif.is-visible {
+            transform: translate3d(0px, 0, 0);
+            opacity: 1;
+        }
+
+        .side-notif.is-exiting {
+            transform: translate3d(100%, 0, 0);
+            opacity: 0;
+            transition:
+                transform 1350ms cubic-bezier(0.42, 0, 0.2, 1),
+                opacity 1150ms ease-in 200ms;
         }
 
         .notif-body {
@@ -1580,9 +1565,14 @@
                 },
                 bonusMultiple: 13,
                 bonusSeconds: 13,
-                sideNotifDurationMs: 6500,
-                eyeHoldDurationMs: 6000,
-                queuedHoldDurationMs: 2200,
+                // Dynamic donate banner timing (ms)
+                notifEnterMs: 680,
+                notifExitMs: 1350,
+                notifMinHoldMs: 4200,
+                notifMaxHoldMs: 12000,
+                notifBaseHoldMs: 3000,
+                notifMsPerChar: 45,
+                notifQueueGapMs: 320,
                 maxSeenEvents: 500,
                 // Timer auto-fit typography bounds
                 timerMaxFontPx: 68,
@@ -1602,10 +1592,8 @@
             let lastFormattedLength = -1;
             let streamlabsSocket = null;
             const seenEventIds = new Set();
-            const eyeQueue = [];
-            let isSpinningEyes = false;
-            let activeHoldTimer = null;
-            let activeHoldDone = null;
+            const donationQueue = [];
+            let isProcessingDonation = false;
 
             // ==================== DOM REFERENCES ====================
             const els = {
@@ -1900,12 +1888,24 @@
                 return numText;
             }
 
+            function sleep(ms) {
+                return new Promise(function (resolve) {
+                    setTimeout(resolve, ms);
+                });
+            }
+
+            function computeNotifHoldMs(donorName, messageText) {
+                const msgLen = messageText ? messageText.length : 0;
+                const donorWeight = donorName ? Math.round(donorName.length * 0.4) : 0;
+                const rawMs = CONFIG.notifBaseHoldMs + (msgLen + donorWeight) * CONFIG.notifMsPerChar;
+                return Math.max(CONFIG.notifMinHoldMs, Math.min(CONFIG.notifMaxHoldMs, rawMs));
+            }
+
             /**
-             * Spawns a donate banner emerging from behind the cat head toward the left.
-             * Displays donor name, amount, donation message (if any), base added duration,
-             * and attaches a separate "+13 sn" badge to the duration chip when bonus applies.
+             * Builds a donate banner DOM element emerging from behind the cat head toward the left
+             * and calculates its dynamic reading hold duration (clamped to min/max bounds).
              */
-            function spawnSideNotification(baseSeconds, bonusSeconds, tier, details) {
+            function createSideNotificationElement(baseSeconds, bonusSeconds, tier, details) {
                 const info = details && typeof details === 'object' ? details : {};
                 const donorName = sanitizeText(info.donorName, 40);
                 const messageText = sanitizeText(info.message, 280);
@@ -1974,17 +1974,10 @@
 
                 pill.appendChild(timeWrap);
 
-                while (els.sideNotifStack.children.length >= 2) {
-                    els.sideNotifStack.removeChild(els.sideNotifStack.firstChild);
-                }
-
-                els.sideNotifStack.appendChild(pill);
-
-                setTimeout(function () {
-                    if (pill.parentNode) {
-                        pill.parentNode.removeChild(pill);
-                    }
-                }, CONFIG.sideNotifDurationMs + 100);
+                return {
+                    el: pill,
+                    holdMs: computeNotifHoldMs(donorName, messageText)
+                };
             }
 
             function pulseBoard() {
@@ -2064,88 +2057,45 @@
                 });
             }
 
-            function waitHold(ms) {
-                return new Promise(function (resolve) {
-                    activeHoldDone = resolve;
-                    activeHoldTimer = setTimeout(function () {
-                        activeHoldTimer = null;
-                        activeHoldDone = null;
-                        resolve();
-                    }, ms);
-                });
-            }
-
-            function shortenActiveHoldIfQueued() {
-                if (activeHoldTimer && activeHoldDone) {
-                    clearTimeout(activeHoldTimer);
-                    activeHoldTimer = setTimeout(function () {
-                        const done = activeHoldDone;
-                        activeHoldTimer = null;
-                        activeHoldDone = null;
-                        if (done) done();
-                    }, 520);
-                }
-            }
-
             function clearEyeTierClasses() {
                 els.catHeadWrap.classList.remove('glow-latte', 'glow-dollar', 'glow-gold');
                 els.leftEyeGroup.classList.remove('tier-latte', 'tier-dollar', 'tier-gold');
                 els.rightEyeGroup.classList.remove('tier-latte', 'tier-dollar', 'tier-gold');
             }
 
-            async function processEyeQueue() {
-                if (isSpinningEyes) return;
-                isSpinningEyes = true;
+            async function spinSlotEyes(tier) {
+                clearEyeTierClasses();
+                els.overlayRoot.classList.add('is-excited');
+                els.leftEyeGroup.classList.add('slot-active');
+                els.rightEyeGroup.classList.add('slot-active');
 
-                try {
-                    while (eyeQueue.length > 0) {
-                        const tier = eyeQueue.shift();
+                const leftSteps = 12;
+                const rightSteps = 15;
+                populateReel(els.leftReelTrack, tier, leftSteps);
+                populateReel(els.rightReelTrack, tier, rightSteps);
 
-                        clearEyeTierClasses();
-                        els.overlayRoot.classList.add('is-excited');
-                        els.leftEyeGroup.classList.add('slot-active');
-                        els.rightEyeGroup.classList.add('slot-active');
+                // Staggered lock-in: left eye settles, then right eye ~260ms later
+                const leftSpin = animateSingleReel(els.leftReelTrack, LEFT_EYE_CENTER, leftSteps, 1020);
+                const rightSpin = animateSingleReel(els.rightReelTrack, RIGHT_EYE_CENTER, rightSteps, 1280);
 
-                        const leftSteps = 12;
-                        const rightSteps = 15;
-                        populateReel(els.leftReelTrack, tier, leftSteps);
-                        populateReel(els.rightReelTrack, tier, rightSteps);
+                await leftSpin;
+                els.leftEyeGroup.classList.add('tier-' + tier);
+                triggerEyeBounce(els.leftEyeGroup);
 
-                        // Staggered lock-in: left eye settles, then right eye ~260ms later
-                        const leftSpin = animateSingleReel(els.leftReelTrack, LEFT_EYE_CENTER, leftSteps, 1020);
-                        const rightSpin = animateSingleReel(els.rightReelTrack, RIGHT_EYE_CENTER, rightSteps, 1280);
-
-                        await leftSpin;
-                        els.leftEyeGroup.classList.add('tier-' + tier);
-                        triggerEyeBounce(els.leftEyeGroup);
-
-                        await rightSpin;
-                        els.rightEyeGroup.classList.add('tier-' + tier);
-                        els.catHeadWrap.classList.add('glow-' + tier);
-                        triggerEyeBounce(els.rightEyeGroup);
-
-                        const holdMs = eyeQueue.length > 0 ? CONFIG.queuedHoldDurationMs : CONFIG.eyeHoldDurationMs;
-                        await waitHold(holdMs);
-                    }
-                } finally {
-                    els.leftEyeGroup.classList.remove('slot-active');
-                    els.rightEyeGroup.classList.remove('slot-active');
-                    clearEyeTierClasses();
-                    els.overlayRoot.classList.remove('is-excited');
-                    isSpinningEyes = false;
-                }
+                await rightSpin;
+                els.rightEyeGroup.classList.add('tier-' + tier);
+                els.catHeadWrap.classList.add('glow-' + tier);
+                triggerEyeBounce(els.rightEyeGroup);
             }
 
-            function enqueueEyeSpin(tier) {
-                eyeQueue.push(tier);
-                if (isSpinningEyes) {
-                    shortenActiveHoldIfQueued();
-                } else {
-                    processEyeQueue();
-                }
+            function resetSlotEyes() {
+                els.leftEyeGroup.classList.remove('slot-active');
+                els.rightEyeGroup.classList.remove('slot-active');
+                clearEyeTierClasses();
+                els.overlayRoot.classList.remove('is-excited');
             }
 
-            // ==================== DONATION PROCESSING & +13 SN BONUS RULE ====================
+            // ==================== UNIFIED SEQUENTIAL DONATION QUEUE & +13 SN BONUS RULE ====================
             function isPositiveMultipleOf13(amount) {
                 if (!Number.isFinite(amount) || amount <= 0) return false;
                 const rounded = Math.round(amount);
@@ -2158,10 +2108,76 @@
             }
 
             /**
-             * Processes a donation in TRY, KICKS, or SUB:
-             * - Immediately adds baseSeconds + bonusSeconds to the drift-free countdown timer
-             * - Displays donor name, amount, message & base duration emerging from behind the cat to the left
-             * - Spins slot eyes based on total added seconds (<600s Latte, 600-3599s Dollar, >=3600s Gold)
+             * Runs queued donations strictly one at a time:
+             * - While one donation is displayed, queued donations do NOT appear on screen
+             *   and do NOT add time to the countdown until it is their turn.
+             * - Hold duration scales dynamically with text length (clamped to min/max limits).
+             * - Banner exits smoothly sliding to the right behind the cat before the next item begins.
+             */
+            async function processDonationQueue() {
+                if (isProcessingDonation) return;
+                isProcessingDonation = true;
+
+                try {
+                    while (donationQueue.length > 0) {
+                        const item = donationQueue.shift();
+
+                        // 1. Add time to drift-free countdown ONLY when this donation activates
+                        const now = Date.now();
+                        const baseEnd = targetEndTimestamp > now ? targetEndTimestamp : now;
+                        targetEndTimestamp = baseEnd + item.totalAddedSeconds * 1000;
+                        saveTimerState();
+                        renderTimer(true);
+                        pulseBoard();
+
+                        // 2. Spin cat slot eyes + mount single banner emerging from behind the cat
+                        const eyeSpinPromise = spinSlotEyes(item.tier);
+                        const banner = createSideNotificationElement(
+                            item.baseSeconds,
+                            item.bonusSeconds,
+                            item.tier,
+                            item.details
+                        );
+
+                        while (els.sideNotifStack.firstChild) {
+                            els.sideNotifStack.removeChild(els.sideNotifStack.firstChild);
+                        }
+                        els.sideNotifStack.appendChild(banner.el);
+
+                        // Force reflow so smooth slide-out transition starts from behind the cat
+                        void banner.el.offsetWidth;
+                        banner.el.classList.add('is-visible');
+
+                        // Hold on screen based on text length (and ensure slot eyes finished settling)
+                        await Promise.all([
+                            eyeSpinPromise,
+                            sleep(CONFIG.notifEnterMs + banner.holdMs)
+                        ]);
+
+                        // 3. Slowly & fluidly glide right back behind the cat
+                        banner.el.classList.remove('is-visible');
+                        banner.el.classList.add('is-exiting');
+                        await sleep(CONFIG.notifExitMs + 60);
+
+                        if (banner.el.parentNode) {
+                            banner.el.parentNode.removeChild(banner.el);
+                        }
+
+                        resetSlotEyes();
+
+                        if (donationQueue.length > 0) {
+                            await sleep(CONFIG.notifQueueGapMs);
+                        }
+                    }
+                } finally {
+                    resetSlotEyes();
+                    isProcessingDonation = false;
+                }
+            }
+
+            /**
+             * Validates and enqueues a donation in TRY, KICKS, or SUB.
+             * Timer increment, banner display, and slot eyes all execute sequentially per queued item.
              */
             function processDonation(currencyType, rawAmount, details) {
                 const type = String(currencyType || '').toUpperCase();
@@ -2176,13 +2192,6 @@
                 const totalAddedSeconds = baseSeconds + bonusSeconds;
 
                 if (totalAddedSeconds <= 0) return;
-
-                // Drift-free timer update (smoothly resumes from now if timer reached 00:00:00)
-                const now = Date.now();
-                const baseEnd = targetEndTimestamp > now ? targetEndTimestamp : now;
-                targetEndTimestamp = baseEnd + totalAddedSeconds * 1000;
-                saveTimerState();
-                renderTimer(true);
 
                 // Prize eye tier based on total added duration
                 let tier = 'latte';
@@ -2199,9 +2208,15 @@
                     amountLabel: info.amountLabel || formatDonationAmount(type, amount)
                 };
 
-                pulseBoard();
-                spawnSideNotification(baseSeconds, bonusSeconds, tier, notifDetails);
-                enqueueEyeSpin(tier);
+                donationQueue.push({
+                    baseSeconds: baseSeconds,
+                    bonusSeconds: bonusSeconds,
+                    totalAddedSeconds: totalAddedSeconds,
+                    tier: tier,
+                    details: notifDetails
+                });
+
+                processDonationQueue();
             }
 
             function resetTimerToDefault() {
