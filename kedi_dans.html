@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paithon — 1000+ TL Kedi Dans Alert</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@700;800;900&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --lilac-reward: #dec4ff;
+            --lilac-border: rgba(185, 151, 245, 0.85);
+            --font-display: 'Fredoka', 'Nunito', system-ui, -apple-system, sans-serif;
+            --font-body: 'Nunito', 'Fredoka', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+            font-family: var(--font-body);
+            color: #fffdfb;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            user-select: none;
+        }
+
+        .alert-stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            transform: scale(0.94);
+            pointer-events: none;
+            transition:
+                opacity 380ms cubic-bezier(0.22, 1, 0.36, 1),
+                transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .alert-stage.is-active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .video-frame {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 26px;
+            overflow: hidden;
+            border: 2.5px solid var(--lilac-border);
+            background: #120d13;
+            box-shadow:
+                0 20px 44px rgba(8, 5, 11, 0.78),
+                0 0 32px rgba(168, 85, 247, 0.36);
+        }
+
+        .alert-video {
+            display: block;
+            max-width: min(1280px, calc(100vw - 48px));
+            max-height: min(720px, calc(100vh - 120px));
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .alert-caption {
+            margin-top: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            border-radius: 999px;
+            background: linear-gradient(155deg, #241c21 0%, #161116 100%);
+            border: 2px solid var(--lilac-border);
+            box-shadow:
+                0 12px 26px rgba(8, 5, 11, 0.72),
+                0 0 22px rgba(168, 85, 247, 0.32);
+            white-space: nowrap;
+            max-width: calc(100vw - 48px);
+        }
+
+        .alert-caption.is-hidden {
+            display: none;
+        }
+
+        .caption-donor {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: #fffdfb;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 420px;
+        }
+
+        .caption-dot {
+            color: rgba(222, 196, 255, 0.55);
+            font-size: 20px;
+        }
+
+        .caption-amount {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--lilac-reward);
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+        }
+
+        .setup-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 14px;
+            background: rgba(23, 18, 21, 0.96);
+            border: 1.5px solid rgba(244, 114, 182, 0.7);
+            color: #fbcfe8;
+            font-size: 16px;
+            font-weight: 800;
+            display: none;
+            z-index: 50;
+            white-space: nowrap;
+        }
+
+        .setup-notice.is-visible {
+            display: block;
+        }
+    </style>
+</head>
+
+<body tabindex="0">
+    <div id="alertStage" class="alert-stage" aria-live="polite">
+        <div class="video-frame">
+            <video id="alertVideo" class="alert-video" playsinline preload="auto"></video>
+        </div>
+        <div id="alertCaption" class="alert-caption">
+            <span id="captionDonor" class="caption-donor"></span>
+            <span id="captionDot" class="caption-dot">•</span>
+            <span id="captionAmount" class="caption-amount"></span>
+        </div>
+    </div>
+
+    <div id="setupNotice" class="setup-notice">
+        R2 Public URL eksik: URL sonuna &amp;video=PUBLIC_R2_MP4_URL ekleyin.
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            // ==================== CONFIGURATION ====================
+            // Cloudflare R2 bucket'inizdaki "Public Development URL" (pub-xxxx.r2.dev)
+            // veya custom domain linkini asagiya yapistirin ya da URL'den ?video=... ile verin.
+            const DEFAULT_OBJECT_PATH = 'gittiysen%20gelme%20geri%20-%20kedi%20dans.mp4';
+            const CONFIG = {
+                streamlabsToken: '',
+                // Ornek: 'https://pub-xxxxxxxxxxxxxxxx.r2.dev/' + DEFAULT_OBJECT_PATH
+                videoUrl: '',
+                minAmountTry: 1000,
+                defaultVolume: 0.9,
+                queueGapMs: 350,
+                fadeOutMs: 420,
+                maxSeenEvents: 500
+            };
+
+            // ==================== STATE ====================
+            let streamlabsSocket = null;
+            const seenEventIds = new Set();
+            const alertQueue = [];
+            let isPlaying = false;
+            let activeVideoUrl = '';
+            let activeMinAmount = CONFIG.minAmountTry;
+            let activeVolume = CONFIG.defaultVolume;
+            let forceMuted = false;
+            let showCaption = true;
+
+            // ==================== DOM ====================
+            const els = {
+                stage: document.getElementById('alertStage'),
+                video: document.getElementById('alertVideo'),
+                caption: document.getElementById('alertCaption'),
+                donor: document.getElementById('captionDonor'),
+                dot: document.getElementById('captionDot'),
+                amount: document.getElementById('captionAmount'),
+                setupNotice: document.getElementById('setupNotice')
+            };
+
+            function sleep(ms) {
+                return new Promise(function (resolve) {
+                    setTimeout(resolve, ms);
+                });
+            }
+
+            function parseNumericAmount(value) {
+                if (typeof value === 'number') {
+                    return Number.isFinite(value) ? value : NaN;
+                }
+                if (typeof value !== 'string') return NaN;
+
+                const cleaned = value.trim().replace(/[^\d.,-]/g, '');
+                if (!cleaned) return NaN;
+
+                const lastComma = cleaned.lastIndexOf(',');
+                const lastDot = cleaned.lastIndexOf('.');
+                let normalized = cleaned;
+
+                if (lastComma > -1 && lastDot > -1) {
+                    if (lastComma > lastDot) {
+                        normalized = cleaned.replace(/\./g, '').replace(',', '.');
+                    } else {
+                        normalized = cleaned.replace(/,/g, '');
+                    }
+                } else if (lastComma > -1) {
+                    const decimals = cleaned.length - lastComma - 1;
+                    normalized = decimals === 3 ? cleaned.replace(/,/g, '') : cleaned.replace(',', '.');
+                }
+
+                const num = parseFloat(normalized);
+                return Number.isFinite(num) ? num : NaN;
+            }
+
+            function formatTryAmount(amount) {
+                const isWhole = Math.abs(amount - Math.round(amount)) < 1e-6;
+                const formatted = isWhole
+                    ? Math.round(amount).toLocaleString('tr-TR')
+                    : amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return formatted + ' TL';
+            }
+
+            function showMissingVideoHint() {
+                if (!els.setupNotice) return;
+                els.setupNotice.classList.add('is-visible');
+                setTimeout(function () {
+                    els.setupNotice.classList.remove('is-visible');
+                }, 4500);
+            }
+
+            function playSingleVideoAlert(item) {
+                return new Promise(function (resolve) {
+                    if (!activeVideoUrl) {
+                        console.warn('[KediDans] Video URL ayarlanmamis. ?video=... veya CONFIG.videoUrl doldurun.');
+                        if (item.isTest) showMissingVideoHint();
+                        resolve();
+                        return;
+                    }
+
+                    const video = els.video;
+                    let settled = false;
+
+                    function finish() {
+                        if (settled) return;
+                        settled = true;
+                        video.removeEventListener('ended', onEnded);
+                        video.removeEventListener('error', onError);
+                        els.stage.classList.remove('is-active');
+                        setTimeout(function () {
+                            try {
+                                video.pause();
+                                video.currentTime = 0;
+                            } catch (e) { }
+                            resolve();
+                        }, CONFIG.fadeOutMs);
+                    }
+
+                    function onEnded() {
+                        finish();
+                    }
+
+                    function onError() {
+                        console.error('[KediDans] Video yuklenemedi:', activeVideoUrl);
+                        finish();
+                    }
+
+                    if (showCaption) {
+                        const donor = String(item.donorName || '').trim();
+                        const amountText = formatTryAmount(item.amount);
+                        els.donor.textContent = donor || 'Anonim';
+                        els.amount.textContent = amountText;
+                        els.dot.style.display = 'inline';
+                        els.caption.classList.remove('is-hidden');
+                    } else {
+                        els.caption.classList.add('is-hidden');
+                    }
+
+                    video.src = activeVideoUrl;
+                    video.muted = forceMuted;
+                    video.volume = activeVolume;
+                    video.currentTime = 0;
+
+                    video.addEventListener('ended', onEnded);
+                    video.addEventListener('error', onError);
+
+                    els.stage.classList.add('is-active');
+
+                    const playPromise = video.play();
+                    if (playPromise && typeof playPromise.catch === 'function') {
+                        playPromise.catch(function () {
+                            // Tarayici sesli autoplay'i engellerse sessiz baslatmayi dene
+                            video.muted = true;
+                            video.play().catch(function () {
+                                finish();
+                            });
+                        });
+                    }
+                });
+            }
+
+            async function processAlertQueue() {
+                if (isPlaying) return;
+                isPlaying = true;
+                try {
+                    while (alertQueue.length > 0) {
+                        const item = alertQueue.shift();
+                        await playSingleVideoAlert(item);
+                        if (alertQueue.length > 0) {
+                            await sleep(CONFIG.queueGapMs);
+                        }
+                    }
+                } finally {
+                    isPlaying = false;
+                }
+            }
+
+            function enqueueAlert(donorName, amount, isTest) {
+                if (!Number.isFinite(amount) || amount < activeMinAmount) return;
+                alertQueue.push({
+                    donorName: donorName,
+                    amount: amount,
+                    isTest: Boolean(isTest)
+                });
+                processAlertQueue();
+            }
+
+            // ==================== STREAMLABS SOCKET ====================
+            function isDuplicateEvent(eventId) {
+                if (!eventId) return false;
+                const key = String(eventId);
+                if (seenEventIds.has(key)) return true;
+                seenEventIds.add(key);
+                if (seenEventIds.size > CONFIG.maxSeenEvents) {
+                    const oldest = seenEventIds.values().next().value;
+                    seenEventIds.delete(oldest);
+                }
+                return false;
+            }
+
+            function handleStreamlabsPayload(eventData) {
+                if (!eventData || typeof eventData !== 'object') return;
+                const type = String(eventData.type || '').toLowerCase();
+                if (type !== 'donation' && type !== 'tip') return;
+
+                const messages = Array.isArray(eventData.message)
+                    ? eventData.message
+                    : (eventData.message ? [eventData.message] : []);
+
+                messages.forEach(function (msg) {
+                    if (!msg || typeof msg !== 'object') return;
+                    const eventId = msg._id || msg.id || msg.event_id || eventData.event_id;
+                    if (isDuplicateEvent(eventId)) return;
+
+                    const currency = String(msg.currency || '').trim().toUpperCase();
+                    if (currency && currency !== 'TRY' && currency !== 'TL') return;
+
+                    const amount = parseNumericAmount(msg.amount != null ? msg.amount : msg.formatted_amount);
+                    if (!Number.isFinite(amount) || amount < activeMinAmount) return;
+
+                    const donorName = msg.from || msg.name || msg.display_name || msg.username || msg.sender || '';
+                    enqueueAlert(donorName, amount, false);
+                });
+            }
+
+            window.handleStreamlabsPayload = handleStreamlabsPayload;
+
+            function connectStreamlabs(token) {
+                if (!token || typeof token !== 'string') return;
+                const cleanToken = token.trim();
+                if (!cleanToken) return;
+
+                function initSocket() {
+                    if (typeof window.io !== 'function') return;
+                    try {
+                        if (streamlabsSocket) {
+                            streamlabsSocket.disconnect();
+                        }
+                        streamlabsSocket = window.io('https://sockets.streamlabs.com?token=' + encodeURIComponent(cleanToken), {
+                            transports: ['websocket']
+                        });
+                        streamlabsSocket.on('event', handleStreamlabsPayload);
+                    } catch (err) { }
+                }
+
+                if (typeof window.io === 'function') {
+                    initSocket();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.js';
+                script.async = true;
+                script.onload = initSocket;
+                document.head.appendChild(script);
+            }
+
+            // ==================== TEST SHORTCUTS (1, 2, T, ESC) ====================
+            window.addEventListener('pointerdown', function () {
+                if (document.body && typeof document.body.focus === 'function') {
+                    document.body.focus();
+                }
+            });
+
+            window.addEventListener('keydown', function (e) {
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+                const key = e.key;
+                if (key === '1' || key === 't' || key === 'T') {
+                    enqueueAlert('TestBagisci', activeMinAmount, true);
+                } else if (key === '2') {
+                    enqueueAlert('BuyukDestek', activeMinAmount + 500, true);
+                } else if (key === 'Escape') {
+                    alertQueue.length = 0;
+                    els.stage.classList.remove('is-active');
+                    try {
+                        els.video.pause();
+                        els.video.currentTime = 0;
+                    } catch (err) { }
+                }
+            });
+
+            // ==================== INIT ====================
+            function init() {
+                const params = new URLSearchParams(window.location.search);
+                const urlToken = params.get('token');
+                const urlVideo = params.get('video');
+                const urlMin = parseFloat(params.get('min'));
+                const urlVol = parseFloat(params.get('volume'));
+
+                activeVideoUrl = (urlVideo && urlVideo.trim()) ? urlVideo.trim() : CONFIG.videoUrl;
+                if (Number.isFinite(urlMin) && urlMin > 0) {
+                    activeMinAmount = urlMin;
+                }
+                if (Number.isFinite(urlVol)) {
+                    activeVolume = Math.max(0, Math.min(1, urlVol));
+                }
+                forceMuted = params.get('muted') === '1' || params.get('muted') === 'true';
+                showCaption = params.get('caption') !== '0' && params.get('caption') !== 'false';
+
+                const token = urlToken || CONFIG.streamlabsToken;
+                if (token) {
+                    connectStreamlabs(token);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+
+</html>
