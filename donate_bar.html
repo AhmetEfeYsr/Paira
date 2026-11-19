@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Streamlabs Buzlu Pipetli Latte Bağış Hedefi</title>
+  <title>Paithon Hedefi — Buzlu Latte Bağış Bardağı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --latte-font: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-      --latte-scale: 1;
-      --latte-card-bg: rgba(24, 15, 10, 0.80);
-      --latte-card-border: rgba(255, 229, 198, 0.28);
-      --latte-accent: #f3b574;
-      --latte-accent-bright: #ffe2b8;
-      --latte-text: #fff8f0;
-      --latte-muted: rgba(255, 236, 214, 0.68);
+      --lilac-title: #e6cfff;
+      --lilac-amount: #d6b2ff;
+      --lilac-complete: #f0e0ff;
+      --lilac-glow: rgba(186, 134, 255, 0.58);
     }
 
     *,
@@ -30,11 +29,13 @@
       height: 100%;
       background: transparent !important;
       overflow: hidden;
-      font-family: var(--latte-font);
+      font-family: 'Pacifico', 'Segoe UI', cursive, sans-serif;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       display: flex;
       align-items: center;
       justify-content: center;
+      outline: none;
     }
 
     .latte-widget {
@@ -42,53 +43,107 @@
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      width: 268px;
-      padding: 10px 8px 12px;
+      min-width: 280px;
+      padding: 12px 18px;
       user-select: none;
-      transform: scale(var(--latte-scale));
-      transform-origin: center center;
     }
 
     .hidden {
       display: none !important;
     }
 
-    /* Bağış geldiğinde yükselen +miktar rozeti */
-    .latte-delta {
-      position: absolute;
-      top: 18px;
-      right: 16px;
-      z-index: 10;
-      padding: 5px 11px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #f8c688, #d98643);
-      color: #261308;
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing: 0.2px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(255, 245, 230, 0.55);
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(14px) scale(0.8);
+    /* Üst / Alt yazı slotları (panel yok, doğrudan şeffaf zemin üzerinde) */
+    .latte-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      z-index: 6;
     }
 
-    .latte-delta.show {
-      animation: latteDeltaPop 1.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    .latte-slot-top {
+      margin-bottom: 2px;
+    }
+
+    .latte-slot-bottom {
+      margin-top: -6px;
+    }
+
+    .latte-label {
+      font-family: 'Pacifico', cursive;
+      font-weight: 400;
+      line-height: 1.24;
+      letter-spacing: 0.4px;
+      text-align: center;
+      white-space: nowrap;
+      text-shadow:
+        0 2px 3px rgba(18, 9, 30, 0.96),
+        0 0 8px rgba(22, 10, 36, 0.88),
+        0 0 16px var(--lilac-glow);
+      transition: color 0.35s ease, text-shadow 0.35s ease;
+    }
+
+    .latte-label-title {
+      font-size: 27px;
+      color: var(--lilac-title);
+    }
+
+    .latte-label-amount {
+      font-size: 23px;
+      color: var(--lilac-amount);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .latte-widget.goal-complete .latte-label {
+      color: var(--lilac-complete);
+      text-shadow:
+        0 2px 3px rgba(18, 9, 30, 0.96),
+        0 0 10px rgba(192, 132, 252, 0.85),
+        0 0 22px rgba(216, 180, 254, 0.7);
     }
 
     /* Bardak sahnesi ve esnek zıplama */
     .latte-stage {
-      width: 244px;
-      height: 318px;
+      position: relative;
+      width: 236px;
+      height: 308px;
       display: flex;
       align-items: center;
       justify-content: center;
       filter: drop-shadow(0 12px 22px rgba(18, 9, 4, 0.42));
       transform-origin: center bottom;
+      z-index: 4;
     }
 
     .latte-widget.pouring .latte-stage {
       animation: latteCupBounce 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Bağış geldiğinde bardağın yanında yükselen +miktar rozeti */
+    .latte-delta {
+      position: absolute;
+      top: 28px;
+      right: -2px;
+      z-index: 10;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #f3d285 0%, #c084fc 100%);
+      border: 2px solid rgba(255, 250, 244, 0.9);
+      color: #1f1229;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 13.5px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 14px rgba(192, 132, 252, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      transform: translateY(14px) scale(0.8);
+    }
+
+    .latte-delta.show {
+      animation: latteDeltaPop 1.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     .latte-svg {
@@ -201,7 +256,7 @@
 
     /* Hedef %100 kutlama yıldızları */
     .sparkle {
-      fill: #ffe7b8;
+      fill: #ebd4ff;
       opacity: 0;
       transform-box: fill-box;
       transform-origin: center;
@@ -211,110 +266,6 @@
     .latte-widget.goal-complete .sp2 { animation-delay: 0.45s; }
     .latte-widget.goal-complete .sp3 { animation-delay: 0.95s; }
     .latte-widget.goal-complete .sp4 { animation-delay: 1.4s; }
-
-    /* Alt Bilgi Paneli */
-    .latte-card {
-      width: 224px;
-      margin-top: -4px;
-      padding: 10px 14px 11px;
-      border-radius: 16px;
-      background: var(--latte-card-bg);
-      border: 1.5px solid var(--latte-card-border);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
-      transition: border-color 0.4s ease, box-shadow 0.4s ease;
-    }
-
-    .latte-widget.goal-complete .latte-card {
-      border-color: rgba(255, 224, 168, 0.72);
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42), 0 0 18px rgba(243, 181, 116, 0.28);
-    }
-
-    .latte-card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-
-    .latte-card-top.centered {
-      justify-content: center;
-    }
-
-    .latte-title {
-      color: var(--latte-accent-bright);
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .latte-percent {
-      flex-shrink: 0;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(243, 181, 116, 0.18);
-      border: 1px solid rgba(243, 181, 116, 0.36);
-      color: var(--latte-accent-bright);
-      font-size: 11.5px;
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .latte-widget.goal-complete .latte-percent {
-      background: linear-gradient(135deg, #f8c688, #d98643);
-      border-color: transparent;
-      color: #241207;
-    }
-
-    .latte-amounts {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 5px;
-      margin-bottom: 7px;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.15;
-    }
-
-    .latte-current {
-      color: var(--latte-text);
-      font-size: 20px;
-      font-weight: 900;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-    }
-
-    .latte-sep {
-      color: var(--latte-muted);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .latte-total {
-      color: var(--latte-muted);
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .latte-mini-track {
-      width: 100%;
-      height: 5px;
-      border-radius: 999px;
-      background: rgba(255, 240, 222, 0.14);
-      overflow: hidden;
-    }
-
-    .latte-mini-fill {
-      width: 0%;
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #b86f39, #eab070, #ffe5c2);
-      transition: width 1.15s cubic-bezier(0.22, 1, 0.36, 1);
-    }
 
     @keyframes latteWaveFront {
       0% { transform: translateX(0px); }
@@ -407,12 +358,15 @@
 </head>
 <body>
   <div id="latte-widget" class="latte-widget">
-    <!-- Bağış geldiğinde yükselen +miktar rozeti -->
-    <div id="latte-delta" class="latte-delta" aria-hidden="true"></div>
+    <!-- Üst yazı alanı (parametre ile başlık/miktar üstte seçilirse buraya taşınır) -->
+    <div id="slot-top" class="latte-slot latte-slot-top hidden"></div>
 
-    <!-- Buzlu Pipetli Latte Bardağı SVG -->
+    <!-- Buzlu Pipetli Latte Bardağı -->
     <div class="latte-stage">
-      <svg id="latte-svg" class="latte-svg" viewBox="0 0 260 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Buzlu Pipetli Latte Bağış Hedefi">
+      <!-- Bağış geldiğinde yükselen +miktar rozeti -->
+      <div id="latte-delta" class="latte-delta" aria-hidden="true"></div>
+
+      <svg id="latte-svg" class="latte-svg" viewBox="0 0 260 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Paithon Hedefi Buzlu Pipetli Latte Bardağı">
         <defs>
           <clipPath id="latte-cup-clip">
             <path d="M 60,114 L 200,114 L 181,298 Q 179,312 165,312 L 95,312 Q 81,312 79,298 Z" />
@@ -424,8 +378,8 @@
             <rect x="132" y="58" width="12" height="238" rx="2" />
           </clipPath>
           <radialGradient id="latte-glow" cx="50%" cy="55%" r="50%">
-            <stop offset="0%" stop-color="#f2b872" stop-opacity="0.34" />
-            <stop offset="65%" stop-color="#c97d42" stop-opacity="0.10" />
+            <stop offset="0%" stop-color="#d8a8ff" stop-opacity="0.34" />
+            <stop offset="65%" stop-color="#c97d42" stop-opacity="0.12" />
             <stop offset="100%" stop-color="#c97d42" stop-opacity="0" />
           </radialGradient>
           <linearGradient id="latte-liquid-grad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -647,20 +601,10 @@
       </svg>
     </div>
 
-    <!-- Alt Bilgi Paneli -->
-    <div id="latte-card" class="latte-card">
-      <div id="latte-card-top" class="latte-card-top">
-        <span id="goal-title" class="latte-title">Buzlu Latte Hedefi</span>
-        <span id="goal-percent" class="latte-percent">0%</span>
-      </div>
-      <div class="latte-amounts">
-        <span id="goal-current" class="latte-current">0 ₺</span>
-        <span class="latte-sep">/</span>
-        <span id="goal-total" class="latte-total">500 ₺</span>
-      </div>
-      <div class="latte-mini-track">
-        <div id="latte-mini-fill" class="latte-mini-fill"></div>
-      </div>
+    <!-- Alt yazı alanı (varsayılan olarak başlık ve hedef miktar burada görünür) -->
+    <div id="slot-bottom" class="latte-slot latte-slot-bottom">
+      <div id="goal-title" class="latte-label latte-label-title">Paithon Hedefi</div>
+      <div id="goal-amount" class="latte-label latte-label-amount">0 / 20.000 TL</div>
     </div>
   </div>
 
@@ -670,36 +614,26 @@
 
       /*
        * URL PARAMETRELERİ:
-       *   token     : Streamlabs Socket API Token (canlı bağışlar için)
-       *   title     : Hedef ismi (alternatif: hedef, isim, name)
-       *   target    : Hedef donate miktarı (alternatif: goal, miktar)
-       *   percent   : Yüzde bilgisini göster/gizle -> 1/0 veya true/false (alternatif: yuzde, showPercent)
-       *   panel     : Alt paneli göster/gizle -> 1/0 veya true/false (alternatif: altpanel, card, showPanel)
-       *   current   : Başlangıç miktarı (alternatif: start, baslangic)
-       *   currency  : Para birimi -> ₺, TRY, USD, $, EUR, € (alternatif: birim)
-       *   scale     : Boyut ölçeği -> örn. 0.8, 1, 1.3 (alternatif: boyut)
-       *   save      : 1 yapılırsa gelen bağışlar localStorage'da tutulur (alternatif: kaydet)
+       *   token       : Streamlabs Socket API Token
+       *   baslik      : Başlık ("Paithon Hedefi") durumu -> alt | ust | gizle (veya 1 / 0)  [Varsayılan: alt]
+       *   baslikKonum : Başlık konumu (baslik=1 kullanıldığında) -> alt | ust               [Varsayılan: alt]
+       *   miktar      : Hedef miktar ("0 / 20.000 TL") durumu -> alt | ust | gizle (veya 1 / 0) [Varsayılan: alt]
+       *   miktarKonum : Hedef miktar konumu (miktar=1 kullanıldığında) -> alt | ust         [Varsayılan: alt]
        *
        * TEST TUŞLARI:
-       *   1 : Küçük bağış (+%10)
-       *   2 : Orta bağış (+%25)
-       *   3 : Hedefi %100'e tamamla (zaten %100 ise +%20 ekler)
-       *   4 : Sıfırla (bardağı boşalt)
+       *   1 : +1.000 TL bağış (%5)
+       *   2 : +5.000 TL bağış (%25)
+       *   3 : Hedefi %100'e doldur (20.000 TL; zaten doluysa +2.000 TL ekler)
+       *   4 : Sıfırla (0 TL, bardağı boşalt)
        */
 
-      const CURRENCY_MAP = {
-        TRY: '₺',
-        TL: '₺',
-        USD: '$',
-        EUR: '€',
-        GBP: '£',
-        CAD: 'CA$',
-        AUD: 'A$'
-      };
-      const PREFIX_CURRENCIES = new Set(['$', '€', '£', 'CA$', 'A$']);
+      const GOAL_TITLE = 'Paithon Hedefi';
+      const GOAL_TARGET = 20000;
+      const GOAL_CURRENCY = 'TL';
+      const STORAGE_KEY = 'paithon_iced_latte_goal_v1';
 
       const LIQUID_TOP_Y = 124;
-      const LIQUID_BOTTOM_Y = 308;
+      const LIQUID_BOTTOM_Y = 302;
       const LIQUID_EMPTY_Y = 318;
 
       const ICE_CUBES = [
@@ -709,6 +643,32 @@
         { id: 'ice-4', restX: 113, topX: 109, restY: 263, floatOffset: 10 },
         { id: 'ice-5', restX: 146, topX: 151, restY: 262, floatOffset: 11 }
       ];
+
+      // Sadece normal bağışlar kabul edilir; Kicks, Bits, Abonelik vb. kesinlikle yoksayılır
+      const BLOCKED_EVENT_TYPES = new Set([
+        'kicks',
+        'kick_kicks',
+        'kick',
+        'kick_gift',
+        'kick_sub',
+        'kick_subscription',
+        'bits',
+        'cheer',
+        'subscription',
+        'resub',
+        'sub',
+        'submysterygift',
+        'gift_sub',
+        'gift_subscription',
+        'gift',
+        'follow',
+        'host',
+        'raid',
+        'superchat',
+        'membership',
+        'merch',
+        'loyalty_store_redemption'
+      ]);
 
       // URL parametre okuyucuları (büyük/küçük harf duyarsız)
       const rawParams = new URLSearchParams(window.location.search);
@@ -727,118 +687,182 @@
         return { found: false, value: null };
       }
 
-      function getStringParam(keys, fallback) {
-        const res = getParam(keys);
-        return res.found ? res.value : fallback;
+      function normalizePosition(raw) {
+        if (raw == null) return null;
+        const v = String(raw).trim().toLowerCase();
+        if (v === 'ust' || v === 'üst' || v === 'top' || v === 'up' || v === 'yukari' || v === 'yukarı') {
+          return 'top';
+        }
+        if (v === 'alt' || v === 'bottom' || v === 'down' || v === 'asagi' || v === 'aşağı') {
+          return 'bottom';
+        }
+        return null;
       }
 
-      function getNumberParam(keys, fallback, minVal) {
-        const res = getParam(keys);
-        if (!res.found) return fallback;
-        const parsed = parseFloat(String(res.value).replace(',', '.'));
-        if (isNaN(parsed)) return fallback;
-        if (typeof minVal === 'number' && parsed < minVal) return fallback;
-        return parsed;
-      }
-
-      function getBoolParam(keys, fallback) {
-        const res = getParam(keys);
-        if (!res.found) return fallback;
-        const v = String(res.value).trim().toLowerCase();
-        if (v === '1' || v === 'true' || v === 'yes' || v === 'evet' || v === 'on' || v === 'goster' || v === 'show') {
+      function parseBoolToken(raw) {
+        if (raw == null) return null;
+        const v = String(raw).trim().toLowerCase();
+        if (
+          v === '1' || v === 'true' || v === 'yes' || v === 'evet' ||
+          v === 'on' || v === 'goster' || v === 'göster' || v === 'show' ||
+          v === 'var' || v === 'ac' || v === 'aç'
+        ) {
           return true;
         }
-        if (v === '0' || v === 'false' || v === 'no' || v === 'hayir' || v === 'off' || v === 'gizle' || v === 'hide') {
+        if (
+          v === '0' || v === 'false' || v === 'no' || v === 'hayir' ||
+          v === 'hayır' || v === 'off' || v === 'gizle' || v === 'hide' ||
+          v === 'yok' || v === 'kapali' || v === 'kapalı'
+        ) {
           return false;
         }
-        return fallback;
+        return null;
       }
 
-      function normalizeCurrency(raw) {
-        if (!raw) return '₺';
-        const trimmed = String(raw).trim();
-        const upper = trimmed.toUpperCase();
-        return CURRENCY_MAP[upper] || trimmed || '₺';
+      function resolveTextSlot(mainKeys, posKeys) {
+        const mainRaw = getParam(mainKeys);
+        const posRaw = getParam(posKeys);
+
+        let show = true;
+        let pos = 'bottom';
+
+        if (posRaw.found) {
+          const explicitPos = normalizePosition(posRaw.value);
+          if (explicitPos) pos = explicitPos;
+        }
+
+        if (mainRaw.found) {
+          const asPos = normalizePosition(mainRaw.value);
+          if (asPos) {
+            show = true;
+            pos = asPos;
+          } else {
+            const asBool = parseBoolToken(mainRaw.value);
+            if (asBool !== null) {
+              show = asBool;
+            }
+          }
+        }
+
+        return { show: show, pos: pos };
       }
 
-      const currencyParam = getParam(['currency', 'birim', 'para']);
-      const titleParam = getParam(['title', 'hedef', 'isim', 'name']);
+      const tokenParam = getParam(['token']);
+      const titleSlot = resolveTextSlot(['baslik', 'baslikgoster', 'baslik_goster'], ['baslikkonum', 'baslik_konum']);
+      const amountSlot = resolveTextSlot(['miktar', 'hedefmiktar', 'hedef_miktar', 'miktargoster', 'miktar_goster'], ['miktarkonum', 'miktar_konum', 'hedefkonum', 'hedef_konum']);
 
       const CONFIG = {
-        token: getStringParam(['token', 'sockettoken', 'key'], '').trim(),
-        title: titleParam.found ? titleParam.value : 'Buzlu Latte Hedefi',
-        target: getNumberParam(['target', 'goal', 'miktar', 'hedefmiktar'], 500, 1),
-        initialCurrent: getNumberParam(['current', 'start', 'baslangic'], 0, 0),
-        currency: normalizeCurrency(currencyParam.found ? currencyParam.value : '₺'),
-        currencyExplicit: currencyParam.found,
-        showPercent: getBoolParam(['percent', 'yuzde', 'showpercent', 'pct'], true),
-        showPanel: getBoolParam(['panel', 'altpanel', 'card', 'showpanel', 'info'], true),
-        scale: getNumberParam(['scale', 'boyut'], 1, 0.2),
-        save: getBoolParam(['save', 'kaydet', 'persist'], false)
+        token: tokenParam.found ? String(tokenParam.value).trim() : '',
+        titleSlot: titleSlot,
+        amountSlot: amountSlot
       };
-
-      const STORAGE_KEY =
-        'latte_goal_' + encodeURIComponent(CONFIG.title) + '_' + CONFIG.target;
-
-      function loadSavedCurrent() {
-        if (!CONFIG.save) return CONFIG.initialCurrent;
-        try {
-          const saved = parseFloat(localStorage.getItem(STORAGE_KEY));
-          if (!isNaN(saved) && saved >= 0) return saved;
-        } catch (_) {}
-        return CONFIG.initialCurrent;
-      }
-
-      function persistCurrent(val) {
-        if (!CONFIG.save) return;
-        try {
-          localStorage.setItem(STORAGE_KEY, String(val));
-        } catch (_) {}
-      }
-
-      // Ölçeği uygula
-      document.documentElement.style.setProperty('--latte-scale', String(CONFIG.scale));
 
       // DOM elemanları
       const elWidget = document.getElementById('latte-widget');
+      const elSlotTop = document.getElementById('slot-top');
+      const elSlotBottom = document.getElementById('slot-bottom');
+      const elGoalTitle = document.getElementById('goal-title');
+      const elGoalAmount = document.getElementById('goal-amount');
       const elLiquid = document.getElementById('latte-liquid-group');
       const elSplash = document.getElementById('latte-splash-group');
       const elDelta = document.getElementById('latte-delta');
-      const elCard = document.getElementById('latte-card');
-      const elCardTop = document.getElementById('latte-card-top');
-      const elTitle = document.getElementById('goal-title');
-      const elPercent = document.getElementById('goal-percent');
-      const elCurrent = document.getElementById('goal-current');
-      const elTotal = document.getElementById('goal-total');
-      const elMiniFill = document.getElementById('latte-mini-fill');
 
-      const initialVal = loadSavedCurrent();
+      function applyTextLayout() {
+        elGoalTitle.textContent = GOAL_TITLE;
+        elGoalTitle.classList.toggle('hidden', !CONFIG.titleSlot.show);
+        elGoalAmount.classList.toggle('hidden', !CONFIG.amountSlot.show);
+
+        if (CONFIG.titleSlot.show) {
+          (CONFIG.titleSlot.pos === 'top' ? elSlotTop : elSlotBottom).appendChild(elGoalTitle);
+        }
+        if (CONFIG.amountSlot.show) {
+          (CONFIG.amountSlot.pos === 'top' ? elSlotTop : elSlotBottom).appendChild(elGoalAmount);
+        }
+
+        const hasTop =
+          (CONFIG.titleSlot.show && CONFIG.titleSlot.pos === 'top') ||
+          (CONFIG.amountSlot.show && CONFIG.amountSlot.pos === 'top');
+        const hasBottom =
+          (CONFIG.titleSlot.show && CONFIG.titleSlot.pos === 'bottom') ||
+          (CONFIG.amountSlot.show && CONFIG.amountSlot.pos === 'bottom');
+
+        elSlotTop.classList.toggle('hidden', !hasTop);
+        elSlotBottom.classList.toggle('hidden', !hasBottom);
+      }
+
+      function loadSavedAmount() {
+        try {
+          const raw = window.localStorage.getItem(STORAGE_KEY);
+          if (raw == null) return 0;
+          const parsed = parseFloat(raw);
+          if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+        } catch (_) {}
+        return 0;
+      }
+
+      function saveAmount(val) {
+        try {
+          window.localStorage.setItem(STORAGE_KEY, String(val));
+        } catch (_) {}
+      }
+
+      function clearSavedAmount() {
+        try {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch (_) {}
+      }
+
+      const initialCurrent = loadSavedAmount();
       const state = {
-        title: CONFIG.title,
-        current: initialVal,
-        target: CONFIG.target,
-        currency: CONFIG.currency,
-        displayedCurrent: initialVal
+        current: initialCurrent,
+        displayedCurrent: initialCurrent
       };
 
       let pourTimer = null;
       let deltaTimer = null;
       let countAnimId = null;
 
-      function formatMoney(value, currency) {
+      function formatNumberTR(value) {
         const num = Number(value) || 0;
         const isInt = Math.abs(num - Math.round(num)) < 0.005;
-        const formatted = isInt
+        return isInt
           ? Math.round(num).toLocaleString('tr-TR')
           : num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        if (PREFIX_CURRENCIES.has(currency)) {
-          return currency + formatted;
-        }
-        return formatted + ' ' + currency;
       }
 
-      function animateCounter(fromVal, toVal, currency) {
+      function formatGoalLine(currentVal) {
+        return formatNumberTR(currentVal) + ' / ' + formatNumberTR(GOAL_TARGET) + ' ' + GOAL_CURRENCY;
+      }
+
+      function parseNumericAmount(value) {
+        if (typeof value === 'number') {
+          return Number.isFinite(value) ? value : NaN;
+        }
+        if (typeof value !== 'string') return NaN;
+
+        const cleaned = value.trim().replace(/[^\d.,-]/g, '');
+        if (!cleaned) return NaN;
+
+        const lastComma = cleaned.lastIndexOf(',');
+        const lastDot = cleaned.lastIndexOf('.');
+        let normalized = cleaned;
+
+        if (lastComma > -1 && lastDot > -1) {
+          if (lastComma > lastDot) {
+            normalized = cleaned.replace(/\./g, '').replace(',', '.');
+          } else {
+            normalized = cleaned.replace(/,/g, '');
+          }
+        } else if (lastComma > -1) {
+          const decimals = cleaned.length - lastComma - 1;
+          normalized = decimals === 3 ? cleaned.replace(/,/g, '') : cleaned.replace(',', '.');
+        }
+
+        const num = parseFloat(normalized);
+        return Number.isFinite(num) ? num : NaN;
+      }
+
+      function animateCounter(fromVal, toVal) {
         if (countAnimId) {
           cancelAnimationFrame(countAnimId);
           countAnimId = null;
@@ -852,13 +876,13 @@
           const eased = 1 - Math.pow(1 - p, 3);
           const val = fromVal + (toVal - fromVal) * eased;
           state.displayedCurrent = val;
-          elCurrent.textContent = formatMoney(val, currency);
+          elGoalAmount.textContent = formatGoalLine(val);
 
           if (p < 1) {
             countAnimId = requestAnimationFrame(step);
           } else {
             state.displayedCurrent = toVal;
-            elCurrent.textContent = formatMoney(toVal, currency);
+            elGoalAmount.textContent = formatGoalLine(toVal);
             countAnimId = null;
           }
         }
@@ -866,7 +890,7 @@
         countAnimId = requestAnimationFrame(step);
       }
 
-      function triggerPourAnimation(deltaAmount, currency) {
+      function triggerPourAnimation(deltaAmount) {
         elWidget.classList.remove('pouring');
         void elWidget.offsetWidth;
         elWidget.classList.add('pouring');
@@ -877,7 +901,7 @@
         }, 1450);
 
         if (deltaAmount > 0) {
-          elDelta.textContent = '+' + formatMoney(deltaAmount, currency);
+          elDelta.textContent = '+' + formatNumberTR(deltaAmount) + ' ' + GOAL_CURRENCY;
           elDelta.classList.remove('show');
           void elDelta.offsetWidth;
           elDelta.classList.add('show');
@@ -894,11 +918,10 @@
         const delta = (options && options.delta) || 0;
         const prevDisplayed = state.displayedCurrent;
 
-        const safeTarget = state.target > 0 ? state.target : 100;
-        const rawPercent = (state.current / safeTarget) * 100;
+        const rawPercent = (state.current / GOAL_TARGET) * 100;
         const clampedPercent = Math.max(0, Math.min(rawPercent, 100));
 
-        // 1. Sıvı seviyesi
+        // 1. Sıvı seviyesi (0 TL -> boş, >0 TL -> dipten yukarı dolum)
         const surfaceY =
           clampedPercent <= 0
             ? LIQUID_EMPTY_Y
@@ -922,54 +945,110 @@
         }
 
         // 3. Durum sınıfları
-        elWidget.classList.toggle('has-liquid', clampedPercent > 4);
+        elWidget.classList.toggle('has-liquid', clampedPercent > 0);
         elWidget.classList.toggle('goal-complete', rawPercent >= 100);
 
-        // 4. Alt panel & yüzde görünürlüğü
-        elCard.classList.toggle('hidden', !CONFIG.showPanel);
-
-        const hasTitle = Boolean(String(state.title || '').trim());
-        elTitle.textContent = state.title;
-        elTitle.classList.toggle('hidden', !hasTitle);
-        elPercent.textContent = Math.round(rawPercent) + '%';
-        elPercent.classList.toggle('hidden', !CONFIG.showPercent);
-        elCardTop.classList.toggle('hidden', !hasTitle && !CONFIG.showPercent);
-        elCardTop.classList.toggle('centered', !(hasTitle && CONFIG.showPercent));
-
-        elTotal.textContent = formatMoney(safeTarget, state.currency);
-        elMiniFill.style.width = clampedPercent.toFixed(1) + '%';
-
+        // 4. Miktar yazısı
         if (Math.abs(state.current - prevDisplayed) > 0.001) {
-          animateCounter(prevDisplayed, state.current, state.currency);
+          animateCounter(prevDisplayed, state.current);
         } else {
-          elCurrent.textContent = formatMoney(state.current, state.currency);
+          elGoalAmount.textContent = formatGoalLine(state.current);
         }
 
         if (animatePour && delta > 0) {
-          triggerPourAnimation(delta, state.currency);
+          triggerPourAnimation(delta);
         }
       }
 
       function addDonation(amount, animatePour) {
-        const add = parseFloat(amount);
-        if (isNaN(add) || add <= 0) return;
+        const add = Number(amount);
+        if (!Number.isFinite(add) || add <= 0) return;
         state.current = Math.round((state.current + add) * 100) / 100;
-        persistCurrent(state.current);
+        saveAmount(state.current);
         updateVisuals({ animatePour: animatePour !== false, delta: add });
       }
 
       function resetGoal() {
         state.current = 0;
         state.displayedCurrent = 0;
-        persistCurrent(0);
+        clearSavedAmount();
         updateVisuals({ animatePour: false, delta: 0 });
       }
 
-      // ==================== STREAMLABS SOCKET API (INLINE WEBSOCKET) ====================
+      // ==================== STREAMLABS SOCKET API (BYNOGAME / NORMAL DONATE) ====================
+      const seenIds = new Set();
+
+      function handleStreamlabsEvent(eventData) {
+        if (!eventData || typeof eventData !== 'object') return;
+
+        const eventFor = String(eventData.for || '').trim().toLowerCase();
+        const eventType = String(eventData.type || '').trim().toLowerCase();
+
+        // Sadece Streamlabs / ByNoGame normal bağışları (kicks, bits, sub, follow vb. hariç)
+        if (eventFor && eventFor !== 'streamlabs' && eventFor !== 'bynogame') return;
+        if (BLOCKED_EVENT_TYPES.has(eventType)) return;
+        if (eventType !== 'donation' && eventType !== 'tip') return;
+
+        const list = Array.isArray(eventData.message)
+          ? eventData.message
+          : eventData.message
+            ? [eventData.message]
+            : [];
+
+        list.forEach(function (donation, idx) {
+          if (!donation || typeof donation !== 'object') return;
+
+          const msgType = String(donation.type || '').trim().toLowerCase();
+          if (msgType && BLOCKED_EVENT_TYPES.has(msgType)) return;
+
+          const msgCurrency = String(donation.currency || '').trim().toUpperCase();
+          const formattedText = String(donation.formatted_amount || donation.formattedAmount || '').toLowerCase();
+          if (
+            formattedText.indexOf('kick') !== -1 ||
+            formattedText.indexOf('bit') !== -1 ||
+            formattedText.indexOf('sub') !== -1
+          ) {
+            return;
+          }
+
+          // Yalnızca TL / TRY (veya para birimi alanı boş normal bağış) kabul edilir
+          if (msgCurrency && msgCurrency !== 'TRY' && msgCurrency !== 'TL' && msgCurrency !== '₺') {
+            return;
+          }
+
+          const rawId =
+            donation._id ||
+            donation.id ||
+            donation.event_id ||
+            (eventData.event_id ? String(eventData.event_id) + '_' + idx : '');
+
+          if (rawId && !donation.isTest) {
+            const idKey = String(rawId);
+            if (seenIds.has(idKey)) return;
+            seenIds.add(idKey);
+            if (seenIds.size > 500) {
+              const oldest = seenIds.values().next().value;
+              seenIds.delete(oldest);
+            }
+          }
+
+          const amt = parseNumericAmount(
+            donation.amount != null
+              ? donation.amount
+              : (donation.formatted_amount != null ? donation.formatted_amount : donation.formattedAmount)
+          );
+
+          if (Number.isFinite(amt) && amt > 0) {
+            addDonation(amt, true);
+          }
+        });
+      }
+
+      window.handleStreamlabsEvent = handleStreamlabsEvent;
+
       function connectStreamlabs(token) {
         if (!token) return;
 
-        const seenIds = new Set();
         let ws = null;
         let pingTimer = null;
         let reconnectDelay = 2000;
@@ -991,20 +1070,19 @@
           try {
             ws = new WebSocket(wsUrl);
           } catch (err) {
-            console.error('[Latte] Streamlabs WebSocket açılamadı:', err);
+            console.error('[Paithon Latte] Streamlabs WebSocket açılamadı:', err);
             return;
           }
 
           ws.onopen = function () {
             reconnectDelay = 2000;
-            console.info('[Latte] Streamlabs Socket API bağlantısı aktif.');
+            console.info('[Paithon Latte] Streamlabs Socket API bağlantısı aktif.');
           };
 
           ws.onmessage = function (ev) {
             const msg = typeof ev.data === 'string' ? ev.data : '';
             if (!msg) return;
 
-            // Engine.IO OPEN: 0{"sid":"...","pingInterval":25000,...}
             if (msg.charAt(0) === '0') {
               try {
                 const meta = JSON.parse(msg.slice(1));
@@ -1019,7 +1097,6 @@
               return;
             }
 
-            // Engine.IO PING -> PONG
             if (msg === '2') {
               if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send('3');
@@ -1027,42 +1104,15 @@
               return;
             }
 
-            // Socket.IO EVENT: 42["event",{...}]
             if (msg.slice(0, 2) === '42') {
               try {
-                const packet = JSON.parse(msg.slice(2));
+                const bracketIdx = msg.indexOf('[');
+                if (bracketIdx === -1) return;
+                const packet = JSON.parse(msg.slice(bracketIdx));
                 if (!Array.isArray(packet) || packet[0] !== 'event') return;
-                const eventData = packet[1];
-                if (!eventData) return;
-
-                if (
-                  (!eventData.for || eventData.for === 'streamlabs') &&
-                  eventData.type === 'donation'
-                ) {
-                  const list = Array.isArray(eventData.message)
-                    ? eventData.message
-                    : eventData.message
-                      ? [eventData.message]
-                      : [];
-
-                  list.forEach(function (donation) {
-                    if (!donation) return;
-                    const dedupeId = donation.id || donation._id;
-                    if (dedupeId && !donation.isTest) {
-                      if (seenIds.has(dedupeId)) return;
-                      seenIds.add(dedupeId);
-                    }
-                    const amt = parseFloat(String(donation.amount || '').replace(',', '.'));
-                    if (!isNaN(amt) && amt > 0) {
-                      if (!CONFIG.currencyExplicit && donation.currency) {
-                        state.currency = normalizeCurrency(donation.currency);
-                      }
-                      addDonation(amt, true);
-                    }
-                  });
-                }
+                handleStreamlabsEvent(packet[1]);
               } catch (err) {
-                console.warn('[Latte] Streamlabs olayı okunamadı:', err);
+                console.warn('[Paithon Latte] Streamlabs olayı okunamadı:', err);
               }
             }
           };
@@ -1084,35 +1134,13 @@
         connect();
       }
 
-      // ==================== STREAMLABS CUSTOM GOAL OLAYLARI (OPSİYONEL UYUMLULUK) ====================
-      function handleGoalPayload(detail, isLiveEvent) {
-        if (!detail) return;
-        const amount = detail.amount || {};
-        const nextCurrent = parseFloat(amount.current);
-        const nextTarget = parseFloat(amount.target);
-        const prev = state.current;
-
-        if (!titleParam.found && detail.title) state.title = detail.title;
-        if (!isNaN(nextTarget) && nextTarget > 0) state.target = nextTarget;
-        if (!isNaN(nextCurrent)) state.current = Math.max(0, nextCurrent);
-        if (!CONFIG.currencyExplicit) {
-          const rawCur = amount.currency_symbol || amount.currency || detail.currency;
-          if (rawCur) state.currency = normalizeCurrency(rawCur);
-        }
-
-        const delta = isLiveEvent ? state.current - prev : 0;
-        updateVisuals({ animatePour: isLiveEvent && delta > 0, delta: delta });
-      }
-
-      document.addEventListener('goalLoad', function (obj) {
-        handleGoalPayload(obj && obj.detail, false);
-      });
-
-      document.addEventListener('goalEvent', function (obj) {
-        handleGoalPayload(obj && obj.detail, true);
-      });
-
       // ==================== KLAVYE TEST TUŞLARI (1, 2, 3, 4) ====================
+      window.addEventListener('pointerdown', function () {
+        if (document.body && typeof document.body.focus === 'function') {
+          document.body.focus();
+        }
+      });
+
       window.addEventListener('keydown', function (e) {
         if (e.ctrlKey || e.altKey || e.metaKey) return;
         const tag = (e.target && e.target.tagName) || '';
@@ -1122,33 +1150,30 @@
         const code = e.code;
 
         if (key === '1' || code === 'Digit1' || code === 'Numpad1') {
-          addDonation(Math.max(1, Math.round(state.target * 0.1 * 100) / 100), true);
+          addDonation(1000, true);
         } else if (key === '2' || code === 'Digit2' || code === 'Numpad2') {
-          addDonation(Math.max(1, Math.round(state.target * 0.25 * 100) / 100), true);
+          addDonation(5000, true);
         } else if (key === '3' || code === 'Digit3' || code === 'Numpad3') {
-          const remaining = state.target - state.current;
-          const add =
-            remaining > 0
-              ? Math.round(remaining * 100) / 100
-              : Math.max(1, Math.round(state.target * 0.2 * 100) / 100);
-          addDonation(add, true);
+          const remaining = GOAL_TARGET - state.current;
+          addDonation(remaining > 0 ? Math.round(remaining * 100) / 100 : 2000, true);
         } else if (key === '4' || code === 'Digit4' || code === 'Numpad4') {
           resetGoal();
         }
       });
 
       // Başlat
+      applyTextLayout();
       updateVisuals({ animatePour: false, delta: 0 });
       connectStreamlabs(CONFIG.token);
 
       console.info(
-        '[Latte] Hazır | Test tuşları: [1] +%10, [2] +%25, [3] %100 Doldur, [4] Sıfırla',
+        '[Paithon Latte] Hazır | Test tuşları: [1] +1.000 TL, [2] +5.000 TL, [3] 20.000 TL Doldur, [4] Sıfırla',
         {
-          title: state.title,
-          target: state.target,
+          title: GOAL_TITLE,
+          target: GOAL_TARGET,
           current: state.current,
-          percent: CONFIG.showPercent,
-          panel: CONFIG.showPanel,
+          baslik: CONFIG.titleSlot,
+          miktar: CONFIG.amountSlot,
           socketConnected: Boolean(CONFIG.token)
         }
       );
