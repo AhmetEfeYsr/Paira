@@ -606,6 +606,8 @@
 
         /* Main Timer Container */
         .timer-box {
+            position: relative;
+            overflow: hidden;
             border-radius: 18px;
             border: 1.5px solid rgba(255, 255, 255, 0.09);
             background: linear-gradient(180deg, rgba(14, 11, 14, 0.95) 0%, rgba(21, 16, 20, 0.93) 100%);
@@ -614,7 +616,74 @@
             box-shadow: inset 0 3px 12px rgba(4, 2, 6, 0.8);
         }
 
+        /* Subtle Floating Lilac Cat Paws Behind Countdown */
+        .timer-paws-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: 0.86;
+            transition: opacity 0.35s ease;
+            -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+        }
+
+        .board-card.pulse-add .timer-paws-bg {
+            opacity: 1;
+        }
+
+        @keyframes pawFloatDrift {
+            0% {
+                transform: translate3d(0px, 132px, 0) rotate(var(--rot-start, -14deg)) scale(0.86);
+                opacity: 0;
+            }
+
+            16% {
+                opacity: var(--paw-alpha, 0.15);
+            }
+
+            50% {
+                transform: translate3d(var(--drift-x, 8px), 52px, 0) rotate(var(--rot-mid, 6deg)) scale(1);
+                opacity: var(--paw-alpha, 0.15);
+            }
+
+            84% {
+                opacity: var(--paw-alpha, 0.15);
+            }
+
+            100% {
+                transform: translate3d(var(--drift-x-end, -5px), -32px, 0) rotate(var(--rot-end, -12deg)) scale(0.92);
+                opacity: 0;
+            }
+        }
+
+        .timer-paw {
+            position: absolute;
+            top: 0;
+            color: var(--lilac-reward);
+            opacity: 0;
+            will-change: transform, opacity;
+            animation: pawFloatDrift var(--paw-dur, 12.5s) ease-in-out var(--paw-delay, 0s) infinite;
+        }
+
+        .timer-paw:nth-child(even) {
+            color: #c4b5fd;
+        }
+
+        .timer-paw.p1 { left: 4%;  width: 22px; height: 22px; --paw-dur: 11.5s; --paw-delay: -1.8s;  --paw-alpha: 0.17; --rot-start: -18deg; --rot-mid: -4deg; --rot-end: -15deg; --drift-x: 8px;  --drift-x-end: -4px; }
+        .timer-paw.p2 { left: 15%; width: 17px; height: 17px; --paw-dur: 13.8s; --paw-delay: -7.4s;  --paw-alpha: 0.14; --rot-start: 14deg;  --rot-mid: -2deg; --rot-end: 12deg;  --drift-x: -7px; --drift-x-end: 5px;  }
+        .timer-paw.p3 { left: 26%; width: 24px; height: 24px; --paw-dur: 12.4s; --paw-delay: -4.2s;  --paw-alpha: 0.17; --rot-start: -12deg; --rot-mid: 8deg;  --rot-end: -8deg;  --drift-x: 10px; --drift-x-end: -6px; }
+        .timer-paw.p4 { left: 38%; width: 18px; height: 18px; --paw-dur: 14.6s; --paw-delay: -10.6s; --paw-alpha: 0.13; --rot-start: 16deg;  --rot-mid: 2deg;  --rot-end: 18deg;  --drift-x: -8px; --drift-x-end: 4px;  }
+        .timer-paw.p5 { left: 50%; width: 21px; height: 21px; --paw-dur: 11.8s; --paw-delay: -2.6s;  --paw-alpha: 0.14; --rot-start: -15deg; --rot-mid: 5deg;  --rot-end: -12deg; --drift-x: 7px;  --drift-x-end: -5px; }
+        .timer-paw.p6 { left: 62%; width: 25px; height: 25px; --paw-dur: 13.2s; --paw-delay: -8.9s;  --paw-alpha: 0.16; --rot-start: 12deg;  --rot-mid: -6deg; --rot-end: 14deg;  --drift-x: -9px; --drift-x-end: 6px;  }
+        .timer-paw.p7 { left: 74%; width: 17px; height: 17px; --paw-dur: 12.0s; --paw-delay: -5.3s;  --paw-alpha: 0.15; --rot-start: -20deg; --rot-mid: -4deg; --rot-end: -16deg; --drift-x: 8px;  --drift-x-end: -4px; }
+        .timer-paw.p8 { left: 85%; width: 23px; height: 23px; --paw-dur: 14.2s; --paw-delay: -11.8s; --paw-alpha: 0.17; --rot-start: 15deg;  --rot-mid: -3deg; --rot-end: 12deg;  --drift-x: -8px; --drift-x-end: 5px;  }
+        .timer-paw.p9 { left: 92%; width: 18px; height: 18px; --paw-dur: 12.8s; --paw-delay: -3.5s;  --paw-alpha: 0.15; --rot-start: -10deg; --rot-mid: 6deg;  --rot-end: -14deg; --drift-x: -6px; --drift-x-end: 3px;  }
+
         .title-row {
+            position: relative;
+            z-index: 2;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -683,6 +752,8 @@
 
         /* Fixed-height zero-overflow timer stage (never jumps vertically when auto-fitting) */
         .timer-fit-wrap {
+            position: relative;
+            z-index: 2;
             width: 100%;
             height: 78px;
             padding: 0 14px;
@@ -1297,6 +1368,28 @@
                 <div id="boardCard" class="board-card">
                     <!-- PAITHON HEADER + AUTO-FITTING ZERO-OVERFLOW COUNTDOWN -->
                     <div class="timer-box">
+                        <div class="timer-paws-bg" aria-hidden="true">
+                            <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+                                <defs>
+                                    <g id="timerPawPrint" fill="currentColor">
+                                        <path d="M 24 22.5 C 18.2 22.5, 13 27.6, 13.4 33.4 C 13.7 37.6, 17.4 39.8, 21.1 38.7 C 22.8 38.2, 25.2 38.2, 26.9 38.7 C 30.6 39.8, 34.3 37.6, 34.6 33.4 C 35 27.6, 29.8 22.5, 24 22.5 Z" />
+                                        <ellipse cx="10.2" cy="21.5" rx="4.2" ry="5.5" transform="rotate(-28 10.2 21.5)" />
+                                        <ellipse cx="18.6" cy="13.8" rx="4.4" ry="5.9" transform="rotate(-10 18.6 13.8)" />
+                                        <ellipse cx="29.4" cy="13.8" rx="4.4" ry="5.9" transform="rotate(10 29.4 13.8)" />
+                                        <ellipse cx="37.8" cy="21.5" rx="4.2" ry="5.5" transform="rotate(28 37.8 21.5)" />
+                                    </g>
+                                </defs>
+                            </svg>
+                            <svg class="timer-paw p1" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p2" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p3" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p4" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p5" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p6" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p7" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p8" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                            <svg class="timer-paw p9" viewBox="0 0 48 48"><use href="#timerPawPrint" /></svg>
+                        </div>
                         <div class="title-row">
                             <span class="live-dot" aria-hidden="true">
                                 <span class="live-dot-halo"></span>
