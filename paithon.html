@@ -52,36 +52,38 @@
             font-synthesis: none;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-end;
             outline: none;
         }
 
         /*
-      Outer shell reserves transparent room on the left of the cat head
-      so side time pills and their top-right +13 sn badges never clip
-      even when positioned in the top-right corner of an OBS stream.
+      Designed for 1500x600 OBS Browser Source:
+      Cat & board anchor to the far right, leaving ~1100px of transparent canvas
+      on the left for donation message banners emerging from behind the cat.
     */
         .overlay-shell {
             position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: flex-end;
-            padding: 14px 10px 14px 180px;
-            max-width: 100vw;
+            padding: 16px 24px 16px 24px;
             user-select: none;
         }
 
-        /* Board (376px) paired with enlarged cat head (332px) for balanced presence */
+        /* Board (376px) paired with enlarged cat head (332px) anchored on the far right */
         .overlay-root {
             position: relative;
             width: 376px;
-            max-width: calc(100vw - 192px);
+            max-width: calc(100vw - 32px);
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* ==================== CAT HEAD + ENLARGED PROPORTION + SIDE NOTIF ANCHOR ==================== */
+        /* ==================== CAT HEAD + ENLARGED PROPORTION + BEHIND-CAT NOTIF ANCHOR ==================== */
         .cat-stage {
             position: relative;
             width: 332px;
@@ -93,6 +95,7 @@
 
         .cat-head-wrap {
             position: relative;
+            z-index: 10;
             width: 100%;
             filter: drop-shadow(0 10px 16px rgba(14, 9, 14, 0.44));
             animation: catBreathe 5.4s ease-in-out infinite;
@@ -130,46 +133,52 @@
             }
         }
 
-        /* ==================== SIDE TIME NOTIFICATION + TOP-RIGHT +13 SN BADGE ==================== */
+        /* ==================== BEHIND-CAT LEFT-EXTENDING DONATE RIBBON + +13 SN BADGE ==================== */
         .side-notif-stack {
             position: absolute;
-            right: calc(100% + 8px);
-            top: 56%;
+            right: 50%;
+            top: 62%;
             transform: translateY(-50%);
-            width: 178px;
+            width: min(1140px, calc(100vw - 230px));
+            padding: 28px 0 28px 32px;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
             gap: 14px;
             pointer-events: none;
-            z-index: 30;
-            overflow: visible;
+            z-index: 2;
+            overflow: hidden;
         }
 
         @keyframes sideNotifLifecycle {
             0% {
                 opacity: 0;
-                transform: translateX(20px) scale(0.82);
+                transform: translate3d(100%, 0, 0);
             }
 
-            10% {
+            9% {
                 opacity: 1;
-                transform: translateX(-3px) scale(1.04);
+                transform: translate3d(-6px, 0, 0);
             }
 
-            16% {
+            14% {
                 opacity: 1;
-                transform: translateX(0px) scale(1);
+                transform: translate3d(0px, 0, 0);
             }
 
-            84% {
+            87% {
                 opacity: 1;
-                transform: translateX(0px) scale(1);
+                transform: translate3d(0px, 0, 0);
+            }
+
+            94% {
+                opacity: 0.9;
+                transform: translate3d(16%, 0, 0);
             }
 
             100% {
                 opacity: 0;
-                transform: translateX(-14px) translateY(-6px) scale(0.94);
+                transform: translate3d(100%, 0, 0);
             }
         }
 
@@ -199,91 +208,186 @@
             position: relative;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            min-width: 108px;
-            padding: 10px 18px;
-            border-radius: 18px;
-            background: linear-gradient(155deg, rgba(34, 27, 30, 0.97) 0%, rgba(23, 18, 21, 0.98) 100%);
-            border: 2px solid rgba(185, 151, 245, 0.8);
+            justify-content: flex-end;
+            gap: 16px;
+            width: fit-content;
+            max-width: 100%;
+            min-width: 240px;
+            padding: 14px 164px 14px 22px;
+            border-radius: 22px 0 0 22px;
+            background: linear-gradient(155deg, #241c21 0%, #161116 100%);
+            border: 2px solid rgba(185, 151, 245, 0.84);
+            border-right: none;
             box-shadow:
-                0 12px 24px rgba(8, 5, 11, 0.65),
-                0 0 18px rgba(168, 85, 247, 0.24),
-                inset 0 1.5px 0 rgba(255, 255, 255, 0.16);
+                -8px 12px 26px rgba(8, 5, 11, 0.68),
+                0 0 20px rgba(168, 85, 247, 0.24),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.14);
+            color: #fffdfb;
+            will-change: transform, opacity;
+            animation: sideNotifLifecycle 6.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .notif-body {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            text-align: right;
+            min-width: 0;
+            max-width: 680px;
+            gap: 4px;
+        }
+
+        .notif-meta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            max-width: 100%;
+        }
+
+        .notif-donor {
+            font-family: var(--font-display);
+            font-size: 19px;
+            font-weight: 700;
+            line-height: 1.15;
+            color: #fffdfb;
+            letter-spacing: 0.015em;
+            text-shadow:
+                0 0 0.7px rgba(255, 253, 251, 0.22),
+                0 2px 6px rgba(0, 0, 0, 0.65);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 280px;
+        }
+
+        .notif-dot {
+            color: rgba(222, 196, 255, 0.55);
+            font-size: 14px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .notif-amount {
+            font-family: var(--font-body);
+            font-size: 16px;
+            font-weight: 900;
+            line-height: 1.15;
+            color: var(--lilac-reward);
+            letter-spacing: 0.01em;
+            text-shadow:
+                0 0 0.7px rgba(222, 196, 255, 0.25),
+                0 1px 6px rgba(168, 85, 247, 0.35);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .notif-message {
+            font-family: var(--font-body);
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1.32;
+            color: #f4ecf7;
+            letter-spacing: 0.005em;
+            text-shadow:
+                0 0 0.6px rgba(244, 236, 247, 0.2),
+                0 1px 5px rgba(0, 0, 0, 0.7);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+            max-width: 100%;
+        }
+
+        .notif-time-wrap {
+            position: relative;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notif-duration {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 96px;
+            padding: 9px 15px;
+            border-radius: 15px;
+            background: #120d13;
+            border: 1.5px solid rgba(185, 151, 245, 0.62);
+            box-shadow: inset 0 2px 8px rgba(4, 2, 6, 0.75);
             font-family: var(--font-display);
             font-variant-numeric: tabular-nums;
             font-feature-settings: "tnum" 1;
-            font-size: 25px;
+            font-size: 24px;
             font-weight: 700;
             line-height: 1;
             letter-spacing: 0.02em;
-            color: #fffdfb;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+            color: var(--lilac-reward);
+            text-shadow:
+                0 0 0.9px rgba(222, 196, 255, 0.35),
+                0 2px 8px rgba(0, 0, 0, 0.75),
+                0 0 12px rgba(168, 85, 247, 0.45);
             white-space: nowrap;
-            animation: sideNotifLifecycle 4.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
-        /* Subtle right pointer nub facing the cat's left cheek */
-        .side-notif::after {
-            content: '';
-            position: absolute;
-            right: -7px;
-            top: 50%;
-            width: 12px;
-            height: 12px;
-            margin-top: -6px;
-            background: #191317;
-            border-top: 2px solid rgba(185, 151, 245, 0.8);
-            border-right: 2px solid rgba(185, 151, 245, 0.8);
-            border-radius: 0 3px 0 0;
-            transform: rotate(45deg);
+        .notif-duration.is-long {
+            font-size: 20px;
+            padding: 8px 12px;
         }
 
         .side-notif.tier-latte {
-            border-color: rgba(216, 180, 254, 0.84);
+            border-color: rgba(216, 180, 254, 0.86);
             box-shadow:
-                0 12px 24px rgba(8, 5, 11, 0.65),
-                0 0 18px rgba(185, 151, 245, 0.3),
+                -8px 12px 26px rgba(8, 5, 11, 0.68),
+                0 0 20px rgba(185, 151, 245, 0.3),
                 inset 0 1.5px 0 rgba(255, 255, 255, 0.16);
-        }
-
-        .side-notif.tier-latte::after {
-            border-top-color: rgba(216, 180, 254, 0.84);
-            border-right-color: rgba(216, 180, 254, 0.84);
         }
 
         .side-notif.tier-dollar {
             border-color: rgba(52, 211, 153, 0.88);
-            color: #ecfdf5;
             box-shadow:
-                0 12px 24px rgba(8, 5, 11, 0.65),
-                0 0 20px rgba(16, 185, 129, 0.34),
+                -8px 12px 26px rgba(8, 5, 11, 0.68),
+                0 0 22px rgba(16, 185, 129, 0.34),
                 inset 0 1.5px 0 rgba(209, 250, 229, 0.2);
         }
 
-        .side-notif.tier-dollar::after {
-            border-top-color: rgba(52, 211, 153, 0.88);
-            border-right-color: rgba(52, 211, 153, 0.88);
+        .side-notif.tier-dollar .notif-amount,
+        .side-notif.tier-dollar .notif-duration {
+            color: #a7f3d0;
+            border-color: rgba(52, 211, 153, 0.65);
+            text-shadow:
+                0 0 0.9px rgba(167, 243, 208, 0.32),
+                0 2px 8px rgba(0, 0, 0, 0.75),
+                0 0 12px rgba(16, 185, 129, 0.42);
         }
 
         .side-notif.tier-gold {
             border-color: rgba(251, 191, 36, 0.94);
-            color: #fef9c3;
             box-shadow:
-                0 12px 24px rgba(8, 5, 11, 0.65),
-                0 0 24px rgba(245, 158, 11, 0.42),
+                -8px 12px 26px rgba(8, 5, 11, 0.68),
+                0 0 26px rgba(245, 158, 11, 0.42),
                 inset 0 1.5px 0 rgba(254, 240, 138, 0.25);
         }
 
-        .side-notif.tier-gold::after {
-            border-top-color: rgba(251, 191, 36, 0.94);
-            border-right-color: rgba(251, 191, 36, 0.94);
+        .side-notif.tier-gold .notif-amount,
+        .side-notif.tier-gold .notif-duration {
+            color: #fef08a;
+            border-color: rgba(251, 191, 36, 0.72);
+            text-shadow:
+                0 0 0.9px rgba(254, 240, 138, 0.35),
+                0 2px 8px rgba(0, 0, 0, 0.75),
+                0 0 14px rgba(245, 158, 11, 0.48);
         }
 
-        /* Separate +13 sn mini badge pinned to the top-right corner of the time pill */
+        /* Separate +13 sn mini badge pinned to the top-right corner of the duration chip */
         .bonus-badge {
             position: absolute;
             top: -12px;
-            right: -12px;
+            right: -10px;
             z-index: 4;
             padding: 3px 9px 4px;
             border-radius: 999px;
@@ -302,7 +406,7 @@
                 0 0 14px rgba(216, 180, 254, 0.6);
             opacity: 0;
             transform-origin: center bottom;
-            animation: badgeSpringPop 0.56s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+            animation: badgeSpringPop 0.56s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s forwards;
         }
 
         /* ==================== PARTY HAT, EARS & SLOT EYES ANIMATIONS ==================== */
@@ -850,14 +954,14 @@
         }
 
         /* Responsive adjustments for narrow preview viewports */
-        @media (max-width: 540px) {
+        @media (max-width: 680px) {
             .overlay-shell {
-                padding: 12px 8px 12px 136px;
+                padding: 12px 12px;
             }
 
             .overlay-root {
                 width: 318px;
-                max-width: calc(100vw - 146px);
+                max-width: calc(100vw - 24px);
             }
 
             .cat-stage {
@@ -865,20 +969,35 @@
             }
 
             .side-notif-stack {
-                right: calc(100% + 6px);
-                width: 142px;
+                width: calc(100vw - 180px);
+                padding: 20px 0 20px 16px;
             }
 
             .side-notif {
-                min-width: 88px;
-                padding: 8px 13px;
-                font-size: 19px;
-                border-radius: 15px;
+                min-width: 180px;
+                padding: 10px 138px 10px 14px;
+                gap: 10px;
+                border-radius: 16px 0 0 16px;
+            }
+
+            .notif-donor {
+                font-size: 15px;
+            }
+
+            .notif-amount,
+            .notif-message {
+                font-size: 14px;
+            }
+
+            .notif-duration {
+                min-width: 74px;
+                padding: 7px 10px;
+                font-size: 18px;
             }
 
             .bonus-badge {
                 top: -11px;
-                right: -10px;
+                right: -8px;
                 padding: 2.5px 7px 3px;
                 font-size: 11px;
             }
@@ -902,14 +1021,14 @@
             }
         }
 
-        @media (max-width: 410px) {
+        @media (max-width: 440px) {
             .overlay-shell {
-                padding: 10px 6px 10px 106px;
+                padding: 10px 8px;
             }
 
             .overlay-root {
                 width: 274px;
-                max-width: calc(100vw - 114px);
+                max-width: calc(100vw - 16px);
             }
 
             .cat-stage {
@@ -917,14 +1036,20 @@
             }
 
             .side-notif-stack {
-                right: calc(100% + 4px);
-                width: 118px;
+                width: calc(100vw - 148px);
+                padding: 18px 0 18px 10px;
             }
 
             .side-notif {
-                min-width: 76px;
-                padding: 7px 10px;
-                font-size: 16px;
+                min-width: 150px;
+                padding: 8px 118px 8px 12px;
+                gap: 8px;
+            }
+
+            .notif-duration {
+                min-width: 64px;
+                padding: 6px 9px;
+                font-size: 15px;
             }
 
             .title-row {
@@ -1455,7 +1580,7 @@
                 },
                 bonusMultiple: 13,
                 bonusSeconds: 13,
-                sideNotifDurationMs: 4600,
+                sideNotifDurationMs: 6500,
                 eyeHoldDurationMs: 6000,
                 queuedHoldDurationMs: 2200,
                 maxSeenEvents: 500,
@@ -1754,34 +1879,102 @@
                 }
             }
 
+            function sanitizeText(value, maxLen) {
+                if (value == null) return '';
+                const cleaned = String(value).replace(/\s+/g, ' ').trim();
+                if (!cleaned) return '';
+                if (maxLen && cleaned.length > maxLen) {
+                    return cleaned.slice(0, maxLen - 1).trimEnd() + '…';
+                }
+                return cleaned;
+            }
+
+            function formatDonationAmount(currencyType, amount) {
+                const isWhole = Math.abs(amount - Math.round(amount)) < 1e-6;
+                const numText = isWhole
+                    ? String(Math.round(amount))
+                    : amount.toFixed(2).replace('.', ',');
+                if (currencyType === 'TRY') return numText + ' TL';
+                if (currencyType === 'KICKS') return numText + ' Kicks';
+                if (currencyType === 'SUB') return numText + ' Sub';
+                return numText;
+            }
+
             /**
-             * Spawns the floating side duration pill next to the cat's left cheek.
-             * Shows ONLY base added time (zero donor name or message).
-             * Attaches a separate "+13 sn" badge to the pill's top-right corner when bonus applies.
+             * Spawns a donate banner emerging from behind the cat head toward the left.
+             * Displays donor name, amount, donation message (if any), base added duration,
+             * and attaches a separate "+13 sn" badge to the duration chip when bonus applies.
              */
-            function spawnSideNotification(baseSeconds, bonusSeconds, tier) {
+            function spawnSideNotification(baseSeconds, bonusSeconds, tier, details) {
+                const info = details && typeof details === 'object' ? details : {};
+                const donorName = sanitizeText(info.donorName, 40);
+                const messageText = sanitizeText(info.message, 220);
+                const amountLabel = sanitizeText(info.amountLabel, 32);
+
                 const pill = document.createElement('div');
                 pill.className = 'side-notif tier-' + tier;
 
+                const bodyEl = document.createElement('div');
+                bodyEl.className = 'notif-body';
+
+                if (donorName || amountLabel) {
+                    const metaEl = document.createElement('div');
+                    metaEl.className = 'notif-meta';
+
+                    if (donorName) {
+                        const donorEl = document.createElement('span');
+                        donorEl.className = 'notif-donor';
+                        donorEl.textContent = donorName;
+                        metaEl.appendChild(donorEl);
+                    }
+
+                    if (donorName && amountLabel) {
+                        const dotEl = document.createElement('span');
+                        dotEl.className = 'notif-dot';
+                        dotEl.textContent = '•';
+                        metaEl.appendChild(dotEl);
+                    }
+
+                    if (amountLabel) {
+                        const amountEl = document.createElement('span');
+                        amountEl.className = 'notif-amount';
+                        amountEl.textContent = amountLabel;
+                        metaEl.appendChild(amountEl);
+                    }
+
+                    bodyEl.appendChild(metaEl);
+                }
+
+                if (messageText) {
+                    const msgEl = document.createElement('div');
+                    msgEl.className = 'notif-message';
+                    msgEl.textContent = messageText;
+                    bodyEl.appendChild(msgEl);
+                }
+
+                if (bodyEl.childNodes.length > 0) {
+                    pill.appendChild(bodyEl);
+                }
+
+                const timeWrap = document.createElement('div');
+                timeWrap.className = 'notif-time-wrap';
+
                 const durationText = formatSideDuration(baseSeconds);
                 const durationSpan = document.createElement('span');
+                durationSpan.className = 'notif-duration' + (durationText.length >= 9 ? ' is-long' : '');
                 durationSpan.textContent = durationText;
-                pill.appendChild(durationSpan);
-
-                // Keep very long hour notifications (e.g. +100:00:00) sleek and unclipped
-                if (durationText.length >= 9) {
-                    pill.style.fontSize = '21px';
-                    pill.style.padding = '9px 14px';
-                }
+                timeWrap.appendChild(durationSpan);
 
                 if (bonusSeconds > 0) {
                     const badge = document.createElement('span');
                     badge.className = 'bonus-badge';
                     badge.textContent = '+' + bonusSeconds + ' sn';
-                    pill.appendChild(badge);
+                    timeWrap.appendChild(badge);
                 }
 
-                while (els.sideNotifStack.children.length >= 3) {
+                pill.appendChild(timeWrap);
+
+                while (els.sideNotifStack.children.length >= 2) {
                     els.sideNotifStack.removeChild(els.sideNotifStack.firstChild);
                 }
 
@@ -1791,7 +1984,7 @@
                     if (pill.parentNode) {
                         pill.parentNode.removeChild(pill);
                     }
-                }, CONFIG.sideNotifDurationMs + 80);
+                }, CONFIG.sideNotifDurationMs + 100);
             }
 
             function pulseBoard() {
@@ -1967,10 +2160,10 @@
             /**
              * Processes a donation in TRY, KICKS, or SUB:
              * - Immediately adds baseSeconds + bonusSeconds to the drift-free countdown timer
-             * - Displays ONLY base duration on the side pill + separate "+13 sn" top-right badge when applicable
+             * - Displays donor name, amount, message & base duration emerging from behind the cat to the left
              * - Spins slot eyes based on total added seconds (<600s Latte, 600-3599s Dollar, >=3600s Gold)
              */
-            function processDonation(currencyType, rawAmount) {
+            function processDonation(currencyType, rawAmount, details) {
                 const type = String(currencyType || '').toUpperCase();
                 const amount = parseNumericAmount(rawAmount);
                 if (!Number.isFinite(amount) || amount <= 0) return;
@@ -1999,8 +2192,15 @@
                     tier = 'dollar';
                 }
 
+                const info = details && typeof details === 'object' ? details : {};
+                const notifDetails = {
+                    donorName: info.donorName || '',
+                    message: info.message || '',
+                    amountLabel: info.amountLabel || formatDonationAmount(type, amount)
+                };
+
                 pulseBoard();
-                spawnSideNotification(baseSeconds, bonusSeconds, tier);
+                spawnSideNotification(baseSeconds, bonusSeconds, tier, notifDetails);
                 enqueueEyeSpin(tier);
             }
 
@@ -2040,6 +2240,14 @@
                     if (isDuplicateEvent(eventId)) return;
 
                     const msgCurrency = String(msg.currency || '').trim().toUpperCase();
+                    const donorName = sanitizeText(
+                        msg.from || msg.name || msg.display_name || msg.username || msg.sender || msg.gifter || '',
+                        40
+                    );
+                    const donorMessage = sanitizeText(
+                        msg.message || msg.comment || msg.text || msg.note || '',
+                        220
+                    );
 
                     // 1. Kicks / Bits / Kick gift payloads
                     if (
@@ -2057,7 +2265,10 @@
                                         (msg.quantity != null ? msg.quantity : msg.count)))
                         );
                         if (Number.isFinite(kicksAmount) && kicksAmount > 0) {
-                            processDonation('KICKS', kicksAmount);
+                            processDonation('KICKS', kicksAmount, {
+                                donorName: donorName,
+                                message: donorMessage
+                            });
                         }
                         return;
                     }
@@ -2067,7 +2278,10 @@
                         if (!msgCurrency || msgCurrency === 'TRY' || msgCurrency === 'TL') {
                             const amount = parseNumericAmount(msg.amount != null ? msg.amount : msg.formatted_amount);
                             if (Number.isFinite(amount) && amount > 0) {
-                                processDonation('TRY', amount);
+                                processDonation('TRY', amount, {
+                                    donorName: donorName,
+                                    message: donorMessage
+                                });
                             }
                         }
                         return;
@@ -2092,7 +2306,10 @@
                                         (msg.mass_gift_count != null ? msg.mass_gift_count :
                                             (msg.count != null ? msg.count : 1))));
                         const subCount = parseNumericAmount(rawCount);
-                        processDonation('SUB', Number.isFinite(subCount) && subCount > 0 ? subCount : 1);
+                        processDonation('SUB', Number.isFinite(subCount) && subCount > 0 ? subCount : 1, {
+                            donorName: donorName,
+                            message: donorMessage
+                        });
                     }
                 });
             }
@@ -2145,19 +2362,37 @@
                 if (e.ctrlKey || e.metaKey || e.altKey) return;
                 const key = e.key;
                 if (key === '1') {
-                    processDonation('KICKS', 100);  // +05:00 -> Latte eyes
+                    processDonation('KICKS', 100, {
+                        donorName: 'Mırmır',
+                        message: 'Kediye mama parası, iyi yayınlar!'
+                    });  // +05:00 -> Latte eyes
                 } else if (key === '2') {
-                    processDonation('TRY', 100);    // +15:00 -> Dollar eyes
+                    processDonation('TRY', 100, {
+                        donorName: 'Ahmet',
+                        message: 'Paithon efsane gidiyor, kolay gelsin!'
+                    });  // +15:00 -> Dollar eyes
                 } else if (key === '3') {
-                    processDonation('SUB', 2);      // +1:00:00 -> Gold eyes
+                    processDonation('SUB', 2, {
+                        donorName: 'LilaKedi',
+                        message: '2 abonelik geldi, yayın devamkee!'
+                    });  // +1:00:00 -> Gold eyes
                 } else if (key === '4') {
-                    processDonation('TRY', 130);    // +19:30 + top-right "+13 sn" badge -> Dollar eyes
+                    processDonation('TRY', 130, {
+                        donorName: 'PairaFan',
+                        message: '13 ün katı bonuslu bağış! Kedi çok tatlı olmuş 💜'
+                    });  // +19:30 + "+13 sn" badge -> Dollar eyes
                 } else if (key === '5') {
-                    processDonation('KICKS', 130);  // +06:30 + top-right "+13 sn" badge -> Latte eyes
+                    processDonation('KICKS', 130, {
+                        donorName: 'PatiSever',
+                        message: 'Bonus saniyeler de benden olsun!'
+                    });  // +06:30 + "+13 sn" badge -> Latte eyes
                 } else if (key === '6') {
-                    processDonation('SUB', 200);    // +100:00:00 -> Gold eyes (tests 3-4+ digit auto-fit)
+                    processDonation('SUB', 200, {
+                        donorName: 'MegaDestek',
+                        message: 'Bu yayın bugün bitmez, 100 saat daha!'
+                    });  // +100:00:00 -> Gold eyes (tests 3-4+ digit auto-fit)
                 } else if (key === 'r' || key === 'R') {
-                    resetTimerToDefault();          // Reset to default 02:00:00
+                    resetTimerToDefault();          // Reset to default / URL minutes
                 }
             });
 
