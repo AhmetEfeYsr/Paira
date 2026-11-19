@@ -677,6 +677,7 @@
 
         .board-card {
             position: relative;
+            z-index: 6;
             background: linear-gradient(168deg, var(--board-top) 0%, var(--board-bot) 100%);
             border: 2px solid var(--lilac-border);
             border-radius: 26px;
@@ -1188,34 +1189,50 @@
             box-shadow: 0 0 8px rgba(196, 181, 253, 0.75);
         }
 
+        .pause-banner-anchor {
+            position: absolute;
+            right: 50%;
+            bottom: 12px;
+            z-index: 2;
+            width: min(1160px, calc(100vw - 220px));
+            padding: 16px 0 22px 24px;
+            display: flex;
+            justify-content: flex-end;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
         .pause-banner {
-            position: fixed;
-            left: 26px;
-            bottom: 22px;
-            z-index: 40;
+            position: relative;
             display: inline-flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 14px;
-            padding: 15px 24px 15px 18px;
-            border-radius: 22px;
+            padding: 16px 214px 16px 26px;
+            border-radius: 24px 0 0 24px;
             background: linear-gradient(155deg, #241c21 0%, #161116 100%);
             border: 2px solid rgba(185, 151, 245, 0.85);
+            border-right: none;
             box-shadow:
-                0 14px 28px rgba(8, 5, 11, 0.72),
+                -8px 12px 26px rgba(8, 5, 11, 0.72),
                 0 0 24px rgba(168, 85, 247, 0.28),
                 inset 0 1.5px 0 rgba(255, 255, 255, 0.14);
             color: #fffdfb;
             pointer-events: none;
+            will-change: transform, opacity;
             opacity: 0;
-            transform: translate3d(-24px, 10px, 0);
+            transform: translate3d(100%, 0, 0);
             transition:
-                opacity 380ms cubic-bezier(0.22, 1, 0.36, 1),
-                transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+                transform 1050ms cubic-bezier(0.42, 0, 0.2, 1),
+                opacity 850ms ease-in 150ms;
         }
 
         .pause-banner.is-visible {
             opacity: 1;
             transform: translate3d(0, 0, 0);
+            transition:
+                transform 680ms cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 400ms ease-out;
         }
 
         .pause-banner-icon {
@@ -1270,9 +1287,10 @@
             left: 26px;
             top: 22px;
             z-index: 90;
-            width: 340px;
-            padding: 16px;
-            border-radius: 20px;
+            width: 510px;
+            max-width: calc(100vw - 48px);
+            padding: 24px;
+            border-radius: 28px;
             background: rgba(23, 18, 21, 0.97);
             border: 2px solid rgba(185, 151, 245, 0.85);
             box-shadow:
@@ -1281,7 +1299,7 @@
             color: #fffdfb;
             display: none;
             flex-direction: column;
-            gap: 12px;
+            gap: 18px;
             user-select: none;
         }
 
@@ -1293,12 +1311,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 12px;
         }
 
         .admin-title {
             font-family: var(--font-display);
-            font-size: 16px;
+            font-size: 24px;
             font-weight: 700;
             letter-spacing: 0.06em;
             color: var(--lilac-reward);
@@ -1306,13 +1324,13 @@
         }
 
         .admin-close {
-            width: 28px;
-            height: 28px;
-            border-radius: 9px;
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
             border: 1px solid rgba(255, 255, 255, 0.16);
             background: rgba(255, 255, 255, 0.06);
             color: #fffdfb;
-            font-size: 16px;
+            font-size: 24px;
             font-weight: 700;
             line-height: 1;
             cursor: pointer;
@@ -1324,19 +1342,19 @@
 
         .admin-row {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .admin-btn {
             flex: 1 1 auto;
-            padding: 9px 10px;
-            border-radius: 11px;
+            padding: 14px 16px;
+            border-radius: 16px;
             border: 1.5px solid rgba(185, 151, 245, 0.45);
             background: #241d21;
             color: #fffdfb;
             font-family: var(--font-body);
-            font-size: 13px;
+            font-size: 20px;
             font-weight: 800;
             cursor: pointer;
             transition: background 0.15s ease, border-color 0.15s ease;
@@ -1366,19 +1384,19 @@
 
         .admin-input-group {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
 
         .admin-input {
             flex: 1;
             min-width: 0;
-            padding: 8px 11px;
-            border-radius: 11px;
+            padding: 13px 16px;
+            border-radius: 16px;
             border: 1.5px solid rgba(185, 151, 245, 0.42);
             background: #120d13;
             color: #fffdfb;
             font-family: var(--font-body);
-            font-size: 14px;
+            font-size: 21px;
             font-weight: 800;
             outline: none;
         }
@@ -1388,7 +1406,7 @@
         }
 
         .admin-hint {
-            font-size: 11.5px;
+            font-size: 17px;
             font-weight: 700;
             color: rgba(244, 236, 247, 0.65);
             line-height: 1.35;
@@ -1900,19 +1918,20 @@
                         </div>
                     </div>
                 </div>
+                <!-- Pause Status Banner Emerging Left From Behind Lower Board -->
+                <div class="pause-banner-anchor">
+                    <div id="pauseBanner" class="pause-banner" role="status" aria-live="polite">
+                        <span class="pause-banner-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4.5" width="4.5" height="15" rx="2" />
+                                <rect x="13.5" y="4.5" width="4.5" height="15" rx="2" />
+                            </svg>
+                        </span>
+                        <span class="pause-banner-text">Yayıncımız dinleniyor, o sırada <strong>sayaç duraklatıldı</strong></span>
+                    </div>
+                </div>
             </div>
         </main>
-    </div>
-
-    <!-- Bottom-Left Pause Status Banner -->
-    <div id="pauseBanner" class="pause-banner" role="status" aria-live="polite">
-        <span class="pause-banner-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="4.5" width="4.5" height="15" rx="2" />
-                <rect x="13.5" y="4.5" width="4.5" height="15" rx="2" />
-            </svg>
-        </span>
-        <span class="pause-banner-text">Yayıncımız dinleniyor, o sırada <strong>sayaç duraklatıldı</strong></span>
     </div>
 
     <!-- Hidden OBS Interact Control Panel (Toggle via M or Double-Click) -->
