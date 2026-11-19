@@ -1367,6 +1367,7 @@
 
             // ==================== STATE ====================
             let targetEndTimestamp = 0;
+            let activeUrlMinutes = null;
             let lastRenderedSecond = -1;
             let lastFormattedLength = -1;
             let streamlabsSocket = null;
@@ -1531,20 +1532,29 @@
                 safeSetStorage(CONFIG.storageKey, JSON.stringify({
                     targetEndTimestamp: targetEndTimestamp,
                     remainingMs: getRemainingMs(),
+                    urlMinutes: activeUrlMinutes,
                     savedAt: Date.now()
                 }));
             }
 
-            function loadSavedRemainingMs() {
+            function loadSavedState() {
                 const raw = safeGetStorage(CONFIG.storageKey);
                 if (!raw) return null;
                 try {
                     const parsed = JSON.parse(raw);
-                    if (parsed && Number.isFinite(parsed.targetEndTimestamp)) {
-                        return Math.max(0, parsed.targetEndTimestamp - Date.now());
+                    if (!parsed || typeof parsed !== 'object') return null;
+                    const savedUrlMinutes = Number.isFinite(parsed.urlMinutes) ? parsed.urlMinutes : null;
+                    if (Number.isFinite(parsed.targetEndTimestamp)) {
+                        return {
+                            remainingMs: Math.max(0, parsed.targetEndTimestamp - Date.now()),
+                            urlMinutes: savedUrlMinutes
+                        };
                     }
-                    if (parsed && Number.isFinite(parsed.remainingMs)) {
-                        return Math.max(0, parsed.remainingMs);
+                    if (Number.isFinite(parsed.remainingMs)) {
+                        return {
+                            remainingMs: Math.max(0, parsed.remainingMs),
+                            urlMinutes: savedUrlMinutes
+                        };
                     }
                 } catch (err) {
                     return null;
@@ -1878,8 +1888,9 @@
             }
 
             function resetTimerToDefault() {
+                const resetMinutes = Number.isFinite(activeUrlMinutes) ? activeUrlMinutes : CONFIG.initialMinutes;
                 safeRemoveStorage(CONFIG.storageKey);
-                targetEndTimestamp = Date.now() + Math.round(CONFIG.initialMinutes * 60 * 1000);
+                targetEndTimestamp = Date.now() + Math.round(resetMinutes * 60 * 1000);
                 saveTimerState();
                 renderTimer(true);
                 pulseBoard();
@@ -2046,18 +2057,24 @@
                 const params = new URLSearchParams(window.location.search);
                 const urlToken = params.get('token');
                 const urlMinutes = parseFloat(params.get('minutes'));
+                const hasUrlMinutes = Number.isFinite(urlMinutes) && urlMinutes >= 0;
                 const shouldReset = params.get('reset') === '1' || params.get('reset') === 'true';
 
                 if (shouldReset) {
                     safeRemoveStorage(CONFIG.storageKey);
                 }
 
-                const savedRemaining = shouldReset ? null : loadSavedRemainingMs();
-                if (Number.isFinite(urlMinutes) && urlMinutes >= 0 && (shouldReset || savedRemaining === null)) {
+                const savedState = shouldReset ? null : loadSavedState();
+                const urlMinutesChanged = hasUrlMinutes && (!savedState || savedState.urlMinutes !== urlMinutes);
+
+                if (hasUrlMinutes && (shouldReset || !savedState || urlMinutesChanged)) {
+                    activeUrlMinutes = urlMinutes;
                     targetEndTimestamp = Date.now() + Math.round(urlMinutes * 60 * 1000);
-                } else if (savedRemaining !== null) {
-                    targetEndTimestamp = Date.now() + savedRemaining;
+                } else if (savedState) {
+                    activeUrlMinutes = savedState.urlMinutes;
+                    targetEndTimestamp = Date.now() + savedState.remainingMs;
                 } else {
+                    activeUrlMinutes = null;
                     targetEndTimestamp = Date.now() + Math.round(CONFIG.initialMinutes * 60 * 1000);
                 }
 
