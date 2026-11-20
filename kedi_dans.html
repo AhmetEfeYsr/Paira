@@ -864,10 +864,13 @@
             const serverStatusesByKey = new Map();
             const serverStatusesByUrl = new Map();
 
-            const mediaStatuses = new Map(); // itemId -> { state, label }
-            const videoPool = new Map();     // itemId -> { videoEl, srcUrl, isObjectUrl, naturalRatio, fullSig, fromServer, lastUsedAt }
+            const mediaStatuses = new Map(); // itemId -> { state, label, title? }
+            const videoPool = new Map();     // itemId -> { videoEl, srcUrl, isObjectUrl, naturalRatio, fullSig, fromServer, isOfflineCached, lastUsedAt }
             const ytSlots = new Map();       // itemId -> { slotEl, player, videoId, playerReady, warmState, onPlaybackEnd, onPlaybackError }
             const directFetchInFlight = new Map();
+            const offlineMirrorQueue = [];
+            const offlineMirrorQueuedKeys = new Set();
+            let offlineMirrorRunning = false;
             const ytWarmQueue = [];
             let ytWarmActiveCount = 0;
             let ytApiState = 'idle';
@@ -1061,6 +1064,17 @@
                 }
                 candidate = candidate.trim();
                 return IG_ID_RE.test(candidate) ? candidate : null;
+            }
+
+            function getOfflineMediaKey(url) {
+                const clean = typeof url === 'string' ? url.trim() : '';
+                if (!clean) return null;
+                const ytId = extractYouTubeId(clean);
+                if (ytId) return 'yt_' + ytId;
+                const igId = extractInstagramId(clean);
+                if (igId) return 'ig_' + igId;
+                if (isInstagramUrl(clean)) return 'ig_url_' + hashString(clean);
+                return 'url_' + hashString(clean);
             }
 
             function isHttpUrl(url) {
@@ -1403,11 +1417,12 @@
                 }
             }
 
-            function mountWarmVideo(item, srcUrl, isObjectUrl, label, fromServer) {
+            function mountWarmVideo(item, srcUrl, isObjectUrl, label, fromServer, isOfflineCached) {
                 const sig = item.url.trim() + '|' + srcUrl;
                 const existing = videoPool.get(item.id);
                 if (existing && existing.fullSig === sig) {
                     existing.lastUsedAt = Date.now();
+                    if (isOfflineCached) existing.isOfflineCached = true;
                     setItemStatus(item.id, { state: 'ready', label: label });
                     return;
                 }
@@ -1427,6 +1442,7 @@
                     naturalRatio: 16 / 9,
                     fullSig: sig,
                     fromServer: Boolean(fromServer),
+                    isOfflineCached: Boolean(isOfflineCached || isObjectUrl),
                     lastUsedAt: Date.now()
                 };
 
@@ -1438,6 +1454,22 @@
 
                 video.addEventListener('error', function () {
                     if (!isObjectUrl) {
+                        if (fromServer) {
+                            const offlineKey = getOfflineMediaKey(item.url);
+                            if (offlineKey) {
+                                MediaDB.get(offlineKey).then(function (cached) {
+                                    if (cached && cached.blob && cached.blob.size > 0) {
+                                        const latest = appConfig.items.find(function (it) { return it.id === item.id; });
+                                        if (latest && latest.url.trim() === item.url.trim()) {
+                                            mountWarmVideo(latest, URL.createObjectURL(cached.blob), true, 'Önbellek Hazır', false, true);
+                                            return;
+                                        }
+                                    }
+                                    setItemStatus(item.id, { state: 'error', label: 'Yüklenemedi' });
+                                });
+                                return;
+                            }
+                        }
                         setItemStatus(item.id, { state: 'error', label: 'Yüklenemedi' });
                     }
                 });
@@ -1446,6 +1478,47 @@
                 try { video.load(); } catch (_) { }
                 videoPool.set(item.id, entry);
                 setItemStatus(item.id, { state: 'ready', label: label });
+            }
+
+            function enqueueOfflineMirror(cleanUrl, localUrl) {
+                if (!cleanUrl || !localUrl) return;
+                const offlineKey = getOfflineMediaKey(cleanUrl);
+                if (!offlineKey || offlineMirrorQueuedKeys.has(offlineKey)) return;
+                offlineMirrorQueuedKeys.add(offlineKey);
+                offlineMirrorQueue.push({ key: offlineKey, url: cleanUrl, localUrl: localUrl });
+                pumpOfflineMirrorQueue();
+            }
+
+            async function pumpOfflineMirrorQueue() {
+                if (offlineMirrorRunning) return;
+                offlineMirrorRunning = true;
+                try {
+                    while (offlineMirrorQueue.length > 0) {
+                        const job = offlineMirrorQueue.shift();
+                        try {
+                            const existing = await MediaDB.get(job.key);
+                            if (existing && existing.blob && existing.blob.size > 0 && existing.localUrl === job.localUrl) {
+                                continue;
+                            }
+                            const resp = await fetch(apiBase + job.localUrl);
+                            if (!resp.ok) continue;
+                            const blob = await resp.blob();
+                            if (blob && blob.size > 0) {
+                                await MediaDB.put({
+                                    id: job.key,
+                                    url: job.url,
+                                    localUrl: job.localUrl,
+                                    blob: blob,
+                                    updatedAt: Date.now()
+                                });
+                            }
+                        } catch (_) {
+                            offlineMirrorQueuedKeys.delete(job.key);
+                        }
+                    }
+                } finally {
+                    offlineMirrorRunning = false;
+                }
             }
 
             async function fetchDirectVideoBlob(url, cacheKey, onProgress) {
@@ -1729,7 +1802,8 @@
 
                     if (entry.state === 'ready' && entry.localUrl) {
                         disposeYouTubeSlot(it.id);
-                        mountWarmVideo(it, apiBase + entry.localUrl, false, 'MP4 Hazır', true);
+                        mountWarmVideo(it, apiBase + entry.localUrl, false, 'MP4 Hazır', true, false);
+                        enqueueOfflineMirror(cleanUrl, entry.localUrl);
                     } else if (entry.state === 'queued') {
                         setItemStatus(it.id, { state: 'loading', label: 'Sırada' });
                     } else if (entry.state === 'downloading') {
@@ -1772,6 +1846,19 @@
                     }
                 }
 
+                const offlineKey = getOfflineMediaKey(cleanUrl);
+                if (offlineKey) {
+                    const cached = await MediaDB.get(offlineKey);
+                    if (cached && cached.blob && cached.blob.size > 0) {
+                        const latestAfterDb = appConfig.items.find(function (it) { return it.id === item.id; });
+                        if (!latestAfterDb || latestAfterDb.url.trim() !== cleanUrl) return;
+                        disposeYouTubeSlot(item.id);
+                        const readyLbl = cached.localUrl ? 'Önbellek Hazır' : 'Hazır';
+                        mountWarmVideo(latestAfterDb, URL.createObjectURL(cached.blob), true, readyLbl, false, true);
+                        return;
+                    }
+                }
+
                 const ytId = extractYouTubeId(cleanUrl);
                 if (ytId) {
                     disposeVideoPoolEntry(item.id);
@@ -1788,7 +1875,7 @@
                         setItemStatus(item.id, {
                             state: 'error',
                             label: 'Sunucu Gerekli',
-                            title: 'Instagram videoları için KediDansServer.exe açık olmalıdır.'
+                            title: 'Instagram videoları için KediDansServer.exe en az bir kez açık olmalıdır.'
                         });
                     }
                     return;
@@ -1801,13 +1888,7 @@
                     return;
                 }
 
-                const cacheKey = 'url_' + hashString(cleanUrl);
-                const cached = await MediaDB.get(cacheKey);
-                if (cached && cached.blob && cached.blob.size > 0) {
-                    mountWarmVideo(item, URL.createObjectURL(cached.blob), true, 'Hazır', false);
-                    return;
-                }
-
+                const cacheKey = offlineKey || ('url_' + hashString(cleanUrl));
                 setItemStatus(item.id, { state: 'loading', label: 'İndiriliyor' });
                 const blob = await fetchDirectVideoBlob(cleanUrl, cacheKey, function (pct) {
                     setItemStatus(item.id, { state: 'loading', label: '%' + pct });
@@ -1817,9 +1898,9 @@
                 if (!latest || latest.url.trim() !== cleanUrl) return;
 
                 if (blob) {
-                    mountWarmVideo(latest, URL.createObjectURL(blob), true, 'Hazır', false);
+                    mountWarmVideo(latest, URL.createObjectURL(blob), true, 'Hazır', false, true);
                 } else {
-                    mountWarmVideo(latest, cleanUrl, false, 'Hazır', false);
+                    mountWarmVideo(latest, cleanUrl, false, 'Hazır', false, false);
                 }
             }
 
@@ -1971,6 +2052,17 @@
                         }
                         resolve();
                         return;
+                    }
+
+                    if (poolEntry.fromServer && (poolEntry.videoEl.error || !sseSource)) {
+                        const offlineKey = getOfflineMediaKey(item.url);
+                        if (offlineKey) {
+                            const cached = await MediaDB.get(offlineKey);
+                            if (cached && cached.blob && cached.blob.size > 0) {
+                                mountWarmVideo(item, URL.createObjectURL(cached.blob), true, 'Önbellek Hazır', false, true);
+                                poolEntry = videoPool.get(item.id) || poolEntry;
+                            }
+                        }
                     }
 
                     const video = poolEntry.videoEl;
@@ -2163,9 +2255,13 @@
                     while (alertQueue.length > 0) {
                         const alertData = alertQueue.shift();
                         try {
-                            const poolEntry = videoPool.get(alertData.item.id);
+                            let poolEntry = videoPool.get(alertData.item.id);
+                            if (!poolEntry) {
+                                await prefetchItem(alertData.item);
+                                poolEntry = videoPool.get(alertData.item.id);
+                            }
                             const ytId = extractYouTubeId(alertData.item.url);
-                            if (poolEntry && poolEntry.fromServer) {
+                            if (poolEntry && (poolEntry.fromServer || poolEntry.isOfflineCached)) {
                                 await playHtml5VideoAlert(alertData, alertData.item);
                             } else if (ytId) {
                                 await playYouTubeAlert(alertData, alertData.item, ytId);
@@ -2903,6 +2999,9 @@
 
             // ==================== INIT ====================
             async function init() {
+                if (navigator.storage && typeof navigator.storage.persist === 'function') {
+                    navigator.storage.persist().catch(function () { });
+                }
                 const importedFromUrl = loadInitialConfig();
                 bindEvents();
                 bindShortcuts();
