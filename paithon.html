@@ -2393,6 +2393,7 @@
             let kediDansServerOnline = false;
             let kediDansSse = null;
             let kediDansProbeTimer = null;
+            let lastKediDansSyncAt = 0;
             let kediDansApiBase = CONFIG.kediDansApiBase;
 
             // ==================== DOM REFERENCES ====================
@@ -2976,12 +2977,16 @@
                         addRemainingMs(item.totalAddedSeconds * 1000);
                         pulseBoard();
                         if (item.type === 'SUB' || item.type === 'KICKS') {
-                            const videoMatch = findMatchingKediDansVideo(item.type, item.amount, item.details.donorName);
+                            let videoMatch = findMatchingKediDansVideo(item.type, item.amount, item.details.donorName);
+                            if (!videoMatch && (!kediDansServerOnline || Date.now() - lastKediDansSyncAt > 4000)) {
+                                await probeKediDansServer(700);
+                                videoMatch = findMatchingKediDansVideo(item.type, item.amount, item.details.donorName);
+                            }
                             const soundMatch = findMatchingSoundRule(item.type, item.amount);
                             if (videoMatch && (!soundMatch || videoMatch.amount >= soundMatch.minAmount)) {
                                 // Video plays in kedi_dans.html instead of a sound here
                                 stopActiveSound();
-                                notifyKediDansVideo(item.type, item.amount, item.details.donorName, item.eventId, item.isTest);
+                                notifyKediDansVideo(videoMatch, item.type, item.amount, item.details.donorName, item.eventId, item.isTest);
                             } else {
                                 playDonationSound(item.type, item.amount);
                             }
@@ -3171,6 +3176,7 @@
                 if (els.tabPaneSounds) els.tabPaneSounds.classList.toggle('is-active', isSounds);
                 if (isSounds) {
                     renderSoundPanel();
+                    probeKediDansServer();
                 }
             }
 
@@ -3579,10 +3585,15 @@
                     const url = typeof it.url === 'string' ? it.url.trim() : '';
                     const amt = Number(it.amount);
                     if (trig === targetTrigger && url && Number.isFinite(amt) && amt >= 0) {
+                        const sizeNum = Number(it.size);
                         list.push({
+                            id: typeof it.id === 'string' && it.id.trim() ? it.id.trim() : ('kedi_' + i),
                             donor: typeof it.donor === 'string' ? it.donor.trim() : '',
+                            trigger: targetTrigger,
                             amount: amt,
-                            url: url
+                            url: url,
+                            position: typeof it.position === 'string' && it.position.trim() ? it.position.trim() : 'center',
+                            size: Number.isFinite(sizeNum) ? Math.min(100, Math.max(0, Math.round(sizeNum))) : 65
                         });
                     }
                 }
@@ -3631,10 +3642,11 @@
                 const normType = String(type || '').toUpperCase();
                 if (normType !== 'SUB' && normType !== 'KICKS') return null;
                 if (!Number.isFinite(amount) || amount <= 0) return null;
-                if (!kediDansSubItems.length && !kediDansKicksItems.length) {
+                let pool = normType === 'SUB' ? kediDansSubItems : kediDansKicksItems;
+                if (!pool.length) {
                     loadKediDansConfigFromStorage();
+                    pool = normType === 'SUB' ? kediDansSubItems : kediDansKicksItems;
                 }
-                const pool = normType === 'SUB' ? kediDansSubItems : kediDansKicksItems;
                 if (!pool.length) return null;
 
                 let bestSpecial = null;
@@ -3653,7 +3665,7 @@
                 return bestSpecial || bestGeneral;
             }
 
-            function notifyKediDansVideo(type, amount, donorName, eventId, isTest) {
+            function notifyKediDansVideo(videoMatch, type, amount, donorName, eventId, isTest) {
                 const payload = {
                     type: 'kedi_shared_alert',
                     kind: 'kedi_shared_alert',
@@ -3662,18 +3674,17 @@
                     eventId: eventId || null,
                     donorName: donorName || '',
                     amount: amount,
-                    isTest: Boolean(isTest)
+                    isTest: Boolean(isTest),
+                    item: videoMatch || null
                 };
                 if (kediDansChannel) {
                     try { kediDansChannel.postMessage(payload); } catch (_) { }
                 }
-                if (kediDansServerOnline) {
-                    fetch(kediDansApiBase + '/api/test', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).catch(function () { });
-                }
+                fetch(kediDansApiBase + '/api/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(function () { });
             }
 
             function connectKediDansServerEvents() {
@@ -3687,7 +3698,10 @@
                     kediDansSse.addEventListener('config', function (ev) {
                         try {
                             const data = JSON.parse(ev.data);
-                            if (data && data.config) applyKediDansConfig(data.config);
+                            if (data && data.config) {
+                                lastKediDansSyncAt = Date.now();
+                                applyKediDansConfig(data.config);
+                            }
                         } catch (_) { }
                     });
                     kediDansSse.onerror = function () {
@@ -3701,15 +3715,17 @@
                 } catch (_) { }
             }
 
-            async function probeKediDansServer() {
+            async function probeKediDansServer(timeoutMs) {
+                const ms = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 1200;
                 const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
-                const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 1000) : null;
+                const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, ms) : null;
                 try {
                     const resp = await fetch(kediDansApiBase + '/api/config', ctrl ? { signal: ctrl.signal } : undefined);
                     if (timer) clearTimeout(timer);
                     if (!resp.ok) return false;
                     const data = await resp.json();
                     kediDansServerOnline = true;
+                    lastKediDansSyncAt = Date.now();
                     if (data && data.config) {
                         applyKediDansConfig(data.config);
                     }
@@ -3730,7 +3746,7 @@
                     if (!ok) {
                         scheduleKediDansServerProbe();
                     }
-                }, 15000);
+                }, 5000);
             }
 
             function initKediDansBridge(customApi) {

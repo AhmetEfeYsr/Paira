@@ -2534,7 +2534,9 @@
                 const donorName = String(data.donorName || '').trim();
                 const dedupKey = buildEventDedupKey(trig, data.eventId, donorName, amt);
                 if (isDuplicateEvent(dedupKey)) return;
-                enqueueAlert(donorName, amt, Boolean(data.isTest), null, trig);
+                const matchedItem = findMatchingItem(amt, donorName, appConfig.items, trig)
+                    || (data.item ? normalizeItem(data.item) : null);
+                enqueueAlert(donorName, amt, Boolean(data.isTest), matchedItem, trig);
             }
 
             function handleStreamlabsPayload(eventData) {
