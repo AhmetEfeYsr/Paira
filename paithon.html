@@ -2306,6 +2306,7 @@
                     <button id="btnAddKicksSound" class="admin-btn primary sound-add-btn" type="button">+ Kicks Sesi</button>
                 </div>
                 <div id="kicksSoundList" class="sound-rules-list"></div>
+                <div id="kediDansKicksNotice" class="sound-bridge-note hidden"></div>
             </div>
 
             <div class="sound-section">
@@ -2387,6 +2388,7 @@
             let activeAudio = null;
             let soundStatusTimer = null;
             let kediDansSubItems = [];
+            let kediDansKicksItems = [];
             let kediDansChannel = null;
             let kediDansServerOnline = false;
             let kediDansSse = null;
@@ -2423,6 +2425,7 @@
                 btnAddKicksSound: document.getElementById('btnAddKicksSound'),
                 btnAddSubSound: document.getElementById('btnAddSubSound'),
                 kicksSoundList: document.getElementById('kicksSoundList'),
+                kediDansKicksNotice: document.getElementById('kediDansKicksNotice'),
                 subSoundList: document.getElementById('subSoundList'),
                 kediDansSubNotice: document.getElementById('kediDansSubNotice'),
                 soundStatusMsg: document.getElementById('soundStatusMsg'),
@@ -2972,10 +2975,10 @@
                         // 1. Add time to drift-free countdown ONLY when this donation activates
                         addRemainingMs(item.totalAddedSeconds * 1000);
                         pulseBoard();
-                        if (item.type === 'SUB' && findMatchingKediDansSubVideo(item.amount, item.details.donorName)) {
+                        if ((item.type === 'SUB' || item.type === 'KICKS') && findMatchingKediDansVideo(item.type, item.amount, item.details.donorName)) {
                             // Video plays in kedi_dans.html instead of a sound here
                             stopActiveSound();
-                            notifyKediDansSubVideo(item.amount, item.details.donorName, item.eventId, item.isTest);
+                            notifyKediDansVideo(item.type, item.amount, item.details.donorName, item.eventId, item.isTest);
                         } else {
                             playDonationSound(item.type, item.amount);
                         }
@@ -3540,10 +3543,10 @@
 
                 renderSoundListForType(els.kicksSoundList, 'KICKS');
                 renderSoundListForType(els.subSoundList, 'SUB');
-                renderKediDansSubNotice();
+                renderKediDansBridgeNotices();
             }
 
-            // ==================== KEDI_DANS SUB-VIDEO BRIDGE ====================
+            // ==================== KEDI_DANS SUB & KICKS VIDEO BRIDGE ====================
             function normalizeKediDonorKey(name) {
                 if (typeof name !== 'string') return '';
                 return name.trim().replace(/^@+/, '').replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR');
@@ -3560,7 +3563,7 @@
                 return false;
             }
 
-            function extractKediDansSubItems(cfg) {
+            function extractKediDansSharedItems(cfg, targetTrigger) {
                 if (!cfg || !Array.isArray(cfg.items)) return [];
                 const list = [];
                 for (let i = 0; i < cfg.items.length; i++) {
@@ -3569,7 +3572,7 @@
                     const trig = typeof it.trigger === 'string' ? it.trigger.trim().toUpperCase() : 'TRY';
                     const url = typeof it.url === 'string' ? it.url.trim() : '';
                     const amt = Number(it.amount);
-                    if (trig === 'SUB' && url && Number.isFinite(amt) && amt >= 0) {
+                    if (trig === targetTrigger && url && Number.isFinite(amt) && amt >= 0) {
                         list.push({
                             donor: typeof it.donor === 'string' ? it.donor.trim() : '',
                             amount: amt,
@@ -3581,24 +3584,30 @@
                 return list;
             }
 
-            function renderKediDansSubNotice() {
-                if (!els.kediDansSubNotice) return;
-                if (!kediDansSubItems.length) {
-                    els.kediDansSubNotice.classList.add('hidden');
-                    els.kediDansSubNotice.textContent = '';
+            function renderSingleBridgeNotice(el, items, unitText, eventNoun) {
+                if (!el) return;
+                if (!items.length) {
+                    el.classList.add('hidden');
+                    el.textContent = '';
                     return;
                 }
-                const labels = kediDansSubItems.map(function (it) {
-                    return (it.donor ? (it.donor + ' · ') : '') + Math.round(it.amount) + ' Sub+';
+                const labels = items.map(function (it) {
+                    return (it.donor ? (it.donor + ' · ') : '') + Math.round(it.amount) + ' ' + unitText;
                 });
-                els.kediDansSubNotice.textContent =
-                    'Kedi Dans ortak video aktif (' + labels.join(', ') + '): eşleşen aboneliklerde ses yerine kedi_dans.html ekranında video oynar.';
-                els.kediDansSubNotice.classList.remove('hidden');
+                el.textContent =
+                    'Kedi Dans ortak video aktif (' + labels.join(', ') + '): eşleşen ' + eventNoun + ' için ses yerine kedi_dans.html ekranında video oynar.';
+                el.classList.remove('hidden');
+            }
+
+            function renderKediDansBridgeNotices() {
+                renderSingleBridgeNotice(els.kediDansSubNotice, kediDansSubItems, 'Sub+', 'aboneliklerde');
+                renderSingleBridgeNotice(els.kediDansKicksNotice, kediDansKicksItems, 'Kicks+', 'Kicks gönderimlerinde');
             }
 
             function applyKediDansConfig(cfg) {
-                kediDansSubItems = extractKediDansSubItems(cfg);
-                renderKediDansSubNotice();
+                kediDansSubItems = extractKediDansSharedItems(cfg, 'SUB');
+                kediDansKicksItems = extractKediDansSharedItems(cfg, 'KICKS');
+                renderKediDansBridgeNotices();
             }
 
             function loadKediDansConfigFromStorage() {
@@ -3612,18 +3621,21 @@
                 }
             }
 
-            function findMatchingKediDansSubVideo(subCount, donorName) {
-                if (!Number.isFinite(subCount) || subCount <= 0) return null;
-                if (!kediDansSubItems.length) {
+            function findMatchingKediDansVideo(type, amount, donorName) {
+                const normType = String(type || '').toUpperCase();
+                if (normType !== 'SUB' && normType !== 'KICKS') return null;
+                if (!Number.isFinite(amount) || amount <= 0) return null;
+                if (!kediDansSubItems.length && !kediDansKicksItems.length) {
                     loadKediDansConfigFromStorage();
                 }
-                if (!kediDansSubItems.length) return null;
+                const pool = normType === 'SUB' ? kediDansSubItems : kediDansKicksItems;
+                if (!pool.length) return null;
 
                 let bestSpecial = null;
                 let bestGeneral = null;
-                for (let i = 0; i < kediDansSubItems.length; i++) {
-                    const it = kediDansSubItems[i];
-                    if (subCount < it.amount) continue;
+                for (let i = 0; i < pool.length; i++) {
+                    const it = pool[i];
+                    if (amount < it.amount) continue;
                     if (it.donor) {
                         if (kediDonorMatchesItem(donorName, it.donor)) {
                             if (!bestSpecial || it.amount > bestSpecial.amount) bestSpecial = it;
@@ -3635,14 +3647,15 @@
                 return bestSpecial || bestGeneral;
             }
 
-            function notifyKediDansSubVideo(subCount, donorName, eventId, isTest) {
+            function notifyKediDansVideo(type, amount, donorName, eventId, isTest) {
                 const payload = {
-                    type: 'sub_alert',
-                    kind: 'sub_alert',
+                    type: 'kedi_shared_alert',
+                    kind: 'kedi_shared_alert',
+                    trigger: String(type || '').toUpperCase(),
                     sender: 'paithon',
                     eventId: eventId || null,
                     donorName: donorName || '',
-                    amount: subCount,
+                    amount: amount,
                     isTest: Boolean(isTest)
                 };
                 if (kediDansChannel) {
@@ -3820,7 +3833,8 @@
                         if (Number.isFinite(kicksAmount) && kicksAmount > 0) {
                             processDonation('KICKS', kicksAmount, {
                                 donorName: donorName,
-                                message: donorMessage
+                                message: donorMessage,
+                                eventId: eventId
                             });
                         }
                         return;
@@ -4128,7 +4142,9 @@
                 } else if (key === '1') {
                     processDonation('KICKS', 100, {
                         donorName: 'Mırmır',
-                        message: 'Kediye mama parası, iyi yayınlar!'
+                        message: 'Kediye mama parası, iyi yayınlar!',
+                        isTest: true,
+                        eventId: 'paithon_test_' + Date.now()
                     });  // +05:00 -> Latte eyes
                 } else if (key === '2') {
                     processDonation('TRY', 100, {
@@ -4150,7 +4166,9 @@
                 } else if (key === '5') {
                     processDonation('KICKS', 130, {
                         donorName: 'PatiSever',
-                        message: 'Bonus saniyeler de benden olsun!'
+                        message: 'Bonus saniyeler de benden olsun!',
+                        isTest: true,
+                        eventId: 'paithon_test_' + Date.now()
                     });  // +06:30 + "+13 sn" badge -> Latte eyes
                 } else if (key === '6') {
                     processDonation('SUB', 200, {

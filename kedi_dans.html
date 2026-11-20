@@ -521,7 +521,7 @@
 
         .list-col-headers {
             display: grid;
-            grid-template-columns: 130px 124px minmax(170px, 1fr) 120px 80px 92px 72px;
+            grid-template-columns: 130px 136px minmax(170px, 1fr) 120px 80px 92px 72px;
             gap: 8px;
             padding: 0 10px;
             font-size: 11.5px;
@@ -539,7 +539,7 @@
 
         .tier-row {
             display: grid;
-            grid-template-columns: 130px 124px minmax(170px, 1fr) 120px 80px 92px 72px;
+            grid-template-columns: 130px 136px minmax(170px, 1fr) 120px 80px 92px 72px;
             gap: 8px;
             align-items: center;
             padding: 8px 10px;
@@ -561,6 +561,16 @@
         .tier-row.is-sub-row.is-donor-special {
             border-color: rgba(251, 191, 36, 0.7);
             background: linear-gradient(145deg, rgba(245, 158, 11, 0.16), rgba(168, 85, 247, 0.14));
+        }
+
+        .tier-row.is-kicks-row {
+            border-color: rgba(52, 211, 153, 0.45);
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(34, 26, 37, 0.94));
+        }
+
+        .tier-row.is-kicks-row.is-donor-special {
+            border-color: rgba(52, 211, 153, 0.7);
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.16), rgba(168, 85, 247, 0.14));
         }
 
         @media (max-width: 820px) {
@@ -628,6 +638,11 @@
         .suffix-select.is-sub {
             color: #fde68a;
             background: #241910;
+        }
+
+        .suffix-select.is-kicks {
+            color: #86efac;
+            background: #0f211a;
         }
 
         .dl-badge {
@@ -787,7 +802,7 @@
             <section class="card">
                 <div class="list-col-headers">
                     <span>Bağışçı (Özel)</span>
-                    <span>Miktar (TL / Sub)</span>
+                    <span>Miktar (TL/Sub/Kicks)</span>
                     <span>YouTube, Instagram veya MP4 Linki</span>
                     <span>Konum</span>
                     <span>Boyut (0-100)</span>
@@ -799,7 +814,7 @@
 
                 <div class="list-footer">
                     <button id="btnAddItem" class="btn btn-primary btn-sm" type="button">+ Video Ekle</button>
-                    <span class="hint-text">Bağışçıya özel video önceliklidir. <strong>Sub+</strong> seçilen videolar Paithon sayacıyla ortak çalışır (ses yerine burada video oynar).</span>
+                    <span class="hint-text">Bağışçıya özel video önceliklidir. <strong>Sub+</strong> ve <strong>Kicks+</strong> videoları Paithon sayacıyla ortak çalışır (ses yerine burada video oynar).</span>
                 </div>
             </section>
         </div>
@@ -1041,9 +1056,19 @@
                 return formatted + ' TL';
             }
 
+            function normalizeTrigger(raw) {
+                const up = typeof raw === 'string' ? raw.trim().toUpperCase() : '';
+                if (up === 'SUB' || up === 'KICKS') return up;
+                return 'TRY';
+            }
+
             function formatAlertAmount(amount, trigger) {
-                if (String(trigger || '').toUpperCase() === 'SUB') {
+                const trig = normalizeTrigger(trigger);
+                if (trig === 'SUB') {
                     return Math.round(amount).toLocaleString('tr-TR') + ' Sub';
+                }
+                if (trig === 'KICKS') {
+                    return Math.round(amount).toLocaleString('tr-TR') + ' Kicks';
                 }
                 return formatTryAmount(amount);
             }
@@ -1149,7 +1174,7 @@
                 const amt = Number(r.amount);
                 const pos = typeof r.position === 'string' && VALID_POSITIONS.has(r.position) ? r.position : 'center';
                 const sizeNum = Number(r.size);
-                const trig = (typeof r.trigger === 'string' && r.trigger.trim().toUpperCase() === 'SUB') ? 'SUB' : 'TRY';
+                const trig = normalizeTrigger(r.trigger);
                 return {
                     id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : uid('item_'),
                     donor: typeof r.donor === 'string' ? r.donor.trim() : '',
@@ -1161,12 +1186,19 @@
                 };
             }
 
+            function triggerRank(trig) {
+                const t = normalizeTrigger(trig);
+                if (t === 'SUB') return 1;
+                if (t === 'KICKS') return 2;
+                return 0;
+            }
+
             function sortItems(items) {
                 if (!Array.isArray(items)) return items;
                 items.sort(function (a, b) {
-                    const aSub = (a.trigger || 'TRY') === 'SUB';
-                    const bSub = (b.trigger || 'TRY') === 'SUB';
-                    if (aSub !== bSub) return aSub ? 1 : -1;
+                    const ra = triggerRank(a.trigger);
+                    const rb = triggerRank(b.trigger);
+                    if (ra !== rb) return ra - rb;
                     const aHas = Boolean(a.donor && a.donor.trim());
                     const bHas = Boolean(b.donor && b.donor.trim());
                     if (aHas !== bHas) return aHas ? 1 : -1;
@@ -1297,14 +1329,14 @@
 
             function findMatchingItem(donationAmount, donorName, items, triggerType) {
                 if (!Number.isFinite(donationAmount) || !Array.isArray(items)) return null;
-                const targetTrigger = (typeof triggerType === 'string' && triggerType.toUpperCase() === 'SUB') ? 'SUB' : 'TRY';
+                const targetTrigger = normalizeTrigger(triggerType);
                 let bestSpecial = null;
                 let bestGeneral = null;
 
                 for (let i = 0; i < items.length; i++) {
                     const it = items[i];
                     if (!it || typeof it.url !== 'string' || !it.url.trim()) continue;
-                    const itemTrigger = (typeof it.trigger === 'string' && it.trigger.toUpperCase() === 'SUB') ? 'SUB' : 'TRY';
+                    const itemTrigger = normalizeTrigger(it.trigger);
                     if (itemTrigger !== targetTrigger) continue;
                     const minAmt = Number(it.amount);
                     if (!Number.isFinite(minAmt) || minAmt < 0 || donationAmount < minAmt) continue;
@@ -2327,9 +2359,7 @@
             }
 
             function enqueueAlert(donorName, amount, isTest, explicitItem, triggerType) {
-                const trig = (typeof triggerType === 'string' && triggerType.toUpperCase() === 'SUB')
-                    ? 'SUB'
-                    : ((explicitItem && explicitItem.trigger === 'SUB') ? 'SUB' : 'TRY');
+                const trig = triggerType ? normalizeTrigger(triggerType) : normalizeTrigger(explicitItem && explicitItem.trigger);
                 const item = explicitItem || findMatchingItem(amount, donorName, appConfig.items, trig);
                 if (!item || !item.url) {
                     if (isTest) showToast('Önce geçerli bir video linki ekleyin.');
@@ -2364,6 +2394,9 @@
                 'subscription', 'resub', 'sub', 'submysterygift',
                 'gift_sub', 'gift_subscription', 'kick_sub', 'kick_subscription', 'gift'
             ]);
+            const KICKS_EVENT_TYPES = new Set([
+                'bits', 'kicks', 'kick_kicks', 'kick', 'kick_gift'
+            ]);
 
             function isDuplicateEvent(eventId) {
                 if (!eventId) return false;
@@ -2376,19 +2409,23 @@
                 return false;
             }
 
-            function buildSubDedupKey(eventId, donorName, subCount) {
-                if (eventId) return 'sub_id_' + String(eventId);
-                return 'sub_fp_' + normalizeDonorKey(donorName) + '_' + Math.round(subCount) + '_' + Math.floor(Date.now() / 4000);
+            function buildEventDedupKey(trigger, eventId, donorName, amount) {
+                const prefix = normalizeTrigger(trigger).toLowerCase();
+                if (eventId) return prefix + '_id_' + String(eventId);
+                return prefix + '_fp_' + normalizeDonorKey(donorName) + '_' + Math.round(amount) + '_' + Math.floor(Date.now() / 4000);
             }
 
-            function handleExternalSubAlert(data) {
+            function handleExternalSharedAlert(data, fallbackTrigger) {
                 if (isPanelMode || !data || typeof data !== 'object') return;
-                const subCount = parseNumericAmount(data.amount != null ? data.amount : data.subCount);
-                if (!Number.isFinite(subCount) || subCount <= 0) return;
+                const trig = normalizeTrigger(data.trigger || fallbackTrigger || 'SUB');
+                if (trig !== 'SUB' && trig !== 'KICKS') return;
+                const rawVal = data.amount != null ? data.amount : (trig === 'SUB' ? data.subCount : data.kicksAmount);
+                const amt = parseNumericAmount(rawVal);
+                if (!Number.isFinite(amt) || amt <= 0) return;
                 const donorName = String(data.donorName || '').trim();
-                const dedupKey = buildSubDedupKey(data.eventId, donorName, subCount);
+                const dedupKey = buildEventDedupKey(trig, data.eventId, donorName, amt);
                 if (isDuplicateEvent(dedupKey)) return;
-                enqueueAlert(donorName, subCount, Boolean(data.isTest), null, 'SUB');
+                enqueueAlert(donorName, amt, Boolean(data.isTest), null, trig);
             }
 
             function handleStreamlabsPayload(eventData) {
@@ -2396,7 +2433,7 @@
                 const type = String(eventData.type || '').toLowerCase();
                 const isDonation = type === 'donation' || type === 'tip';
                 const isSub = SUB_EVENT_TYPES.has(type);
-                if (!isDonation && !isSub) return;
+                const isKicksType = KICKS_EVENT_TYPES.has(type);
 
                 const messages = Array.isArray(eventData.message)
                     ? eventData.message
@@ -2406,11 +2443,21 @@
                     const msg = messages[i];
                     if (!msg || typeof msg !== 'object') continue;
                     const eventId = msg._id || msg.id || msg.event_id || eventData.event_id;
+                    const currency = String(msg.currency || '').trim().toUpperCase();
                     const donorName = msg.from || msg.name || msg.display_name || msg.username || msg.sender || msg.gifter || '';
 
-                    if (isDonation) {
+                    if (isKicksType || currency === 'KICKS') {
+                        const kicksAmount = parseNumericAmount(
+                            msg.amount != null ? msg.amount :
+                                (msg.kicks != null ? msg.kicks :
+                                    (msg.bits != null ? msg.bits :
+                                        (msg.quantity != null ? msg.quantity : msg.count)))
+                        );
+                        if (!Number.isFinite(kicksAmount) || kicksAmount <= 0) continue;
+                        if (isDuplicateEvent(buildEventDedupKey('KICKS', eventId, donorName, kicksAmount))) continue;
+                        enqueueAlert(donorName, kicksAmount, false, null, 'KICKS');
+                    } else if (isDonation) {
                         if (isDuplicateEvent(eventId)) continue;
-                        const currency = String(msg.currency || '').trim().toUpperCase();
                         if (currency && currency !== 'TRY' && currency !== 'TL') continue;
 
                         const amount = parseNumericAmount(msg.amount != null ? msg.amount : msg.formatted_amount);
@@ -2426,7 +2473,7 @@
                                             (msg.count != null ? msg.count : 1))));
                         const subCount = parseNumericAmount(rawCount);
                         const finalSubCount = Number.isFinite(subCount) && subCount > 0 ? subCount : 1;
-                        if (isDuplicateEvent(buildSubDedupKey(eventId, donorName, finalSubCount))) continue;
+                        if (isDuplicateEvent(buildEventDedupKey('SUB', eventId, donorName, finalSubCount))) continue;
                         enqueueAlert(donorName, finalSubCount, false, null, 'SUB');
                     }
                 }
@@ -2595,20 +2642,24 @@
 
                     const row = document.createElement('div');
                     const isSpecial = Boolean(it.donor && it.donor.trim());
-                    const isSub = (it.trigger || 'TRY') === 'SUB';
-                    row.className = 'tier-row' + (isSpecial ? ' is-donor-special' : '') + (isSub ? ' is-sub-row' : '');
+                    const trig = normalizeTrigger(it.trigger);
+                    const isSub = trig === 'SUB';
+                    const isKicks = trig === 'KICKS';
+                    row.className = 'tier-row' + (isSpecial ? ' is-donor-special' : '') + (isSub ? ' is-sub-row' : (isKicks ? ' is-kicks-row' : ''));
                     row.setAttribute('data-item-id', it.id);
 
                     const badgeTitleText = st.title || (st.state === 'error' ? 'Tekrar denemek için tıklayın' : '');
                     const errTitle = badgeTitleText ? (' title="' + escapeHtml(badgeTitleText) + '"') : '';
                     const shortcutHint = hasUrl ? (' (Tuş: ' + validOrder + ')') : '';
+                    const amtTitle = isSub ? 'Minimum abonelik sayısı' : (isKicks ? 'Minimum Kicks miktarı' : 'Minimum bağış tutarı (TL)');
                     row.innerHTML =
                         '<input class="field-input tier-donor-input" type="text" placeholder="Herkes (boş)" value="' + escapeHtml(it.donor || '') + '" title="Özel bağışçı/abone adı (virgülle birden fazla yazılabilir)" />' +
                         '<div class="suffix-box">' +
-                            '<input class="suffix-input tier-amt-input" type="number" min="' + (isSub ? '1' : '0') + '" step="1" value="' + escapeHtml(it.amount) + '" title="' + (isSub ? 'Minimum abonelik sayısı' : 'Minimum bağış tutarı (TL)') + '" />' +
-                            '<select class="suffix-select tier-trigger-select' + (isSub ? ' is-sub' : '') + '" title="Tetikleme türü: TL bağışı veya Abonelik">' +
-                                '<option value="TRY"' + (!isSub ? ' selected' : '') + '>TL+</option>' +
+                            '<input class="suffix-input tier-amt-input" type="number" min="' + (isSub || isKicks ? '1' : '0') + '" step="1" value="' + escapeHtml(it.amount) + '" title="' + amtTitle + '" />' +
+                            '<select class="suffix-select tier-trigger-select' + (isSub ? ' is-sub' : (isKicks ? ' is-kicks' : '')) + '" title="Tetikleme türü: TL bağışı, Abonelik veya Kicks">' +
+                                '<option value="TRY"' + (trig === 'TRY' ? ' selected' : '') + '>TL+</option>' +
                                 '<option value="SUB"' + (isSub ? ' selected' : '') + '>Sub+</option>' +
+                                '<option value="KICKS"' + (isKicks ? ' selected' : '') + '>Kicks+</option>' +
                             '</select>' +
                         '</div>' +
                         '<input class="field-input tier-url-input" type="text" placeholder="YouTube, Instagram veya MP4 linki yapıştırın..." value="' + escapeHtml(it.url) + '" />' +
@@ -2854,9 +2905,11 @@
                         saveConfig({ reprefetch: false, immediate: true });
                         renderPanel();
                     } else if (e.target.classList.contains('tier-trigger-select')) {
-                        item.trigger = e.target.value === 'SUB' ? 'SUB' : 'TRY';
+                        item.trigger = normalizeTrigger(e.target.value);
                         if (item.trigger === 'SUB' && (!Number.isFinite(item.amount) || item.amount <= 0)) {
                             item.amount = 1;
+                        } else if (item.trigger === 'KICKS' && (!Number.isFinite(item.amount) || item.amount <= 0)) {
+                            item.amount = 100;
                         }
                         sortItems(appConfig.items);
                         saveConfig({ reprefetch: false, immediate: true });
@@ -2973,8 +3026,8 @@
                                 if (!isPanelMode) connectStreamlabs(getEffectiveToken());
                             } else if (msg.type === 'test_alert' && !isPanelMode && msg.item) {
                                 enqueueAlert(msg.donorName || 'TestBagisci', msg.amount || 0, true, normalizeItem(msg.item));
-                            } else if (msg.type === 'sub_alert' && !isPanelMode) {
-                                handleExternalSubAlert(msg);
+                            } else if ((msg.type === 'kedi_shared_alert' || msg.type === 'sub_alert') && !isPanelMode) {
+                                handleExternalSharedAlert(msg, msg.type === 'sub_alert' ? 'SUB' : undefined);
                             } else if (msg.type === 'stop_alert' && !isPanelMode) {
                                 stopAllPlayback();
                             }
@@ -3066,8 +3119,8 @@
                     if (isPanelMode) return;
                     try {
                         const data = JSON.parse(ev.data);
-                        if (data && data.kind === 'sub_alert') {
-                            handleExternalSubAlert(data);
+                        if (data && (data.kind === 'kedi_shared_alert' || data.kind === 'sub_alert')) {
+                            handleExternalSharedAlert(data, data.kind === 'sub_alert' ? 'SUB' : undefined);
                             return;
                         }
                         if (data && data.item) {
