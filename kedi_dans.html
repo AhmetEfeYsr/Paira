@@ -2499,8 +2499,11 @@
                 }
 
                 const frag = document.createDocumentFragment();
+                let validOrder = 0;
                 for (let i = 0; i < appConfig.items.length; i++) {
                     const it = appConfig.items[i];
+                    const hasUrl = Boolean(it.url && it.url.trim());
+                    if (hasUrl) validOrder++;
                     const st = mediaStatuses.get(it.id) || { state: 'idle', label: it.url ? 'Bekliyor' : 'Link yok' };
 
                     const row = document.createElement('div');
@@ -2510,6 +2513,7 @@
 
                     const badgeTitleText = st.title || (st.state === 'error' ? 'Tekrar denemek için tıklayın' : '');
                     const errTitle = badgeTitleText ? (' title="' + escapeHtml(badgeTitleText) + '"') : '';
+                    const shortcutHint = hasUrl ? (' (Tuş: ' + validOrder + ')') : '';
                     row.innerHTML =
                         '<input class="field-input tier-donor-input" type="text" placeholder="Herkes (boş)" value="' + escapeHtml(it.donor || '') + '" title="Özel bağışçı adı (virgülle birden fazla yazılabilir)" />' +
                         '<div class="suffix-box">' +
@@ -2524,7 +2528,7 @@
                         '</div>' +
                         '<span class="dl-badge ' + getBadgeClass(st.state) + '"' + errTitle + '>' + escapeHtml(st.label) + '</span>' +
                         '<div class="row-btns">' +
-                            '<button class="btn btn-primary btn-sm tier-btn-test" type="button" title="Test Et">▶</button>' +
+                            '<button class="btn btn-primary btn-sm tier-btn-test" type="button" title="Test Et' + shortcutHint + '">▶</button>' +
                             '<button class="btn btn-danger btn-sm tier-btn-del" type="button" title="Sil">×</button>' +
                         '</div>';
 
@@ -2791,6 +2795,23 @@
                     togglePanel();
                 });
 
+                let digitBuffer = '';
+                let digitTimer = null;
+
+                function triggerVideoByNumber(num) {
+                    const valid = appConfig.items.filter(function (it) { return it.url && it.url.trim(); });
+                    if (valid.length === 0) {
+                        showSetupNotice('Aktif video yok. M tuşuyla paneli açıp link ekleyin.');
+                        return;
+                    }
+                    const idx = num - 1;
+                    if (idx >= 0 && idx < valid.length) {
+                        testItemAction(valid[idx]);
+                    } else {
+                        showToast(num + '. sırada aktif video yok (' + valid.length + ' video kayıtlı).');
+                    }
+                }
+
                 window.addEventListener('keydown', function (e) {
                     if (e.ctrlKey || e.metaKey || e.altKey) return;
                     if (isTypingTarget(e.target)) return;
@@ -2800,18 +2821,39 @@
                         e.preventDefault();
                         togglePanel();
                     } else if (key === 'Escape') {
+                        clearTimeout(digitTimer);
+                        digitBuffer = '';
                         if (!isPanelMode && els.panelOverlay.classList.contains('is-open')) {
                             togglePanel(false);
                         } else {
                             stopAllPlayback();
                         }
-                    } else if (key === '1' || key === 't' || key === 'T') {
-                        const firstValid = appConfig.items.find(function (it) { return it.url && it.url.trim(); });
-                        if (firstValid) testItemAction(firstValid);
-                        else showSetupNotice('Aktif video yok. M tuşuyla paneli açıp link ekleyin.');
-                    } else if (key === '2') {
-                        const valid = appConfig.items.filter(function (it) { return it.url && it.url.trim(); });
-                        if (valid.length > 0) testItemAction(valid[valid.length - 1]);
+                    } else if (key === 't' || key === 'T') {
+                        clearTimeout(digitTimer);
+                        digitBuffer = '';
+                        triggerVideoByNumber(1);
+                    } else if (/^[0-9]$/.test(key)) {
+                        clearTimeout(digitTimer);
+                        const validCount = appConfig.items.filter(function (it) { return it.url && it.url.trim(); }).length;
+                        if (!digitBuffer && key === '0') {
+                            triggerVideoByNumber(10);
+                            return;
+                        }
+                        digitBuffer += key;
+                        const num = parseInt(digitBuffer, 10);
+                        const canHaveMoreDigits = validCount >= num * 10;
+                        if (canHaveMoreDigits) {
+                            digitTimer = setTimeout(function () {
+                                const finalNum = parseInt(digitBuffer, 10);
+                                digitBuffer = '';
+                                if (Number.isFinite(finalNum) && finalNum > 0) {
+                                    triggerVideoByNumber(finalNum);
+                                }
+                            }, 280);
+                        } else {
+                            digitBuffer = '';
+                            triggerVideoByNumber(num);
+                        }
                     }
                 });
             }
