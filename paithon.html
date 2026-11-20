@@ -1287,9 +1287,11 @@
             left: 26px;
             top: 22px;
             z-index: 90;
-            width: 510px;
+            width: 540px;
             max-width: calc(100vw - 48px);
-            padding: 24px;
+            max-height: calc(100vh - 44px);
+            overflow-y: auto;
+            padding: 22px;
             border-radius: 28px;
             background: rgba(23, 18, 21, 0.97);
             border: 2px solid rgba(185, 151, 245, 0.85);
@@ -1299,8 +1301,17 @@
             color: #fffdfb;
             display: none;
             flex-direction: column;
-            gap: 18px;
+            gap: 16px;
             user-select: none;
+        }
+
+        .admin-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .admin-panel::-webkit-scrollbar-thumb {
+            background: rgba(185, 151, 245, 0.35);
+            border-radius: 999px;
         }
 
         .admin-panel.is-open {
@@ -1410,6 +1421,300 @@
             font-weight: 700;
             color: rgba(244, 236, 247, 0.65);
             line-height: 1.35;
+        }
+
+        /* ==================== PANEL TABS & SOUND MANAGER ==================== */
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 5px;
+            border-radius: 16px;
+            background: rgba(18, 13, 19, 0.92);
+            border: 1px solid rgba(185, 151, 245, 0.25);
+        }
+
+        .admin-tab-btn {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgba(244, 236, 247, 0.72);
+            font-family: var(--font-body);
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .admin-tab-btn:hover {
+            color: #fffdfb;
+            background: rgba(185, 151, 245, 0.12);
+        }
+
+        .admin-tab-btn.is-active {
+            background: rgba(168, 85, 247, 0.3);
+            border-color: rgba(216, 180, 254, 0.72);
+            color: #fffdfb;
+        }
+
+        .admin-tab-pane {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .admin-tab-pane.is-active {
+            display: flex;
+        }
+
+        .sound-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 16px;
+            background: #18121a;
+            border: 1px solid rgba(185, 151, 245, 0.28);
+        }
+
+        .sound-vol-label {
+            font-size: 15px;
+            font-weight: 800;
+            color: #e9d5ff;
+            white-space: nowrap;
+        }
+
+        .sound-vol-slider {
+            flex: 1;
+            min-width: 80px;
+            accent-color: #c084fc;
+            cursor: pointer;
+        }
+
+        .sound-vol-val {
+            min-width: 44px;
+            text-align: right;
+            font-size: 15px;
+            font-weight: 800;
+            color: #faf5ff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sound-stop-btn {
+            flex: 0 0 auto;
+            padding: 7px 12px;
+            font-size: 14px;
+            border-radius: 11px;
+        }
+
+        .sound-section {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            padding: 13px;
+            border-radius: 18px;
+            background: #19131c;
+            border: 1px solid rgba(185, 151, 245, 0.28);
+        }
+
+        .sound-section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .sound-section-title {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: #e9d5ff;
+        }
+
+        .sound-section-title.is-kicks {
+            color: #86efac;
+        }
+
+        .sound-section-title.is-sub {
+            color: #fde68a;
+        }
+
+        .sound-add-btn {
+            flex: 0 0 auto;
+            padding: 7px 12px;
+            font-size: 14px;
+            border-radius: 11px;
+        }
+
+        .sound-rules-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sound-empty {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(185, 151, 245, 0.25);
+            color: rgba(244, 236, 247, 0.56);
+            font-size: 14px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .sound-rule-row {
+            display: grid;
+            grid-template-columns: 112px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 14px;
+            background: #231b26;
+            border: 1.5px solid rgba(185, 151, 245, 0.26);
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .sound-rule-row.is-dragover {
+            border-color: #d8b4fe;
+            background: rgba(168, 85, 247, 0.22);
+        }
+
+        .sound-amt-box {
+            display: flex;
+            align-items: center;
+            background: #120d13;
+            border: 1.5px solid rgba(185, 151, 245, 0.36);
+            border-radius: 11px;
+            padding: 0 8px 0 4px;
+            height: 38px;
+        }
+
+        .sound-amt-box:focus-within {
+            border-color: var(--lilac-border-bright);
+        }
+
+        .sound-amt-input {
+            width: 100%;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            color: #fffdfb;
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 800;
+            text-align: right;
+            padding: 0 4px;
+            outline: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sound-amt-input::-webkit-inner-spin-button,
+        .sound-amt-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .sound-amt-unit {
+            font-size: 12px;
+            font-weight: 800;
+            color: rgba(233, 213, 255, 0.72);
+            white-space: nowrap;
+        }
+
+        .sound-upload-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            height: 38px;
+            padding: 0 11px;
+            border-radius: 11px;
+            border: 1.5px dashed rgba(185, 151, 245, 0.45);
+            background: rgba(18, 13, 19, 0.78);
+            color: rgba(244, 236, 247, 0.8);
+            font-family: var(--font-body);
+            font-size: 13.5px;
+            font-weight: 800;
+            cursor: pointer;
+            text-align: left;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .sound-upload-btn:hover {
+            border-color: #d8b4fe;
+            background: rgba(168, 85, 247, 0.16);
+            color: #fffdfb;
+        }
+
+        .sound-upload-btn.has-file {
+            border-style: solid;
+            border-color: rgba(52, 211, 153, 0.55);
+            background: rgba(16, 185, 129, 0.14);
+            color: #d1fae5;
+        }
+
+        .sound-file-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sound-row-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sound-icon-btn {
+            width: 36px;
+            height: 38px;
+            padding: 0;
+            border-radius: 11px;
+            border: 1.5px solid rgba(185, 151, 245, 0.4);
+            background: #2b2230;
+            color: #fffdfb;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+        }
+
+        .sound-icon-btn:hover:not(:disabled) {
+            background: #3a2d41;
+            border-color: #d8b4fe;
+        }
+
+        .sound-icon-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .sound-icon-btn.is-play {
+            background: rgba(168, 85, 247, 0.28);
+            border-color: rgba(216, 180, 254, 0.72);
+        }
+
+        .sound-icon-btn.is-del {
+            border-color: rgba(244, 114, 182, 0.45);
+            color: #fbcfe8;
+        }
+
+        .sound-status-msg {
+            min-height: 18px;
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #c4b5fd;
+            text-align: center;
+        }
+
+        .sound-status-msg.is-err {
+            color: #fda4af;
         }
     </style>
 </head>
@@ -1940,28 +2245,67 @@
             <span class="admin-title">Paithon Kontrol</span>
             <button id="btnAdminClose" class="admin-close" type="button" title="Kapat (M)">×</button>
         </div>
-        <div class="admin-row">
-            <button id="btnTogglePause" class="admin-btn primary" type="button">Duraklat (Space)</button>
-            <button id="btnResetTimer" class="admin-btn danger" type="button">Sıfırla (R)</button>
+
+        <div class="admin-tabs" role="tablist">
+            <button id="tabBtnTimer" class="admin-tab-btn is-active" type="button" data-admin-tab="timer">Sayaç</button>
+            <button id="tabBtnSounds" class="admin-tab-btn" type="button" data-admin-tab="sounds">Sesler (Kicks / Sub)</button>
         </div>
-        <div class="admin-row">
-            <button class="admin-btn" type="button" data-delta-min="1">+1 dk</button>
-            <button class="admin-btn" type="button" data-delta-min="5">+5 dk</button>
-            <button class="admin-btn" type="button" data-delta-min="15">+15 dk</button>
-            <button class="admin-btn" type="button" data-delta-min="30">+30 dk</button>
+
+        <div id="tabPaneTimer" class="admin-tab-pane is-active">
+            <div class="admin-row">
+                <button id="btnTogglePause" class="admin-btn primary" type="button">Duraklat (Space)</button>
+                <button id="btnResetTimer" class="admin-btn danger" type="button">Sıfırla (R)</button>
+            </div>
+            <div class="admin-row">
+                <button class="admin-btn" type="button" data-delta-min="1">+1 dk</button>
+                <button class="admin-btn" type="button" data-delta-min="5">+5 dk</button>
+                <button class="admin-btn" type="button" data-delta-min="15">+15 dk</button>
+                <button class="admin-btn" type="button" data-delta-min="30">+30 dk</button>
+            </div>
+            <div class="admin-row">
+                <button class="admin-btn" type="button" data-delta-min="-1">-1 dk</button>
+                <button class="admin-btn" type="button" data-delta-min="-5">-5 dk</button>
+                <button class="admin-btn" type="button" data-delta-min="-15">-15 dk</button>
+            </div>
+            <form id="manualTimeForm" class="admin-input-group">
+                <input id="manualTimeInput" class="admin-input" type="text" placeholder="SS:DD:SS veya dakika (ör. 180)"
+                    autocomplete="off" />
+                <button class="admin-btn primary" type="submit" style="flex:0 0 auto;">Uygula</button>
+            </form>
+            <div class="admin-hint">
+                Kısayollar: <strong>Space / P</strong> Durdur-Devam • <strong>M / Çift Tık</strong> Panel • <strong>↑ / ↓</strong> ±1 dk
+            </div>
         </div>
-        <div class="admin-row">
-            <button class="admin-btn" type="button" data-delta-min="-1">-1 dk</button>
-            <button class="admin-btn" type="button" data-delta-min="-5">-5 dk</button>
-            <button class="admin-btn" type="button" data-delta-min="-15">-15 dk</button>
-        </div>
-        <form id="manualTimeForm" class="admin-input-group">
-            <input id="manualTimeInput" class="admin-input" type="text" placeholder="SS:DD:SS veya dakika (ör. 180)"
-                autocomplete="off" />
-            <button class="admin-btn primary" type="submit" style="flex:0 0 auto;">Uygula</button>
-        </form>
-        <div class="admin-hint">
-            Kısayollar: <strong>Space / P</strong> Durdur-Devam • <strong>M / Çift Tık</strong> Panel • <strong>↑ / ↓</strong> ±1 dk
+
+        <div id="tabPaneSounds" class="admin-tab-pane">
+            <div class="sound-toolbar">
+                <span class="sound-vol-label">Ses:</span>
+                <input id="soundMasterVol" class="sound-vol-slider" type="range" min="0" max="100" step="1" value="85" />
+                <span id="soundMasterVolVal" class="sound-vol-val">%85</span>
+                <button id="btnStopSound" class="admin-btn danger sound-stop-btn" type="button">Durdur</button>
+            </div>
+
+            <div class="sound-section">
+                <div class="sound-section-head">
+                    <span class="sound-section-title is-kicks">Kicks Sesleri</span>
+                    <button id="btnAddKicksSound" class="admin-btn primary sound-add-btn" type="button">+ Kicks Sesi</button>
+                </div>
+                <div id="kicksSoundList" class="sound-rules-list"></div>
+            </div>
+
+            <div class="sound-section">
+                <div class="sound-section-head">
+                    <span class="sound-section-title is-sub">Sub Sesleri</span>
+                    <button id="btnAddSubSound" class="admin-btn primary sound-add-btn" type="button">+ Sub Sesi</button>
+                </div>
+                <div id="subSoundList" class="sound-rules-list"></div>
+            </div>
+
+            <div id="soundStatusMsg" class="sound-status-msg"></div>
+            <div class="admin-hint">
+                En yüksek eşleşen miktarın sesi çalar (ör. <strong>100+</strong> ve <strong>500+</strong> varsa 500 Kicks gelince 500+ çalar). <strong>Donate (TL)</strong> için ses çalmaz. Ses dosyalarını seçebilir veya satırın üzerine sürükleyip bırakabilirsiniz.
+            </div>
+            <input id="soundFileInput" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.webm,.opus" style="display:none;" />
         </div>
     </aside>
 
@@ -1975,6 +2319,10 @@
                 initialMinutes: 120,
                 streamlabsToken: '',
                 storageKey: 'paithon_cat_timer_v6',
+                soundConfigKey: 'paithon_sound_rules_v1',
+                soundDbName: 'paithon_sounds_db_v1',
+                soundDbStore: 'audioFiles',
+                maxSoundFileBytes: 30 * 1024 * 1024,
                 // Exact tariff rates (seconds added per 1 unit)
                 secondsPerUnit: {
                     SUB: 1800,  // 1 Sub = 30 dk (1800 sn)
@@ -2014,6 +2362,11 @@
             const seenEventIds = new Set();
             const donationQueue = [];
             let isProcessingDonation = false;
+            let soundConfig = { volume: 0.85, rules: [] };
+            const soundBlobUrls = new Map(); // ruleId -> objectURL
+            let pendingUploadRuleId = null;
+            let activeAudio = null;
+            let soundStatusTimer = null;
 
             // ==================== DOM REFERENCES ====================
             const els = {
@@ -2031,10 +2384,23 @@
                 pauseBanner: document.getElementById('pauseBanner'),
                 adminPanel: document.getElementById('adminPanel'),
                 btnAdminClose: document.getElementById('btnAdminClose'),
+                tabBtnTimer: document.getElementById('tabBtnTimer'),
+                tabBtnSounds: document.getElementById('tabBtnSounds'),
+                tabPaneTimer: document.getElementById('tabPaneTimer'),
+                tabPaneSounds: document.getElementById('tabPaneSounds'),
                 btnTogglePause: document.getElementById('btnTogglePause'),
                 btnResetTimer: document.getElementById('btnResetTimer'),
                 manualTimeForm: document.getElementById('manualTimeForm'),
-                manualTimeInput: document.getElementById('manualTimeInput')
+                manualTimeInput: document.getElementById('manualTimeInput'),
+                soundMasterVol: document.getElementById('soundMasterVol'),
+                soundMasterVolVal: document.getElementById('soundMasterVolVal'),
+                btnStopSound: document.getElementById('btnStopSound'),
+                btnAddKicksSound: document.getElementById('btnAddKicksSound'),
+                btnAddSubSound: document.getElementById('btnAddSubSound'),
+                kicksSoundList: document.getElementById('kicksSoundList'),
+                subSoundList: document.getElementById('subSoundList'),
+                soundStatusMsg: document.getElementById('soundStatusMsg'),
+                soundFileInput: document.getElementById('soundFileInput')
             };
 
             // ==================== ZERO-OVERFLOW AUTO-FIT ENGINE ====================
@@ -2580,6 +2946,7 @@
                         // 1. Add time to drift-free countdown ONLY when this donation activates
                         addRemainingMs(item.totalAddedSeconds * 1000);
                         pulseBoard();
+                        playDonationSound(item.type, item.amount);
 
                         // 2. Spin cat slot eyes + mount single banner emerging from behind the cat
                         const eyeSpinPromise = spinSlotEyes(item.tier);
@@ -2660,6 +3027,8 @@
                 };
 
                 donationQueue.push({
+                    type: type,
+                    amount: amount,
                     baseSeconds: baseSeconds,
                     bonusSeconds: bonusSeconds,
                     totalAddedSeconds: totalAddedSeconds,
@@ -2746,6 +3115,406 @@
                     ? forceOpen
                     : !els.adminPanel.classList.contains('is-open');
                 els.adminPanel.classList.toggle('is-open', open);
+                if (open) {
+                    renderSoundPanel();
+                }
+            }
+
+            function setAdminTab(tabName) {
+                const isSounds = tabName === 'sounds';
+                if (els.tabBtnTimer) els.tabBtnTimer.classList.toggle('is-active', !isSounds);
+                if (els.tabBtnSounds) els.tabBtnSounds.classList.toggle('is-active', isSounds);
+                if (els.tabPaneTimer) els.tabPaneTimer.classList.toggle('is-active', !isSounds);
+                if (els.tabPaneSounds) els.tabPaneSounds.classList.toggle('is-active', isSounds);
+                if (isSounds) {
+                    renderSoundPanel();
+                }
+            }
+
+            // ==================== KICKS & SUB CUSTOM SOUND ENGINE (INDEXEDDB) ====================
+            const SoundDB = (function () {
+                let dbPromise = null;
+
+                function open() {
+                    if (dbPromise) return dbPromise;
+                    dbPromise = new Promise(function (resolve, reject) {
+                        if (!window.indexedDB) {
+                            reject(new Error('IndexedDB yok'));
+                            return;
+                        }
+                        const req = window.indexedDB.open(CONFIG.soundDbName, 1);
+                        req.onupgradeneeded = function (ev) {
+                            const db = ev.target.result;
+                            if (!db.objectStoreNames.contains(CONFIG.soundDbStore)) {
+                                db.createObjectStore(CONFIG.soundDbStore, { keyPath: 'id' });
+                            }
+                        };
+                        req.onsuccess = function () { resolve(req.result); };
+                        req.onerror = function () { reject(req.error); };
+                    });
+                    return dbPromise;
+                }
+
+                async function get(id) {
+                    try {
+                        const db = await open();
+                        return await new Promise(function (resolve) {
+                            const tx = db.transaction(CONFIG.soundDbStore, 'readonly');
+                            const req = tx.objectStore(CONFIG.soundDbStore).get(id);
+                            req.onsuccess = function () { resolve(req.result || null); };
+                            req.onerror = function () { resolve(null); };
+                        });
+                    } catch (_) { return null; }
+                }
+
+                async function put(record) {
+                    try {
+                        const db = await open();
+                        return await new Promise(function (resolve) {
+                            const tx = db.transaction(CONFIG.soundDbStore, 'readwrite');
+                            tx.objectStore(CONFIG.soundDbStore).put(record);
+                            tx.oncomplete = function () { resolve(true); };
+                            tx.onerror = function () { resolve(false); };
+                        });
+                    } catch (_) { return false; }
+                }
+
+                async function del(id) {
+                    try {
+                        const db = await open();
+                        return await new Promise(function (resolve) {
+                            const tx = db.transaction(CONFIG.soundDbStore, 'readwrite');
+                            tx.objectStore(CONFIG.soundDbStore).delete(id);
+                            tx.oncomplete = function () { resolve(true); };
+                            tx.onerror = function () { resolve(false); };
+                        });
+                    } catch (_) { return false; }
+                }
+
+                return { get: get, put: put, del: del };
+            })();
+
+            function escapeSoundHtml(str) {
+                return String(str == null ? '' : str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function uidSound() {
+                return 'snd_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+            }
+
+            function showSoundStatus(msg, isErr) {
+                if (!els.soundStatusMsg) return;
+                els.soundStatusMsg.textContent = msg || '';
+                els.soundStatusMsg.classList.toggle('is-err', Boolean(isErr));
+                clearTimeout(soundStatusTimer);
+                if (msg) {
+                    soundStatusTimer = setTimeout(function () {
+                        if (els.soundStatusMsg) {
+                            els.soundStatusMsg.textContent = '';
+                            els.soundStatusMsg.classList.remove('is-err');
+                        }
+                    }, 3600);
+                }
+            }
+
+            function normalizeSoundRule(raw) {
+                const r = raw && typeof raw === 'object' ? raw : {};
+                const type = String(r.type || '').toUpperCase();
+                if (type !== 'KICKS' && type !== 'SUB') return null;
+                const amt = Number(r.minAmount);
+                return {
+                    id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : uidSound(),
+                    type: type,
+                    minAmount: Number.isFinite(amt) && amt >= 1 ? Math.round(amt) : (type === 'KICKS' ? 100 : 1),
+                    fileName: typeof r.fileName === 'string' ? r.fileName.trim() : ''
+                };
+            }
+
+            function sortSoundRules(rules) {
+                rules.sort(function (a, b) {
+                    if (a.type !== b.type) return a.type === 'KICKS' ? -1 : 1;
+                    return (Number(a.minAmount) || 0) - (Number(b.minAmount) || 0);
+                });
+                return rules;
+            }
+
+            function loadSoundConfig() {
+                const raw = safeGetStorage(CONFIG.soundConfigKey);
+                if (!raw) {
+                    soundConfig = { volume: 0.85, rules: [] };
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(raw);
+                    const vol = Number(parsed && parsed.volume);
+                    const cleanVol = Number.isFinite(vol) ? Math.min(1, Math.max(0, vol)) : 0.85;
+                    const rawRules = Array.isArray(parsed && parsed.rules) ? parsed.rules : [];
+                    const rules = [];
+                    for (let i = 0; i < rawRules.length; i++) {
+                        const nr = normalizeSoundRule(rawRules[i]);
+                        if (nr) rules.push(nr);
+                    }
+                    sortSoundRules(rules);
+                    soundConfig = { volume: cleanVol, rules: rules };
+                } catch (_) {
+                    soundConfig = { volume: 0.85, rules: [] };
+                }
+            }
+
+            function saveSoundConfig() {
+                safeSetStorage(CONFIG.soundConfigKey, JSON.stringify({
+                    volume: soundConfig.volume,
+                    rules: soundConfig.rules
+                }));
+            }
+
+            async function hydrateSoundBlobs() {
+                for (let i = 0; i < soundConfig.rules.length; i++) {
+                    const rule = soundConfig.rules[i];
+                    if (soundBlobUrls.has(rule.id)) continue;
+                    const rec = await SoundDB.get(rule.id);
+                    if (rec && rec.blob && rec.blob.size > 0) {
+                        soundBlobUrls.set(rule.id, URL.createObjectURL(rec.blob));
+                        if (!rule.fileName && rec.fileName) {
+                            rule.fileName = rec.fileName;
+                        }
+                    }
+                }
+                renderSoundPanel();
+            }
+
+            function stopActiveSound() {
+                if (!activeAudio) return;
+                try {
+                    activeAudio.audio.pause();
+                    activeAudio.audio.currentTime = 0;
+                } catch (_) { }
+                activeAudio = null;
+            }
+
+            function playAudioUrl(url, ruleId) {
+                if (!url) return;
+                const vol = Math.min(1, Math.max(0, Number(soundConfig.volume)));
+                if (!Number.isFinite(vol) || vol <= 0) return;
+
+                stopActiveSound();
+                const audio = new Audio(url);
+                audio.volume = vol;
+                activeAudio = { audio: audio, ruleId: ruleId || null };
+                audio.addEventListener('ended', function () {
+                    if (activeAudio && activeAudio.audio === audio) {
+                        activeAudio = null;
+                    }
+                });
+                audio.addEventListener('error', function () {
+                    if (activeAudio && activeAudio.audio === audio) {
+                        activeAudio = null;
+                    }
+                });
+                const playPromise = audio.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(function () {
+                        if (activeAudio && activeAudio.audio === audio) {
+                            activeAudio = null;
+                        }
+                    });
+                }
+            }
+
+            /**
+             * Finds highest matching minAmount sound rule for KICKS or SUB.
+             * TRY (Donate) NEVER plays a sound.
+             */
+            function findMatchingSoundRule(type, amount) {
+                const normType = String(type || '').toUpperCase();
+                if (normType !== 'KICKS' && normType !== 'SUB') return null;
+                if (!Number.isFinite(amount) || amount <= 0) return null;
+
+                let best = null;
+                for (let i = 0; i < soundConfig.rules.length; i++) {
+                    const rule = soundConfig.rules[i];
+                    if (rule.type !== normType) continue;
+                    if (!soundBlobUrls.has(rule.id)) continue;
+                    const minAmt = Number(rule.minAmount);
+                    if (!Number.isFinite(minAmt) || minAmt <= 0 || amount < minAmt) continue;
+                    if (!best || minAmt > Number(best.minAmount)) {
+                        best = rule;
+                    }
+                }
+                return best;
+            }
+
+            function playDonationSound(type, amount) {
+                const rule = findMatchingSoundRule(type, amount);
+                if (!rule) return;
+                const url = soundBlobUrls.get(rule.id);
+                if (url) {
+                    playAudioUrl(url, rule.id);
+                }
+            }
+
+            function previewSoundRule(ruleId) {
+                if (activeAudio && activeAudio.ruleId === ruleId) {
+                    stopActiveSound();
+                    return;
+                }
+                const url = soundBlobUrls.get(ruleId);
+                if (!url) {
+                    showSoundStatus('Önce bu satıra bir ses dosyası yükleyin.', true);
+                    return;
+                }
+                playAudioUrl(url, ruleId);
+            }
+
+            function isSupportedAudioFile(file) {
+                if (!file) return false;
+                if (file.type && file.type.indexOf('audio/') === 0) return true;
+                return /\.(mp3|wav|ogg|m4a|aac|flac|webm|opus)$/i.test(file.name || '');
+            }
+
+            async function handleSoundFileForRule(ruleId, file) {
+                const rule = soundConfig.rules.find(function (r) { return r.id === ruleId; });
+                if (!rule || !file) return;
+
+                if (!isSupportedAudioFile(file)) {
+                    showSoundStatus('Lütfen geçerli bir ses dosyası seçin (MP3, WAV, OGG, M4A).', true);
+                    return;
+                }
+                if (file.size > CONFIG.maxSoundFileBytes) {
+                    showSoundStatus('Ses dosyası çok büyük (en fazla 30 MB).', true);
+                    return;
+                }
+
+                const ok = await SoundDB.put({
+                    id: rule.id,
+                    fileName: file.name,
+                    mimeType: file.type || 'audio/mpeg',
+                    blob: file,
+                    updatedAt: Date.now()
+                });
+                if (!ok) {
+                    showSoundStatus('Ses kaydedilemedi (tarayıcı depolama hatası).', true);
+                    return;
+                }
+
+                const oldUrl = soundBlobUrls.get(rule.id);
+                if (oldUrl) {
+                    try { URL.revokeObjectURL(oldUrl); } catch (_) { }
+                }
+                soundBlobUrls.set(rule.id, URL.createObjectURL(file));
+                rule.fileName = file.name;
+                saveSoundConfig();
+                renderSoundPanel();
+                showSoundStatus('Yüklendi: ' + file.name, false);
+            }
+
+            function addSoundRule(type) {
+                const normType = type === 'SUB' ? 'SUB' : 'KICKS';
+                const sameType = soundConfig.rules.filter(function (r) { return r.type === normType; });
+                let nextAmt = normType === 'KICKS' ? 100 : 1;
+                if (sameType.length > 0) {
+                    const maxAmt = sameType.reduce(function (mx, r) {
+                        return Math.max(mx, Number(r.minAmount) || 0);
+                    }, 0);
+                    if (normType === 'KICKS') {
+                        nextAmt = maxAmt + 100;
+                    } else {
+                        nextAmt = maxAmt < 5 ? 5 : maxAmt + 5;
+                    }
+                }
+                const rule = {
+                    id: uidSound(),
+                    type: normType,
+                    minAmount: nextAmt,
+                    fileName: ''
+                };
+                soundConfig.rules.push(rule);
+                sortSoundRules(soundConfig.rules);
+                saveSoundConfig();
+                renderSoundPanel();
+            }
+
+            async function deleteSoundRule(ruleId) {
+                const idx = soundConfig.rules.findIndex(function (r) { return r.id === ruleId; });
+                if (idx === -1) return;
+                if (activeAudio && activeAudio.ruleId === ruleId) {
+                    stopActiveSound();
+                }
+                const oldUrl = soundBlobUrls.get(ruleId);
+                if (oldUrl) {
+                    try { URL.revokeObjectURL(oldUrl); } catch (_) { }
+                    soundBlobUrls.delete(ruleId);
+                }
+                soundConfig.rules.splice(idx, 1);
+                saveSoundConfig();
+                await SoundDB.del(ruleId);
+                renderSoundPanel();
+            }
+
+            function renderSoundListForType(container, type) {
+                if (!container) return;
+                const rules = soundConfig.rules.filter(function (r) { return r.type === type; });
+                const unitLabel = type === 'KICKS' ? 'Kicks+' : 'Sub+';
+                if (rules.length === 0) {
+                    container.innerHTML = '<div class="sound-empty">Henüz ' + (type === 'KICKS' ? 'Kicks' : 'Sub') + ' sesi eklenmedi.</div>';
+                    return;
+                }
+
+                const frag = document.createDocumentFragment();
+                for (let i = 0; i < rules.length; i++) {
+                    const rule = rules[i];
+                    const loaded = soundBlobUrls.has(rule.id);
+                    const fileText = loaded && rule.fileName ? rule.fileName : 'Ses dosyası yükle...';
+                    const row = document.createElement('div');
+                    row.className = 'sound-rule-row';
+                    row.setAttribute('data-rule-id', rule.id);
+                    row.innerHTML =
+                        '<div class="sound-amt-box" title="Minimum ' + (type === 'KICKS' ? 'Kicks' : 'Sub') + ' miktarı">' +
+                            '<input class="sound-amt-input" type="number" min="1" step="1" value="' + escapeSoundHtml(rule.minAmount) + '" />' +
+                            '<span class="sound-amt-unit">' + unitLabel + '</span>' +
+                        '</div>' +
+                        '<button class="sound-upload-btn' + (loaded ? ' has-file' : '') + '" type="button" title="' + escapeSoundHtml(loaded ? (rule.fileName + ' (değiştirmek için tıklayın)') : 'Bilgisayardan ses dosyası seçin veya buraya sürükleyin') + '">' +
+                            '<span>' + (loaded ? '♪' : '📁') + '</span>' +
+                            '<span class="sound-file-label">' + escapeSoundHtml(fileText) + '</span>' +
+                        '</button>' +
+                        '<div class="sound-row-actions">' +
+                            '<button class="sound-icon-btn is-play" type="button" title="Sesi Dinle"' + (loaded ? '' : ' disabled') + '>▶</button>' +
+                            '<button class="sound-icon-btn is-del" type="button" title="Sil">×</button>' +
+                        '</div>';
+                    frag.appendChild(row);
+                }
+                container.innerHTML = '';
+                container.appendChild(frag);
+            }
+
+            function renderSoundPanel() {
+                const volPct = Math.round(Math.min(1, Math.max(0, Number(soundConfig.volume) || 0)) * 100);
+                if (els.soundMasterVol) els.soundMasterVol.value = String(volPct);
+                if (els.soundMasterVolVal) els.soundMasterVolVal.textContent = '%' + volPct;
+
+                let loadedCount = 0;
+                for (let i = 0; i < soundConfig.rules.length; i++) {
+                    if (soundBlobUrls.has(soundConfig.rules[i].id)) loadedCount++;
+                }
+                if (els.tabBtnSounds) {
+                    els.tabBtnSounds.textContent = loadedCount > 0 ? ('Sesler (' + loadedCount + ')') : 'Sesler (Kicks / Sub)';
+                }
+
+                renderSoundListForType(els.kicksSoundList, 'KICKS');
+                renderSoundListForType(els.subSoundList, 'SUB');
+            }
+
+            async function initSoundSystem() {
+                if (navigator.storage && typeof navigator.storage.persist === 'function') {
+                    navigator.storage.persist().catch(function () { });
+                }
+                loadSoundConfig();
+                renderSoundPanel();
+                await hydrateSoundBlobs();
             }
 
             function resetTimerToDefault() {
@@ -2957,12 +3726,145 @@
                 });
             }
 
+            if (els.tabBtnTimer) {
+                els.tabBtnTimer.addEventListener('click', function () {
+                    setAdminTab('timer');
+                });
+            }
+
+            if (els.tabBtnSounds) {
+                els.tabBtnSounds.addEventListener('click', function () {
+                    setAdminTab('sounds');
+                });
+            }
+
+            if (els.soundMasterVol) {
+                els.soundMasterVol.addEventListener('input', function () {
+                    const pct = Math.min(100, Math.max(0, parseInt(els.soundMasterVol.value, 10) || 0));
+                    soundConfig.volume = pct / 100;
+                    if (els.soundMasterVolVal) els.soundMasterVolVal.textContent = '%' + pct;
+                    if (activeAudio && activeAudio.audio) {
+                        activeAudio.audio.volume = soundConfig.volume;
+                    }
+                    saveSoundConfig();
+                });
+            }
+
+            if (els.btnStopSound) {
+                els.btnStopSound.addEventListener('click', function () {
+                    stopActiveSound();
+                });
+            }
+
+            if (els.btnAddKicksSound) {
+                els.btnAddKicksSound.addEventListener('click', function () {
+                    addSoundRule('KICKS');
+                });
+            }
+
+            if (els.btnAddSubSound) {
+                els.btnAddSubSound.addEventListener('click', function () {
+                    addSoundRule('SUB');
+                });
+            }
+
+            if (els.soundFileInput) {
+                els.soundFileInput.addEventListener('change', function () {
+                    const file = els.soundFileInput.files && els.soundFileInput.files[0];
+                    const ruleId = pendingUploadRuleId;
+                    pendingUploadRuleId = null;
+                    els.soundFileInput.value = '';
+                    if (file && ruleId) {
+                        handleSoundFileForRule(ruleId, file);
+                    }
+                });
+            }
+
+            function bindSoundListEvents(listEl) {
+                if (!listEl) return;
+
+                listEl.addEventListener('click', function (e) {
+                    const row = e.target && e.target.closest ? e.target.closest('.sound-rule-row') : null;
+                    if (!row) return;
+                    const ruleId = row.getAttribute('data-rule-id');
+                    if (!ruleId) return;
+
+                    if (e.target.closest('.sound-upload-btn')) {
+                        pendingUploadRuleId = ruleId;
+                        if (els.soundFileInput) {
+                            els.soundFileInput.value = '';
+                            els.soundFileInput.click();
+                        }
+                    } else if (e.target.closest('.is-play')) {
+                        previewSoundRule(ruleId);
+                    } else if (e.target.closest('.is-del')) {
+                        deleteSoundRule(ruleId);
+                    }
+                });
+
+                listEl.addEventListener('input', function (e) {
+                    if (!e.target || !e.target.classList.contains('sound-amt-input')) return;
+                    const row = e.target.closest('.sound-rule-row');
+                    if (!row) return;
+                    const ruleId = row.getAttribute('data-rule-id');
+                    const rule = soundConfig.rules.find(function (r) { return r.id === ruleId; });
+                    if (!rule) return;
+                    const val = parseInt(e.target.value, 10);
+                    if (Number.isFinite(val) && val >= 1) {
+                        rule.minAmount = val;
+                        saveSoundConfig();
+                    }
+                });
+
+                listEl.addEventListener('change', function (e) {
+                    if (!e.target || !e.target.classList.contains('sound-amt-input')) return;
+                    const row = e.target.closest('.sound-rule-row');
+                    if (!row) return;
+                    const ruleId = row.getAttribute('data-rule-id');
+                    const rule = soundConfig.rules.find(function (r) { return r.id === ruleId; });
+                    if (!rule) return;
+                    const val = parseInt(e.target.value, 10);
+                    rule.minAmount = Number.isFinite(val) && val >= 1 ? val : (rule.type === 'KICKS' ? 100 : 1);
+                    sortSoundRules(soundConfig.rules);
+                    saveSoundConfig();
+                    renderSoundPanel();
+                });
+
+                listEl.addEventListener('dragover', function (e) {
+                    const row = e.target && e.target.closest ? e.target.closest('.sound-rule-row') : null;
+                    if (!row) return;
+                    e.preventDefault();
+                    row.classList.add('is-dragover');
+                });
+
+                listEl.addEventListener('dragleave', function (e) {
+                    const row = e.target && e.target.closest ? e.target.closest('.sound-rule-row') : null;
+                    if (!row) return;
+                    row.classList.remove('is-dragover');
+                });
+
+                listEl.addEventListener('drop', function (e) {
+                    const row = e.target && e.target.closest ? e.target.closest('.sound-rule-row') : null;
+                    if (!row) return;
+                    e.preventDefault();
+                    row.classList.remove('is-dragover');
+                    const ruleId = row.getAttribute('data-rule-id');
+                    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+                    if (ruleId && file) {
+                        handleSoundFileForRule(ruleId, file);
+                    }
+                });
+            }
+
+            bindSoundListEvents(els.kicksSoundList);
+            bindSoundListEvents(els.subSoundList);
+
             window.addEventListener('keydown', function (e) {
                 if (e.ctrlKey || e.metaKey || e.altKey) return;
                 const activeTag = document.activeElement && document.activeElement.tagName
                     ? document.activeElement.tagName.toUpperCase()
                     : '';
-                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
                     if (e.key === 'Escape') {
                         toggleAdminPanel(false);
                         document.activeElement.blur();
@@ -3072,6 +3974,7 @@
                 renderTimer(true);
                 fitPriceCells();
                 startCountdownLoop();
+                initSoundSystem();
 
                 const token = urlToken || CONFIG.streamlabsToken;
                 if (token) {
