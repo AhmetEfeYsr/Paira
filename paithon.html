@@ -2975,10 +2975,16 @@
                         // 1. Add time to drift-free countdown ONLY when this donation activates
                         addRemainingMs(item.totalAddedSeconds * 1000);
                         pulseBoard();
-                        if ((item.type === 'SUB' || item.type === 'KICKS') && findMatchingKediDansVideo(item.type, item.amount, item.details.donorName)) {
-                            // Video plays in kedi_dans.html instead of a sound here
-                            stopActiveSound();
-                            notifyKediDansVideo(item.type, item.amount, item.details.donorName, item.eventId, item.isTest);
+                        if (item.type === 'SUB' || item.type === 'KICKS') {
+                            const videoMatch = findMatchingKediDansVideo(item.type, item.amount, item.details.donorName);
+                            const soundMatch = findMatchingSoundRule(item.type, item.amount);
+                            if (videoMatch && (!soundMatch || videoMatch.amount >= soundMatch.minAmount)) {
+                                // Video plays in kedi_dans.html instead of a sound here
+                                stopActiveSound();
+                                notifyKediDansVideo(item.type, item.amount, item.details.donorName, item.eventId, item.isTest);
+                            } else {
+                                playDonationSound(item.type, item.amount);
+                            }
                         } else {
                             playDonationSound(item.type, item.amount);
                         }

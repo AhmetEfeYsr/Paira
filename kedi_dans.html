@@ -508,7 +508,13 @@
             font-weight: 700;
         }
 
-        /* Video List Card */
+        /* Video List Cards */
+        .video-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
         .card {
             border-radius: 18px;
             background: var(--surface-1);
@@ -519,9 +525,62 @@
             gap: 11px;
         }
 
+        .card.card-kicks {
+            border-color: rgba(52, 211, 153, 0.34);
+        }
+
+        .card.card-sub {
+            border-color: rgba(251, 191, 36, 0.34);
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--lilac-reward);
+        }
+
+        .section-title.is-kicks {
+            color: #86efac;
+        }
+
+        .section-title.is-sub {
+            color: #fde68a;
+        }
+
+        .section-count {
+            font-family: var(--font-body);
+            font-size: 11.5px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-muted);
+        }
+
+        .section-empty {
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px dashed rgba(185, 151, 245, 0.22);
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 700;
+        }
+
         .list-col-headers {
             display: grid;
-            grid-template-columns: 130px 136px minmax(170px, 1fr) 120px 80px 92px 72px;
+            grid-template-columns: 130px 112px minmax(170px, 1fr) 120px 80px 92px 72px;
             gap: 8px;
             padding: 0 10px;
             font-size: 11.5px;
@@ -539,7 +598,7 @@
 
         .tier-row {
             display: grid;
-            grid-template-columns: 130px 136px minmax(170px, 1fr) 120px 80px 92px 72px;
+            grid-template-columns: 130px 112px minmax(170px, 1fr) 120px 80px 92px 72px;
             gap: 8px;
             align-items: center;
             padding: 8px 10px;
@@ -621,28 +680,12 @@
             user-select: none;
         }
 
-        .suffix-select {
-            border: 0;
-            border-left: 1px solid rgba(185, 151, 245, 0.22);
-            background: #17101b;
-            color: var(--lilac-reward);
-            font-family: var(--font-body);
-            font-size: 12px;
-            font-weight: 800;
-            padding: 8px 5px;
-            outline: none;
-            cursor: pointer;
-            flex: 0 0 auto;
-        }
-
-        .suffix-select.is-sub {
-            color: #fde68a;
-            background: #241910;
-        }
-
-        .suffix-select.is-kicks {
+        .suffix-tag.is-kicks {
             color: #86efac;
-            background: #0f211a;
+        }
+
+        .suffix-tag.is-sub {
+            color: #fde68a;
         }
 
         .dl-badge {
@@ -799,24 +842,62 @@
                 <strong>Not:</strong> Sayfa doğrudan <code>file://</code> olarak açıldığı için YouTube videoları kısıtlanabilir. YouTube linkleri için <code>https://pairaaa.com/kedi_dans.html</code> veya bir HTTP adresi kullanın.
             </div>
 
-            <section class="card">
-                <div class="list-col-headers">
-                    <span>Bağışçı (Özel)</span>
-                    <span>Miktar (TL/Sub/Kicks)</span>
-                    <span>YouTube, Instagram veya MP4 Linki</span>
-                    <span>Konum</span>
-                    <span>Boyut (0-100)</span>
-                    <span>Durum</span>
-                    <span style="text-align: right;">İşlem</span>
-                </div>
+            <div id="videoSections" class="video-sections">
+                <section class="card">
+                    <div class="section-head">
+                        <span class="section-title">Donate Videoları <span id="countTry" class="section-count">0</span></span>
+                        <button id="btnAddTryItem" class="btn btn-primary btn-sm" type="button">+ Donate Videosu</button>
+                    </div>
+                    <div id="headersTry" class="list-col-headers">
+                        <span>Bağışçı (Özel)</span>
+                        <span>Tutar (TL+)</span>
+                        <span>YouTube, Instagram veya MP4 Linki</span>
+                        <span>Konum</span>
+                        <span>Boyut (0-100)</span>
+                        <span>Durum</span>
+                        <span style="text-align: right;">İşlem</span>
+                    </div>
+                    <div id="itemsListTry" class="tiers-list"></div>
+                </section>
 
-                <div id="itemsList" class="tiers-list"></div>
+                <section class="card card-kicks">
+                    <div class="section-head">
+                        <span class="section-title is-kicks">Kicks Videoları <span id="countKicks" class="section-count">0</span></span>
+                        <button id="btnAddKicksItem" class="btn btn-primary btn-sm" type="button">+ Kicks Videosu</button>
+                    </div>
+                    <div id="headersKicks" class="list-col-headers">
+                        <span>Gönderen (Özel)</span>
+                        <span>Miktar (Kicks+)</span>
+                        <span>YouTube, Instagram veya MP4 Linki</span>
+                        <span>Konum</span>
+                        <span>Boyut (0-100)</span>
+                        <span>Durum</span>
+                        <span style="text-align: right;">İşlem</span>
+                    </div>
+                    <div id="itemsListKicks" class="tiers-list"></div>
+                </section>
 
-                <div class="list-footer">
-                    <button id="btnAddItem" class="btn btn-primary btn-sm" type="button">+ Video Ekle</button>
-                    <span class="hint-text">Bağışçıya özel video önceliklidir. <strong>Sub+</strong> ve <strong>Kicks+</strong> videoları Paithon sayacıyla ortak çalışır (ses yerine burada video oynar).</span>
-                </div>
-            </section>
+                <section class="card card-sub">
+                    <div class="section-head">
+                        <span class="section-title is-sub">Sub Videoları <span id="countSub" class="section-count">0</span></span>
+                        <button id="btnAddSubItem" class="btn btn-primary btn-sm" type="button">+ Sub Videosu</button>
+                    </div>
+                    <div id="headersSub" class="list-col-headers">
+                        <span>Abone (Özel)</span>
+                        <span>Miktar (Sub+)</span>
+                        <span>YouTube, Instagram veya MP4 Linki</span>
+                        <span>Konum</span>
+                        <span>Boyut (0-100)</span>
+                        <span>Durum</span>
+                        <span style="text-align: right;">İşlem</span>
+                    </div>
+                    <div id="itemsListSub" class="tiers-list"></div>
+                </section>
+            </div>
+
+            <div class="hint-text" style="padding: 0 4px;">
+                Bağışçıya özel video önceliklidir. Kicks ve Sub videoları Paithon sayacıyla ortak çalışır (ses yerine burada video oynar; en yüksek eşleşen kademe kazanır).
+            </div>
         </div>
     </aside>
 
@@ -951,8 +1032,19 @@
                 inpStreamlabsToken: document.getElementById('inpStreamlabsToken'),
                 btnToggleTokenVis: document.getElementById('btnToggleTokenVis'),
                 fileProtocolWarn: document.getElementById('fileProtocolWarn'),
-                itemsList: document.getElementById('itemsList'),
-                btnAddItem: document.getElementById('btnAddItem')
+                videoSections: document.getElementById('videoSections'),
+                itemsListTry: document.getElementById('itemsListTry'),
+                itemsListKicks: document.getElementById('itemsListKicks'),
+                itemsListSub: document.getElementById('itemsListSub'),
+                headersTry: document.getElementById('headersTry'),
+                headersKicks: document.getElementById('headersKicks'),
+                headersSub: document.getElementById('headersSub'),
+                countTry: document.getElementById('countTry'),
+                countKicks: document.getElementById('countKicks'),
+                countSub: document.getElementById('countSub'),
+                btnAddTryItem: document.getElementById('btnAddTryItem'),
+                btnAddKicksItem: document.getElementById('btnAddKicksItem'),
+                btnAddSubItem: document.getElementById('btnAddSubItem')
             };
 
             // ==================== HELPERS ====================
@@ -1186,35 +1278,23 @@
                 };
             }
 
-            function triggerRank(trig) {
-                const t = normalizeTrigger(trig);
-                if (t === 'SUB') return 1;
-                if (t === 'KICKS') return 2;
-                return 0;
-            }
-
-            function sortItems(items) {
-                if (!Array.isArray(items)) return items;
-                items.sort(function (a, b) {
-                    const ra = triggerRank(a.trigger);
-                    const rb = triggerRank(b.trigger);
-                    if (ra !== rb) return ra - rb;
-                    const aHas = Boolean(a.donor && a.donor.trim());
-                    const bHas = Boolean(b.donor && b.donor.trim());
-                    if (aHas !== bHas) return aHas ? 1 : -1;
-                    if (aHas && bHas) {
-                        const cmp = a.donor.toLocaleLowerCase('tr-TR').localeCompare(b.donor.toLocaleLowerCase('tr-TR'), 'tr-TR');
-                        if (cmp !== 0) return cmp;
-                    }
-                    return (Number(a.amount) || 0) - (Number(b.amount) || 0);
-                });
-                return items;
+            function getVisualOrderedItems() {
+                const tryItems = [];
+                const kicksItems = [];
+                const subItems = [];
+                for (let i = 0; i < appConfig.items.length; i++) {
+                    const it = appConfig.items[i];
+                    const trig = normalizeTrigger(it.trigger);
+                    if (trig === 'KICKS') kicksItems.push(it);
+                    else if (trig === 'SUB') subItems.push(it);
+                    else tryItems.push(it);
+                }
+                return tryItems.concat(kicksItems, subItems);
             }
 
             function normalizeConfig(raw) {
                 const c = raw && typeof raw === 'object' ? raw : {};
                 const items = Array.isArray(c.items) ? c.items.map(normalizeItem) : [createDefaultItem()];
-                sortItems(items);
                 return {
                     streamlabsToken: typeof c.streamlabsToken === 'string' ? c.streamlabsToken.trim() : '',
                     items: items
@@ -1439,8 +1519,8 @@
                     );
                 }
 
-                if (!els.itemsList) return;
-                const rows = els.itemsList.querySelectorAll('.tier-row');
+                if (!els.videoSections) return;
+                const rows = els.videoSections.querySelectorAll('.tier-row');
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
                     const id = row.getAttribute('data-item-id');
@@ -2358,12 +2438,41 @@
                 }
             }
 
+            function findMatchingPaithonSound(triggerType, amount) {
+                const trig = normalizeTrigger(triggerType);
+                if (trig !== 'SUB' && trig !== 'KICKS') return null;
+                if (!Number.isFinite(amount) || amount <= 0) return null;
+                const raw = safeLsGet('paithon_sound_rules_v1');
+                if (!raw) return null;
+                try {
+                    const parsed = JSON.parse(raw);
+                    const rules = Array.isArray(parsed && parsed.rules) ? parsed.rules : [];
+                    let best = null;
+                    for (let i = 0; i < rules.length; i++) {
+                        const r = rules[i];
+                        if (!r || String(r.type || '').toUpperCase() !== trig || !r.fileName) continue;
+                        const minAmt = Number(r.minAmount);
+                        if (!Number.isFinite(minAmt) || minAmt <= 0 || amount < minAmt) continue;
+                        if (!best || minAmt > Number(best.minAmount)) best = r;
+                    }
+                    return best;
+                } catch (_) {
+                    return null;
+                }
+            }
+
             function enqueueAlert(donorName, amount, isTest, explicitItem, triggerType) {
                 const trig = triggerType ? normalizeTrigger(triggerType) : normalizeTrigger(explicitItem && explicitItem.trigger);
                 const item = explicitItem || findMatchingItem(amount, donorName, appConfig.items, trig);
                 if (!item || !item.url) {
                     if (isTest) showToast('Önce geçerli bir video linki ekleyin.');
                     return;
+                }
+                if (!explicitItem && !isTest && (trig === 'SUB' || trig === 'KICKS')) {
+                    const paithonSound = findMatchingPaithonSound(trig, amount);
+                    if (paithonSound && Number(paithonSound.minAmount) > Number(item.amount)) {
+                        return;
+                    }
                 }
                 if (alertQueue.length >= MAX_QUEUE_LEN) {
                     alertQueue.shift();
@@ -2625,60 +2734,84 @@
             }
 
             function renderItemsList() {
-                if (!els.itemsList) return;
-                if (appConfig.items.length === 0) {
-                    els.itemsList.innerHTML = '<div class="hint-text" style="padding:12px;">Henüz video yok. Alttan ekleyebilirsiniz.</div>';
-                    updateStatusUIOnly();
-                    return;
-                }
+                if (!els.videoSections) return;
 
-                const frag = document.createDocumentFragment();
-                let validOrder = 0;
+                const tryItems = [];
+                const kicksItems = [];
+                const subItems = [];
                 for (let i = 0; i < appConfig.items.length; i++) {
                     const it = appConfig.items[i];
-                    const hasUrl = Boolean(it.url && it.url.trim());
-                    if (hasUrl) validOrder++;
-                    const st = mediaStatuses.get(it.id) || { state: 'idle', label: it.url ? 'Bekliyor' : 'Link yok' };
-
-                    const row = document.createElement('div');
-                    const isSpecial = Boolean(it.donor && it.donor.trim());
                     const trig = normalizeTrigger(it.trigger);
-                    const isSub = trig === 'SUB';
-                    const isKicks = trig === 'KICKS';
-                    row.className = 'tier-row' + (isSpecial ? ' is-donor-special' : '') + (isSub ? ' is-sub-row' : (isKicks ? ' is-kicks-row' : ''));
-                    row.setAttribute('data-item-id', it.id);
-
-                    const badgeTitleText = st.title || (st.state === 'error' ? 'Tekrar denemek için tıklayın' : '');
-                    const errTitle = badgeTitleText ? (' title="' + escapeHtml(badgeTitleText) + '"') : '';
-                    const shortcutHint = hasUrl ? (' (Tuş: ' + validOrder + ')') : '';
-                    const amtTitle = isSub ? 'Minimum abonelik sayısı' : (isKicks ? 'Minimum Kicks miktarı' : 'Minimum bağış tutarı (TL)');
-                    row.innerHTML =
-                        '<input class="field-input tier-donor-input" type="text" placeholder="Herkes (boş)" value="' + escapeHtml(it.donor || '') + '" title="Özel bağışçı/abone adı (virgülle birden fazla yazılabilir)" />' +
-                        '<div class="suffix-box">' +
-                            '<input class="suffix-input tier-amt-input" type="number" min="' + (isSub || isKicks ? '1' : '0') + '" step="1" value="' + escapeHtml(it.amount) + '" title="' + amtTitle + '" />' +
-                            '<select class="suffix-select tier-trigger-select' + (isSub ? ' is-sub' : (isKicks ? ' is-kicks' : '')) + '" title="Tetikleme türü: TL bağışı, Abonelik veya Kicks">' +
-                                '<option value="TRY"' + (trig === 'TRY' ? ' selected' : '') + '>TL+</option>' +
-                                '<option value="SUB"' + (isSub ? ' selected' : '') + '>Sub+</option>' +
-                                '<option value="KICKS"' + (isKicks ? ' selected' : '') + '>Kicks+</option>' +
-                            '</select>' +
-                        '</div>' +
-                        '<input class="field-input tier-url-input" type="text" placeholder="YouTube, Instagram veya MP4 linki yapıştırın..." value="' + escapeHtml(it.url) + '" />' +
-                        '<select class="field-select tier-pos-select" title="Ekran Konumu">' + buildPositionOptionsHtml(it.position) + '</select>' +
-                        '<div class="suffix-box">' +
-                            '<input class="suffix-input tier-size-input" type="number" min="0" max="100" step="1" value="' + escapeHtml(it.size) + '" title="Boyut (0-100)" />' +
-                            '<span class="suffix-tag">%</span>' +
-                        '</div>' +
-                        '<span class="dl-badge ' + getBadgeClass(st.state) + '"' + errTitle + '>' + escapeHtml(st.label) + '</span>' +
-                        '<div class="row-btns">' +
-                            '<button class="btn btn-primary btn-sm tier-btn-test" type="button" title="Test Et' + shortcutHint + '">▶</button>' +
-                            '<button class="btn btn-danger btn-sm tier-btn-del" type="button" title="Sil">×</button>' +
-                        '</div>';
-
-                    frag.appendChild(row);
+                    if (trig === 'KICKS') kicksItems.push(it);
+                    else if (trig === 'SUB') subItems.push(it);
+                    else tryItems.push(it);
                 }
 
-                els.itemsList.innerHTML = '';
-                els.itemsList.appendChild(frag);
+                let validOrder = 0;
+
+                function renderSectionList(listEl, headerEl, countEl, items, triggerType) {
+                    if (countEl) countEl.textContent = String(items.length);
+                    if (headerEl) headerEl.classList.toggle('hidden', items.length === 0);
+                    if (!listEl) return;
+
+                    if (items.length === 0) {
+                        const emptyLabel = triggerType === 'KICKS'
+                            ? 'Henüz Kicks videosu eklenmedi.'
+                            : (triggerType === 'SUB' ? 'Henüz Sub videosu eklenmedi.' : 'Henüz Donate videosu eklenmedi.');
+                        listEl.innerHTML = '<div class="section-empty">' + emptyLabel + '</div>';
+                        return;
+                    }
+
+                    const isSub = triggerType === 'SUB';
+                    const isKicks = triggerType === 'KICKS';
+                    const unitText = isSub ? 'Sub+' : (isKicks ? 'Kicks+' : 'TL+');
+                    const unitClass = isSub ? ' is-sub' : (isKicks ? ' is-kicks' : '');
+                    const amtTitle = isSub ? 'Minimum abonelik sayısı' : (isKicks ? 'Minimum Kicks miktarı' : 'Minimum bağış tutarı (TL)');
+                    const donorTitle = isSub ? 'Özel abone adı (virgülle birden fazla yazılabilir)' : (isKicks ? 'Özel Kicks gönderen adı (virgülle birden fazla yazılabilir)' : 'Özel bağışçı adı (virgülle birden fazla yazılabilir)');
+
+                    const frag = document.createDocumentFragment();
+                    for (let i = 0; i < items.length; i++) {
+                        const it = items[i];
+                        const hasUrl = Boolean(it.url && it.url.trim());
+                        if (hasUrl) validOrder++;
+                        const st = mediaStatuses.get(it.id) || { state: 'idle', label: it.url ? 'Bekliyor' : 'Link yok' };
+
+                        const row = document.createElement('div');
+                        const isSpecial = Boolean(it.donor && it.donor.trim());
+                        row.className = 'tier-row' + (isSpecial ? ' is-donor-special' : '') + (isSub ? ' is-sub-row' : (isKicks ? ' is-kicks-row' : ''));
+                        row.setAttribute('data-item-id', it.id);
+
+                        const badgeTitleText = st.title || (st.state === 'error' ? 'Tekrar denemek için tıklayın' : '');
+                        const errTitle = badgeTitleText ? (' title="' + escapeHtml(badgeTitleText) + '"') : '';
+                        const shortcutHint = hasUrl ? (' (Tuş: ' + validOrder + ')') : '';
+                        row.innerHTML =
+                            '<input class="field-input tier-donor-input" type="text" placeholder="Herkes (boş)" value="' + escapeHtml(it.donor || '') + '" title="' + donorTitle + '" />' +
+                            '<div class="suffix-box">' +
+                                '<input class="suffix-input tier-amt-input" type="number" min="' + (isSub || isKicks ? '1' : '0') + '" step="1" value="' + escapeHtml(it.amount) + '" title="' + amtTitle + '" />' +
+                                '<span class="suffix-tag' + unitClass + '">' + unitText + '</span>' +
+                            '</div>' +
+                            '<input class="field-input tier-url-input" type="text" placeholder="YouTube, Instagram veya MP4 linki yapıştırın..." value="' + escapeHtml(it.url) + '" />' +
+                            '<select class="field-select tier-pos-select" title="Ekran Konumu">' + buildPositionOptionsHtml(it.position) + '</select>' +
+                            '<div class="suffix-box">' +
+                                '<input class="suffix-input tier-size-input" type="number" min="0" max="100" step="1" value="' + escapeHtml(it.size) + '" title="Boyut (0-100)" />' +
+                                '<span class="suffix-tag">%</span>' +
+                            '</div>' +
+                            '<span class="dl-badge ' + getBadgeClass(st.state) + '"' + errTitle + '>' + escapeHtml(st.label) + '</span>' +
+                            '<div class="row-btns">' +
+                                '<button class="btn btn-primary btn-sm tier-btn-test" type="button" title="Test Et' + shortcutHint + '">▶</button>' +
+                                '<button class="btn btn-danger btn-sm tier-btn-del" type="button" title="Sil">×</button>' +
+                            '</div>';
+
+                        frag.appendChild(row);
+                    }
+
+                    listEl.innerHTML = '';
+                    listEl.appendChild(frag);
+                }
+
+                renderSectionList(els.itemsListTry, els.headersTry, els.countTry, tryItems, 'TRY');
+                renderSectionList(els.itemsListKicks, els.headersKicks, els.countKicks, kicksItems, 'KICKS');
+                renderSectionList(els.itemsListSub, els.headersSub, els.countSub, subItems, 'SUB');
                 updateStatusUIOnly();
             }
 
@@ -2689,29 +2822,45 @@
             }
 
             // ==================== ACTIONS ====================
-            function addItem() {
+            function addItem(triggerType) {
+                const trig = normalizeTrigger(triggerType);
+                const sameItems = appConfig.items.filter(function (it) { return normalizeTrigger(it.trigger) === trig; });
                 let nextAmt = 0;
-                const tryItems = appConfig.items.filter(function (it) { return (it.trigger || 'TRY') !== 'SUB'; });
-                if (tryItems.length > 0) {
-                    const maxAmt = tryItems.reduce(function (mx, it) {
-                        return Math.max(mx, Number(it.amount) || 0);
-                    }, 0);
-                    nextAmt = maxAmt + 100;
+                if (trig === 'SUB') {
+                    nextAmt = 1;
+                    if (sameItems.length > 0) {
+                        const maxAmt = sameItems.reduce(function (mx, it) {
+                            return Math.max(mx, Number(it.amount) || 0);
+                        }, 0);
+                        nextAmt = maxAmt < 5 ? 5 : maxAmt + 5;
+                    }
+                } else {
+                    nextAmt = trig === 'KICKS' ? 100 : 0;
+                    if (sameItems.length > 0) {
+                        const maxAmt = sameItems.reduce(function (mx, it) {
+                            return Math.max(mx, Number(it.amount) || 0);
+                        }, 0);
+                        nextAmt = maxAmt + 100;
+                    }
                 }
                 const item = createDefaultItem({
                     id: uid('item_'),
                     donor: '',
-                    trigger: 'TRY',
+                    trigger: trig,
                     amount: nextAmt,
                     url: ''
                 });
                 appConfig.items.push(item);
-                sortItems(appConfig.items);
                 saveConfig({ reprefetch: false, immediate: true });
                 renderPanel();
 
-                const rowInput = els.itemsList.querySelector('[data-item-id="' + item.id + '"] .tier-url-input');
-                if (rowInput) rowInput.focus();
+                const rowInput = els.videoSections
+                    ? els.videoSections.querySelector('[data-item-id="' + item.id + '"] .tier-url-input')
+                    : null;
+                if (rowInput) {
+                    try { rowInput.scrollIntoView({ block: 'nearest' }); } catch (_) { }
+                    rowInput.focus();
+                }
             }
 
             function deleteItem(itemId) {
@@ -2831,11 +2980,13 @@
                     showToast('Streamlabs Token kaydedildi.');
                 });
 
-                els.btnAddItem.addEventListener('click', addItem);
+                els.btnAddTryItem.addEventListener('click', function () { addItem('TRY'); });
+                els.btnAddKicksItem.addEventListener('click', function () { addItem('KICKS'); });
+                els.btnAddSubItem.addEventListener('click', function () { addItem('SUB'); });
 
                 const urlTimers = new Map();
 
-                els.itemsList.addEventListener('click', function (e) {
+                els.videoSections.addEventListener('click', function (e) {
                     const row = e.target.closest ? e.target.closest('.tier-row') : null;
                     if (!row) return;
                     const id = row.getAttribute('data-item-id');
@@ -2858,7 +3009,7 @@
                     }
                 });
 
-                els.itemsList.addEventListener('input', function (e) {
+                els.videoSections.addEventListener('input', function (e) {
                     const row = e.target.closest ? e.target.closest('.tier-row') : null;
                     if (!row) return;
                     const id = row.getAttribute('data-item-id');
@@ -2888,7 +3039,7 @@
                     }
                 });
 
-                els.itemsList.addEventListener('change', function (e) {
+                els.videoSections.addEventListener('change', function (e) {
                     const row = e.target.closest ? e.target.closest('.tier-row') : null;
                     if (!row) return;
                     const id = row.getAttribute('data-item-id');
@@ -2897,23 +3048,14 @@
 
                     if (e.target.classList.contains('tier-donor-input')) {
                         item.donor = e.target.value.trim();
-                        sortItems(appConfig.items);
+                        row.classList.toggle('is-donor-special', Boolean(item.donor));
                         saveConfig({ reprefetch: false, immediate: true });
-                        renderPanel();
                     } else if (e.target.classList.contains('tier-amt-input')) {
-                        sortItems(appConfig.items);
+                        const minAllowed = (normalizeTrigger(item.trigger) === 'TRY') ? 0 : 1;
+                        const v = parseFloat(e.target.value);
+                        item.amount = Number.isFinite(v) && v >= minAllowed ? v : minAllowed;
+                        e.target.value = String(item.amount);
                         saveConfig({ reprefetch: false, immediate: true });
-                        renderPanel();
-                    } else if (e.target.classList.contains('tier-trigger-select')) {
-                        item.trigger = normalizeTrigger(e.target.value);
-                        if (item.trigger === 'SUB' && (!Number.isFinite(item.amount) || item.amount <= 0)) {
-                            item.amount = 1;
-                        } else if (item.trigger === 'KICKS' && (!Number.isFinite(item.amount) || item.amount <= 0)) {
-                            item.amount = 100;
-                        }
-                        sortItems(appConfig.items);
-                        saveConfig({ reprefetch: false, immediate: true });
-                        renderPanel();
                     } else if (e.target.classList.contains('tier-url-input')) {
                         clearTimeout(urlTimers.get(id));
                         item.url = e.target.value.trim();
@@ -2953,7 +3095,7 @@
                 let digitTimer = null;
 
                 function triggerVideoByNumber(num) {
-                    const valid = appConfig.items.filter(function (it) { return it.url && it.url.trim(); });
+                    const valid = getVisualOrderedItems().filter(function (it) { return it.url && it.url.trim(); });
                     if (valid.length === 0) {
                         showSetupNotice('Aktif video yok. M tuşuyla paneli açıp link ekleyin.');
                         return;
@@ -2988,7 +3130,7 @@
                         triggerVideoByNumber(1);
                     } else if (/^[0-9]$/.test(key)) {
                         clearTimeout(digitTimer);
-                        const validCount = appConfig.items.filter(function (it) { return it.url && it.url.trim(); }).length;
+                        const validCount = getVisualOrderedItems().filter(function (it) { return it.url && it.url.trim(); }).length;
                         if (!digitBuffer && key === '0') {
                             triggerVideoByNumber(10);
                             return;
