@@ -1716,6 +1716,21 @@
         .sound-status-msg.is-err {
             color: #fda4af;
         }
+
+        .sound-bridge-note {
+            padding: 9px 11px;
+            border-radius: 12px;
+            border: 1px solid rgba(251, 191, 36, 0.45);
+            background: rgba(245, 158, 11, 0.12);
+            color: #fef3c7;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .sound-bridge-note.hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -2299,6 +2314,7 @@
                     <button id="btnAddSubSound" class="admin-btn primary sound-add-btn" type="button">+ Sub Sesi</button>
                 </div>
                 <div id="subSoundList" class="sound-rules-list"></div>
+                <div id="kediDansSubNotice" class="sound-bridge-note hidden"></div>
             </div>
 
             <div id="soundStatusMsg" class="sound-status-msg"></div>
@@ -2323,6 +2339,9 @@
                 soundDbName: 'paithon_sounds_db_v1',
                 soundDbStore: 'audioFiles',
                 maxSoundFileBytes: 30 * 1024 * 1024,
+                kediDansStorageKey: 'kedi_dans_config_v4',
+                kediDansSyncChannel: 'kedi_dans_sync_v1',
+                kediDansApiBase: 'http://127.0.0.1:8765',
                 // Exact tariff rates (seconds added per 1 unit)
                 secondsPerUnit: {
                     SUB: 1800,  // 1 Sub = 30 dk (1800 sn)
@@ -2367,6 +2386,12 @@
             let pendingUploadRuleId = null;
             let activeAudio = null;
             let soundStatusTimer = null;
+            let kediDansSubItems = [];
+            let kediDansChannel = null;
+            let kediDansServerOnline = false;
+            let kediDansSse = null;
+            let kediDansProbeTimer = null;
+            let kediDansApiBase = CONFIG.kediDansApiBase;
 
             // ==================== DOM REFERENCES ====================
             const els = {
@@ -2399,6 +2424,7 @@
                 btnAddSubSound: document.getElementById('btnAddSubSound'),
                 kicksSoundList: document.getElementById('kicksSoundList'),
                 subSoundList: document.getElementById('subSoundList'),
+                kediDansSubNotice: document.getElementById('kediDansSubNotice'),
                 soundStatusMsg: document.getElementById('soundStatusMsg'),
                 soundFileInput: document.getElementById('soundFileInput')
             };
@@ -2946,7 +2972,13 @@
                         // 1. Add time to drift-free countdown ONLY when this donation activates
                         addRemainingMs(item.totalAddedSeconds * 1000);
                         pulseBoard();
-                        playDonationSound(item.type, item.amount);
+                        if (item.type === 'SUB' && findMatchingKediDansSubVideo(item.amount, item.details.donorName)) {
+                            // Video plays in kedi_dans.html instead of a sound here
+                            stopActiveSound();
+                            notifyKediDansSubVideo(item.amount, item.details.donorName, item.eventId, item.isTest);
+                        } else {
+                            playDonationSound(item.type, item.amount);
+                        }
 
                         // 2. Spin cat slot eyes + mount single banner emerging from behind the cat
                         const eyeSpinPromise = spinSlotEyes(item.tier);
@@ -3029,6 +3061,8 @@
                 donationQueue.push({
                     type: type,
                     amount: amount,
+                    eventId: info.eventId || null,
+                    isTest: Boolean(info.isTest),
                     baseSeconds: baseSeconds,
                     bonusSeconds: bonusSeconds,
                     totalAddedSeconds: totalAddedSeconds,
@@ -3506,6 +3540,207 @@
 
                 renderSoundListForType(els.kicksSoundList, 'KICKS');
                 renderSoundListForType(els.subSoundList, 'SUB');
+                renderKediDansSubNotice();
+            }
+
+            // ==================== KEDI_DANS SUB-VIDEO BRIDGE ====================
+            function normalizeKediDonorKey(name) {
+                if (typeof name !== 'string') return '';
+                return name.trim().replace(/^@+/, '').replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR');
+            }
+
+            function kediDonorMatchesItem(donorName, itemDonorField) {
+                const target = normalizeKediDonorKey(donorName);
+                if (!target || typeof itemDonorField !== 'string' || !itemDonorField.trim()) return false;
+                const tokens = itemDonorField.split(',');
+                for (let i = 0; i < tokens.length; i++) {
+                    const tok = normalizeKediDonorKey(tokens[i]);
+                    if (tok && tok === target) return true;
+                }
+                return false;
+            }
+
+            function extractKediDansSubItems(cfg) {
+                if (!cfg || !Array.isArray(cfg.items)) return [];
+                const list = [];
+                for (let i = 0; i < cfg.items.length; i++) {
+                    const it = cfg.items[i];
+                    if (!it || typeof it !== 'object') continue;
+                    const trig = typeof it.trigger === 'string' ? it.trigger.trim().toUpperCase() : 'TRY';
+                    const url = typeof it.url === 'string' ? it.url.trim() : '';
+                    const amt = Number(it.amount);
+                    if (trig === 'SUB' && url && Number.isFinite(amt) && amt >= 0) {
+                        list.push({
+                            donor: typeof it.donor === 'string' ? it.donor.trim() : '',
+                            amount: amt,
+                            url: url
+                        });
+                    }
+                }
+                list.sort(function (a, b) { return a.amount - b.amount; });
+                return list;
+            }
+
+            function renderKediDansSubNotice() {
+                if (!els.kediDansSubNotice) return;
+                if (!kediDansSubItems.length) {
+                    els.kediDansSubNotice.classList.add('hidden');
+                    els.kediDansSubNotice.textContent = '';
+                    return;
+                }
+                const labels = kediDansSubItems.map(function (it) {
+                    return (it.donor ? (it.donor + ' · ') : '') + Math.round(it.amount) + ' Sub+';
+                });
+                els.kediDansSubNotice.textContent =
+                    'Kedi Dans ortak video aktif (' + labels.join(', ') + '): eşleşen aboneliklerde ses yerine kedi_dans.html ekranında video oynar.';
+                els.kediDansSubNotice.classList.remove('hidden');
+            }
+
+            function applyKediDansConfig(cfg) {
+                kediDansSubItems = extractKediDansSubItems(cfg);
+                renderKediDansSubNotice();
+            }
+
+            function loadKediDansConfigFromStorage() {
+                const raw = safeGetStorage(CONFIG.kediDansStorageKey);
+                if (!raw) return false;
+                try {
+                    applyKediDansConfig(JSON.parse(raw));
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            function findMatchingKediDansSubVideo(subCount, donorName) {
+                if (!Number.isFinite(subCount) || subCount <= 0) return null;
+                if (!kediDansSubItems.length) {
+                    loadKediDansConfigFromStorage();
+                }
+                if (!kediDansSubItems.length) return null;
+
+                let bestSpecial = null;
+                let bestGeneral = null;
+                for (let i = 0; i < kediDansSubItems.length; i++) {
+                    const it = kediDansSubItems[i];
+                    if (subCount < it.amount) continue;
+                    if (it.donor) {
+                        if (kediDonorMatchesItem(donorName, it.donor)) {
+                            if (!bestSpecial || it.amount > bestSpecial.amount) bestSpecial = it;
+                        }
+                    } else {
+                        if (!bestGeneral || it.amount > bestGeneral.amount) bestGeneral = it;
+                    }
+                }
+                return bestSpecial || bestGeneral;
+            }
+
+            function notifyKediDansSubVideo(subCount, donorName, eventId, isTest) {
+                const payload = {
+                    type: 'sub_alert',
+                    kind: 'sub_alert',
+                    sender: 'paithon',
+                    eventId: eventId || null,
+                    donorName: donorName || '',
+                    amount: subCount,
+                    isTest: Boolean(isTest)
+                };
+                if (kediDansChannel) {
+                    try { kediDansChannel.postMessage(payload); } catch (_) { }
+                }
+                if (kediDansServerOnline) {
+                    fetch(kediDansApiBase + '/api/test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).catch(function () { });
+                }
+            }
+
+            function connectKediDansServerEvents() {
+                if (kediDansSse) {
+                    try { kediDansSse.close(); } catch (_) { }
+                    kediDansSse = null;
+                }
+                if (!kediDansServerOnline || typeof window.EventSource !== 'function') return;
+                try {
+                    kediDansSse = new EventSource(kediDansApiBase + '/api/events?role=panel');
+                    kediDansSse.addEventListener('config', function (ev) {
+                        try {
+                            const data = JSON.parse(ev.data);
+                            if (data && data.config) applyKediDansConfig(data.config);
+                        } catch (_) { }
+                    });
+                    kediDansSse.onerror = function () {
+                        if (kediDansSse) {
+                            try { kediDansSse.close(); } catch (_) { }
+                            kediDansSse = null;
+                        }
+                        kediDansServerOnline = false;
+                        scheduleKediDansServerProbe();
+                    };
+                } catch (_) { }
+            }
+
+            async function probeKediDansServer() {
+                const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+                const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 1000) : null;
+                try {
+                    const resp = await fetch(kediDansApiBase + '/api/config', ctrl ? { signal: ctrl.signal } : undefined);
+                    if (timer) clearTimeout(timer);
+                    if (!resp.ok) return false;
+                    const data = await resp.json();
+                    kediDansServerOnline = true;
+                    if (data && data.config) {
+                        applyKediDansConfig(data.config);
+                    }
+                    connectKediDansServerEvents();
+                    return true;
+                } catch (_) {
+                    if (timer) clearTimeout(timer);
+                    kediDansServerOnline = false;
+                    return false;
+                }
+            }
+
+            function scheduleKediDansServerProbe() {
+                if (kediDansServerOnline || kediDansProbeTimer) return;
+                kediDansProbeTimer = setTimeout(async function () {
+                    kediDansProbeTimer = null;
+                    const ok = await probeKediDansServer();
+                    if (!ok) {
+                        scheduleKediDansServerProbe();
+                    }
+                }, 15000);
+            }
+
+            function initKediDansBridge(customApi) {
+                if (customApi) {
+                    kediDansApiBase = customApi.replace(/\/+$/, '');
+                }
+                loadKediDansConfigFromStorage();
+
+                if (typeof window.BroadcastChannel === 'function') {
+                    try {
+                        kediDansChannel = new BroadcastChannel(CONFIG.kediDansSyncChannel);
+                        kediDansChannel.onmessage = function (ev) {
+                            const msg = ev && ev.data;
+                            if (msg && msg.type === 'config_updated' && msg.config) {
+                                applyKediDansConfig(msg.config);
+                            }
+                        };
+                    } catch (_) { }
+                }
+
+                window.addEventListener('storage', function (ev) {
+                    if (ev.key === CONFIG.kediDansStorageKey && ev.newValue) {
+                        try { applyKediDansConfig(JSON.parse(ev.newValue)); } catch (_) { }
+                    }
+                });
+
+                probeKediDansServer().then(function (ok) {
+                    if (!ok) scheduleKediDansServerProbe();
+                });
             }
 
             async function initSoundSystem() {
@@ -3626,7 +3861,8 @@
                         const subCount = parseNumericAmount(rawCount);
                         processDonation('SUB', Number.isFinite(subCount) && subCount > 0 ? subCount : 1, {
                             donorName: donorName,
-                            message: donorMessage
+                            message: donorMessage,
+                            eventId: eventId
                         });
                     }
                 });
@@ -3902,7 +4138,9 @@
                 } else if (key === '3') {
                     processDonation('SUB', 2, {
                         donorName: 'LilaKedi',
-                        message: '2 abonelik geldi, yayın devamkee!'
+                        message: '2 abonelik geldi, yayın devamkee!',
+                        isTest: true,
+                        eventId: 'paithon_test_' + Date.now()
                     });  // +1:00:00 -> Gold eyes
                 } else if (key === '4') {
                     processDonation('TRY', 130, {
@@ -3917,7 +4155,9 @@
                 } else if (key === '6') {
                     processDonation('SUB', 200, {
                         donorName: 'MegaDestek',
-                        message: 'Bu yayın bugün bitmez, 100 saat daha!'
+                        message: 'Bu yayın bugün bitmez, 100 saat daha!',
+                        isTest: true,
+                        eventId: 'paithon_test_' + Date.now()
                     });  // +100:00:00 -> Gold eyes (tests 3-4+ digit auto-fit)
                 } else if (key === 'r' || key === 'R') {
                     resetTimerToDefault();          // Reset to default / URL minutes
@@ -3974,6 +4214,7 @@
                 renderTimer(true);
                 fitPriceCells();
                 startCountdownLoop();
+                initKediDansBridge((params.get('api') || '').trim());
                 initSoundSystem();
 
                 const token = urlToken || CONFIG.streamlabsToken;
