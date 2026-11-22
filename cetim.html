@@ -483,7 +483,7 @@
 
     <div id="globalBanner" class="banner hidden"></div>
 
-    <!-- Login View (Sadece Giriş Butonu) -->
+    <!-- Login View -->
     <section id="loginView" class="card login-card">
       <div class="login-title">Kick Hesabıyla Bağlan</div>
       <div class="login-sub">Yayın başında bir kez giriş yap. OBS açık kaldığı sürece oturum otomatik yenilenir ve mesajlar gönderilir.</div>
@@ -511,15 +511,15 @@
 
         <div class="stats-grid">
           <div class="stat-box">
-            <div class="stat-label">Chat</div>
+            <div class="stat-label">Durum</div>
             <div class="stat-val">
               <span id="activityDot" class="dot"></span>
-              <span id="activityLabel">Sakin</span>
+              <span id="activityLabel">Bekliyor</span>
             </div>
           </div>
           <div class="stat-box">
-            <div class="stat-label" id="windowLabel">Son 5 dk</div>
-            <div class="stat-val" id="recentCountLabel">0 msj</div>
+            <div class="stat-label" id="windowLabel">10. dk hedefi</div>
+            <div class="stat-val" id="recentCountLabel">0 / 30</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Gönderilen</div>
@@ -532,7 +532,7 @@
       <section class="card">
         <div class="card-head">
           <span class="label-caps">Tetikleme Modu</span>
-          <span id="ruleSummary" class="hint">10 dk / 30 dk</span>
+          <span id="ruleSummary" class="hint">10–30 dk • 30+10 msj</span>
         </div>
 
         <div class="segmented" role="tablist">
@@ -551,27 +551,31 @@
 
         <!-- Dinamik -->
         <div id="panel-dynamic" class="mode-panel">
-          <div class="grid-2">
+          <div class="stats-grid">
             <div class="field">
-              <label for="dynActiveMin">Aktif Chat (dk)</label>
-              <input id="dynActiveMin" type="number" min="1" max="240" step="1" />
+              <label for="dynMinMin">İlk Kontrol (dk)</label>
+              <input id="dynMinMin" type="number" min="1" max="240" step="1" />
             </div>
             <div class="field">
-              <label for="dynIdleMin">Sakin Chat (dk)</label>
-              <input id="dynIdleMin" type="number" min="1" max="360" step="1" />
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label for="dynWindowMin">Ölçüm Penceresi (dk)</label>
-              <input id="dynWindowMin" type="number" min="1" max="60" step="1" />
+              <label for="dynStepMin">Adım (+dk)</label>
+              <input id="dynStepMin" type="number" min="1" max="120" step="1" />
             </div>
             <div class="field">
-              <label for="dynThreshold">Aktiflik Eşiği (mesaj)</label>
-              <input id="dynThreshold" type="number" min="1" max="5000" step="1" />
+              <label for="dynMaxMin">Zorunlu (dk)</label>
+              <input id="dynMaxMin" type="number" min="1" max="360" step="1" />
             </div>
           </div>
-          <span class="hint">Ölçüm penceresinde eşik kadar mesaj gelirse aktif süre, altında kalırsa sakin süre uygulanır.</span>
+          <div class="grid-2">
+            <div class="field">
+              <label for="dynBaseMsgs">İlk Eşik (mesaj)</label>
+              <input id="dynBaseMsgs" type="number" min="1" max="5000" step="1" />
+            </div>
+            <div class="field">
+              <label for="dynStepMsgs">Adım Artışı (+mesaj)</label>
+              <input id="dynStepMsgs" type="number" min="0" max="5000" step="1" />
+            </div>
+          </div>
+          <span class="hint">İlk kontrolde eşik dolmadıysa her adımda süre ve mesaj hedefi artar; zorunlu sürede koşulsuz gönderilir.</span>
         </div>
 
         <!-- Mesaj Sayacı -->
@@ -654,10 +658,11 @@
         timer: {
           mode: 'dynamic', // fixed | dynamic | count
           fixedMinutes: 15,
-          dynActiveMin: 10,
-          dynIdleMin: 30,
-          dynWindowMin: 5,
-          dynThreshold: 10,
+          dynMinMin: 10,
+          dynStepMin: 5,
+          dynMaxMin: 30,
+          dynBaseMsgs: 30,
+          dynStepMsgs: 10,
           countTarget: 300,
           rotation: 'sequential',
           running: false
@@ -685,9 +690,10 @@
       let refreshTimer = null;
       let lastSentAt = Date.now();
       let messagesSinceLastSend = 0;
+      let dynamicStage = 0;
       let sentTotal = 0;
-      let recentTimestamps = [];
       let isSending = false;
+      let nextRetryAt = 0;
       let logs = [];
 
       const $ = (id) => document.getElementById(id);
@@ -911,6 +917,7 @@
           state.timer.running = true;
           lastSentAt = Date.now();
           messagesSinceLastSend = 0;
+          dynamicStage = 0;
           saveState();
 
           showBanner('');
@@ -1072,12 +1079,15 @@
           sentTotal++;
           lastSentAt = Date.now();
           messagesSinceLastSend = 0;
+          dynamicStage = 0;
+          nextRetryAt = 0;
           const preview = content.length > 56 ? content.slice(0, 56) + '...' : content;
           addLog(`Gönderildi: "${preview}"`, 'lilac');
           renderMonitor();
           return true;
         } catch (err) {
-          addLog('Gönderilemedi: ' + err.message, 'err');
+          nextRetryAt = Date.now() + 15000;
+          addLog('Gönderilemedi (15 sn sonra tekrar denenecek): ' + err.message, 'err');
           return false;
         } finally {
           isSending = false;
@@ -1106,6 +1116,7 @@
           addLog('Aktif mesaj yok.', 'err');
           lastSentAt = Date.now();
           messagesSinceLastSend = 0;
+          dynamicStage = 0;
           return;
         }
         if (reason) addLog(`Tetiklendi (${reason})`, '');
@@ -1134,7 +1145,7 @@
 
         if (!chatroomId) {
           updateWsDot();
-          addLog('Chatroom ID otomatik alınamadı; zamanlayıcı sakin sürede çalışır.', 'err');
+          addLog('Chatroom ID otomatik alınamadı; dinamik mod zorunlu sürede gönderir.', 'err');
           return;
         }
 
@@ -1228,14 +1239,10 @@
           return;
         }
 
-        const now = Date.now();
-        recentTimestamps.push(now);
-        pruneRecent(now);
-
         if (state.timer.running) {
           messagesSinceLastSend++;
           const target = Math.max(1, Number(state.timer.countTarget) || 300);
-          if (state.timer.mode === 'count' && messagesSinceLastSend >= target) {
+          if (state.timer.mode === 'count' && messagesSinceLastSend >= target && Date.now() >= nextRetryAt) {
             triggerMessage(`${target} mesaj eşiği`);
           }
         }
@@ -1243,28 +1250,33 @@
         renderMonitor();
       }
 
-      function pruneRecent(now = Date.now()) {
-        const windowMs = Math.max(1, Number(state.timer.dynWindowMin) || 5) * 60 * 1000;
-        const cutoff = now - windowMs;
-        while (recentTimestamps.length && recentTimestamps[0] < cutoff) {
-          recentTimestamps.shift();
-        }
-      }
+      function getDynamicCheckpoint(stage = dynamicStage) {
+        const minMin = Math.max(1, Number(state.timer.dynMinMin) || 10);
+        const stepMin = Math.max(1, Number(state.timer.dynStepMin) || 5);
+        const maxMin = Math.max(minMin, Number(state.timer.dynMaxMin) || 30);
+        const baseMsgs = Math.max(1, Number(state.timer.dynBaseMsgs) || 30);
+        const stepMsgs = Math.max(0, Number(state.timer.dynStepMsgs) || 0);
 
-      function isChatActive() {
-        pruneRecent();
-        const threshold = Math.max(1, Number(state.timer.dynThreshold) || 10);
-        return recentTimestamps.length >= threshold;
-      }
-
-      function getTargetMs() {
-        if (state.timer.mode === 'fixed') {
-          return Math.max(1, Number(state.timer.fixedMinutes) || 15) * 60 * 1000;
+        const cpMin = minMin + stage * stepMin;
+        if (cpMin >= maxMin) {
+          return {
+            cpMin: maxMin,
+            cpMs: maxMin * 60 * 1000,
+            maxMin,
+            maxMs: maxMin * 60 * 1000,
+            reqMsgs: null,
+            isFinal: true
+          };
         }
-        const mins = isChatActive()
-          ? (Number(state.timer.dynActiveMin) || 10)
-          : (Number(state.timer.dynIdleMin) || 30);
-        return Math.max(1, mins) * 60 * 1000;
+
+        return {
+          cpMin,
+          cpMs: cpMin * 60 * 1000,
+          maxMin,
+          maxMs: maxMin * 60 * 1000,
+          reqMsgs: baseMsgs + stage * stepMsgs,
+          isFinal: false
+        };
       }
 
       // --- Engine Loop ---
@@ -1283,15 +1295,37 @@
       }
 
       function engineTick() {
-        pruneRecent();
+        const now = Date.now();
 
-        if (state.timer.running && state.timer.mode !== 'count') {
-          const targetMs = getTargetMs();
-          if (Date.now() - lastSentAt >= targetMs) {
-            const reason = state.timer.mode === 'dynamic'
-              ? (isChatActive() ? `Dinamik • Aktif ${state.timer.dynActiveMin} dk` : `Dinamik • Sakin ${state.timer.dynIdleMin} dk`)
-              : `Sabit ${state.timer.fixedMinutes} dk`;
-            triggerMessage(reason);
+        if (state.timer.running && !isSending && now >= nextRetryAt) {
+          const elapsed = now - lastSentAt;
+
+          if (state.timer.mode === 'fixed') {
+            const targetMs = Math.max(1, Number(state.timer.fixedMinutes) || 15) * 60 * 1000;
+            if (elapsed >= targetMs) {
+              triggerMessage(`Sabit ${state.timer.fixedMinutes} dk`);
+            }
+          } else if (state.timer.mode === 'dynamic') {
+            let cp = getDynamicCheckpoint();
+
+            if (elapsed >= cp.maxMs) {
+              triggerMessage(`Dinamik • ${cp.maxMin}. dk zorunlu gönderim`);
+            } else {
+              while (!cp.isFinal && elapsed >= cp.cpMs) {
+                if (messagesSinceLastSend >= cp.reqMsgs) {
+                  triggerMessage(`Dinamik • ${cp.cpMin}. dk (${messagesSinceLastSend}/${cp.reqMsgs} msj)`);
+                  break;
+                }
+                const missedMin = cp.cpMin;
+                const missedReq = cp.reqMsgs;
+                dynamicStage++;
+                cp = getDynamicCheckpoint();
+                const nextInfo = cp.isFinal
+                  ? `${cp.maxMin}. dk zorunlu gönderim`
+                  : `${cp.cpMin}. dk (${cp.reqMsgs} msj)`;
+                addLog(`${missedMin}. dk eşiği tutmadı (${messagesSinceLastSend}/${missedReq}) → ${nextInfo} bekleniyor.`, '');
+              }
+            }
           }
         }
 
@@ -1314,11 +1348,6 @@
       }
 
       function renderMonitor() {
-        const active = isChatActive();
-        $('activityDot').className = 'dot ' + (active ? 'lilac' : '');
-        $('activityLabel').textContent = active ? 'Aktif' : 'Sakin';
-        $('windowLabel').textContent = `Son ${state.timer.dynWindowMin} dk`;
-        $('recentCountLabel').textContent = `${recentTimestamps.length} msj`;
         $('sentCountLabel').textContent = String(sentTotal);
         $('toggleEngineBtn').textContent = state.timer.running ? 'Duraklat' : 'Başlat';
 
@@ -1328,6 +1357,11 @@
 
         if (state.timer.mode === 'count') {
           const target = Math.max(1, Number(state.timer.countTarget) || 300);
+          $('activityDot').className = 'dot ' + (messagesSinceLastSend > 0 ? 'lilac' : '');
+          $('activityLabel').textContent = state.timer.running ? 'Sayıyor' : 'Bekliyor';
+          $('windowLabel').textContent = 'Sayaç';
+          $('recentCountLabel').textContent = `${messagesSinceLastSend} / ${target}`;
+
           display.textContent = `${messagesSinceLastSend} / ${target}`;
           fill.style.width = `${Math.min(100, (messagesSinceLastSend / target) * 100)}%`;
           sub.textContent = state.timer.running
@@ -1336,22 +1370,48 @@
           return;
         }
 
-        const targetMs = getTargetMs();
+        if (state.timer.mode === 'dynamic') {
+          const cp = getDynamicCheckpoint();
+          const elapsed = state.timer.running ? (Date.now() - lastSentAt) : 0;
+          const remaining = state.timer.running ? Math.max(0, cp.cpMs - elapsed) : cp.cpMs;
+          const pct = state.timer.running ? Math.min(100, (elapsed / cp.cpMs) * 100) : 0;
+
+          const ready = cp.isFinal || messagesSinceLastSend >= cp.reqMsgs;
+          $('activityDot').className = 'dot ' + (ready ? 'lilac' : '');
+          $('activityLabel').textContent = cp.isFinal ? 'Zorunlu' : (ready ? 'Eşik OK' : 'Bekliyor');
+          $('windowLabel').textContent = cp.isFinal ? `${cp.maxMin}. dk` : `${cp.cpMin}. dk hedefi`;
+          $('recentCountLabel').textContent = cp.isFinal
+            ? `${messagesSinceLastSend} msj`
+            : `${messagesSinceLastSend} / ${cp.reqMsgs}`;
+
+          display.textContent = formatTime(remaining);
+          fill.style.width = `${pct}%`;
+
+          if (!state.timer.running) {
+            sub.textContent = 'Duraklatıldı';
+          } else if (cp.isFinal) {
+            sub.textContent = `Dinamik • ${cp.maxMin}. dk zorunlu gönderime kalan`;
+          } else {
+            sub.textContent = `Dinamik • ${cp.cpMin}. dk kontrolü (${messagesSinceLastSend}/${cp.reqMsgs} msj)`;
+          }
+          return;
+        }
+
+        // Fixed mode
+        const targetMs = Math.max(1, Number(state.timer.fixedMinutes) || 15) * 60 * 1000;
         const elapsed = state.timer.running ? (Date.now() - lastSentAt) : 0;
         const remaining = state.timer.running ? Math.max(0, targetMs - elapsed) : targetMs;
 
+        $('activityDot').className = 'dot ' + (messagesSinceLastSend > 0 ? 'lilac' : '');
+        $('activityLabel').textContent = messagesSinceLastSend > 0 ? 'Aktif' : 'Sakin';
+        $('windowLabel').textContent = 'Gelen';
+        $('recentCountLabel').textContent = `${messagesSinceLastSend} msj`;
+
         display.textContent = formatTime(remaining);
         fill.style.width = `${state.timer.running ? Math.min(100, (elapsed / targetMs) * 100) : 0}%`;
-
-        if (!state.timer.running) {
-          sub.textContent = 'Duraklatıldı';
-        } else if (state.timer.mode === 'dynamic') {
-          sub.textContent = active
-            ? `Dinamik • Aktif chat (${state.timer.dynActiveMin} dk)`
-            : `Dinamik • Sakin chat (${state.timer.dynIdleMin} dk)`;
-        } else {
-          sub.textContent = `Sabit • Her ${state.timer.fixedMinutes} dk`;
-        }
+        sub.textContent = state.timer.running
+          ? `Sabit • Her ${state.timer.fixedMinutes} dk`
+          : 'Duraklatıldı';
       }
 
       function renderModes() {
@@ -1363,17 +1423,22 @@
         if (panel) panel.classList.add('active');
 
         $('fixedMinutes').value = state.timer.fixedMinutes;
-        $('dynActiveMin').value = state.timer.dynActiveMin;
-        $('dynIdleMin').value = state.timer.dynIdleMin;
-        $('dynWindowMin').value = state.timer.dynWindowMin;
-        $('dynThreshold').value = state.timer.dynThreshold;
+        $('dynMinMin').value = state.timer.dynMinMin;
+        $('dynStepMin').value = state.timer.dynStepMin;
+        $('dynMaxMin').value = state.timer.dynMaxMin;
+        $('dynBaseMsgs').value = state.timer.dynBaseMsgs;
+        $('dynStepMsgs').value = state.timer.dynStepMsgs;
         $('countTarget').value = state.timer.countTarget;
         $('rotationMode').value = state.timer.rotation;
 
         const sum = $('ruleSummary');
-        if (state.timer.mode === 'fixed') sum.textContent = `${state.timer.fixedMinutes} dk`;
-        else if (state.timer.mode === 'dynamic') sum.textContent = `${state.timer.dynActiveMin} dk / ${state.timer.dynIdleMin} dk`;
-        else sum.textContent = `${state.timer.countTarget} mesajda 1`;
+        if (state.timer.mode === 'fixed') {
+          sum.textContent = `${state.timer.fixedMinutes} dk`;
+        } else if (state.timer.mode === 'dynamic') {
+          sum.textContent = `${state.timer.dynMinMin}–${state.timer.dynMaxMin} dk • ${state.timer.dynBaseMsgs}+${state.timer.dynStepMsgs} msj`;
+        } else {
+          sum.textContent = `${state.timer.countTarget} mesajda 1`;
+        }
 
         renderMonitor();
       }
@@ -1428,6 +1493,9 @@
           clearInterval(refreshTimer);
           state.auth = structuredClone(DEFAULT_STATE.auth);
           state.timer.running = false;
+          dynamicStage = 0;
+          messagesSinceLastSend = 0;
+          nextRetryAt = 0;
           saveState();
           showBanner('');
           renderViews();
@@ -1437,6 +1505,9 @@
           state.timer.running = !state.timer.running;
           if (state.timer.running) {
             lastSentAt = Date.now();
+            messagesSinceLastSend = 0;
+            dynamicStage = 0;
+            nextRetryAt = 0;
             addLog('Zamanlayıcı başlatıldı.', 'ok');
           } else {
             addLog('Zamanlayıcı duraklatıldı.', '');
@@ -1454,6 +1525,8 @@
             state.timer.mode = btn.dataset.mode;
             lastSentAt = Date.now();
             messagesSinceLastSend = 0;
+            dynamicStage = 0;
+            nextRetryAt = 0;
             saveState();
             renderModes();
             addLog(`Mod: ${btn.textContent}`, '');
@@ -1461,17 +1534,22 @@
         });
 
         [
-          ['fixedMinutes', 'fixedMinutes'],
-          ['dynActiveMin', 'dynActiveMin'],
-          ['dynIdleMin', 'dynIdleMin'],
-          ['dynWindowMin', 'dynWindowMin'],
-          ['dynThreshold', 'dynThreshold'],
-          ['countTarget', 'countTarget']
-        ].forEach(([elId, key]) => {
+          ['fixedMinutes', 'fixedMinutes', 1],
+          ['dynMinMin', 'dynMinMin', 1],
+          ['dynStepMin', 'dynStepMin', 1],
+          ['dynMaxMin', 'dynMaxMin', 1],
+          ['dynBaseMsgs', 'dynBaseMsgs', 1],
+          ['dynStepMsgs', 'dynStepMsgs', 0],
+          ['countTarget', 'countTarget', 1]
+        ].forEach(([elId, key, minVal]) => {
           $(elId).addEventListener('change', (e) => {
-            const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+            const parsed = parseInt(e.target.value, 10);
+            const val = Number.isNaN(parsed) ? minVal : Math.max(minVal, parsed);
             e.target.value = val;
             state.timer[key] = val;
+            if (key === 'dynMinMin' && state.timer.dynMaxMin < val) {
+              state.timer.dynMaxMin = val;
+            }
             saveState();
             renderModes();
           });
