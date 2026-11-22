@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kick Timer — Yayın İçi Mesaj Zamanlayıcı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+--bg-root: #0b0b0e;
+--bg-surface: #121217;
+--bg-elevated: #181820;
+--bg-input: #0e0e13;
+--border: #23232e;
+--border-strong: #323242;
+
+--lilac: #b596f7;
+--lilac-hover: #c4abfa;
+--lilac-text: #110d1a;
+--lilac-soft: rgba(181, 150, 247, 0.10);
+--lilac-border: rgba(181, 150, 247, 0.28);
+
+--text-primary: #ececf1;
+--text-secondary: #9090a3;
+--text-muted: #5d5d6e;
+
+--ok: #6cc997;
+--warn: #d8ad62;
+--err: #e07272;
+
+--radius-sm: 6px;
+--radius-md: 10px;
+--radius-lg: 12px;
+--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+
+html, body {
+background-color: var(--bg-root);
+color: var(--text-primary);
+font-family: var(--font-sans);
+font-size: 13px;
+line-height: 1.5;
+-webkit-font-smoothing: antialiased;
+min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+width: 6px;
+height: 6px;
+}
+::-webkit-scrollbar-track {
+background: transparent;
+}
+::-webkit-scrollbar-thumb {
+background: #272734;
+border-radius: 3px;
+}
+
+.app-shell {
+max-width: 520px;
+margin: 0 auto;
+padding: 16px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+/* Header */
+.topbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 10px 14px;
+background: var(--bg-surface);
+border: 1px solid var(--border);
+border-radius: var(--radius-lg);
+}
+
+.brand {
+display: flex;
+align-items: center;
+gap: 9px;
+font-weight: 600;
+font-size: 13.5px;
+letter-spacing: -0.01em;
+}
+
+.brand-mark {
+width: 8px;
+height: 8px;
+border-radius: 2px;
+background: var(--lilac);
+}
+
+.topbar-right {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.user-chip {
+display: flex;
+align-items: center;
+gap: 7px;
+padding: 4px 9px;
+background: var(--bg-elevated);
+border: 1px solid var(--border);
+border-radius: 999px;
+font-size: 12px;
+color: var(--text-primary);
+}
+
+.dot {
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: var(--text-muted);
+flex-shrink: 0;
+}
+.dot.ok { background: var(--ok); }
+.dot.warn { background: var(--warn); }
+.dot.err { background: var(--err); }
+.dot.lilac { background: var(--lilac); }
+
+/* Cards */
+.card {
+background: var(--bg-surface);
+border: 1px solid var(--border);
+border-radius: var(--radius-lg);
+padding: 16px;
+}
+
+.card-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 12px;
+}
+
+.section-label {
+font-size: 11px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--text-secondary);
+}
+
+/* Buttons */
+button {
+font-family: inherit;
+font-size: 12.5px;
+font-weight: 500;
+border: none;
+cursor: pointer;
+transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, opacity 140ms ease;
+}
+
+.btn-primary {
+background: var(--lilac);
+color: var(--lilac-text);
+padding: 9px 14px;
+border-radius: var(--radius-sm);
+font-weight: 600;
+}
+.btn-primary:hover { background: var(--lilac-hover); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-secondary {
+background: var(--bg-elevated);
+color: var(--text-primary);
+border: 1px solid var(--border);
+padding: 7px 12px;
+border-radius: var(--radius-sm);
+}
+.btn-secondary:hover {
+border-color: var(--border-strong);
+background: #1f1f29;
+}
+
+.btn-ghost {
+background: transparent;
+color: var(--text-secondary);
+padding: 6px 8px;
+border-radius: var(--radius-sm);
+}
+.btn-ghost:hover {
+color: var(--text-primary);
+background: var(--bg-elevated);
+}
+
+.btn-danger {
+background: transparent;
+color: var(--err);
+border: 1px solid rgba(224, 114, 114, 0.25);
+padding: 6px 10px;
+border-radius: var(--radius-sm);
+}
+.btn-danger:hover {
+background: rgba(224, 114, 114, 0.1);
+}
+
+.btn-icon {
+width: 30px;
+height: 30px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+background: var(--bg-elevated);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+color: var(--text-secondary);
+}
+.btn-icon:hover {
+color: var(--text-primary);
+border-color: var(--border-strong);
+}
+
+/* Inputs */
+.field {
+display: flex;
+flex-direction: column;
+gap: 5px;
+}
+
+.field label {
+font-size: 11.5px;
+color: var(--text-secondary);
+font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+width: 100%;
+background: var(--bg-input);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+color: var(--text-primary);
+font-family: inherit;
+font-size: 12.5px;
+padding: 8px 10px;
+outline: none;
+transition: border-color 140ms ease;
+}
+
+input:focus, select:focus, textarea:focus {
+border-color: var(--lilac);
+}
+
+input[type="number"] {
+font-family: var(--font-mono);
+}
+
+.hint {
+font-size: 11px;
+color: var(--text-muted);
+}
+
+.grid-2 {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+}
+
+.grid-3 {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 8px;
+}
+
+.row {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+/* Login View */
+.login-stack {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.login-title {
+font-size: 16px;
+font-weight: 600;
+letter-spacing: -0.02em;
+}
+
+.login-sub {
+font-size: 12.5px;
+color: var(--text-secondary);
+margin-top: 2px;
+}
+
+.copy-box {
+display: flex;
+gap: 6px;
+}
+
+.copy-box input {
+font-family: var(--font-mono);
+font-size: 11.5px;
+color: var(--text-secondary);
+}
+
+details {
+border-top: 1px solid var(--border);
+padding-top: 10px;
+}
+
+summary {
+cursor: pointer;
+font-size: 12px;
+color: var(--text-secondary);
+user-select: none;
+list-style: none;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+summary::-webkit-details-marker { display: none; }
+summary:hover { color: var(--text-primary); }
+
+/* Monitor Card */
+.monitor-top {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 12px;
+margin-bottom: 14px;
+}
+
+.countdown {
+font-family: var(--font-mono);
+font-size: 32px;
+font-weight: 500;
+letter-spacing: -0.03em;
+font-variant-numeric: tabular-nums;
+line-height: 1.1;
+color: var(--text-primary);
+}
+
+.countdown-sub {
+font-size: 11.5px;
+color: var(--text-secondary);
+margin-top: 4px;
+}
+
+.progress-track {
+height: 3px;
+background: var(--bg-elevated);
+border-radius: 99px;
+overflow: hidden;
+margin-bottom: 14px;
+}
+
+.progress-fill {
+height: 100%;
+width: 0%;
+background: var(--lilac);
+transition: width 300ms linear;
+}
+
+.stat-box {
+background: var(--bg-elevated);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+padding: 8px 10px;
+}
+
+.stat-label {
+font-size: 10.5px;
+color: var(--text-muted);
+text-transform: uppercase;
+letter-spacing: 0.04em;
+}
+
+.stat-value {
+font-family: var(--font-mono);
+font-size: 13px;
+font-weight: 500;
+color: var(--text-primary);
+margin-top: 2px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+/* Segmented Mode Control */
+.segmented {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+background: var(--bg-input);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+padding: 3px;
+gap: 3px;
+margin-bottom: 14px;
+}
+
+.seg-btn {
+background: transparent;
+color: var(--text-secondary);
+padding: 7px 6px;
+border-radius: 4px;
+font-size: 12px;
+font-weight: 500;
+}
+
+.seg-btn:hover {
+color: var(--text-primary);
+}
+
+.seg-btn.active {
+background: var(--lilac-soft);
+color: var(--lilac);
+border: 1px solid var(--lilac-border);
+}
+
+.mode-panel {
+display: none;
+flex-direction: column;
+gap: 10px;
+}
+.mode-panel.active {
+display: flex;
+}
+
+/* Messages List */
+.msg-input-row {
+display: flex;
+gap: 6px;
+margin-bottom: 10px;
+}
+
+.msg-list {
+display: flex;
+flex-direction: column;
+gap: 6px;
+max-height: 220px;
+overflow-y: auto;
+}
+
+.msg-item {
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 8px 10px;
+background: var(--bg-elevated);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+}
+
+.msg-item.is-next {
+border-color: var(--lilac-border);
+}
+
+.msg-item.disabled {
+opacity: 0.45;
+}
+
+.msg-text {
+flex: 1;
+font-size: 12.5px;
+word-break: break-word;
+}
+
+.next-tag {
+font-size: 10px;
+font-weight: 600;
+color: var(--lilac);
+background: var(--lilac-soft);
+padding: 2px 6px;
+border-radius: 4px;
+flex-shrink: 0;
+}
+
+.msg-check {
+accent-color: var(--lilac);
+cursor: pointer;
+}
+
+/* Log */
+.log-list {
+display: flex;
+flex-direction: column;
+gap: 4px;
+max-height: 150px;
+overflow-y: auto;
+font-family: var(--font-mono);
+font-size: 11px;
+}
+
+.log-entry {
+display: flex;
+gap: 8px;
+padding: 4px 6px;
+border-radius: 4px;
+background: var(--bg-input);
+}
+
+.log-time {
+color: var(--text-muted);
+flex-shrink: 0;
+}
+
+.log-msg { color: var(--text-secondary); word-break: break-word; }
+.log-msg.ok { color: var(--ok); }
+.log-msg.err { color: var(--err); }
+.log-msg.lilac { color: var(--lilac); }
+
+/* Switch */
+.switch-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+padding: 4px 0;
+}
+
+.switch-row span {
+font-size: 12px;
+color: var(--text-secondary);
+}
+
+/* Modal */
+.modal-backdrop {
+position: fixed;
+inset: 0;
+background: rgba(7, 7, 10, 0.78);
+display: none;
+align-items: center;
+justify-content: center;
+padding: 16px;
+z-index: 50;
+}
+.modal-backdrop.open { display: flex; }
+
+.modal-card {
+width: 100%;
+max-width: 440px;
+max-height: 90vh;
+overflow-y: auto;
+background: var(--bg-surface);
+border: 1px solid var(--border-strong);
+border-radius: var(--radius-lg);
+padding: 16px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.hidden { display: none !important; }
+
+.banner {
+padding: 9px 11px;
+border-radius: var(--radius-sm);
+font-size: 12px;
+border: 1px solid var(--border);
+background: var(--bg-elevated);
+color: var(--text-secondary);
+}
+.banner.err {
+border-color: rgba(224, 114, 114, 0.35);
+color: var(--err);
+background: rgba(224, 114, 114, 0.08);
+}
+.banner.ok {
+border-color: rgba(108, 201, 151, 0.3);
+color: var(--ok);
+background: rgba(108, 201, 151, 0.07);
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+<!-- Top Bar -->
+<header class="topbar">
+<div class="brand">
+<span class="brand-mark"></span>
+<span>Kick Timer</span>
+</div>
+<div class="topbar-right">
+<div id="userChip" class="user-chip hidden">
+<span id="wsDot" class="dot"></span>
+<span id="usernameLabel">—</span>
+</div>
+<button id="openSettingsBtn" class="btn-icon hidden" title="Ayarlar" aria-label="Ayarlar">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+</svg>
+</button>
+</div>
+</header>
+
+<div id="globalBanner" class="banner hidden"></div>
+
+<!-- Login View -->
+<section id="loginView" class="card login-stack">
+<div>
+<div class="login-title">Kick Hesabıyla Bağlan</div>
+<div class="login-sub">OBS yayın başında bir kez giriş yap. Oturum ve token yenilemesi OBS açık kaldığı sürece otomatik yönetilir.</div>
+</div>
+
+<div class="field">
+<label for="loginClientId">Kick App Client ID</label>
+<input id="loginClientId" type="text" placeholder="01J..." autocomplete="off" />
+</div>
+
+<div class="field">
+<label for="loginClientSecret">Kick App Client Secret</label>
+<input id="loginClientSecret" type="password" placeholder="Yalnızca bu tarayıcıda saklanır" autocomplete="off" />
+</div>
+
+<div class="field">
+<label>Redirect URI (Kick Developer Paneli'ne ekleyin)</label>
+<div class="copy-box">
+<input id="redirectUriInput" type="text" readonly />
+<button id="copyRedirectBtn" class="btn-secondary" type="button">Kopyala</button>
+</div>
+</div>
+
+<button id="kickLoginBtn" class="btn-primary" type="button">Kick ile Giriş Yap</button>
+
+<details>
+<summary>
+<span>Gelişmiş / Manuel Token ile Giriş</span>
+<span>▾</span>
+</summary>
+<div class="login-stack" style="margin-top: 10px;">
+<div class="field">
+<label for="loginTokenProxy">Token Proxy URL (Opsiyonel)</label>
+<input id="loginTokenProxy" type="text" placeholder="Boş bırakılırsa id.kick.com/oauth/token kullanılır" />
+<span class="hint">Tarayıcı CORS engeline takılırsa kendi token proxy adresinizi girebilirsiniz.</span>
+</div>
+<div class="field">
+<label for="manualAccessToken">Mevcut Access Token (Opsiyonel)</label>
+<input id="manualAccessToken" type="password" placeholder="Bearer token yapıştır..." />
+</div>
+<div class="grid-2">
+<div class="field">
+<label for="manualBroadcasterId">Broadcaster User ID</label>
+<input id="manualBroadcasterId" type="number" placeholder="Otomatik çekilir" />
+</div>
+<div class="field">
+<label for="manualChatroomId">Chatroom ID</label>
+<input id="manualChatroomId" type="number" placeholder="Chat dinleme için" />
+</div>
+</div>
+<button id="manualLoginBtn" class="btn-secondary" type="button">Manuel Token ile Devam Et</button>
+</div>
+</details>
+</section>
+
+<!-- Main Dashboard -->
+<main id="dashboardView" class="hidden" style="display: flex; flex-direction: column; gap: 12px;">
+<!-- Status & Countdown -->
+<section class="card">
+<div class="monitor-top">
+<div>
+<div id="countdownDisplay" class="countdown">00:00</div>
+<div id="countdownSub" class="countdown-sub">Duraklatıldı</div>
+</div>
+<div class="row">
+<button id="sendNowBtn" class="btn-secondary" type="button" title="Sıradaki mesajı hemen gönder">Şimdi Gönder</button>
+<button id="toggleEngineBtn" class="btn-primary" type="button">Başlat</button>
+</div>
+</div>
+
+<div class="progress-track">
+<div id="progressFill" class="progress-fill"></div>
+</div>
+
+<div class="grid-3">
+<div class="stat-box">
+<div class="stat-label">Chat Durumu</div>
+<div class="stat-value">
+<span id="activityDot" class="dot"></span>
+<span id="activityStateLabel">Sakin</span>
+</div>
+</div>
+<div class="stat-box">
+<div class="stat-label" id="windowStatLabel">Son 5 dk</div>
+<div class="stat-value" id="recentMsgCount">0 msj</div>
+</div>
+<div class="stat-box">
+<div class="stat-label">Gönderilen</div>
+<div class="stat-value" id="sentTotalCount">0</div>
+</div>
+</div>
+</section>
+
+<!-- Mode Selector & Config -->
+<section class="card">
+<div class="card-header">
+<span class="section-label">Tetikleme Modu</span>
+<span id="activeRuleSummary" class="hint"></span>
+</div>
+
+<div class="segmented" role="tablist">
+<button class="seg-btn" data-mode="fixed" type="button">Sabit</button>
+<button class="seg-btn" data-mode="dynamic" type="button">Dinamik</button>
+<button class="seg-btn" data-mode="count" type="button">Mesaj Sayacı</button>
+</div>
+
+<!-- Mode 1: Fixed -->
+<div id="panel-fixed" class="mode-panel">
+<div class="field">
+<label for="fixedMinutes">Gönderim Aralığı (dakika)</label>
+<input id="fixedMinutes" type="number" min="1" max="240" step="1" />
+</div>
+</div>
+
+<!-- Mode 2: Dynamic -->
+<div id="panel-dynamic" class="mode-panel">
+<div class="grid-2">
+<div class="field">
+<label for="dynActiveMin">Aktif Chat Aralığı (dk)</label>
+<input id="dynActiveMin" type="number" min="1" max="240" step="1" />
+</div>
+<div class="field">
+<label for="dynIdleMin">Sakin Chat Aralığı (dk)</label>
+<input id="dynIdleMin" type="number" min="1" max="360" step="1" />
+</div>
+</div>
+<div class="grid-2">
+<div class="field">
+<label for="dynWindowMin">Ölçüm Penceresi (dk)</label>
+<input id="dynWindowMin" type="number" min="1" max="60" step="1" />
+</div>
+<div class="field">
+<label for="dynThreshold">Aktiflik Eşiği (mesaj)</label>
+<input id="dynThreshold" type="number" min="1" max="5000" step="1" />
+</div>
+</div>
+<span class="hint">Son ölçüm penceresindeki mesaj sayısı eşiğe ulaştığında aktif aralık, altında kaldığında sakin aralık uygulanır.</span>
+</div>
+
+<!-- Mode 3: Message Count -->
+<div id="panel-count" class="mode-panel">
+<div class="field">
+<label for="countTarget">Kaç Mesajda Bir Gönderilsin?</label>
+<input id="countTarget" type="number" min="1" max="50000" step="1" />
+</div>
+<span class="hint">Sadece gelen izleyici mesajları sayılır; hedef sayıya ulaşıldığında mesaj atılır ve sayaç sıfırlanır.</span>
+</div>
+</section>
+
+<!-- Messages Queue -->
+<section class="card">
+<div class="card-header">
+<span class="section-label">Mesaj Havuzu</span>
+<div class="row">
+<select id="rotationMode" style="width: auto; padding: 4px 8px; font-size: 11.5px;">
+<option value="sequential">Sıralı</option>
+<option value="random">Rastgele</option>
+</select>
+</div>
+</div>
+
+<div class="msg-input-row">
+<input id="newMessageInput" type="text" maxlength="500" placeholder="Gönderilecek mesajı yazın..." />
+<button id="addMessageBtn" class="btn-secondary" type="button">Ekle</button>
+</div>
+
+<div id="messageList" class="msg-list"></div>
+</section>
+
+<!-- Activity Log -->
+<section class="card">
+<div class="card-header" style="margin-bottom: 8px;">
+<span class="section-label">Kayıtlar</span>
+<button id="clearLogBtn" class="btn-ghost" type="button" style="font-size: 11px; padding: 3px 6px;">Temizle</button>
+</div>
+<div id="logList" class="log-list"></div>
+</section>
+</main>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal-backdrop">
+<div class="modal-card">
+<div class="card-header" style="margin-bottom: 0;">
+<span class="section-label">Bağlantı ve Kanal Ayarları</span>
+<button id="closeSettingsBtn" class="btn-ghost" type="button">Kapat</button>
+</div>
+
+<div class="grid-2">
+<div class="field">
+<label for="setBroadcasterId">Broadcaster User ID</label>
+<input id="setBroadcasterId" type="number" />
+</div>
+<div class="field">
+<label for="setChatroomId">Chatroom ID</label>
+<input id="setChatroomId" type="number" placeholder="Örn: 1234567" />
+</div>
+</div>
+
+<div class="field">
+<label for="setChannelSlug">Kanal Slug (Chatroom ID otomatik bulma için)</label>
+<div class="row">
+<input id="setChannelSlug" type="text" placeholder="kanal_adi" />
+<button id="resolveChatroomBtn" class="btn-secondary" type="button" style="white-space: nowrap;">ID Bul</button>
+</div>
+</div>
+
+<div class="field">
+<label for="setSendType">Kick API Gönderim Tipi</label>
+<select id="setSendType">
+<option value="user">user (Giriş yapan yayıncı olarak)</option>
+<option value="bot">bot (Uygulama bot hesabı olarak)</option>
+</select>
+</div>
+
+<div class="field">
+<label for="setCustomWs">Özel WebSocket Relay URL (Opsiyonel)</label>
+<input id="setCustomWs" type="text" placeholder="Boş bırakılırsa Kick Pusher WS kullanılır" />
+<span class="hint">Kick resmi Webhook olaylarını bir WebSocket sunucusuyla aktarıyorsanız adresini yazın.</span>
+</div>
+
+<div class="field">
+<label for="setTokenProxy">Token Proxy URL (Opsiyonel)</label>
+<input id="setTokenProxy" type="text" placeholder="https://..." />
+</div>
+
+<div class="switch-row">
+<span>Kendi gönderdiğim mesajları sayaçtan hariç tut</span>
+<input id="setIgnoreSelf" type="checkbox" class="msg-check" />
+</div>
+
+<div class="row" style="justify-content: space-between; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border);">
+<button id="logoutBtn" class="btn-danger" type="button">Çıkış Yap</button>
+<div class="row">
+<button id="reconnectWsBtn" class="btn-secondary" type="button">Chat Yeniden Bağla</button>
+<button id="saveSettingsBtn" class="btn-primary" type="button">Kaydet</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const KICK_AUTH_URL = 'https://id.kick.com/oauth/authorize';
+const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
+const KICK_API_BASE = 'https://api.kick.com/public/v1';
+const KICK_PUSHER_WS = 'wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false';
+const OAUTH_SCOPES = 'user:read channel:read chat:write';
+const STORAGE_KEY = 'kick_timer_state_v1';
+const REDIRECT_URI = 'https://pairaaa.com/cetim';
+
+const DEFAULT_STATE = {
+config: {
+clientId: '01M817K3BWSRWWT264RY14P9M1',
+clientSecret: '',
+tokenProxy: '',
+customWsUrl: '',
+sendType: 'user',
+broadcasterId: '',
+chatroomId: '',
+channelSlug: '',
+ignoreSelf: true
+},
+auth: {
+accessToken: '',
+refreshToken: '',
+expiresAt: 0,
+username: '',
+userId: ''
+},
+timer: {
+mode: 'dynamic', // fixed | dynamic | count
+fixedMinutes: 15,
+dynActiveMin: 10,
+dynIdleMin: 30,
+dynWindowMin: 5,
+dynThreshold: 10,
+countTarget: 300,
+rotation: 'sequential',
+running: false
+},
+messages: [
+{ id: 'm1', text: 'Yayına hoş geldiniz, takip ederek destek olabilirsiniz.', enabled: true },
+{ id: 'm2', text: 'Discord sunucumuza katılmayı unutmayın.', enabled: true }
+ ],
+nextIndex: 0
+};
+
+let state = loadState();
+
+// Runtime (memory)
+let ws = null;
+let wsReconnectTimer = null;
+let wsPingTimer = null;
+let wsBackoffMs = 2000;
+let wsConnected = false;
+
+let tickTimer = null;
+let refreshCheckTimer = null;
+let lastSentAt = Date.now();
+let messagesSinceLastSend = 0;
+let sentTotal = 0;
+let recentTimestamps = [];
+let isSending = false;
+let logs = [];
+
+const $` = (id) => document.getElementById(id);
+
+function loadState() {
+try {
+const raw = localStorage.getItem(STORAGE_KEY);
+if (!raw) return structuredClone(DEFAULT_STATE);
+const parsed = JSON.parse(raw);
+const savedCfg = parsed.config || {};
+return {
+config: {
+...DEFAULT_STATE.config,
+...savedCfg,
+clientId: savedCfg.clientId || DEFAULT_STATE.config.clientId,
+tokenProxy: savedCfg.tokenProxy || ''
+},
+auth: { ...DEFAULT_STATE.auth, ...(parsed.auth || {}) },
+timer: { ...DEFAULT_STATE.timer, ...(parsed.timer || {}) },
+messages: Array.isArray(parsed.messages) ? parsed.messages : structuredClone(DEFAULT_STATE.messages),
+nextIndex: Number.isInteger(parsed.nextIndex) ? parsed.nextIndex : 0
+};
+} catch {
+return structuredClone(DEFAULT_STATE);
+}
+}
+
+function saveState() {
+try {
+localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+} catch (err) {
+addLog('Ayarlar kaydedilemedi: ' + err.message, 'err');
+}
+}
+
+function getRedirectUri() {
+return REDIRECT_URI;
+}
+
+function captureSecretFromUrl() {
+const params = new URLSearchParams(window.location.search);
+const urlSecret = params.get('secret');
+if (!urlSecret || !urlSecret.trim()) return;
+
+state.config.clientSecret = urlSecret.trim();
+saveState();
+
+params.delete('secret');
+const remaining = params.toString();
+const cleanUrl = window.location.pathname + (remaining ? ?${remaining}` : '');
+window.history.replaceState({}, document.title, cleanUrl);
+}
+
+function showBanner(text, type = '') {
+const el = $`('globalBanner');
+if (!text) {
+el.classList.add('hidden');
+return;
+}
+el.textContent = text;
+el.className = 'banner' + (type ? ' ' + type : '');
+}
+
+function addLog(message, level = '') {
+const now = new Date();
+const ts = now.toTimeString().slice(0, 8);
+logs.unshift({ ts, message, level });
+if (logs.length > 40) logs.pop();
+renderLogs();
+}
+
+function renderLogs() {
+const container = $('logList'); if (!logs.length) { container.innerHTML = '&lt;div class="hint" style="padding:4px 2px;"&gt;Henüz kayıt yok.&lt;/div&gt;'; return; } container.innerHTML = logs.map((entry) =&gt;
+<div class="log-entry">
+<span class="log-time"> {entry.level}">${escapeHtml(entry.message)}&lt;/span&gt; &lt;/div&gt;).join('');
+}
+
+function escapeHtml(str) {
+return String(str)
+.replace(/&/g, '&')
+.replace(/</g, '<')
+.replace(/>/g, '>')
+.replace(/"/g, '"')
+.replace(/'/g, ''');
+}
+
+// --- PKCE Utilities ---
+function randomString(byteLength = 48) {
+const bytes = new Uint8Array(byteLength);
+crypto.getRandomValues(bytes);
+return base64UrlEncode(bytes);
+}
+
+function base64UrlEncode(bytes) {
+let bin = '';
+for (let i = 0; i < bytes.length; i++) {
+bin += String.fromCharCode(bytes[i]);
+}
+return btoa(bin).replace(/+/g, '-').replace(///g, '_').replace(/=+`$/, '');
+}
+
+async function sha256Base64Url(plain) {
+const data = new TextEncoder().encode(plain);
+const hash = await crypto.subtle.digest('SHA-256', data);
+return base64UrlEncode(new Uint8Array(hash));
+}
+
+// --- OAuth 2.1 + PKCE ---
+async function startKickOAuth() {
+const clientId =  ('loginClientSecret')?.value.trim() || state.config.clientSecret;
+const tokenProxy = $`('loginTokenProxy')?.value.trim() || state.config.tokenProxy;
+
+if (!clientId) {
+showBanner('Devam etmek için Kick App Client ID girmelisiniz.', 'err');
+return;
+}
+
+if (!clientSecret) {
+showBanner('Client Secret bulunamadı. Sayfayı ?secret=... parametresiyle açın veya alana girin.', 'err');
+return;
+}
+
+if (window.location.protocol === 'file:') {
+showBanner('Kick OAuth file:// protokolünde çalışmaz. Dosyayı localhost veya HTTPS üzerinden açın.', 'err');
+return;
+}
+
+state.config.clientId = clientId;
+state.config.clientSecret = clientSecret;
+state.config.tokenProxy = tokenProxy;
+saveState();
+
+const verifier = randomString(64);
+const challenge = await sha256Base64Url(verifier);
+const oauthState = randomString(24);
+
+sessionStorage.setItem('kick_pkce_verifier', verifier);
+sessionStorage.setItem('kick_oauth_state', oauthState);
+
+const params = new URLSearchParams({
+response_type: 'code',
+client_id: clientId,
+redirect_uri: getRedirectUri(),
+scope: OAUTH_SCOPES,
+code_challenge: challenge,
+code_challenge_method: 'S256',
+state: oauthState
+});
+
+window.location.href = ``${KICK_AUTH_URL}?${params.toString()};
+}
+
+async function handleOAuthCallback() {
+const params = new URLSearchParams(window.location.search);
+const code = params.get('code');
+const returnedState = params.get('state');
+const error = params.get('error');
+
+if (error) {
+showBanner(Kick girişi reddedildi:${error}`, 'err');
+window.history.replaceState({}, document.title, window.location.pathname);
+return false;
+}
+
+if (!code) return false;
+
+const savedState = sessionStorage.getItem('kick_oauth_state');
+const verifier = sessionStorage.getItem('kick_pkce_verifier');
+
+window.history.replaceState({}, document.title, window.location.pathname);
+sessionStorage.removeItem('kick_oauth_state');
+sessionStorage.removeItem('kick_pkce_verifier');
+
+if (!verifier || (savedState && savedState !== returnedState)) {
+showBanner('OAuth güvenlik doğrulaması (state/PKCE) eşleşmedi. Tekrar giriş yapın.', 'err');
+return false;
+}
+
+showBanner('Kick oturumu doğrulanıyor...');
+
+const tokenEndpoint = state.config.tokenProxy || KICK_TOKEN_URL;
+const body = new URLSearchParams({
+grant_type: 'authorization_code',
+client_id: state.config.clientId,
+redirect_uri: getRedirectUri(),
+code_verifier: verifier,
+code
+});
+
+if (state.config.clientSecret) {
+body.set('client_secret', state.config.clientSecret);
+}
+
+try {
+const res = await fetch(tokenEndpoint, {
+method: 'POST',
+headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+body: body.toString()
+});
+
+const data = await res.json().catch(() => ({}));
+if (!res.ok || !data.access_token) {
+throw new Error(data.error_description || data.message || HTTP ${res.status}`);
+}
+
+applyTokens(data);
+await syncAccountProfile();
+showBanner('');
+addLog('Kick OAuth girişi tamamlandı.', 'ok');
+return true;
+} catch (err) {
+showBanner(Token alınamadı:${err.message}. CORS hatası alıyorsanız Token Proxy URL kullanın.`, 'err');
+addLog('OAuth token hatası: ' + err.message, 'err');
+return false;
+}
+}
+
+function applyTokens(data) {
+state.auth.accessToken = data.access_token;
+if (data.refresh_token) state.auth.refreshToken = data.refresh_token;
+const expiresIn = Number(data.expires_in) || 7200;
+state.auth.expiresAt = Date.now() + expiresIn * 1000;
+saveState();
+}
+
+async function refreshAccessToken() {
+if (!state.auth.refreshToken || !state.config.clientId) return false;
+
+const tokenEndpoint = state.config.tokenProxy || KICK_TOKEN_URL;
+const body = new URLSearchParams({
+grant_type: 'refresh_token',
+client_id: state.config.clientId,
+refresh_token: state.auth.refreshToken
+});
+if (state.config.clientSecret) {
+body.set('client_secret', state.config.clientSecret);
+}
+
+try {
+const res = await fetch(tokenEndpoint, {
+method: 'POST',
+headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+body: body.toString()
+});
+const data = await res.json().catch(() => ({}));
+if (!res.ok || !data.access_token) {
+throw new Error(data.error_description || HTTP ${res.status}`);
+}
+applyTokens(data);
+addLog('Oturum tokenı otomatik yenilendi.', 'ok');
+return true;
+} catch (err) {
+addLog('Token yenileme başarısız: ' + err.message, 'err');
+return false;
+}
+}
+
+// --- Kick Public API v1 ---
+async function kickApiFetch(path, options = {}, allowRetry = true) {
+const res = await fetch(``${KICK_API_BASE}latex
+{path}`, { ...options, headers: { 'Authorization': `Bearer 
+
+{state.auth.accessToken}`,
+'Accept': 'application/json',
+...(options.headers || {})
+}
+});
+
+if (res.status === 401 && allowRetry && state.auth.refreshToken) {
+const ok = await refreshAccessToken();
+if (ok) return kickApiFetch(path, options, false);
+}
+
+const data = await res.json().catch(() => ({}));
+if (!res.ok) {
+throw new Error(data.message || data.error || HTTP ${res.status}`);
+}
+return data;
+}
+
+async function syncAccountProfile() {
+try {
+const userRes = await kickApiFetch('/users');
+const user = Array.isArray(userRes.data) ? userRes.data[0] : userRes.data;
+if (user) {
+state.auth.userId = String(user.user_id || '');
+state.auth.username = user.name || user.username || 'Yayıncı';
+}
+} catch (err) {
+addLog('Kullanıcı bilgisi alınamadı: ' + err.message, 'err');
+}
+
+try {
+const chRes = await kickApiFetch('/channels');
+const ch = Array.isArray(chRes.data) ? chRes.data[0] : chRes.data;
+if (ch) {
+if (!state.config.broadcasterId && ch.broadcaster_user_id) {
+state.config.broadcasterId = String(ch.broadcaster_user_id);
+}
+if (!state.config.channelSlug && ch.slug) {
+state.config.channelSlug = ch.slug;
+}
+}
+} catch (err) {
+addLog('Kanal bilgisi alınamadı: ' + err.message, 'err');
+}
+
+if (!state.config.broadcasterId && state.auth.userId) {
+state.config.broadcasterId = state.auth.userId;
+}
+
+if (!state.config.chatroomId && state.config.channelSlug) {
+await resolveChatroomIdFromSlug(state.config.channelSlug, true);
+}
+
+saveState();
+}
+
+async function resolveChatroomIdFromSlug(slug, silent = false) {
+const cleanSlug = (slug || '').trim().toLowerCase();
+if (!cleanSlug) return null;
+try {
+const res = await fetch(https://kick.com/api/v2/channels/${encodeURIComponent(cleanSlug)}); if (!res.ok) throw new Error(HTTP latex
+{res.status}`); const data = await res.json(); const id = data?.chatroom?.id; if (id) { state.config.chatroomId = String(id); saveState(); if (!silent) addLog(`Chatroom ID bulundu: 
+
+{id}`, 'ok');
+return String(id);
+}
+} catch (err) {
+if (!silent) {
+addLog('Chatroom ID otomatik çekilemedi. Ayarlardan manuel girebilirsiniz.', 'err');
+}
+}
+return null;
+}
+
+async function sendKickMessage(content) {
+if (!content || !state.auth.accessToken) return false;
+if (isSending) return false;
+isSending = true;
+
+try {
+const payload = {
+content: content.slice(0, 500),
+type: state.config.sendType === 'bot' ? 'bot' : 'user'
+};
+if (payload.type === 'user') {
+const bid = Number(state.config.broadcasterId || state.auth.userId);
+if (!bid) throw new Error('Broadcaster User ID tanımlı değil (Ayarlar).');
+payload.broadcaster_user_id = bid;
+}
+
+await kickApiFetch('/chat', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(payload)
+});
+
+sentTotal++;
+lastSentAt = Date.now();
+messagesSinceLastSend = 0;
+addLog(Gönderildi: "${content.slice(0, 60)}${content.length &gt; 60 ? '...' : ''}", 'lilac');
+renderMonitor();
+return true;
+} catch (err) {
+addLog(Mesaj gönderilemedi: ${err.message}`, 'err');
+return false;
+} finally {
+isSending = false;
+}
+}
+
+function pickNextMessage() {
+const active = state.messages.filter((m) => m.enabled && m.text.trim());
+if (!active.length) return null;
+
+if (state.timer.rotation === 'random') {
+const idx = Math.floor(Math.random() * active.length);
+return active[idx].text.trim();
+}
+
+const idx = state.nextIndex % active.length;
+const chosen = active[idx].text.trim();
+state.nextIndex = (idx + 1) % active.length;
+saveState();
+renderMessages();
+return chosen;
+}
+
+async function triggerScheduledMessage(reason = '') {
+const text = pickNextMessage();
+if (!text) {
+addLog('Gönderilecek aktif mesaj bulunamadı.', 'err');
+lastSentAt = Date.now();
+messagesSinceLastSend = 0;
+return;
+}
+if (reason) addLog(Tetiklendi (${reason})`, '');
+await sendKickMessage(text);
+}
+
+// --- Chat Listener (WebSocket) ---
+function disconnectChatWs() {
+clearTimeout(wsReconnectTimer);
+clearInterval(wsPingTimer);
+wsConnected = false;
+if (ws) {
+ws.onclose = null;
+ws.onerror = null;
+ws.onmessage = null;
+ws.close();
+ws = null;
+}
+updateWsIndicator();
+}
+
+function connectChatWs() {
+disconnectChatWs();
+const customUrl = (state.config.customWsUrl || '').trim();
+const chatroomId = String(state.config.chatroomId || '').trim();
+
+if (!customUrl && !chatroomId) {
+updateWsIndicator();
+addLog('Chat dinlemek için Ayarlar bölümünden Chatroom ID girin.', 'err');
+return;
+}
+
+const targetUrl = customUrl || KICK_PUSHER_WS;
+
+try {
+ws = new WebSocket(targetUrl);
+} catch (err) {
+addLog('WebSocket başlatılamadı: ' + err.message, 'err');
+scheduleReconnect();
+return;
+}
+
+ws.onopen = () => {
+wsConnected = true;
+wsBackoffMs = 2000;
+updateWsIndicator();
+
+if (!customUrl) {
+ws.send(JSON.stringify({
+event: 'pusher:subscribe',
+data: { auth: '', channel: chatrooms.${chatroomId}.v2} })); addLog(Chat dinleniyor (chatroom #${chatroomId})., 'ok');
+} else {
+addLog('Özel WebSocket sunucusuna bağlanıldı.', 'ok');
+}
+
+wsPingTimer = setInterval(() => {
+if (ws && ws.readyState === WebSocket.OPEN) {
+ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+}
+}, 60000);
+};
+
+ws.onmessage = (evt) => {
+try {
+const msg = JSON.parse(evt.data);
+
+if (msg.event === 'pusher:ping') {
+ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+return;
+}
+
+if (msg.event === 'App\Events\ChatMessageEvent' || msg.event === 'chat.message.sent') {
+const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+handleIncomingChatMessage(data);
+}
+} catch {
+// Diğer protokol mesajlarını yoksay
+}
+};
+
+ws.onerror = () => {
+wsConnected = false;
+updateWsIndicator();
+};
+
+ws.onclose = () => {
+wsConnected = false;
+clearInterval(wsPingTimer);
+updateWsIndicator();
+scheduleReconnect();
+};
+}
+
+function scheduleReconnect() {
+if (!state.auth.accessToken) return;
+clearTimeout(wsReconnectTimer);
+wsReconnectTimer = setTimeout(() => {
+addLog('Chat bağlantısı yeniden deneniyor...', '');
+connectChatWs();
+}, wsBackoffMs);
+wsBackoffMs = Math.min(wsBackoffMs * 2, 30000);
+}
+
+function handleIncomingChatMessage(data) {
+const senderId = String(data?.sender?.id || data?.sender?.user_id || '');
+const senderName = (data?.sender?.username || '').toLowerCase();
+const myName = (state.auth.username || '').toLowerCase();
+
+if (state.config.ignoreSelf) {
+if ((state.auth.userId && senderId === state.auth.userId) || (myName && senderName === myName)) {
+return;
+}
+}
+
+const now = Date.now();
+recentTimestamps.push(now);
+pruneRecentTimestamps(now);
+
+if (state.timer.running) {
+messagesSinceLastSend++;
+if (state.timer.mode === 'count' && messagesSinceLastSend >= Math.max(1, Number(state.timer.countTarget))) {
+triggerScheduledMessage(${state.timer.countTarget} mesaj eşiği`);
+}
+}
+
+renderMonitor();
+}
+
+function pruneRecentTimestamps(now = Date.now()) {
+const windowMs = Math.max(1, Number(state.timer.dynWindowMin) || 5) * 60 * 1000;
+const cutoff = now - windowMs;
+while (recentTimestamps.length && recentTimestamps[0] < cutoff) {
+recentTimestamps.shift();
+}
+}
+
+function isChatCurrentlyActive() {
+pruneRecentTimestamps();
+const threshold = Math.max(1, Number(state.timer.dynThreshold) || 10);
+return recentTimestamps.length >= threshold;
+}
+
+// --- Engine Tick Loop ---
+function startEngineLoop() {
+clearInterval(tickTimer);
+tickTimer = setInterval(engineTick, 1000);
+
+clearInterval(refreshCheckTimer);
+refreshCheckTimer = setInterval(() => {
+if (state.auth.refreshToken && state.auth.expiresAt) {
+const remaining = state.auth.expiresAt - Date.now();
+if (remaining < 5 * 60 * 1000) {
+refreshAccessToken();
+}
+}
+}, 30000);
+}
+
+function engineTick() {
+pruneRecentTimestamps();
+
+if (state.timer.running && state.timer.mode !== 'count') {
+const targetMs = getCurrentTargetMs();
+const elapsedMs = Date.now() - lastSentAt;
+if (elapsedMs >= targetMs) {
+const reason = state.timer.mode === 'dynamic'
+? (isChatCurrentlyActive() ? Dinamik / Aktif${state.timer.dynActiveMin} dk:Dinamik / Sakin  {state.timer.fixedMinutes} dk`;
+triggerScheduledMessage(reason);
+}
+}
+
+renderMonitor();
+}
+
+function getCurrentTargetMs() {
+if (state.timer.mode === 'fixed') {
+return Math.max(1, Number(state.timer.fixedMinutes) || 15) * 60 * 1000;
+}
+const active = isChatCurrentlyActive();
+const mins = active
+? (Number(state.timer.dynActiveMin) || 10)
+: (Number(state.timer.dynIdleMin) || 30);
+return Math.max(1, mins) * 60 * 1000;
+}
+
+function formatDuration(ms) {
+const totalSec = Math.max(0, Math.ceil(ms / 1000));
+const h = Math.floor(totalSec / 3600);
+const m = Math.floor((totalSec % 3600) / 60);
+const s = totalSec % 60;
+const pad = (n) => String(n).padStart(2, '0');
+return h > 0 ? ${pad(h)}:${pad(m)}:${pad(s)}: ``${pad(m)}:${pad(s)}`;
+}
+
+// --- UI Rendering ---
+function updateWsIndicator() {
+const dot = `$('wsDot');
+dot.className = 'dot ' + (wsConnected ? 'ok' : (state.config.chatroomId || state.config.customWsUrl ? 'warn' : 'err'));
+}
+
+function renderMonitor() {
+const activeChat = isChatCurrentlyActive();
+ ('activityStateLabel').textContent = activeChat ? 'Aktif' : 'Sakin';
+ {state.timer.dynWindowMin} dk; $('recentMsgCount').textContent = ``${recentTimestamps.length} msj; $('sentTotalCount').textContent = String(sentTotal);
+
+const toggleBtn = `$('toggleEngineBtn');
+toggleBtn.textContent = state.timer.running ? 'Duraklat' : 'Başlat';
+
+const display =  ('countdownSub');
+const fill = $`('progressFill');
+
+if (state.timer.mode === 'count') {
+const target = Math.max(1, Number(state.timer.countTarget) || 300);
+display.textContent = ${messagesSinceLastSend} / $`{target}`; const pct = Math.min(100, (messagesSinceLastSend / target) * 100); fill.style.width =${pct}%; sub.textContent = state.timer.running ?Mesaj sayacı aktif • Kalan ${Math.max(0, target - messagesSinceLastSend)} mesaj
+: 'Duraklatıldı • Mesaj sayacı beklemede';
+return;
+}
+
+const targetMs = getCurrentTargetMs();
+const elapsedMs = state.timer.running ? (Date.now() - lastSentAt) : 0;
+const remainingMs = state.timer.running ? Math.max(0, targetMs - elapsedMs) : targetMs;
+const pct = state.timer.running ? Math.min(100, (elapsedMs / targetMs) * 100) : 0;
+
+display.textContent = formatDuration(remainingMs);
+fill.style.width = ``${pct}%`;
+
+if (!state.timer.running) {
+sub.textContent = 'Duraklatıldı';
+} else if (state.timer.mode === 'dynamic') {
+sub.textContent = activeChat
+? Dinamik mod • Chat aktif (${state.timer.dynActiveMin} dk aralık):Dinamik mod • Chat sakin (${state.timer.dynIdleMin} dk aralık);
+} else {
+sub.textContent = Sabit mod • Her ${state.timer.fixedMinutes} dakikada bir`;
+}
+}
+
+function renderModeUI() {
+document.querySelectorAll('.seg-btn').forEach((btn) => {
+btn.classList.toggle('active', btn.dataset.mode === state.timer.mode);
+});
+document.querySelectorAll('.mode-panel').forEach((p) => p.classList.remove('active'));
+const activePanel = $(panel-${state.timer.mode});
+if (activePanel) activePanel.classList.add('active');
+
+$('fixedMinutes').value = state.timer.fixedMinutes; $('dynActiveMin').value = state.timer.dynActiveMin;
+$('dynIdleMin').value = state.timer.dynIdleMin; $('dynWindowMin').value = state.timer.dynWindowMin;
+$('dynThreshold').value = state.timer.dynThreshold; $('countTarget').value = state.ti
