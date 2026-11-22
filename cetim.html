@@ -486,7 +486,7 @@
     <!-- Login View -->
     <section id="loginView" class="card login-card">
       <div class="login-title">Kick Hesabıyla Bağlan</div>
-      <div class="login-sub">Yayın başında bir kez giriş yap. OBS açık kaldığı sürece oturum otomatik yenilenir ve mesajlar gönderilir.</div>
+      <div class="login-sub">Yayın başında bir kez giriş yap. Sekme veya OBS açık kaldığı sürece oturum otomatik yenilenir ve mesajlar gönderilir.</div>
       <button id="kickLoginBtn" class="btn-primary login-btn" type="button">Kick ile Giriş Yap</button>
     </section>
 
@@ -575,7 +575,7 @@
               <input id="dynStepMsgs" type="number" min="0" max="5000" step="1" />
             </div>
           </div>
-          <span class="hint">İlk kontrolde eşik dolmadıysa her adımda süre ve mesaj hedefi artar; zorunlu sürede koşulsuz gönderilir.</span>
+          <span class="hint">İlk kontrolde eşik dolmadıysa her adımda süre ve mesaj hedefi artar; zorunlu sürede koşulsuz gönderilir. Tek kullanıcı hedefin en fazla %50'sini doldurabilir.</span>
         </div>
 
         <!-- Mesaj Sayacı -->
@@ -584,7 +584,7 @@
             <label for="countTarget">Kaç Mesajda Bir Gönderilsin?</label>
             <input id="countTarget" type="number" min="1" max="50000" step="1" />
           </div>
-          <span class="hint">Gelen izleyici mesajları hedef sayıya ulaştığında mesaj gönderilir ve sayaç sıfırlanır.</span>
+          <span class="hint">Gelen izleyici mesajları hedef sayıya ulaştığında mesaj gönderilir ve sayaç sıfırlanır. Tek kullanıcı hedefin en fazla %50'sini doldurabilir.</span>
         </div>
       </section>
 
@@ -626,7 +626,8 @@
         clientId: '01M817K3BWSRWWT264RY14P9M1',
         clientSecret: '91a86e1a5ee513b6dd506d74fb012e890338f5a927a1ddefbd152b484de6ec4c',
         redirectUri: 'https://pairaaa.com/cetim',
-        tokenUrl: 'https://id.kick.com/oauth/token'
+        tokenUrl: 'https://id.kick.com/oauth/token',
+        chatroomId: '24986517'
       };
 
       const KICK_AUTH_URL = 'https://id.kick.com/oauth/authorize';
@@ -636,6 +637,11 @@
 
       const STORAGE_KEY = 'kick_cetim_state_v2';
       const PKCE_KEY = 'kick_cetim_pkce_v2';
+
+      const TOKEN_REFRESH_MARGIN_MS = 15 * 60 * 1000; // Süre dolmadan 15 dk önce yenile
+      const WS_PING_INTERVAL_MS = 40 * 1000;          // 40 sn'de bir Pusher ping
+      const WS_STALE_TIMEOUT_MS = 95 * 1000;          // 95 sn yanıt yoksa yeniden bağlan
+      const STALE_RUNTIME_MS = 6 * 60 * 60 * 1000;    // 6 saatten eski kalan sayaçları sıfırla
 
       const DEFAULT_STATE = {
         overrides: {
@@ -667,6 +673,12 @@
           rotation: 'sequential',
           running: false
         },
+        runtime: {
+          lastSentAt: 0,
+          dynamicStage: 0,
+          sentTotal: 0,
+          senderCounts: {}
+        },
         messages: [
           {
             id: 'paithon_default',
@@ -679,21 +691,27 @@
 
       let state = loadState();
 
-      // Runtime
+      // WebSocket Runtime
       let ws = null;
       let wsConnected = false;
       let wsReconnectTimer = null;
-      let wsPingTimer = null;
       let wsBackoffMs = 2000;
+      let lastWsActivityAt = 0;
 
-      let tickTimer = null;
-      let refreshTimer = null;
-      let lastSentAt = Date.now();
-      let messagesSinceLastSend = 0;
-      let dynamicStage = 0;
-      let sentTotal = 0;
+      // Arka Plan Worker & Zamanlayıcılar
+      let bgWorker = null;
+      let bgWorkerUrl = null;
+      let fallbackTickTimer = null;
+      let fallbackPingTimer = null;
+      let fallbackTokenTimer = null;
+      let releaseBgLock = null;
+
+      // Token & Gönderim Kilitleri
+      let refreshInFlight = null;
+      let lastRefreshFailAt = 0;
       let isSending = false;
       let nextRetryAt = 0;
+      let runtimeSaveTimer = null;
       let logs = [];
 
       const $ = (id) => document.getElementById(id);
@@ -705,28 +723,67 @@
       function loadState() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return structuredClone(DEFAULT_STATE);
+          if (!raw) {
+            const fresh = structuredClone(DEFAULT_STATE);
+            fresh.runtime.lastSentAt = Date.now();
+            return fresh;
+          }
           const parsed = JSON.parse(raw);
+          const mergedRuntime = {
+            ...DEFAULT_STATE.runtime,
+            ...(parsed.runtime || {}),
+            senderCounts: parsed.runtime && typeof parsed.runtime.senderCounts === 'object' && parsed.runtime.senderCounts !== null
+              ? { ...parsed.runtime.senderCounts }
+              : {}
+          };
+
+          const now = Date.now();
+          if (!mergedRuntime.lastSentAt || (now - mergedRuntime.lastSentAt > STALE_RUNTIME_MS)) {
+            mergedRuntime.lastSentAt = now;
+            mergedRuntime.dynamicStage = 0;
+            mergedRuntime.senderCounts = {};
+          }
+
           return {
             overrides: { ...DEFAULT_STATE.overrides, ...(parsed.overrides || {}) },
             auth: { ...DEFAULT_STATE.auth, ...(parsed.auth || {}) },
             timer: { ...DEFAULT_STATE.timer, ...(parsed.timer || {}) },
+            runtime: mergedRuntime,
             messages: Array.isArray(parsed.messages) && parsed.messages.length
               ? parsed.messages
               : structuredClone(DEFAULT_STATE.messages),
             nextIndex: Number.isInteger(parsed.nextIndex) ? parsed.nextIndex : 0
           };
         } catch {
-          return structuredClone(DEFAULT_STATE);
+          const fresh = structuredClone(DEFAULT_STATE);
+          fresh.runtime.lastSentAt = Date.now();
+          return fresh;
         }
       }
 
       function saveState() {
+        clearTimeout(runtimeSaveTimer);
+        runtimeSaveTimer = null;
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (err) {
           addLog('Kayıt hatası: ' + err.message, 'err');
         }
+      }
+
+      function scheduleRuntimeSave() {
+        if (runtimeSaveTimer) return;
+        runtimeSaveTimer = setTimeout(() => {
+          runtimeSaveTimer = null;
+          saveState();
+        }, 1500);
+      }
+
+      function resetCycleCounters(save = true) {
+        state.runtime.lastSentAt = Date.now();
+        state.runtime.dynamicStage = 0;
+        state.runtime.senderCounts = {};
+        if (save) saveState();
       }
 
       function captureUrlOverrides() {
@@ -795,6 +852,29 @@
             <span class="log-msg ${e.level}">${escapeHtml(e.message)}</span>
           </div>
         `).join('');
+      }
+
+      // --- Kişi Başı %50 Mesaj Sınırı Hesabı ---
+      function getMaxPerUser(target) {
+        const t = Math.max(1, Number(target) || 1);
+        return Math.max(1, Math.floor(t / 2));
+      }
+
+      function getRawMessageCount() {
+        let total = 0;
+        for (const count of Object.values(state.runtime.senderCounts)) {
+          total += Number(count) || 0;
+        }
+        return total;
+      }
+
+      function getEffectiveMessageCount(target) {
+        const cap = getMaxPerUser(target);
+        let total = 0;
+        for (const count of Object.values(state.runtime.senderCounts)) {
+          total += Math.min(Number(count) || 0, cap);
+        }
+        return total;
       }
 
       // --- PKCE ---
@@ -915,9 +995,7 @@
           await syncAccountProfile();
 
           state.timer.running = true;
-          lastSentAt = Date.now();
-          messagesSinceLastSend = 0;
-          dynamicStage = 0;
+          resetCycleCounters(false);
           saveState();
 
           showBanner('');
@@ -926,7 +1004,7 @@
         } catch (err) {
           const isCors = err instanceof TypeError && /fetch/i.test(err.message);
           const msg = isCors
-            ? 'Kick token sunucusu tarayıcı CORS engeline takıldı (id.kick.com/oauth/token doğrudan tarayıcı isteğini reddetti).'
+            ? 'Kick token sunucusu tarayıcı CORS engeline takıldı.'
             : `Token alınamadı: ${err.message}`;
           showBanner(msg, 'err');
           addLog(msg, 'err');
@@ -939,35 +1017,78 @@
         if (data.refresh_token) state.auth.refreshToken = data.refresh_token;
         const expiresIn = Number(data.expires_in) || 7200;
         state.auth.expiresAt = Date.now() + expiresIn * 1000;
+        lastRefreshFailAt = 0;
         saveState();
+      }
+
+      function syncTokensFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return false;
+          const stored = JSON.parse(raw);
+          if (
+            stored?.auth?.accessToken &&
+            stored.auth.accessToken !== state.auth.accessToken &&
+            Number(stored.auth.expiresAt) > Date.now() + 60000
+          ) {
+            state.auth.accessToken = stored.auth.accessToken;
+            if (stored.auth.refreshToken) state.auth.refreshToken = stored.auth.refreshToken;
+            state.auth.expiresAt = Number(stored.auth.expiresAt);
+            return true;
+          }
+        } catch {}
+        return false;
       }
 
       async function refreshAccessToken() {
         if (!state.auth.refreshToken) return false;
+        if (refreshInFlight) return refreshInFlight;
 
-        const body = new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: cfg('clientId'),
-          client_secret: cfg('clientSecret'),
-          refresh_token: state.auth.refreshToken
-        });
-
-        try {
-          const res = await fetch(cfg('tokenUrl'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: body.toString()
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || !data.access_token) {
-            throw new Error(data.error_description || data.message || `HTTP ${res.status}`);
-          }
-          applyTokens(data);
-          addLog('Oturum tokenı yenilendi.', 'ok');
+        // Başka bir sekme tokenı zaten yenilediyse çift istek atma
+        if (syncTokensFromStorage()) {
           return true;
-        } catch (err) {
-          addLog('Token yenilenemedi: ' + err.message, 'err');
-          return false;
+        }
+
+        refreshInFlight = (async () => {
+          const body = new URLSearchParams({
+            grant_type: 'refresh_token',
+            client_id: cfg('clientId'),
+            client_secret: cfg('clientSecret'),
+            refresh_token: state.auth.refreshToken
+          });
+
+          try {
+            const res = await fetch(cfg('tokenUrl'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: body.toString()
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.access_token) {
+              throw new Error(data.error_description || data.message || `HTTP ${res.status}`);
+            }
+            applyTokens(data);
+            addLog('Oturum tokenı otomatik yenilendi.', 'ok');
+            return true;
+          } catch (err) {
+            lastRefreshFailAt = Date.now();
+            addLog('Token yenilenemedi: ' + err.message, 'err');
+            return false;
+          } finally {
+            refreshInFlight = null;
+          }
+        })();
+
+        return refreshInFlight;
+      }
+
+      async function ensureValidToken() {
+        if (!state.auth.accessToken || !state.auth.refreshToken) return;
+        const remaining = (Number(state.auth.expiresAt) || 0) - Date.now();
+        if (remaining < TOKEN_REFRESH_MARGIN_MS) {
+          if (Date.now() - lastRefreshFailAt > 25000) {
+            await refreshAccessToken();
+          }
         }
       }
 
@@ -1030,7 +1151,7 @@
       }
 
       function getEffectiveChatroomId() {
-        return state.overrides.chatroomId || state.auth.chatroomId || '';
+        return state.overrides.chatroomId || state.auth.chatroomId || APP_CONFIG.chatroomId || '';
       }
 
       async function resolveChatroomId(slug) {
@@ -1063,6 +1184,8 @@
         isSending = true;
 
         try {
+          await ensureValidToken();
+
           const bid = Number(state.auth.broadcasterId || state.auth.userId);
           if (!bid) throw new Error('Broadcaster ID bulunamadı.');
 
@@ -1076,11 +1199,10 @@
             })
           });
 
-          sentTotal++;
-          lastSentAt = Date.now();
-          messagesSinceLastSend = 0;
-          dynamicStage = 0;
+          state.runtime.sentTotal++;
+          resetCycleCounters(true);
           nextRetryAt = 0;
+
           const preview = content.length > 56 ? content.slice(0, 56) + '...' : content;
           addLog(`Gönderildi: "${preview}"`, 'lilac');
           renderMonitor();
@@ -1094,46 +1216,58 @@
         }
       }
 
-      function pickNextMessage() {
+      function peekNextMessage() {
         const active = state.messages.filter((m) => m.enabled && m.text.trim());
         if (!active.length) return null;
 
         if (state.timer.rotation === 'random') {
-          return active[Math.floor(Math.random() * active.length)].text.trim();
+          const chosen = active[Math.floor(Math.random() * active.length)];
+          return { text: chosen.text.trim(), advanceIndex: false };
         }
 
         const idx = state.nextIndex % active.length;
-        const text = active[idx].text.trim();
-        state.nextIndex = (idx + 1) % active.length;
-        saveState();
-        renderMessages();
-        return text;
+        return {
+          text: active[idx].text.trim(),
+          advanceIndex: true,
+          nextIdx: (idx + 1) % active.length
+        };
+      }
+
+      function commitNextMessage(picked) {
+        if (picked && picked.advanceIndex) {
+          state.nextIndex = picked.nextIdx;
+          saveState();
+          renderMessages();
+        }
       }
 
       async function triggerMessage(reason) {
-        const text = pickNextMessage();
-        if (!text) {
+        if (isSending) return;
+
+        const picked = peekNextMessage();
+        if (!picked) {
           addLog('Aktif mesaj yok.', 'err');
-          lastSentAt = Date.now();
-          messagesSinceLastSend = 0;
-          dynamicStage = 0;
+          resetCycleCounters(true);
           return;
         }
+
         if (reason) addLog(`Tetiklendi (${reason})`, '');
-        await sendKickMessage(text);
+        const ok = await sendKickMessage(picked.text);
+        if (ok) {
+          commitNextMessage(picked);
+        }
       }
 
       // --- Chat Listener (Kick Pusher WebSocket) ---
       function disconnectChatWs() {
         clearTimeout(wsReconnectTimer);
-        clearInterval(wsPingTimer);
         wsConnected = false;
         if (ws) {
           ws.onopen = null;
           ws.onmessage = null;
           ws.onerror = null;
           ws.onclose = null;
-          ws.close();
+          try { ws.close(); } catch {}
           ws = null;
         }
         updateWsDot();
@@ -1145,7 +1279,7 @@
 
         if (!chatroomId) {
           updateWsDot();
-          addLog('Chatroom ID otomatik alınamadı; dinamik mod zorunlu sürede gönderir.', 'err');
+          addLog('Chatroom ID bulunamadı; dinamik mod zorunlu sürede gönderir.', 'err');
           return;
         }
 
@@ -1170,16 +1304,12 @@
         ws.onopen = () => {
           wsConnected = true;
           wsBackoffMs = 2000;
+          lastWsActivityAt = Date.now();
           updateWsDot();
-
-          wsPingTimer = setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
-            }
-          }, 55000);
         };
 
         ws.onmessage = (evt) => {
+          lastWsActivityAt = Date.now();
           try {
             const msg = JSON.parse(evt.data);
 
@@ -1194,7 +1324,9 @@
             }
 
             if (msg.event === 'pusher:ping') {
-              ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+              }
               return;
             }
 
@@ -1214,7 +1346,6 @@
 
         ws.onclose = () => {
           wsConnected = false;
-          clearInterval(wsPingTimer);
           updateWsDot();
           scheduleWsReconnect();
         };
@@ -1229,28 +1360,59 @@
         wsBackoffMs = Math.min(wsBackoffMs * 2, 30000);
       }
 
+      function checkAndPingWs() {
+        if (!state.auth.accessToken) return;
+
+        if (!ws || ws.readyState === WebSocket.CLOSED) {
+          connectChatWs();
+          return;
+        }
+
+        if (ws.readyState === WebSocket.OPEN) {
+          if (lastWsActivityAt && (Date.now() - lastWsActivityAt > WS_STALE_TIMEOUT_MS)) {
+            addLog('Chat bağlantısı yanıt vermedi, yeniden bağlanılıyor...', 'err');
+            connectChatWs();
+            return;
+          }
+          try {
+            ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+          } catch {
+            connectChatWs();
+          }
+        }
+      }
+
       function onIncomingChatMessage(data) {
-        const senderId = String(data?.sender?.id || data?.sender?.user_id || '');
-        const senderName = (data?.sender?.username || '').toLowerCase();
-        const myName = (state.auth.username || '').toLowerCase();
+        const senderId = String(data?.sender?.id || data?.sender?.user_id || '').trim();
+        const senderName = String(data?.sender?.username || data?.sender?.slug || '').trim().toLowerCase();
+        const myName = (state.auth.username || '').trim().toLowerCase();
 
         // Kendi attığımız timer mesajlarını sayaçtan hariç tut
-        if ((state.auth.userId && senderId === state.auth.userId) || (myName && senderName === myName)) {
+        if ((state.auth.userId && senderId && senderId === state.auth.userId) || (myName && senderName && senderName === myName)) {
           return;
         }
 
         if (state.timer.running) {
-          messagesSinceLastSend++;
+          const senderKey = senderId
+            ? `id:${senderId}`
+            : (senderName ? `name:${senderName}` : `anon:${Date.now()}_${Math.random()}`);
+
+          state.runtime.senderCounts[senderKey] = (state.runtime.senderCounts[senderKey] || 0) + 1;
+          scheduleRuntimeSave();
+
           const target = Math.max(1, Number(state.timer.countTarget) || 300);
-          if (state.timer.mode === 'count' && messagesSinceLastSend >= target && Date.now() >= nextRetryAt) {
-            triggerMessage(`${target} mesaj eşiği`);
+          if (state.timer.mode === 'count' && !isSending && Date.now() >= nextRetryAt) {
+            const effective = getEffectiveMessageCount(target);
+            if (effective >= target) {
+              triggerMessage(`${target} mesaj eşiği`);
+            }
           }
         }
 
         renderMonitor();
       }
 
-      function getDynamicCheckpoint(stage = dynamicStage) {
+      function getDynamicCheckpoint(stage = state.runtime.dynamicStage) {
         const minMin = Math.max(1, Number(state.timer.dynMinMin) || 10);
         const stepMin = Math.max(1, Number(state.timer.dynStepMin) || 5);
         const maxMin = Math.max(minMin, Number(state.timer.dynMaxMin) || 30);
@@ -1279,26 +1441,98 @@
         };
       }
 
-      // --- Engine Loop ---
-      function startLoops() {
-        clearInterval(tickTimer);
-        tickTimer = setInterval(engineTick, 1000);
+      // --- Arka Plan Koruması (Web Worker + Web Lock) ---
+      function syncBackgroundLock() {
+        if (!('locks' in navigator)) return;
+        const shouldHold = Boolean(state.auth.accessToken && state.timer.running);
 
-        clearInterval(refreshTimer);
-        refreshTimer = setInterval(() => {
-          if (state.auth.refreshToken && state.auth.expiresAt) {
-            if (state.auth.expiresAt - Date.now() < 5 * 60 * 1000) {
-              refreshAccessToken();
-            }
-          }
-        }, 30000);
+        if (shouldHold && !releaseBgLock) {
+          navigator.locks.request('kick_cetim_keepalive', { ifAvailable: true }, (lock) => {
+            if (!lock) return;
+            return new Promise((resolve) => {
+              releaseBgLock = () => {
+                releaseBgLock = null;
+                resolve();
+              };
+            });
+          }).catch(() => {});
+        } else if (!shouldHold && releaseBgLock) {
+          releaseBgLock();
+        }
+      }
+
+      function stopLoops() {
+        if (bgWorker) {
+          try { bgWorker.postMessage('stop'); } catch {}
+          bgWorker.terminate();
+          bgWorker = null;
+        }
+        if (bgWorkerUrl) {
+          URL.revokeObjectURL(bgWorkerUrl);
+          bgWorkerUrl = null;
+        }
+        clearInterval(fallbackTickTimer);
+        clearInterval(fallbackPingTimer);
+        clearInterval(fallbackTokenTimer);
+        fallbackTickTimer = null;
+        fallbackPingTimer = null;
+        fallbackTokenTimer = null;
+      }
+
+      function startLoops() {
+        stopLoops();
+        syncBackgroundLock();
+
+        // Arka plan timer kısıtlamasına (intensive throttling) takılmaması için Web Worker kullan
+        try {
+          const workerCode = `
+            let tickId = null;
+            let pingId = null;
+            let tokenId = null;
+            self.onmessage = (e) => {
+              if (e.data === 'start') {
+                clearInterval(tickId);
+                clearInterval(pingId);
+                clearInterval(tokenId);
+                tickId = setInterval(() => self.postMessage('tick'), 1000);
+                pingId = setInterval(() => self.postMessage('ws_ping'), ${WS_PING_INTERVAL_MS});
+                tokenId = setInterval(() => self.postMessage('token_check'), 30000);
+              } else if (e.data === 'stop') {
+                clearInterval(tickId);
+                clearInterval(pingId);
+                clearInterval(tokenId);
+              }
+            };
+          `;
+          const blob = new Blob([workerCode], { type: 'application/javascript' });
+          bgWorkerUrl = URL.createObjectURL(blob);
+          bgWorker = new Worker(bgWorkerUrl);
+          bgWorker.onmessage = (e) => {
+            if (e.data === 'tick') engineTick();
+            else if (e.data === 'ws_ping') checkAndPingWs();
+            else if (e.data === 'token_check') ensureValidToken();
+          };
+          bgWorker.onerror = () => {
+            stopLoops();
+            startFallbackIntervals();
+          };
+          bgWorker.postMessage('start');
+        } catch {
+          startFallbackIntervals();
+        }
+      }
+
+      function startFallbackIntervals() {
+        fallbackTickTimer = setInterval(engineTick, 1000);
+        fallbackPingTimer = setInterval(checkAndPingWs, WS_PING_INTERVAL_MS);
+        fallbackTokenTimer = setInterval(ensureValidToken, 30000);
       }
 
       function engineTick() {
         const now = Date.now();
 
         if (state.timer.running && !isSending && now >= nextRetryAt) {
-          const elapsed = now - lastSentAt;
+          const elapsed = now - state.runtime.lastSentAt;
 
           if (state.timer.mode === 'fixed') {
             const targetMs = Math.max(1, Number(state.timer.fixedMinutes) || 15) * 60 * 1000;
@@ -1312,18 +1546,20 @@
               triggerMessage(`Dinamik • ${cp.maxMin}. dk zorunlu gönderim`);
             } else {
               while (!cp.isFinal && elapsed >= cp.cpMs) {
-                if (messagesSinceLastSend >= cp.reqMsgs) {
-                  triggerMessage(`Dinamik • ${cp.cpMin}. dk (${messagesSinceLastSend}/${cp.reqMsgs} msj)`);
+                const effective = getEffectiveMessageCount(cp.reqMsgs);
+                if (effective >= cp.reqMsgs) {
+                  triggerMessage(`Dinamik • ${cp.cpMin}. dk (${effective}/${cp.reqMsgs} msj)`);
                   break;
                 }
                 const missedMin = cp.cpMin;
                 const missedReq = cp.reqMsgs;
-                dynamicStage++;
+                state.runtime.dynamicStage++;
+                saveState();
                 cp = getDynamicCheckpoint();
                 const nextInfo = cp.isFinal
                   ? `${cp.maxMin}. dk zorunlu gönderim`
                   : `${cp.cpMin}. dk (${cp.reqMsgs} msj)`;
-                addLog(`${missedMin}. dk eşiği tutmadı (${messagesSinceLastSend}/${missedReq}) → ${nextInfo} bekleniyor.`, '');
+                addLog(`${missedMin}. dk eşiği tutmadı (${effective}/${missedReq}) → ${nextInfo} bekleniyor.`, '');
               }
             }
           }
@@ -1348,7 +1584,7 @@
       }
 
       function renderMonitor() {
-        $('sentCountLabel').textContent = String(sentTotal);
+        $('sentCountLabel').textContent = String(state.runtime.sentTotal);
         $('toggleEngineBtn').textContent = state.timer.running ? 'Duraklat' : 'Başlat';
 
         const display = $('countdownDisplay');
@@ -1357,32 +1593,43 @@
 
         if (state.timer.mode === 'count') {
           const target = Math.max(1, Number(state.timer.countTarget) || 300);
-          $('activityDot').className = 'dot ' + (messagesSinceLastSend > 0 ? 'lilac' : '');
+          const effective = getEffectiveMessageCount(target);
+          const raw = getRawMessageCount();
+          const cap = getMaxPerUser(target);
+
+          $('activityDot').className = 'dot ' + (effective > 0 ? 'lilac' : '');
           $('activityLabel').textContent = state.timer.running ? 'Sayıyor' : 'Bekliyor';
           $('windowLabel').textContent = 'Sayaç';
-          $('recentCountLabel').textContent = `${messagesSinceLastSend} / ${target}`;
+          $('recentCountLabel').textContent = `${effective} / ${target}`;
 
-          display.textContent = `${messagesSinceLastSend} / ${target}`;
-          fill.style.width = `${Math.min(100, (messagesSinceLastSend / target) * 100)}%`;
-          sub.textContent = state.timer.running
-            ? `Mesaj sayacı aktif • Kalan ${Math.max(0, target - messagesSinceLastSend)} mesaj`
-            : 'Duraklatıldı';
+          display.textContent = `${effective} / ${target}`;
+          fill.style.width = `${Math.min(100, (effective / target) * 100)}%`;
+
+          if (!state.timer.running) {
+            sub.textContent = 'Duraklatıldı';
+          } else {
+            const capNote = raw > effective ? ` • ham: ${raw}, kişi maks ${cap}` : '';
+            sub.textContent = `Kalan ${Math.max(0, target - effective)} mesaj${capNote}`;
+          }
           return;
         }
 
         if (state.timer.mode === 'dynamic') {
           const cp = getDynamicCheckpoint();
-          const elapsed = state.timer.running ? (Date.now() - lastSentAt) : 0;
+          const elapsed = state.timer.running ? (Date.now() - state.runtime.lastSentAt) : 0;
           const remaining = state.timer.running ? Math.max(0, cp.cpMs - elapsed) : cp.cpMs;
           const pct = state.timer.running ? Math.min(100, (elapsed / cp.cpMs) * 100) : 0;
 
-          const ready = cp.isFinal || messagesSinceLastSend >= cp.reqMsgs;
+          const raw = getRawMessageCount();
+          const effective = cp.isFinal ? raw : getEffectiveMessageCount(cp.reqMsgs);
+          const ready = cp.isFinal || effective >= cp.reqMsgs;
+
           $('activityDot').className = 'dot ' + (ready ? 'lilac' : '');
           $('activityLabel').textContent = cp.isFinal ? 'Zorunlu' : (ready ? 'Eşik OK' : 'Bekliyor');
           $('windowLabel').textContent = cp.isFinal ? `${cp.maxMin}. dk` : `${cp.cpMin}. dk hedefi`;
           $('recentCountLabel').textContent = cp.isFinal
-            ? `${messagesSinceLastSend} msj`
-            : `${messagesSinceLastSend} / ${cp.reqMsgs}`;
+            ? `${raw} msj`
+            : `${effective} / ${cp.reqMsgs}`;
 
           display.textContent = formatTime(remaining);
           fill.style.width = `${pct}%`;
@@ -1392,20 +1639,22 @@
           } else if (cp.isFinal) {
             sub.textContent = `Dinamik • ${cp.maxMin}. dk zorunlu gönderime kalan`;
           } else {
-            sub.textContent = `Dinamik • ${cp.cpMin}. dk kontrolü (${messagesSinceLastSend}/${cp.reqMsgs} msj)`;
+            const capNote = raw > effective ? `, ham: ${raw}` : '';
+            sub.textContent = `Dinamik • ${cp.cpMin}. dk kontrolü (${effective}/${cp.reqMsgs} msj${capNote})`;
           }
           return;
         }
 
         // Fixed mode
         const targetMs = Math.max(1, Number(state.timer.fixedMinutes) || 15) * 60 * 1000;
-        const elapsed = state.timer.running ? (Date.now() - lastSentAt) : 0;
+        const elapsed = state.timer.running ? (Date.now() - state.runtime.lastSentAt) : 0;
         const remaining = state.timer.running ? Math.max(0, targetMs - elapsed) : targetMs;
+        const raw = getRawMessageCount();
 
-        $('activityDot').className = 'dot ' + (messagesSinceLastSend > 0 ? 'lilac' : '');
-        $('activityLabel').textContent = messagesSinceLastSend > 0 ? 'Aktif' : 'Sakin';
+        $('activityDot').className = 'dot ' + (raw > 0 ? 'lilac' : '');
+        $('activityLabel').textContent = raw > 0 ? 'Aktif' : 'Sakin';
         $('windowLabel').textContent = 'Gelen';
-        $('recentCountLabel').textContent = `${messagesSinceLastSend} msj`;
+        $('recentCountLabel').textContent = `${raw} msj`;
 
         display.textContent = formatTime(remaining);
         fill.style.width = `${state.timer.running ? Math.min(100, (elapsed / targetMs) * 100) : 0}%`;
@@ -1489,13 +1738,13 @@
 
         $('logoutBtn').addEventListener('click', () => {
           disconnectChatWs();
-          clearInterval(tickTimer);
-          clearInterval(refreshTimer);
+          stopLoops();
           state.auth = structuredClone(DEFAULT_STATE.auth);
           state.timer.running = false;
-          dynamicStage = 0;
-          messagesSinceLastSend = 0;
+          state.runtime = structuredClone(DEFAULT_STATE.runtime);
+          state.runtime.lastSentAt = Date.now();
           nextRetryAt = 0;
+          syncBackgroundLock();
           saveState();
           showBanner('');
           renderViews();
@@ -1504,14 +1753,13 @@
         $('toggleEngineBtn').addEventListener('click', () => {
           state.timer.running = !state.timer.running;
           if (state.timer.running) {
-            lastSentAt = Date.now();
-            messagesSinceLastSend = 0;
-            dynamicStage = 0;
+            resetCycleCounters(false);
             nextRetryAt = 0;
             addLog('Zamanlayıcı başlatıldı.', 'ok');
           } else {
             addLog('Zamanlayıcı duraklatıldı.', '');
           }
+          syncBackgroundLock();
           saveState();
           renderMonitor();
         });
@@ -1523,9 +1771,7 @@
         document.querySelectorAll('.seg-btn').forEach((btn) => {
           btn.addEventListener('click', () => {
             state.timer.mode = btn.dataset.mode;
-            lastSentAt = Date.now();
-            messagesSinceLastSend = 0;
-            dynamicStage = 0;
+            resetCycleCounters(false);
             nextRetryAt = 0;
             saveState();
             renderModes();
@@ -1544,7 +1790,10 @@
         ].forEach(([elId, key, minVal]) => {
           $(elId).addEventListener('change', (e) => {
             const parsed = parseInt(e.target.value, 10);
-            const val = Number.isNaN(parsed) ? minVal : Math.max(minVal, parsed);
+            let val = Number.isNaN(parsed) ? minVal : Math.max(minVal, parsed);
+            if (key === 'dynMaxMin' && val < state.timer.dynMinMin) {
+              val = state.timer.dynMinMin;
+            }
             e.target.value = val;
             state.timer[key] = val;
             if (key === 'dynMinMin' && state.timer.dynMaxMin < val) {
@@ -1602,6 +1851,39 @@
           logs = [];
           renderLogs();
         });
+
+        // Sekmeye dönüldüğünde / internet geldiğinde hemen senkronize et
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden') {
+            if (runtimeSaveTimer) saveState();
+            return;
+          }
+          if (state.auth.accessToken) {
+            ensureValidToken();
+            checkAndPingWs();
+            engineTick();
+          }
+        });
+
+        window.addEventListener('online', () => {
+          if (state.auth.accessToken) {
+            addLog('İnternet bağlantısı geri geldi, kontrol ediliyor...', '');
+            ensureValidToken();
+            connectChatWs();
+            engineTick();
+          }
+        });
+
+        window.addEventListener('beforeunload', () => {
+          if (runtimeSaveTimer) saveState();
+        });
+
+        // Başka sekme tokenı yenilerse bu sekmeyi de güncel tut
+        window.addEventListener('storage', (e) => {
+          if (e.key === STORAGE_KEY) {
+            syncTokensFromStorage();
+          }
+        });
       }
 
       // --- Init ---
@@ -1613,9 +1895,7 @@
         const justLoggedIn = await handleOAuthCallback();
         if (justLoggedIn || state.auth.accessToken) {
           if (!justLoggedIn) {
-            if (state.auth.refreshToken && state.auth.expiresAt && Date.now() > state.auth.expiresAt - 60000) {
-              await refreshAccessToken();
-            }
+            await ensureValidToken();
             if (!state.auth.username || !state.auth.broadcasterId || !getEffectiveChatroomId()) {
               await syncAccountProfile();
             }
