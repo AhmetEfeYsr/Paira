@@ -98,6 +98,8 @@
             z-index: 10;
             width: 100%;
             filter: drop-shadow(0 10px 16px rgba(14, 9, 14, 0.44));
+            will-change: transform;
+            backface-visibility: hidden;
             animation: catBreathe 5.4s ease-in-out infinite;
             transition: filter 0.35s ease;
         }
@@ -125,11 +127,11 @@
 
             0%,
             100% {
-                transform: translateY(0px) scale(1);
+                transform: translate3d(0, 0px, 0) scale(1);
             }
 
             50% {
-                transform: translateY(-2px) scale(1.006);
+                transform: translate3d(0, -2px, 0) scale(1.006);
             }
         }
 
@@ -702,6 +704,7 @@
             position: relative;
             overflow: hidden;
             isolation: isolate;
+            contain: layout paint style;
             border-radius: 18px;
             border: 1.5px solid rgba(255, 255, 255, 0.09);
             background: linear-gradient(180deg, #100c10 0%, #161115 100%);
@@ -717,6 +720,7 @@
             z-index: 1;
             pointer-events: none;
             overflow: hidden;
+            contain: strict;
             opacity: 0.92;
             transition: opacity 0.35s ease;
             -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
@@ -935,6 +939,7 @@
             inset: 0;
             border-radius: 50%;
             background: var(--purple-live);
+            will-change: transform, opacity;
             animation: livePulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
         }
 
@@ -974,6 +979,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            contain: layout paint style;
         }
 
         .timer-value {
@@ -3715,6 +3721,8 @@
                 } catch (_) { }
             }
 
+            let kediDansProbeDelayMs = 5000;
+
             async function probeKediDansServer(timeoutMs) {
                 const ms = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 1200;
                 const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
@@ -3725,6 +3733,7 @@
                     if (!resp.ok) return false;
                     const data = await resp.json();
                     kediDansServerOnline = true;
+                    kediDansProbeDelayMs = 5000;
                     lastKediDansSyncAt = Date.now();
                     if (data && data.config) {
                         applyKediDansConfig(data.config);
@@ -3744,9 +3753,10 @@
                     kediDansProbeTimer = null;
                     const ok = await probeKediDansServer();
                     if (!ok) {
+                        kediDansProbeDelayMs = Math.min(30000, kediDansProbeDelayMs + 5000);
                         scheduleKediDansServerProbe();
                     }
-                }, 5000);
+                }, kediDansProbeDelayMs);
             }
 
             function initKediDansBridge(customApi) {
@@ -4206,11 +4216,12 @@
 
             // ==================== INITIALIZATION ====================
             function startCountdownLoop() {
-                function tick() {
-                    renderTimer(false);
-                    requestAnimationFrame(tick);
-                }
-                requestAnimationFrame(tick);
+                renderTimer(true);
+                setInterval(function () {
+                    if (!isPaused) {
+                        renderTimer(false);
+                    }
+                }, 250);
             }
 
             function init() {
