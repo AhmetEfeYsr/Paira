@@ -1272,7 +1272,6 @@
         }
         updateWsDot();
       }
-
       function connectChatWs() {
         disconnectChatWs();
         const chatroomId = getEffectiveChatroomId();
@@ -1292,14 +1291,85 @@
         }
 
         let subscribed = false;
+        let fatalError = false;
+
         const subscribe = () => {
           if (subscribed || !ws || ws.readyState !== WebSocket.OPEN) return;
           subscribed = true;
           ws.send(JSON.stringify({
             event: 'pusher:subscribe',
-            data: { auth: '', channel: `chatrooms.${chatroomId}.v2` }
+            data: { channel: `chatrooms.${chatroomId}.v2` }
           }));
         };
+
+        ws.onopen = () => {
+          lastWsActivityAt = Date.now();
+          updateWsDot();
+        };
+
+        ws.onmessage = (evt) => {
+          lastWsActivityAt = Date.now();
+          try {
+            const msg = JSON.parse(evt.data);
+
+            if (msg.event === 'pusher:connection_established') {
+              addLog(`Pusher bağlandı, #${chatroomId} kanalına abone olunuyor...`, '');
+              subscribe();
+              return;
+            }
+
+            if (msg.event === 'pusher_internal:subscription_succeeded') {
+              wsConnected = true;
+              wsBackoffMs = 2000;
+              updateWsDot();
+              addLog(`Chat dinleniyor (#${chatroomId}).`, 'ok');
+              return;
+            }
+
+            if (msg.event === 'pusher:error') {
+              const errData = typeof msg.data === 'string' ? JSON.parse(msg.data) : (msg.data || {});
+              const code = Number(errData.code) || 0;
+              if (code >= 4000 && code <= 4009) {
+                fatalError = true;
+              }
+              addLog(`Pusher hatası (${code || '?'}): ${errData.message || 'Bilinmiyor'}`, 'err');
+              return;
+            }
+
+            if (msg.event === 'pusher:ping') {
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+              }
+              return;
+            }
+
+            if (msg.event === 'App\\Events\\ChatMessageEvent') {
+              const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+              onIncomingChatMessage(data);
+            }
+          } catch {
+            // Diğer Pusher eventleri yoksayılır
+          }
+        };
+
+        ws.onerror = () => {
+          wsConnected = false;
+          updateWsDot();
+        };
+
+        ws.onclose = (evt) => {
+          wsConnected = false;
+          updateWsDot();
+          if (evt.code >= 4000 && evt.code <= 4009) {
+            fatalError = true;
+          }
+          addLog(`Chat bağlantısı kapandı (kod: ${evt.code}${evt.reason ? ', ' + evt.reason : ''}).`, 'err');
+          if (!fatalError) {
+            scheduleWsReconnect();
+          }
+        };
+      }
+
 
         ws.onopen = () => {
           wsConnected = true;
