@@ -1,0 +1,2473 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pairaaa — !atla Havuz Atlama Oyunu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-card: rgba(21, 16, 27, 0.94);
+      --bg-card-deep: rgba(13, 10, 18, 0.96);
+      --lilac: #c4a4ff;
+      --lilac-bright: #e5d4ff;
+      --lilac-border: rgba(185, 151, 245, 0.52);
+      --lilac-border-strong: rgba(216, 180, 254, 0.85);
+      --gold: #f5d37a;
+      --rose: #e5a9b8;
+      --mint: #86efac;
+      --text-main: #fffdfb;
+      --text-muted: rgba(235, 224, 248, 0.72);
+      --font-display: 'Fredoka', 'Nunito', system-ui, -apple-system, sans-serif;
+      --font-body: 'Nunito', 'Fredoka', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent !important;
+      font-family: var(--font-body);
+      color: var(--text-main);
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-font-smoothing: antialiased;
+      outline: none;
+    }
+
+    #gameCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ==================== OVERLAY HUD KATMANI (GPU-ONLY, BLUR YOK) ==================== */
+    .hud-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Toplu Atlama Sırası Kartı (Üst Orta) */
+    .queue-card {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translate3d(-50%, -24px, 0) scale(0.96);
+      opacity: 0;
+      min-width: 340px;
+      max-width: min(640px, calc(100vw - 48px));
+      padding: 14px 20px;
+      border-radius: 20px;
+      background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-card-deep) 100%);
+      border: 1.5px solid var(--lilac-border-strong);
+      box-shadow: 0 12px 28px rgba(6, 3, 12, 0.65);
+      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease;
+      will-change: transform, opacity;
+    }
+
+    .queue-card.is-visible {
+      opacity: 1;
+      transform: translate3d(-50%, 0, 0) scale(1);
+    }
+
+    .queue-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .queue-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .queue-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #a855f7;
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.9);
+      flex-shrink: 0;
+    }
+
+    .queue-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--lilac-bright);
+    }
+
+    .queue-count {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 3px 11px;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.24);
+      border: 1px solid rgba(216, 180, 254, 0.55);
+      color: #f3e8ff;
+      white-space: nowrap;
+    }
+
+    .queue-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .queue-sub strong {
+      color: var(--lilac-bright);
+    }
+
+    .queue-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 76px;
+      overflow: hidden;
+    }
+
+    .queue-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(185, 151, 245, 0.28);
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #f8f4ff;
+      white-space: nowrap;
+    }
+
+    .queue-chip.is-queen {
+      background: rgba(245, 211, 122, 0.16);
+      border-color: rgba(245, 211, 122, 0.7);
+      color: #fef3c7;
+    }
+
+    .queue-chip-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--lilac);
+      opacity: 0.9;
+    }
+
+    /* Duo Bekleme Rozeti (Üst Orta) */
+    .duo-pill {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translate3d(-50%, -18px, 0);
+      opacity: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: linear-gradient(155deg, var(--bg-card) 0%, var(--bg-card-deep) 100%);
+      border: 1.5px solid var(--lilac-border-strong);
+      box-shadow: 0 10px 24px rgba(6, 3, 12, 0.6);
+      font-size: 14px;
+      font-weight: 800;
+      color: #f8f4ff;
+      white-space: nowrap;
+      transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease;
+      will-change: transform, opacity;
+    }
+
+    .duo-pill.is-visible {
+      opacity: 1;
+      transform: translate3d(-50%, 0, 0);
+    }
+
+    .duo-pill-badge {
+      font-family: var(--font-display);
+      font-size: 12px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: rgba(229, 169, 184, 0.22);
+      border: 1px solid rgba(229, 169, 184, 0.65);
+      color: #fce7f3;
+    }
+
+    /* !top Liderlik Tablosu & Toplu Atlama Podyumu (Sağ Üst) */
+    .board-card {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      width: 316px;
+      max-width: calc(100vw - 48px);
+      padding: 15px 16px 14px;
+      border-radius: 22px;
+      background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-card-deep) 100%);
+      border: 1.5px solid var(--lilac-border-strong);
+      box-shadow: 0 14px 32px rgba(6, 3, 12, 0.72);
+      transform: translate3d(28px, 0, 0) scale(0.97);
+      opacity: 0;
+      transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1), opacity 280ms ease;
+      will-change: transform, opacity;
+    }
+
+    .board-card.is-visible {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    .board-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(185, 151, 245, 0.22);
+    }
+
+    .board-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--lilac-bright);
+      letter-spacing: 0.03em;
+    }
+
+    .board-tag {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .board-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .board-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(185, 151, 245, 0.16);
+    }
+
+    .board-row.rank-1 {
+      background: rgba(245, 211, 122, 0.13);
+      border-color: rgba(245, 211, 122, 0.55);
+    }
+
+    .board-row.rank-2 {
+      background: rgba(216, 180, 254, 0.10);
+      border-color: rgba(216, 180, 254, 0.38);
+    }
+
+    .board-row.rank-3 {
+      background: rgba(229, 169, 184, 0.10);
+      border-color: rgba(229, 169, 184, 0.36);
+    }
+
+    .board-rank {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      width: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .board-row.rank-1 .board-rank { color: var(--gold); }
+    .board-row.rank-2 .board-rank { color: var(--lilac-bright); }
+    .board-row.rank-3 .board-rank { color: var(--rose); }
+
+    .board-user {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .board-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fffdfb;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .board-mode {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .board-score {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--lilac-bright);
+      flex-shrink: 0;
+    }
+
+    .board-row.rank-1 .board-score { color: var(--gold); }
+
+    .board-empty {
+      padding: 12px 6px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* Debug Göstergesi (yalnızca ?debug=1 iken görünür) */
+    .debug-badge {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      padding: 6px 11px;
+      border-radius: 10px;
+      background: rgba(15, 11, 20, 0.88);
+      border: 1px solid rgba(185, 151, 245, 0.35);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: none;
+      align-items: center;
+      gap: 7px;
+      z-index: 30;
+    }
+
+    .debug-badge.is-shown {
+      display: inline-flex;
+    }
+
+    .debug-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+
+    .debug-dot.ok { background: #34d399; }
+    .debug-dot.err { background: #f43f5e; }
+  </style>
+</head>
+<body tabindex="0">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-layer">
+    <!-- Toplu Atlama Sırası -->
+    <div id="queueCard" class="queue-card" aria-live="polite">
+      <div class="queue-head">
+        <div class="queue-title-wrap">
+          <span class="queue-dot"></span>
+          <span class="queue-title">TOPLU ATLAMA SIRASI</span>
+        </div>
+        <span id="queueCount" class="queue-count">0 Kişi</span>
+      </div>
+      <div class="queue-sub">Katılmak için <strong>!atla</strong> yaz • Başlatmak için mod <strong>!atlat</strong> yazar</div>
+      <div id="queueChips" class="queue-chips"></div>
+    </div>
+
+    <!-- Duo Eşleşme Bekleme Rozeti -->
+    <div id="duoPill" class="duo-pill">
+      <span class="duo-pill-badge">DUO</span>
+      <span id="duoPillText"></span>
+    </div>
+
+    <!-- !top ve Toplu Atlama Podyumu -->
+    <div id="boardCard" class="board-card" aria-live="polite">
+      <div class="board-head">
+        <span id="boardTitle" class="board-title">EN İYİ ATLAYIŞLAR</span>
+        <span id="boardTag" class="board-tag">!top</span>
+      </div>
+      <div id="boardList" class="board-list"></div>
+    </div>
+
+    <!-- Opsiyonel Debug Şeridi (?debug=1) -->
+    <div id="debugBadge" class="debug-badge">
+      <span id="debugDot" class="debug-dot"></span>
+      <span id="debugText">Bağlanıyor...</span>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // =========================================================================
+      // AYARLAR & URL PARAMETRELERİ
+      // =========================================================================
+      const params = new URLSearchParams(window.location.search);
+      const CONFIG = {
+        chatroomId: (params.get('chatroom') || '24986517').trim(),
+        pusherWs: 'wss://ws-us2.pusher.com/app/34bf7a0ff419a2a775b9?protocol=7&client=js&version=8.4.0-rc2&flash=false',
+        cetimStorageKey: 'kick_cetim_state_v2',
+        kickApiBase: 'https://api.kick.com/public/v1',
+        leaderboardKey: 'pairaaa_atla_top_v1',
+        broadcasterUsernames: new Set(['pairaaa']),
+        userCooldownMs: Math.max(0, (parseFloat(params.get('cooldown')) || 6) * 1000),
+        topCooldownMs: 7000,
+        duoWaitMs: 12000,
+        maxQueueSize: 55,
+        maxActiveJumpers: 60,
+        maxParticles: 70,
+        enableChatReply: params.get('chat') === '1' || params.get('chat') === 'true',
+        debugMode: params.get('debug') === '1' || params.get('debug') === 'true',
+        resetOnLoad: params.get('reset') === '1' || params.get('reset') === 'true'
+      };
+
+      const MODE_LABELS = {
+        normal: 'Paraşüt',
+        tarzan: 'Tarzan',
+        duo: 'Duo',
+        rocket: 'Füze',
+        balloon: 'Balon'
+      };
+
+      const PASTEL_PALETTE = [
+        { main: '#d8b4fe', shade: '#b78cf7', belly: '#f6edff', chute: '#b997f5' }, // Lila
+        { main: '#f3e5d8', shade: '#dec7b4', belly: '#fffaf4', chute: '#d8b4fe' }, // Krem Latte
+        { main: '#f2c6d0', shade: '#df9fb0', belly: '#fff1f5', chute: '#e5a9b8' }, // Gül Kurusu
+        { main: '#bfead8', shade: '#92d6ba', belly: '#eefbf5', chute: '#99dec2' }, // Pastel Mint
+        { main: '#c5dcf9', shade: '#98bce8', belly: '#f0f7ff', chute: '#a8c9f5' }, // Sis Mavisi
+        { main: '#f7d5bd', shade: '#e5b593', belly: '#fff6ee', chute: '#ecc2a3' }  // Şeftali Krem
+      ];
+
+      const SPECIES_LIST = ['cat', 'chick', 'bunny', 'bear', 'puff'];
+
+      // =========================================================================
+      // DOM REFERANSLARI & CANVAS
+      // =========================================================================
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d', { alpha: true });
+
+      const els = {
+        queueCard: document.getElementById('queueCard'),
+        queueCount: document.getElementById('queueCount'),
+        queueChips: document.getElementById('queueChips'),
+        duoPill: document.getElementById('duoPill'),
+        duoPillText: document.getElementById('duoPillText'),
+        boardCard: document.getElementById('boardCard'),
+        boardTitle: document.getElementById('boardTitle'),
+        boardTag: document.getElementById('boardTag'),
+        boardList: document.getElementById('boardList'),
+        debugBadge: document.getElementById('debugBadge'),
+        debugDot: document.getElementById('debugDot'),
+        debugText: document.getElementById('debugText')
+      };
+
+      if (CONFIG.debugMode) {
+        els.debugBadge.classList.add('is-shown');
+      }
+
+      // =========================================================================
+      // YARDIMCI FONKSİYONLAR
+      // =========================================================================
+      function rand(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function clamp(v, min, max) {
+        return v < min ? min : (v > max ? max : v);
+      }
+
+      function normName(name) {
+        return String(name || '').trim().replace(/^@+/, '').toLowerCase();
+      }
+
+      function normCmd(str) {
+        return String(str || '')
+          .trim()
+          .replace(/İ/g, 'i')
+          .replace(/I/g, 'i')
+          .replace(/ı/g, 'i')
+          .toLowerCase()
+          .replace(/ş/g, 's')
+          .replace(/ğ/g, 'g')
+          .replace(/ü/g, 'u')
+          .replace(/ö/g, 'o')
+          .replace(/ç/g, 'c');
+      }
+
+      function hashStr(str) {
+        let h = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function fillRoundRect(c, x, y, w, h, r) {
+        const rr = Math.min(r, w * 0.5, h * 0.5);
+        c.beginPath();
+        c.moveTo(x + rr, y);
+        c.arcTo(x + w, y, x + w, y + h, rr);
+        c.arcTo(x + w, y + h, x, y + h, rr);
+        c.arcTo(x, y + h, x, y, rr);
+        c.arcTo(x, y, x + w, y, rr);
+        c.closePath();
+      }
+
+      function getSpecialRole(username) {
+        const key = normName(username);
+        if (key === 'himilayk') return 'queen_chick';
+        if (key === 'pairaaa') return 'queen_cat';
+        return null;
+      }
+
+      function getViewerStyle(username) {
+        const role = getSpecialRole(username);
+        if (role === 'queen_chick') {
+          return {
+            spriteKey: 'queen_chick',
+            role: 'queen_chick',
+            chuteColor: '#f5d37a',
+            chuteAccent: '#c4a4ff',
+            isQueen: true,
+            crownIcon: '👑'
+          };
+        }
+        if (role === 'queen_cat') {
+          return {
+            spriteKey: 'queen_cat',
+            role: 'queen_cat',
+            chuteColor: '#d8b4fe',
+            chuteAccent: '#f5d37a',
+            isQueen: true,
+            crownIcon: '👑'
+          };
+        }
+        const h = hashStr(normName(username) || 'anon');
+        const species = SPECIES_LIST[h % SPECIES_LIST.length];
+        const palIdx = (h >>> 4) % PASTEL_PALETTE.length;
+        const pal = PASTEL_PALETTE[palIdx];
+        return {
+          spriteKey: `${species}_${palIdx}`,
+          species,
+          palIdx,
+          role: null,
+          chuteColor: pal.chute,
+          chuteAccent: '#fbf7f2',
+          isQueen: false,
+          crownIcon: ''
+        };
+      }
+
+      // =========================================================================
+      // OFFSCREEN SPRITE ÖNBELLEĞİ (SIFIR RUNTIME BLUR / DÜŞÜK CPU)
+      // =========================================================================
+      const spriteCache = new Map();
+
+      function drawQueenCrown(c, cx, cy, scale) {
+        c.save();
+        c.translate(cx, cy);
+        c.scale(scale, scale);
+
+        // Altın taç gövdesi
+        c.fillStyle = '#f5d37a';
+        c.strokeStyle = '#3a2e2a';
+        c.lineWidth = 2.4;
+        c.lineJoin = 'round';
+        c.beginPath();
+        c.moveTo(-14, 4);
+        c.lineTo(-17, -11);
+        c.lineTo(-7, -4);
+        c.lineTo(0, -16);
+        c.lineTo(7, -4);
+        c.lineTo(17, -11);
+        c.lineTo(14, 4);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Alt taç bandı parlaklık
+        c.fillStyle = '#fef3c7';
+        c.fillRect(-11, -1, 22, 2.6);
+
+        // Taç uç incileri
+        c.fillStyle = '#fffdf9';
+        c.beginPath();
+        c.arc(-17, -11.5, 2.2, 0, Math.PI * 2);
+        c.arc(0, -16.5, 2.6, 0, Math.PI * 2);
+        c.arc(17, -11.5, 2.2, 0, Math.PI * 2);
+        c.fill();
+
+        // Orta lila mücevher
+        c.fillStyle = '#c084fc';
+        c.strokeStyle = '#3a2e2a';
+        c.lineWidth = 1.4;
+        c.beginPath();
+        c.moveTo(0, -8.5);
+        c.lineTo(3.6, -4.5);
+        c.lineTo(0, -0.5);
+        c.lineTo(-3.6, -4.5);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        c.restore();
+      }
+
+      function createSprite(style) {
+        const key = style.spriteKey;
+        if (spriteCache.has(key)) return spriteCache.get(key);
+
+        const size = style.isQueen ? 104 : 88;
+        const off = document.createElement('canvas');
+        off.width = size;
+        off.height = size;
+        const c = off.getContext('2d');
+        const cx = size / 2;
+        const cy = size * 0.58;
+
+        c.lineCap = 'round';
+        c.lineJoin = 'round';
+
+        if (style.role === 'queen_chick') {
+          // --- HIMILAYK: KRALİÇE CİVCİV ---
+          // Hafif altın/lila hale (statik, sıfır blur)
+          c.fillStyle = 'rgba(245, 211, 122, 0.22)';
+          c.beginPath();
+          c.arc(cx, cy, 32, 0, Math.PI * 2);
+          c.fill();
+
+          // Tatlı kanatçıklar
+          c.fillStyle = '#fbd36b';
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 2.8;
+          c.beginPath();
+          c.ellipse(cx - 24, cy + 4, 8, 5.5, -0.45, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+          c.beginPath();
+          c.ellipse(cx + 24, cy + 4, 8, 5.5, 0.45, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+
+          // Yuvarlak yumuşak civciv gövdesi
+          c.fillStyle = '#fde68a';
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 3;
+          c.beginPath();
+          c.ellipse(cx, cy + 2, 23, 21.5, 0, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+
+          // Krem karın/yüz parlaklığı
+          c.fillStyle = '#fffbeb';
+          c.beginPath();
+          c.ellipse(cx, cy + 9, 14, 10, 0, 0, Math.PI * 2);
+          c.fill();
+
+          // Tepe tüyü (tacın altından zarifçe görünür)
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 2.4;
+          c.beginPath();
+          c.moveTo(cx - 2, cy - 19);
+          c.quadraticCurveTo(cx - 5, cy - 25, cx - 9, cy - 22);
+          c.stroke();
+
+          // Pembe yanaklar
+          c.fillStyle = 'rgba(244, 154, 178, 0.62)';
+          c.beginPath();
+          c.ellipse(cx - 13, cy + 4, 4.6, 2.7, 0, 0, Math.PI * 2);
+          c.ellipse(cx + 13, cy + 4, 4.6, 2.7, 0, 0, Math.PI * 2);
+          c.fill();
+
+          // Parlak espresso gözler
+          c.fillStyle = '#2b1e1a';
+          c.beginPath();
+          c.arc(cx - 8.5, cy - 1.5, 4.1, 0, Math.PI * 2);
+          c.arc(cx + 8.5, cy - 1.5, 4.1, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#ffffff';
+          c.beginPath();
+          c.arc(cx - 9.8, cy - 3, 1.5, 0, Math.PI * 2);
+          c.arc(cx + 7.2, cy - 3, 1.5, 0, Math.PI * 2);
+          c.fill();
+
+          // Küçük şık turuncu gaga
+          c.fillStyle = '#f59e0b';
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 2;
+          c.beginPath();
+          c.moveTo(cx - 4.8, cy + 2);
+          c.quadraticCurveTo(cx, cy - 1.2, cx + 4.8, cy + 2);
+          c.quadraticCurveTo(cx, cy + 8.2, cx - 4.8, cy + 2);
+          c.closePath();
+          c.fill();
+          c.stroke();
+
+          // Küçük ayaklar
+          c.strokeStyle = '#d97706';
+          c.lineWidth = 2.5;
+          c.beginPath();
+          c.moveTo(cx - 7, cy + 22);
+          c.lineTo(cx - 9, cy + 26);
+          c.moveTo(cx + 7, cy + 22);
+          c.lineTo(cx + 9, cy + 26);
+          c.stroke();
+
+          // Kraliçe Tacı
+          drawQueenCrown(c, cx, cy - 22, 0.96);
+        } else if (style.role === 'queen_cat') {
+          // --- PAIRAAA: KRALİÇE KEDİ (paithon.html krem-lila kedisine uyumlu) ---
+          // Hafif lila hale
+          c.fillStyle = 'rgba(196, 164, 255, 0.24)';
+          c.beginPath();
+          c.arc(cx, cy, 32, 0, Math.PI * 2);
+          c.fill();
+
+          // Kulaklar
+          c.fillStyle = '#f6efe6';
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 3;
+          // Sol kulak
+          c.beginPath();
+          c.moveTo(cx - 21, cy - 6);
+          c.lineTo(cx - 20, cy - 26);
+          c.lineTo(cx - 5, cy - 17);
+          c.closePath();
+          c.fill();
+          c.stroke();
+          // Sağ kulak
+          c.beginPath();
+          c.moveTo(cx + 21, cy - 6);
+          c.lineTo(cx + 20, cy - 26);
+          c.lineTo(cx + 5, cy - 17);
+          c.closePath();
+          c.fill();
+          c.stroke();
+
+          // İç kulak (gül kurusu)
+          c.fillStyle = '#e5a9b8';
+          c.beginPath();
+          c.moveTo(cx - 17.5, cy - 9);
+          c.lineTo(cx - 17, cy - 21);
+          c.lineTo(cx - 8.5, cy - 15.5);
+          c.closePath();
+          c.fill();
+          c.beginPath();
+          c.moveTo(cx + 17.5, cy - 9);
+          c.lineTo(cx + 17, cy - 21);
+          c.lineTo(cx + 8.5, cy - 15.5);
+          c.closePath();
+          c.fill();
+
+          // Krem-bej tombul kedi başı/gövdesi
+          c.fillStyle = '#fbf7f2';
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 3;
+          c.beginPath();
+          c.ellipse(cx, cy + 2, 24, 21, 0, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+
+          // Alt çene yumuşak gölge
+          c.fillStyle = 'rgba(229, 216, 200, 0.55)';
+          c.beginPath();
+          c.ellipse(cx, cy + 14, 16, 6.5, 0, 0, Math.PI * 2);
+          c.fill();
+
+          // Yanak allığı
+          c.fillStyle = 'rgba(229, 169, 184, 0.62)';
+          c.beginPath();
+          c.ellipse(cx - 14, cy + 5, 4.8, 2.8, 0, 0, Math.PI * 2);
+          c.ellipse(cx + 14, cy + 5, 4.8, 2.8, 0, 0, Math.PI * 2);
+          c.fill();
+
+          // Bıyıklar
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 1.7;
+          c.beginPath();
+          c.moveTo(cx - 21, cy + 2); c.lineTo(cx - 29, cy + 1);
+          c.moveTo(cx - 20, cy + 6); c.lineTo(cx - 28, cy + 7.5);
+          c.moveTo(cx + 21, cy + 2); c.lineTo(cx + 29, cy + 1);
+          c.moveTo(cx + 20, cy + 6); c.lineTo(cx + 28, cy + 7.5);
+          c.stroke();
+
+          // Gözler
+          c.fillStyle = '#2b1e1a';
+          c.beginPath();
+          c.arc(cx - 9, cy - 1, 4.3, 0, Math.PI * 2);
+          c.arc(cx + 9, cy - 1, 4.3, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#ffffff';
+          c.beginPath();
+          c.arc(cx - 10.3, cy - 2.6, 1.6, 0, Math.PI * 2);
+          c.arc(cx + 7.7, cy - 2.6, 1.6, 0, Math.PI * 2);
+          c.fill();
+
+          // Gül kurusu burun + :3 ağız
+          c.fillStyle = '#c97a8e';
+          c.beginPath();
+          c.ellipse(cx, cy + 3.2, 3.1, 2.2, 0, 0, Math.PI * 2);
+          c.fill();
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 2;
+          c.beginPath();
+          c.moveTo(cx - 4.5, cy + 6.8);
+          c.quadraticCurveTo(cx - 2.2, cy + 9.4, cx, cy + 6.4);
+          c.quadraticCurveTo(cx + 2.2, cy + 9.4, cx + 4.5, cy + 6.8);
+          c.stroke();
+
+          // Lila küçük tasma boncuğu
+          c.fillStyle = '#c084fc';
+          c.strokeStyle = '#3a2e2a';
+          c.lineWidth = 1.6;
+          c.beginPath();
+          c.arc(cx, cy + 22, 3.3, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+
+          // Kraliçe Tacı (kulakların arasında şık şekilde)
+          drawQueenCrown(c, cx, cy - 21, 0.92);
+        } else {
+          // --- STANDART İZLEYİCİLER (Şık Minimalist Pastel Maskotlar) ---
+          const pal = PASTEL_PALETTE[style.palIdx || 0];
+          const sp = style.species || 'cat';
+
+          c.fillStyle = pal.main;
+          c.strokeStyle = '#2d2230';
+          c.lineWidth = 2.8;
+
+          // Kulaklar / aksesuarlar (gövdeden önce)
+          if (sp === 'cat') {
+            c.beginPath();
+            c.moveTo(cx - 17, cy - 6); c.lineTo(cx - 16, cy - 23); c.lineTo(cx - 4, cy - 15); c.closePath();
+            c.fill(); c.stroke();
+            c.beginPath();
+            c.moveTo(cx + 17, cy - 6); c.lineTo(cx + 16, cy - 23); c.lineTo(cx + 4, cy - 15); c.closePath();
+            c.fill(); c.stroke();
+          } else if (sp === 'bunny') {
+            c.beginPath();
+            c.ellipse(cx - 8, cy - 22, 4.8, 12, -0.14, 0, Math.PI * 2);
+            c.fill(); c.stroke();
+            c.beginPath();
+            c.ellipse(cx + 8, cy - 22, 4.8, 12, 0.14, 0, Math.PI * 2);
+            c.fill(); c.stroke();
+          } else if (sp === 'bear') {
+            c.beginPath();
+            c.arc(cx - 14, cy - 14, 6.5, 0, Math.PI * 2);
+            c.fill(); c.stroke();
+            c.beginPath();
+            c.arc(cx + 14, cy - 14, 6.5, 0, Math.PI * 2);
+            c.fill(); c.stroke();
+          }
+
+          // Ana yuvarlak gövde
+          c.fillStyle = pal.main;
+          c.beginPath();
+          c.ellipse(cx, cy + 2, 19.5, 18, 0, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+
+          // Yumuşak karın vurgusu
+          c.fillStyle = pal.belly;
+          c.beginPath();
+          c.ellipse(cx, cy + 8, 11.5, 8, 0, 0, Math.PI * 2);
+          c.fill();
+
+          if (sp === 'puff') {
+            // Küçük yıldız tokası
+            c.fillStyle = '#f5d37a';
+            c.beginPath();
+            c.arc(cx, cy - 16, 3.8, 0, Math.PI * 2);
+            c.fill();
+          }
+
+          // Yanaklar
+          c.fillStyle = 'rgba(229, 169, 184, 0.55)';
+          c.beginPath();
+          c.ellipse(cx - 11, cy + 4, 3.6, 2.2, 0, 0, Math.PI * 2);
+          c.ellipse(cx + 11, cy + 4, 3.6, 2.2, 0, 0, Math.PI * 2);
+          c.fill();
+
+          // Gözler
+          c.fillStyle = '#251a27';
+          c.beginPath();
+          c.arc(cx - 7, cy - 1, 3.2, 0, Math.PI * 2);
+          c.arc(cx + 7, cy - 1, 3.2, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#ffffff';
+          c.beginPath();
+          c.arc(cx - 8, cy - 2.2, 1.15, 0, Math.PI * 2);
+          c.arc(cx + 6, cy - 2.2, 1.15, 0, Math.PI * 2);
+          c.fill();
+
+          // Ağız / Gaga
+          if (sp === 'chick') {
+            c.fillStyle = '#f59e0b';
+            c.beginPath();
+            c.moveTo(cx - 3.5, cy + 2.5);
+            c.lineTo(cx + 3.5, cy + 2.5);
+            c.lineTo(cx, cy + 6.5);
+            c.closePath();
+            c.fill();
+          } else {
+            c.strokeStyle = '#2d2230';
+            c.lineWidth = 1.8;
+            c.beginPath();
+            c.arc(cx, cy + 3.5, 3, 0.15 * Math.PI, 0.85 * Math.PI);
+            c.stroke();
+          }
+        }
+
+        spriteCache.set(key, off);
+        return off;
+      }
+
+      // Kraliçe sprite'larını baştan hazırla
+      createSprite(getViewerStyle('himilayk'));
+      createSprite(getViewerStyle('pairaaa'));
+
+      // =========================================================================
+      // OYUN DURUMU (STATE)
+      // =========================================================================
+      let W = window.innerWidth || 1920;
+      let H = window.innerHeight || 1080;
+
+      const pool = {
+        x: W * 0.5,
+        width: 440,
+        height: 76,
+        waterY: H - 56,
+        appear: 0,       // 0 = gizli, 1 = tamamen görünür
+        targetAppear: 0,
+        idleTimer: 0,
+        wind: 0          // px/s^2
+      };
+
+      const jumpers = [];
+      const particles = [];
+      const popups = [];
+      const duoLinks = []; // { a, b, snapped }
+
+      let rafId = null;
+      let lastFrameTime = 0;
+      let waveTime = 0;
+
+      // Cooldown & Spam koruması
+      const userCooldowns = new Map();
+      let lastTopShownAt = 0;
+      const seenMsgIds = new Set();
+
+      // Bekleyen Duo eşleşmesi
+      let pendingDuo = null; // { username, expiresAt, timerId }
+
+      // Toplu atlama kuyruğu (!topluatla / !atlat)
+      const queueState = {
+        open: false,
+        openedBy: '',
+        entries: new Map() // normName -> { username, mode }
+      };
+
+      // Toplu atlama sonu podyum takibi
+      let activeBatch = null; // { total, results: [] }
+      let boardHideTimer = null;
+
+      // Liderlik tablosu (!top)
+      let leaderboard = loadLeaderboard();
+
+      // Cetim token durumu (opsiyonel chat cevabı için salt-okunur)
+      let cetimAuth = readCetimAuth();
+
+      // =========================================================================
+      // CETİM TOKEN OKUYUCU (SALT-OKUNUR, EKSTRA GİRİŞ GEREKTİRMEZ)
+      // =========================================================================
+      function readCetimAuth() {
+        try {
+          const raw = localStorage.getItem(CONFIG.cetimStorageKey);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          const auth = parsed && parsed.auth;
+          if (!auth || !auth.accessToken) return null;
+          return {
+            accessToken: String(auth.accessToken),
+            expiresAt: Number(auth.expiresAt) || 0,
+            broadcasterId: Number(auth.broadcasterId || auth.userId || 0),
+            chatroomId: String(auth.chatroomId || '')
+          };
+        } catch {
+          return null;
+        }
+      }
+
+      async function sendOptionalChatReply(text) {
+        if (!CONFIG.enableChatReply) return;
+        cetimAuth = readCetimAuth();
+        if (!cetimAuth || !cetimAuth.accessToken || !cetimAuth.broadcasterId) return;
+        if (cetimAuth.expiresAt && Date.now() > cetimAuth.expiresAt - 15000) return;
+        try {
+          await fetch(`${CONFIG.kickApiBase}/chat`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${cetimAuth.accessToken}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              broadcaster_user_id: cetimAuth.broadcasterId,
+              content: String(text).slice(0, 480),
+              type: 'user'
+            })
+          });
+        } catch {
+          // OBS veya farklı profilde sessizce yoksayılır
+        }
+      }
+
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === CONFIG.cetimStorageKey) {
+          cetimAuth = readCetimAuth();
+        }
+      });
+
+      // =========================================================================
+      // LİDERLİK TABLOSU (!top)
+      // =========================================================================
+      function loadLeaderboard() {
+        if (CONFIG.resetOnLoad) {
+          try { localStorage.removeItem(CONFIG.leaderboardKey); } catch {}
+          return [];
+        }
+        try {
+          const raw = localStorage.getItem(CONFIG.leaderboardKey);
+          if (!raw) return [];
+          const arr = JSON.parse(raw);
+          if (!Array.isArray(arr)) return [];
+          return arr
+            .filter((x) => x && x.username && Number.isFinite(Number(x.score)))
+            .map((x) => ({
+              username: String(x.username),
+              score: Number(x.score),
+              mode: String(x.mode || 'normal')
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 15);
+        } catch {
+          return [];
+        }
+      }
+
+      function saveLeaderboard() {
+        try {
+          localStorage.setItem(CONFIG.leaderboardKey, JSON.stringify(leaderboard));
+        } catch {}
+      }
+
+      function recordScore(username, score, mode) {
+        if (score <= 0) return { isNewRecord: false, isPersonalBest: false };
+        const key = normName(username);
+        const prevTop = leaderboard.length ? leaderboard[0].score : 0;
+        const existing = leaderboard.find((x) => normName(x.username) === key);
+
+        let isPersonalBest = false;
+        if (existing) {
+          if (score > existing.score) {
+            existing.score = score;
+            existing.mode = mode;
+            existing.username = username;
+            isPersonalBest = true;
+          }
+        } else {
+          leaderboard.push({ username, score, mode });
+          isPersonalBest = true;
+        }
+
+        leaderboard.sort((a, b) => b.score - a.score);
+        if (leaderboard.length > 15) leaderboard.length = 15;
+        saveLeaderboard();
+
+        return {
+          isNewRecord: score > prevTop && score >= 50,
+          isPersonalBest
+        };
+      }
+
+      function renderBoardCard(title, tag, rows, durationMs) {
+        els.boardTitle.textContent = title;
+        els.boardTag.textContent = tag;
+
+        if (!rows.length) {
+          els.boardList.innerHTML = '<div class="board-empty">Henüz havuza düşen yok! !atla yazıp dene.</div>';
+        } else {
+          els.boardList.innerHTML = rows.map((r, i) => {
+            const rankClass = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
+            const role = getSpecialRole(r.username);
+            const prefix = role === 'queen_chick' ? '👑🐥 ' : (role === 'queen_cat' ? '👑🐱 ' : '');
+            const modeLabel = MODE_LABELS[r.mode] || 'Paraşüt';
+            return `
+              <div class="board-row ${rankClass}">
+                <span class="board-rank">#${i + 1}</span>
+                <div class="board-user">
+                  <span class="board-name">${prefix}${escapeHtml(r.username)}</span>
+                  <span class="board-mode">${escapeHtml(modeLabel)}</span>
+                </div>
+                <span class="board-score">${r.score.toFixed(2)}</span>
+              </div>
+            `;
+          }).join('');
+        }
+
+        els.boardCard.classList.add('is-visible');
+        clearTimeout(boardHideTimer);
+        boardHideTimer = setTimeout(() => {
+          els.boardCard.classList.remove('is-visible');
+        }, durationMs || 7000);
+      }
+
+      function showTopLeaderboard(bypassCooldown) {
+        const now = Date.now();
+        if (!bypassCooldown && now - lastTopShownAt < CONFIG.topCooldownMs) return;
+        lastTopShownAt = now;
+
+        const top5 = leaderboard.slice(0, 5);
+        renderBoardCard('EN İYİ ATLAYIŞLAR', '!top', top5, 7500);
+
+        if (CONFIG.enableChatReply && top5.length) {
+          const summary = top5
+            .slice(0, 3)
+            .map((r, i) => `${i + 1}. ${r.username} (${r.score.toFixed(2)})`)
+            .join(' • ');
+          sendOptionalChatReply(`🏆 !atla En İyiler: ${summary}`);
+        }
+      }
+
+      // =========================================================================
+      // TOPLU ATLAMA KUYRUĞU UI & MANTIĞI
+      // =========================================================================
+      function renderQueueCard() {
+        if (!queueState.open) {
+          els.queueCard.classList.remove('is-visible');
+          return;
+        }
+        const entries = Array.from(queueState.entries.values());
+        els.queueCount.textContent = `${entries.length} Kişi`;
+
+        const visible = entries.slice(-14);
+        const hiddenCount = entries.length - visible.length;
+        let html = visible.map((e) => {
+          const role = getSpecialRole(e.username);
+          const isQueen = Boolean(role);
+          const icon = role === 'queen_chick' ? '👑🐥 ' : (role === 'queen_cat' ? '👑🐱 ' : '');
+          const tag = e.mode && e.mode !== 'normal' ? `<span class="queue-chip-tag">${escapeHtml(MODE_LABELS[e.mode] || '')}</span>` : '';
+          return `<span class="queue-chip ${isQueen ? 'is-queen' : ''}">${icon}${escapeHtml(e.username)}${tag}</span>`;
+        }).join('');
+
+        if (hiddenCount > 0) {
+          html = `<span class="queue-chip">+${hiddenCount} kişi</span>` + html;
+        }
+        els.queueChips.innerHTML = html || '<span class="queue-chip" style="opacity:0.65">İlk atlayan sen ol!</span>';
+        els.queueCard.classList.add('is-visible');
+      }
+
+      function openGroupQueue(modUsername) {
+        if (queueState.open) return;
+        queueState.open = true;
+        queueState.openedBy = modUsername;
+        queueState.entries.clear();
+        clearPendingDuo();
+        prepareRoundIfIdle();
+        pool.targetAppear = 1;
+        renderQueueCard();
+        wakeEngine();
+        sendOptionalChatReply('🏊 Toplu atlama sırası açıldı! Katılmak için !atla yazın.');
+      }
+
+      function cancelGroupQueue() {
+        if (!queueState.open) return;
+        queueState.open = false;
+        queueState.entries.clear();
+        renderQueueCard();
+      }
+
+      function launchGroupQueue() {
+        if (!queueState.open) return;
+        const list = Array.from(queueState.entries.values());
+        queueState.open = false;
+        queueState.entries.clear();
+        renderQueueCard();
+
+        if (!list.length) return;
+
+        prepareRoundIfIdle();
+        pool.targetAppear = 1;
+        wakeEngine();
+
+        const batch = { total: list.length, finished: 0, results: [] };
+        activeBatch = batch;
+
+        const maxStagger = Math.min(1100, list.length * 55);
+        list.forEach((entry, idx) => {
+          // Toplu atlamada herkes birbirine bağlı olmadan bağımsız atlar
+          const safeMode = entry.mode === 'duo' ? 'normal' : (entry.mode || 'normal');
+          const delay = list.length > 1 ? (idx / (list.length - 1)) * maxStagger + rand(0, 45) : 0;
+          setTimeout(() => {
+            spawnJumper(entry.username, safeMode, { batch });
+          }, delay);
+        });
+
+        sendOptionalChatReply(`🚀 ${list.length} kişi birlikte atlıyor! Bol şans!`);
+      }
+
+      // =========================================================================
+      // DUO EŞLEŞME YÖNETİMİ
+      // =========================================================================
+      function clearPendingDuo() {
+        if (pendingDuo && pendingDuo.timerId) {
+          clearTimeout(pendingDuo.timerId);
+        }
+        pendingDuo = null;
+        els.duoPill.classList.remove('is-visible');
+      }
+
+      function handleDuoRequest(username, explicitPartner) {
+        if (explicitPartner && normName(explicitPartner) !== normName(username)) {
+          spawnDuoJump(username, explicitPartner);
+          return;
+        }
+
+        if (pendingDuo && normName(pendingDuo.username) !== normName(username)) {
+          const partner = pendingDuo.username;
+          clearPendingDuo();
+          spawnDuoJump(partner, username);
+          return;
+        }
+
+        if (pendingDuo && normName(pendingDuo.username) === normName(username)) {
+          return;
+        }
+
+        els.duoPillText.textContent = `${username} partner bekliyor — katılmak için !atla duo yaz`;
+        els.duoPill.classList.add('is-visible');
+        pendingDuo = {
+          username,
+          timerId: setTimeout(() => {
+            const waitingUser = pendingDuo ? pendingDuo.username : null;
+            clearPendingDuo();
+            if (waitingUser) {
+              const buddy = Math.random() < 0.5 ? 'Mini Kedi' : 'Mini Civciv';
+              spawnDuoJump(waitingUser, buddy, true);
+            }
+          }, CONFIG.duoWaitMs)
+        };
+      }
+
+      // =========================================================================
+      // HAVUZ & RÜZGAR YÖNETİMİ
+      // =========================================================================
+      function resizeCanvas() {
+        W = window.innerWidth || 1920;
+        H = window.innerHeight || 1080;
+        // Valorant FPS koruması için dpr = 1 (OBS 1080p native)
+        canvas.width = W;
+        canvas.height = H;
+        pool.width = Math.round(clamp(W * 0.25, 290, 460));
+        pool.height = 76;
+        pool.waterY = H - 56;
+        pool.x = clamp(pool.x, pool.width * 0.6 + 40, W - pool.width * 0.6 - 40);
+      }
+
+      function prepareRoundIfIdle() {
+        if (jumpers.length === 0 && pool.appear < 0.08) {
+          const margin = pool.width * 0.62 + 80;
+          const minX = Math.min(W * 0.5, margin);
+          const maxX = Math.max(W * 0.5, W - margin);
+          pool.x = rand(minX, maxX);
+          pool.wind = rand(-34, 34);
+          if (Math.abs(pool.wind) < 6) pool.wind = 0;
+        }
+        pool.idleTimer = 0;
+        pool.targetAppear = 1;
+      }
+
+      // =========================================================================
+      // FİZİK TABANLI ATLAYIŞ OLUŞTURUCULAR
+      // =========================================================================
+      function createBaseJumper(username, mode, opts) {
+        const style = getViewerStyle(username);
+        return {
+          id: Math.random().toString(36).slice(2, 9),
+          username,
+          mode,
+          style,
+          sprite: createSprite(style),
+          isAiBuddy: Boolean(opts && opts.isAiBuddy),
+          batch: (opts && opts.batch) || null,
+          duoGroup: (opts && opts.duoGroup) || null,
+          x: pool.x,
+          y: -40,
+          vx: 0,
+          vy: 0,
+          rot: 0,
+          vRot: 0,
+          age: 0,
+          state: 'air', // air | water | land
+          landTimer: 0,
+          score: 0,
+          chuteOpen: false,
+          chuteScale: 0,
+          chuteDelay: rand(0.32, 0.62),
+          swayPhase: rand(0, Math.PI * 2),
+          // Tarzan
+          tarzan: null,
+          // Füze
+          rocketBurn: 0,
+          // Balon
+          balloons: 0,
+          balloonPopTimes: null
+        };
+      }
+
+      function spawnJumper(username, mode, opts) {
+        if (jumpers.length >= CONFIG.maxActiveJumpers) {
+          jumpers.shift();
+        }
+        prepareRoundIfIdle();
+
+        let actualMode = mode || 'normal';
+        if (actualMode === 'random') {
+          const poolModes = ['normal', 'tarzan', 'rocket', 'balloon'];
+          actualMode = poolModes[Math.floor(Math.random() * poolModes.length)];
+        }
+
+        const j = createBaseJumper(username, actualMode, opts);
+
+        if (actualMode === 'normal') {
+          const spread = pool.width * 0.95;
+          j.x = clamp(pool.x + rand(-spread, spread) - pool.wind * 1.4, 90, W - 90);
+          j.y = -36;
+          j.vx = rand(-85, 85);
+          j.vy = rand(45, 95);
+        } else if (actualMode === 'tarzan') {
+          // Ekran boyutuna göre matematiksel olarak havuzu hedefleyen sarmaşık sarkaç fiziği
+          const side = pool.x > W * 0.5 ? -1 : (pool.x < W * 0.5 ? 1 : (Math.random() < 0.5 ? -1 : 1));
+          const L = Math.min(H * 0.43, 415);
+          const gPend = 560;
+          const gFlight = 760;
+          const theta0 = side * rand(0.92, 1.12);
+          const releaseTheta = -side * rand(0.18, 0.40);
+
+          // Enerji korunumu ile beklenen iniş mesafesini hesapla (+ eğlenceli sapma)
+          const cosDiff = Math.max(0.05, Math.cos(releaseTheta) - Math.cos(theta0));
+          const vMag = Math.sqrt(2 * gPend * L * cosDiff);
+          const vxRel = -side * vMag * Math.cos(releaseTheta);
+          const vyRel = -vMag * Math.abs(Math.sin(releaseTheta));
+          const dropY = Math.max(120, pool.waterY - (L * Math.cos(releaseTheta)));
+          const disc = vyRel * vyRel + 2 * gFlight * dropY;
+          const tFlight = (-vyRel + Math.sqrt(Math.max(1, disc))) / gFlight;
+          const predictedTravel = Math.sin(releaseTheta) * L + vxRel * tFlight + 0.5 * (pool.wind * 0.35) * tFlight * tFlight;
+
+          const variance = rand(-pool.width * 0.54, pool.width * 0.54);
+          const anchorX = clamp(pool.x - predictedTravel + variance, 140, W - 140);
+
+          j.tarzan = {
+            attached: true,
+            side,
+            anchorX,
+            anchorY: -8,
+            L,
+            gPend,
+            gFlight,
+            theta: theta0,
+            omega: 0,
+            releaseTheta
+          };
+          j.x = anchorX + Math.sin(theta0) * L;
+          j.y = -8 + Math.cos(theta0) * L;
+        } else if (actualMode === 'rocket') {
+          const fromLeft = Math.random() < 0.5;
+          const side = fromLeft ? -1 : 1;
+          j.x = clamp(pool.x + side * rand(pool.width * 0.8, pool.width * 1.45), 60, W - 60);
+          j.y = rand(50, H * 0.24);
+          j.vx = -side * rand(240, 380);
+          j.vy = rand(-110, 30);
+          j.rocketBurn = rand(0.45, 0.72);
+        } else if (actualMode === 'balloon') {
+          const spread = pool.width * 0.78;
+          j.x = clamp(pool.x + rand(-spread, spread) - pool.wind * 2.2, 95, W - 95);
+          j.y = -32;
+          j.vx = rand(-40, 40);
+          j.vy = 45;
+          j.balloons = 3;
+          j.balloonPopTimes = [rand(1.3, 2.2), rand(2.5, 3.6)];
+        }
+
+        jumpers.push(j);
+        wakeEngine();
+        return j;
+      }
+
+      function spawnDuoJump(userA, userB, secondIsAi) {
+        prepareRoundIfIdle();
+        const group = { a: null, b: null, landedCount: 0, totalScore: 0 };
+        const baseX = clamp(pool.x + rand(-pool.width * 0.85, pool.width * 0.85) - pool.wind * 1.2, 120, W - 120);
+        const baseVx = rand(-75, 75);
+
+        const a = createBaseJumper(userA, 'duo', { duoGroup: group });
+        const b = createBaseJumper(userB, 'duo', { duoGroup: group, isAiBuddy: Boolean(secondIsAi) });
+
+        a.x = baseX - 30;
+        b.x = baseX + 30;
+        a.y = -36;
+        b.y = -44;
+        a.vx = baseVx - 24;
+        b.vx = baseVx + 24;
+        a.vy = 60;
+        b.vy = 64;
+        a.chuteDelay = 0.42;
+        b.chuteDelay = 0.42;
+
+        group.a = a;
+        group.b = b;
+
+        jumpers.push(a, b);
+        duoLinks.push({ a, b, snapped: false, snapY: H * rand(0.56, 0.68) });
+        wakeEngine();
+      }
+
+      // =========================================================================
+      // PARÇACIKLAR & SKOR POPUP'LARI
+      // =========================================================================
+      function spawnSplash(x, y, intensity, isGold) {
+        const count = Math.min(18, Math.round(8 + intensity * 10));
+        for (let i = 0; i < count; i++) {
+          if (particles.length >= CONFIG.maxParticles) particles.shift();
+          const angle = rand(-Math.PI * 0.92, -Math.PI * 0.08);
+          const spd = rand(110, 260 + intensity * 140);
+          particles.push({
+            x: x + rand(-14, 14),
+            y: y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            r: rand(2.6, 5.8),
+            life: 0,
+            maxLife: rand(0.45, 0.85),
+            color: isGold && i % 2 === 0 ? '#f5d37a' : (i % 3 === 0 ? '#e9d5ff' : '#93c5fd')
+          });
+        }
+      }
+
+      function spawnSparkBurst(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+          if (particles.length >= CONFIG.maxParticles) particles.shift();
+          const a = (Math.PI * 2 * i) / count + rand(-0.2, 0.2);
+          const spd = rand(60, 150);
+          particles.push({
+            x, y,
+            vx: Math.cos(a) * spd,
+            vy: Math.sin(a) * spd - 35,
+            r: rand(2.2, 4.2),
+            life: 0,
+            maxLife: rand(0.35, 0.65),
+            color
+          });
+        }
+      }
+
+      function spawnPopup(x, y, mainText, subText, accent) {
+        popups.push({
+          x: clamp(x, 90, W - 90),
+          y,
+          vy: -36,
+          mainText,
+          subText: subText || '',
+          accent: accent || '#e5d4ff',
+          life: 0,
+          maxLife: 2.35
+        });
+      }
+
+      // =========================================================================
+      // İNİŞ & SKOR HESAPLAMA
+      // =========================================================================
+      function handleLanding(j) {
+        const halfW = pool.width * 0.5 - 16; // İç su alanı
+        const dx = Math.abs(j.x - pool.x);
+        const inPool = dx <= halfW;
+
+        if (inPool) {
+          j.state = 'water';
+          j.y = pool.waterY + 4;
+          j.vx *= 0.22;
+          j.vy = 0;
+          j.rot = 0;
+
+          // Merkeze yakınlık skoru (0.00 - 100.00)
+          let score;
+          if (dx <= 4.5) {
+            score = 100;
+          } else {
+            const ratio = clamp(1 - dx / halfW, 0, 1);
+            score = Math.max(1, Math.round(ratio * 10000) / 100);
+          }
+          j.score = score;
+
+          const isBullseye = score >= 95;
+          const intensity = j.mode === 'rocket' ? 1.35 : (isBullseye ? 1.2 : 0.8);
+          spawnSplash(j.x, pool.waterY, intensity, isBullseye);
+
+          let recordInfo = { isNewRecord: false };
+          if (!j.isAiBuddy) {
+            recordInfo = recordScore(j.username, score, j.mode);
+          }
+
+          let sub = '';
+          let accent = '#d8b4fe';
+          if (recordInfo.isNewRecord) {
+            sub = 'YENİ REKOR! 👑';
+            accent = '#f5d37a';
+          } else if (score >= 95) {
+            sub = 'TAM İSABET! ✨';
+            accent = '#f5d37a';
+          } else if (score >= 75) {
+            sub = 'HARİKA!';
+            accent = '#86efac';
+          } else if (score >= 40) {
+            sub = 'GÜZEL!';
+            accent = '#e5d4ff';
+          } else {
+            sub = 'UCUNDAN!';
+            accent = '#f2c6d0';
+          }
+
+          spawnPopup(j.x, pool.waterY - 56, `${score.toFixed(2)}`, sub, accent);
+        } else {
+          j.state = 'land';
+          j.y = H - 28;
+          j.vx *= 0.15;
+          j.vy = -120; // Küçük komik sekme
+          j.score = 0;
+          j.rot = (j.x < pool.x ? -1 : 1) * 0.45;
+          spawnSparkBurst(j.x, H - 24, '#e5a9b8', 7);
+          spawnPopup(j.x, H - 72, '0.00', 'ISKALADI!', '#f2c6d0');
+        }
+
+        // Duo ortalama bildirimi
+        if (j.duoGroup) {
+          j.duoGroup.landedCount++;
+          j.duoGroup.totalScore += j.score;
+          if (j.duoGroup.landedCount === 2) {
+            const avg = j.duoGroup.totalScore / 2;
+            const midX = (j.duoGroup.a.x + j.duoGroup.b.x) * 0.5;
+            spawnPopup(midX, pool.waterY - 110, `DUO ${avg.toFixed(2)}`, 'İKİLİ ORTALAMA', '#f5d37a');
+          }
+        }
+
+        // Toplu atlama podyum takibi
+        if (j.batch) {
+          j.batch.finished++;
+          if (j.score > 0) {
+            j.batch.results.push({ username: j.username, score: j.score, mode: j.mode });
+          }
+          if (j.batch.finished >= j.batch.total && j.batch === activeBatch) {
+            const podium = j.batch.results
+              .slice()
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 3);
+            if (podium.length) {
+              setTimeout(() => {
+                renderBoardCard('TOPLU ATLAMA KAZANANLARI', `${j.batch.total} KİŞİ`, podium, 6500);
+              }, 500);
+            }
+            activeBatch = null;
+          }
+        }
+      }
+
+      // =========================================================================
+      // FİZİK GÜNCELLEME ADIMI
+      // =========================================================================
+      function updatePhysics(dt) {
+        waveTime += dt;
+
+        // Havuz görünme/gizlenme animasyonu
+        const hasActivity = jumpers.length > 0 || queueState.open;
+        if (hasActivity) {
+          pool.idleTimer = 0;
+          pool.targetAppear = 1;
+        } else {
+          pool.idleTimer += dt;
+          if (pool.idleTimer > 2.6) {
+            pool.targetAppear = 0;
+          }
+        }
+        pool.appear += (pool.targetAppear - pool.appear) * Math.min(1, dt * 6.5);
+        if (pool.targetAppear === 0 && pool.appear < 0.004) pool.appear = 0;
+        if (pool.targetAppear === 1 && pool.appear > 0.996) pool.appear = 1;
+
+        // Duo elastik kurdele bağlantıları
+        for (let i = duoLinks.length - 1; i >= 0; i--) {
+          const link = duoLinks[i];
+          if (link.snapped || link.a.state !== 'air' || link.b.state !== 'air') {
+            duoLinks.splice(i, 1);
+            continue;
+          }
+          const avgY = (link.a.y + link.b.y) * 0.5;
+          if (avgY >= link.snapY) {
+            link.snapped = true;
+            spawnSparkBurst((link.a.x + link.b.x) * 0.5, avgY, '#e5d4ff', 6);
+            duoLinks.splice(i, 1);
+            continue;
+          }
+          const dx = link.b.x - link.a.x;
+          const dy = link.b.y - link.a.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          const rest = 64;
+          const force = (dist - rest) * 14;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          link.a.vx += fx * dt;
+          link.a.vy += fy * dt;
+          link.b.vx -= fx * dt;
+          link.b.vy -= fy * dt;
+        }
+
+        // Atlayan karakterler
+        for (let i = jumpers.length - 1; i >= 0; i--) {
+          const j = jumpers[i];
+          j.age += dt;
+
+          if (j.state === 'air') {
+            if (j.mode === 'tarzan' && j.tarzan && j.tarzan.attached) {
+              const t = j.tarzan;
+              const alpha = -(t.gPend / t.L) * Math.sin(t.theta);
+              t.omega += alpha * dt;
+              t.theta += t.omega * dt;
+              j.x = t.anchorX + Math.sin(t.theta) * t.L;
+              j.y = t.anchorY + Math.cos(t.theta) * t.L;
+              j.rot = -t.theta * 0.45;
+
+              // İpi bırakma açısına ulaşıldı mı?
+              const passedRelease = t.side < 0 ? (t.theta >= t.releaseTheta) : (t.theta <= t.releaseTheta);
+              if (passedRelease) {
+                t.attached = false;
+                const vTan = t.omega * t.L;
+                j.vx = Math.cos(t.theta) * vTan;
+                j.vy = -Math.sin(t.theta) * vTan;
+                j.vRot = -t.side * 5.2;
+                spawnSparkBurst(j.x, j.y, '#c4a4ff', 6);
+              }
+            } else if (j.mode === 'tarzan' && j.tarzan) {
+              // Tarzan serbest balistik uçuş
+              j.vx += pool.wind * 0.35 * dt;
+              j.vy += j.tarzan.gFlight * dt;
+              j.x += j.vx * dt;
+              j.y += j.vy * dt;
+              j.rot += j.vRot * dt;
+            } else if (j.mode === 'rocket') {
+              if (j.rocketBurn > 0) {
+                j.rocketBurn -= dt;
+                // Havuza doğru yumuşak güdümlü kavis + motor kıvılcımı
+                const steer = clamp((pool.x - j.x) * 0.55, -180, 180);
+                j.vx += (steer + pool.wind * 0.25) * dt;
+                j.vy += 280 * dt;
+                if (Math.random() < 0.55 && particles.length < CONFIG.maxParticles) {
+                  particles.push({
+                    x: j.x - j.vx * 0.03,
+                    y: j.y - j.vy * 0.03,
+                    vx: -j.vx * 0.15 + rand(-30, 30),
+                    vy: -j.vy * 0.15 + rand(-30, 30),
+                    r: rand(2.5, 5),
+                    life: 0,
+                    maxLife: 0.32,
+                    color: Math.random() < 0.5 ? '#f5d37a' : '#c084fc'
+                  });
+                }
+              } else {
+                j.vx += pool.wind * 0.3 * dt;
+                j.vy += 860 * dt;
+              }
+              j.x += j.vx * dt;
+              j.y += j.vy * dt;
+              j.rot = Math.atan2(j.vy, j.vx) * 0.35;
+            } else if (j.mode === 'balloon') {
+              if (j.balloonPopTimes && j.balloonPopTimes.length && j.age >= j.balloonPopTimes[0] && j.balloons > 1) {
+                j.balloonPopTimes.shift();
+                j.balloons--;
+                spawnSparkBurst(j.x + rand(-14, 14), j.y - 42, '#f2c6d0', 6);
+              }
+              if (j.y > pool.waterY - 125 && j.balloons > 0) {
+                j.balloons = 0;
+                spawnSparkBurst(j.x, j.y - 38, '#d8b4fe', 7);
+              }
+              const targetVy = j.balloons === 3 ? 72 : (j.balloons === 2 ? 128 : (j.balloons === 1 ? 195 : 460));
+              j.vy += (targetVy - j.vy) * (j.balloons > 0 ? 4.2 : 2.2) * dt;
+              const sway = j.balloons > 0 ? Math.sin(j.age * 2.4 + j.swayPhase) * 48 : 0;
+              j.vx += (pool.wind * (j.balloons > 0 ? 1.35 : 0.4) + sway - j.vx * 1.1) * dt;
+              j.x += j.vx * dt;
+              j.y += j.vy * dt;
+              j.rot = clamp(j.vx * 0.0022, -0.32, 0.32);
+            } else {
+              // Normal & Duo (Paraşüt fiziği)
+              if (!j.chuteOpen && j.age >= j.chuteDelay) {
+                j.chuteOpen = true;
+              }
+              if (j.chuteOpen) {
+                j.chuteScale = Math.min(1, j.chuteScale + dt * 5.2);
+                const sway = Math.sin(j.age * 2.5 + j.swayPhase) * 52;
+                j.vy += (124 - j.vy) * 4.4 * dt;
+                j.vx += (pool.wind * 0.92 + sway - j.vx * 1.15) * dt;
+                j.rot = clamp(j.vx * 0.0024, -0.35, 0.35);
+              } else {
+                j.vy += 520 * dt;
+                j.vx += pool.wind * 0.3 * dt;
+              }
+              j.x += j.vx * dt;
+              j.y += j.vy * dt;
+            }
+
+            // Ekran kenarlarından yumuşak geri sekme
+            if (j.x < 36) {
+              j.x = 36;
+              j.vx = Math.abs(j.vx) * 0.65;
+            } else if (j.x > W - 36) {
+              j.x = W - 36;
+              j.vx = -Math.abs(j.vx) * 0.65;
+            }
+
+            // Su / zemin temas kontrolü
+            const impactY = Math.abs(j.x - pool.x) <= (pool.width * 0.5 - 14) ? pool.waterY : H - 28;
+            if (j.y >= impactY) {
+              handleLanding(j);
+            }
+          } else if (j.state === 'water') {
+            j.landTimer += dt;
+            j.vx *= Math.max(0, 1 - 3.5 * dt);
+            j.x = clamp(j.x + j.vx * dt, pool.x - pool.width * 0.5 + 24, pool.x + pool.width * 0.5 - 24);
+            j.y = pool.waterY + 4 + Math.sin(waveTime * 3.6 + j.swayPhase) * 3.2;
+            if (j.landTimer > 2.8) {
+              jumpers.splice(i, 1);
+            }
+          } else if (j.state === 'land') {
+            j.landTimer += dt;
+            j.vy += 640 * dt;
+            j.y += j.vy * dt;
+            if (j.y > H - 28) {
+              j.y = H - 28;
+              j.vy = -j.vy * 0.25;
+              if (Math.abs(j.vy) < 18) j.vy = 0;
+            }
+            if (j.landTimer > 2.2) {
+              jumpers.splice(i, 1);
+            }
+          }
+        }
+
+        // Parçacıklar
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life += dt;
+          if (p.life >= p.maxLife) {
+            particles.splice(i, 1);
+            continue;
+          }
+          p.vy += 460 * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+        }
+
+        // Skor popup'ları
+        for (let i = popups.length - 1; i >= 0; i--) {
+          const pop = popups[i];
+          pop.life += dt;
+          if (pop.life >= pop.maxLife) {
+            popups.splice(i, 1);
+            continue;
+          }
+          pop.y += pop.vy * dt;
+          pop.vy *= Math.max(0, 1 - 2.4 * dt);
+        }
+      }
+
+      // =========================================================================
+      // ÇİZİM (RENDER — ŞIK, TEMİZ, SIFIR BLUR)
+      // =========================================================================
+      function drawPool() {
+        if (pool.appear <= 0.005) return;
+
+        const slideOffset = (1 - pool.appear) * 135;
+        const left = pool.x - pool.width * 0.5;
+        const top = pool.waterY - 12 + slideOffset;
+        const pw = pool.width;
+        const ph = pool.height;
+
+        ctx.save();
+        ctx.globalAlpha = clamp(pool.appear * 1.15, 0, 1);
+
+        // Havuz dış gövdesi (Koyu Obsidyen + Lila Çerçeve)
+        ctx.fillStyle = '#15101c';
+        ctx.strokeStyle = 'rgba(196, 164, 255, 0.72)';
+        ctx.lineWidth = 2.5;
+        fillRoundRect(ctx, left, top, pw, ph + 16, 20);
+        ctx.fill();
+        ctx.stroke();
+
+        // Su alanı clip
+        ctx.save();
+        fillRoundRect(ctx, left + 7, top + 7, pw - 14, ph + 4, 14);
+        ctx.clip();
+
+        // Derin su zemini
+        ctx.fillStyle = '#1a2744';
+        ctx.fillRect(left + 7, top + 7, pw - 14, ph + 4);
+
+        // Arka dalga
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.28)';
+        ctx.beginPath();
+        ctx.moveTo(left, top + ph + 14);
+        for (let sx = 0; sx <= pw; sx += 22) {
+          const wy = top + 14 + Math.sin(sx * 0.032 - waveTime * 2.4) * 3.5;
+          ctx.lineTo(left + sx, wy);
+        }
+        ctx.lineTo(left + pw, top + ph + 14);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ön turkuaz-lila su yüzeyi
+        ctx.fillStyle = 'rgba(78, 178, 214, 0.48)';
+        ctx.beginPath();
+        ctx.moveTo(left, top + ph + 14);
+        for (let sx = 0; sx <= pw; sx += 20) {
+          const wy = top + 18 + Math.sin(sx * 0.04 + waveTime * 3.1) * 3;
+          ctx.lineTo(left + sx, wy);
+        }
+        ctx.lineTo(left + pw, top + ph + 14);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hedef çizgileri (Merkez Bullseye + Yüzde Halkaları)
+        const waterLineY = top + 20;
+        const innerHalf = (pw - 24) * 0.5;
+
+        // Dış hedef şeridi
+        ctx.fillStyle = 'rgba(216, 180, 254, 0.16)';
+        ctx.fillRect(pool.x - innerHalf * 0.55, waterLineY - 4, innerHalf * 1.1, 8);
+
+        // Orta hedef şeridi
+        ctx.fillStyle = 'rgba(192, 132, 252, 0.34)';
+        ctx.fillRect(pool.x - innerHalf * 0.26, waterLineY - 5, innerHalf * 0.52, 10);
+
+        // Altın 100 Puan Bullseye merkezi
+        ctx.fillStyle = '#f5d37a';
+        fillRoundRect(ctx, pool.x - 16, waterLineY - 5.5, 32, 11, 5.5);
+        ctx.fill();
+
+        ctx.fillStyle = '#fffbeb';
+        fillRoundRect(ctx, pool.x - 5, waterLineY - 3, 10, 6, 3);
+        ctx.fill();
+
+        // Üst parlak su köpüğü çizgisi
+        ctx.strokeStyle = 'rgba(233, 213, 255, 0.65)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let sx = 8; sx <= pw - 8; sx += 18) {
+          const wy = top + 18 + Math.sin(sx * 0.04 + waveTime * 3.1) * 3;
+          if (sx === 8) ctx.moveTo(left + sx, wy);
+          else ctx.lineTo(left + sx, wy);
+        }
+        ctx.stroke();
+
+        ctx.restore(); // clip sonu
+
+        // Rüzgar göstergesi (Havuz kenarında zarif mini etiket)
+        if (Math.abs(pool.wind) >= 6) {
+          const windRight = pool.wind > 0;
+          const strength = Math.abs(pool.wind) > 22 ? '»»' : '»';
+          const arrow = windRight ? strength : (strength === '»»' ? '««' : '«');
+          const label = windRight ? `Rüzgar ${arrow}` : `${arrow} Rüzgar`;
+
+          ctx.font = '700 12px Nunito, sans-serif';
+          const tw = ctx.measureText(label).width;
+          const pillW = tw + 18;
+          const pillX = pool.x - pillW * 0.5;
+          const pillY = top - 24;
+
+          ctx.fillStyle = 'rgba(18, 13, 24, 0.88)';
+          ctx.strokeStyle = 'rgba(196, 164, 255, 0.45)';
+          ctx.lineWidth = 1.2;
+          fillRoundRect(ctx, pillX, pillY, pillW, 20, 10);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#e5d4ff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, pool.x, pillY + 10.5);
+        }
+
+        ctx.restore();
+      }
+
+      function drawParachute(j) {
+        if (!j.chuteOpen || j.state !== 'air') return;
+        const s = j.chuteScale;
+        ctx.save();
+        ctx.translate(j.x, j.y - 12);
+        ctx.rotate(j.rot * 0.6);
+        ctx.scale(s, s);
+
+        const canopyY = -44;
+        const radius = j.style.isQueen ? 32 : 27;
+
+        // İnce paraşüt ipleri
+        ctx.strokeStyle = 'rgba(243, 232, 255, 0.72)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(-radius + 4, canopyY + 2); ctx.lineTo(-8, -6);
+        ctx.moveTo(0, canopyY + 2);           ctx.lineTo(0, -6);
+        ctx.moveTo(radius - 4, canopyY + 2);  ctx.lineTo(8, -6);
+        ctx.stroke();
+
+        // Kubbe
+        ctx.fillStyle = j.style.chuteColor;
+        ctx.strokeStyle = '#3a2e2a';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.arc(0, canopyY + 2, radius, Math.PI, 0, false);
+        ctx.quadraticCurveTo(radius * 0.5, canopyY - 4, 0, canopyY + 2);
+        ctx.quadraticCurveTo(-radius * 0.5, canopyY - 4, -radius, canopyY + 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Orta dilim vurgusu
+        ctx.fillStyle = j.style.chuteAccent;
+        ctx.globalAlpha = 0.62;
+        ctx.beginPath();
+        ctx.ellipse(0, canopyY - radius * 0.42, radius * 0.36, radius * 0.52, 0, Math.PI, 0, false);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawBalloons(j) {
+        if (j.mode !== 'balloon' || j.balloons <= 0 || j.state !== 'air') return;
+        const offsets = [
+          { dx: -14, dy: -46, color: '#d8b4fe' },
+          { dx: 14,  dy: -44, color: '#f2c6d0' },
+          { dx: 0,   dy: -56, color: '#f5d37a' }
+        ];
+        ctx.save();
+        ctx.translate(j.x, j.y - 10);
+        for (let i = 0; i < j.balloons; i++) {
+          const b = offsets[i];
+          const wobble = Math.sin(waveTime * 4 + i * 1.7 + j.swayPhase) * 2.5;
+          ctx.strokeStyle = 'rgba(255, 250, 244, 0.72)';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.moveTo(0, -8);
+          ctx.lineTo(b.dx + wobble, b.dy + 10);
+          ctx.stroke();
+
+          ctx.fillStyle = b.color;
+          ctx.strokeStyle = '#3a2e2a';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(b.dx + wobble, b.dy, 10, 12.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(255,255,255,0.65)';
+          ctx.beginPath();
+          ctx.ellipse(b.dx + wobble - 3.5, b.dy - 4, 2.2, 4, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawTarzanRope(j) {
+        if (j.mode !== 'tarzan' || !j.tarzan || !j.tarzan.attached || j.state !== 'air') return;
+        const t = j.tarzan;
+        ctx.save();
+        ctx.strokeStyle = '#c4a4ff';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(t.anchorX, t.anchorY);
+        ctx.lineTo(j.x, j.y - 12);
+        ctx.stroke();
+
+        // Sarmaşık minik yaprak noktaları
+        ctx.fillStyle = '#86efac';
+        for (let k = 0.25; k <= 0.8; k += 0.22) {
+          const lx = t.anchorX + (j.x - t.anchorX) * k;
+          const ly = t.anchorY + (j.y - 12 - t.anchorY) * k;
+          ctx.beginPath();
+          ctx.ellipse(lx + 4, ly, 4.5, 2.2, 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawDuoLinks() {
+        for (let i = 0; i < duoLinks.length; i++) {
+          const link = duoLinks[i];
+          const mx = (link.a.x + link.b.x) * 0.5;
+          const my = (link.a.y + link.b.y) * 0.5 + 10;
+          ctx.save();
+          ctx.strokeStyle = '#e5a9b8';
+          ctx.lineWidth = 2.6;
+          ctx.setLineDash([6, 5]);
+          ctx.beginPath();
+          ctx.moveTo(link.a.x, link.a.y);
+          ctx.quadraticCurveTo(mx, my, link.b.x, link.b.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      function drawJumper(j) {
+        drawTarzanRope(j);
+        drawParachute(j);
+        drawBalloons(j);
+
+        let alpha = 1;
+        if (j.state === 'water' && j.landTimer > 2.1) {
+          alpha = clamp(1 - (j.landTimer - 2.1) / 0.7, 0, 1);
+        } else if (j.state === 'land' && j.landTimer > 1.55) {
+          alpha = clamp(1 - (j.landTimer - 1.55) / 0.65, 0, 1);
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(j.x, j.y);
+        ctx.rotate(j.rot);
+
+        const sp = j.sprite;
+        ctx.drawImage(sp, -sp.width * 0.5, -sp.height * 0.58);
+        ctx.restore();
+
+        // İsim etiketi (Net ve zarif)
+        if (alpha > 0.08) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          const label = j.style.isQueen ? `${j.style.crownIcon} ${j.username}` : j.username;
+          ctx.font = '800 13px Nunito, sans-serif';
+          const tw = ctx.measureText(label).width;
+          const pw = tw + 16;
+          const ph = 22;
+          const tagY = j.y - (j.chuteOpen && j.state === 'air' ? 92 : (j.mode === 'balloon' && j.balloons > 0 ? 94 : 52));
+          const px = clamp(j.x - pw * 0.5, 8, W - pw - 8);
+
+          ctx.fillStyle = j.style.isQueen ? 'rgba(30, 20, 38, 0.92)' : 'rgba(18, 13, 24, 0.86)';
+          ctx.strokeStyle = j.style.isQueen ? 'rgba(245, 211, 122, 0.85)' : 'rgba(196, 164, 255, 0.48)';
+          ctx.lineWidth = j.style.isQueen ? 1.6 : 1.2;
+          fillRoundRect(ctx, px, tagY, pw, ph, 11);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = j.style.isQueen ? '#fef3c7' : '#fffdfb';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, px + pw * 0.5, tagY + ph * 0.5 + 0.5);
+          ctx.restore();
+        }
+      }
+
+      function drawParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          const a = clamp(1 - p.life / p.maxLife, 0, 1);
+          ctx.globalAlpha = a;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * (0.5 + 0.5 * a), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawPopups() {
+        for (let i = 0; i < popups.length; i++) {
+          const pop = popups[i];
+          const progress = pop.life / pop.maxLife;
+          const alpha = progress < 0.14
+            ? progress / 0.14
+            : (progress > 0.72 ? clamp(1 - (progress - 0.72) / 0.28, 0, 1) : 1);
+          const scale = progress < 0.14 ? 0.78 + 0.22 * (progress / 0.14) : 1;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(pop.x, pop.y);
+          ctx.scale(scale, scale);
+
+          ctx.font = '700 22px Fredoka, Nunito, sans-serif';
+          const mainW = ctx.measureText(pop.mainText).width;
+          ctx.font = '800 11.5px Nunito, sans-serif';
+          const subW = pop.subText ? ctx.measureText(pop.subText).width : 0;
+
+          const boxW = Math.max(mainW, subW) + 26;
+          const boxH = pop.subText ? 46 : 32;
+
+          ctx.fillStyle = 'rgba(18, 13, 25, 0.94)';
+          ctx.strokeStyle = pop.accent;
+          ctx.lineWidth = 1.8;
+          fillRoundRect(ctx, -boxW * 0.5, -boxH * 0.5, boxW, boxH, 14);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = pop.accent;
+          ctx.font = '700 21px Fredoka, Nunito, sans-serif';
+          ctx.fillText(pop.mainText, 0, pop.subText ? -6 : 1);
+
+          if (pop.subText) {
+            ctx.fillStyle = '#f8f4ff';
+            ctx.font = '800 11px Nunito, sans-serif';
+            ctx.fillText(pop.subText, 0, 12);
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // =========================================================================
+      // ANA ANİMASYON DÖNGÜSÜ (BOŞTAYKEN %0 CPU İÇİN OTOMATİK UYKU)
+      // =========================================================================
+      function wakeEngine() {
+        if (rafId !== null) return;
+        lastFrameTime = performance.now();
+        rafId = requestAnimationFrame(renderLoop);
+      }
+
+      function renderLoop(now) {
+        const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+        lastFrameTime = now;
+
+        updatePhysics(dt);
+
+        ctx.clearRect(0, 0, W, H);
+        drawPool();
+        drawDuoLinks();
+        for (let i = 0; i < jumpers.length; i++) {
+          drawJumper(jumpers[i]);
+        }
+        drawParticles();
+        drawPopups();
+
+        const isIdle =
+          jumpers.length === 0 &&
+          particles.length === 0 &&
+          popups.length === 0 &&
+          !queueState.open &&
+          pool.appear <= 0.005;
+
+        if (isIdle) {
+          ctx.clearRect(0, 0, W, H);
+          rafId = null; // Tam uyku: Valorant'ta 0 CPU / 0 GPU
+          return;
+        }
+
+        rafId = requestAnimationFrame(renderLoop);
+      }
+
+      // =========================================================================
+      // KOMUT İŞLEYİCİ (!atla, !top, !topluatla, !atlat)
+      // =========================================================================
+      function isModOrBroadcaster(sender) {
+        if (!sender) return false;
+        const uname = normName(sender.username || sender.slug);
+        if (CONFIG.broadcasterUsernames.has(uname)) return true;
+
+        const badges = sender.identity && sender.identity.badges;
+        if (!Array.isArray(badges)) return false;
+        return badges.some((b) => {
+          const t = String((b && (b.type || b.text)) || '').toLowerCase();
+          return t === 'broadcaster' || t === 'moderator' || t === 'mod' || t === 'owner' || t === 'staff';
+        });
+      }
+
+      function parseJumpStyle(argRaw) {
+        const arg = normCmd(argRaw);
+        if (!arg || arg === 'normal' || arg === 'parasut' || arg === 'semsiye') return 'normal';
+        if (arg === 'tarzan' || arg === 'ip' || arg === 'sarmasik') return 'tarzan';
+        if (arg === 'duo' || arg === 'ikili' || arg === 'cift') return 'duo';
+        if (arg === 'fuze' || arg === 'roket' || arg === 'rocket' || arg === 'hizli') return 'rocket';
+        if (arg === 'balon' || arg === 'balloon') return 'balloon';
+        if (arg === 'rastgele' || arg === 'random') return 'random';
+        return 'normal';
+      }
+
+      function handleChatCommand(username, content, isMod) {
+        const trimmed = String(content || '').trim();
+        if (!trimmed.startsWith('!')) return;
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = normCmd(parts[0]);
+        const arg1 = parts[1] || '';
+        const arg2 = parts[2] || '';
+
+        // 1. !top (En iyi atlayışlar)
+        if (cmd === '!top' || cmd === '!skorlar') {
+          if (isMod && normCmd(arg1) === 'sifirla') {
+            leaderboard = [];
+            saveLeaderboard();
+            renderBoardCard('SKORLAR SIFIRLANDI', 'MOD', [], 3500);
+            return;
+          }
+          showTopLeaderboard(isMod);
+          return;
+        }
+
+        // 2. !topluatla (Sadece Mod / Yayıncı)
+        if (cmd === '!topluatla') {
+          if (!isMod) return;
+          openGroupQueue(username);
+          return;
+        }
+
+        // 3. !atlat (Sadece Mod / Yayıncı)
+        if (cmd === '!atlat') {
+          if (!isMod) return;
+          launchGroupQueue();
+          return;
+        }
+
+        // 4. !topluiptal (Sadece Mod / Yayıncı)
+        if (cmd === '!topluiptal') {
+          if (!isMod) return;
+          cancelGroupQueue();
+          return;
+        }
+
+        // 5. !atla [tarzan | duo [@isim] | füze | balon | rastgele]
+        if (cmd === '!atla') {
+          const style = parseJumpStyle(arg1);
+          const userKey = normName(username);
+
+          // Toplu atlama sırası açıksa kullanıcıyı sıraya al (atlatma!)
+          if (queueState.open) {
+            if (!queueState.entries.has(userKey) && queueState.entries.size >= CONFIG.maxQueueSize) {
+              return;
+            }
+            queueState.entries.set(userKey, { username, mode: style });
+            renderQueueCard();
+            wakeEngine();
+            return;
+          }
+
+          // Tekil atlama spam koruması (Mod & Yayıncı hariç)
+          const now = Date.now();
+          if (!isMod && CONFIG.userCooldownMs > 0) {
+            const lastAt = userCooldowns.get(userKey) || 0;
+            if (now - lastAt < CONFIG.userCooldownMs) return;
+            userCooldowns.set(userKey, now);
+          }
+
+          if (style === 'duo') {
+            const explicitPartner = arg2 ? arg2.replace(/^@+/, '').trim() : '';
+            handleDuoRequest(username, explicitPartner);
+          } else {
+            spawnJumper(username, style);
+          }
+        }
+      }
+
+      // =========================================================================
+      // KİCK PUSHER WEBSOCKET (TOKEN GEREKTİRMEZ — CETİM İLE AYNI KANAL)
+      // =========================================================================
+      let ws = null;
+      let wsReconnectTimer = null;
+      let wsPingTimer = null;
+      let wsBackoff = 2000;
+
+      function setDebugStatus(state, text) {
+        if (!CONFIG.debugMode) return;
+        els.debugDot.className = 'debug-dot ' + (state || '');
+        els.debugText.textContent = text;
+      }
+
+      function connectKickChat() {
+        clearTimeout(wsReconnectTimer);
+        clearInterval(wsPingTimer);
+        if (ws) {
+          try { ws.close(); } catch {}
+          ws = null;
+        }
+
+        const chatroomId = CONFIG.chatroomId || (cetimAuth && cetimAuth.chatroomId) || '24986517';
+        setDebugStatus('', `Bağlanıyor (#${chatroomId})...`);
+
+        try {
+          ws = new WebSocket(CONFIG.pusherWs);
+        } catch {
+          scheduleWsReconnect();
+          return;
+        }
+
+        ws.onopen = () => {
+          wsPingTimer = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              try { ws.send(JSON.stringify({ event: 'pusher:ping', data: {} })); } catch {}
+            }
+          }, 40000);
+        };
+
+        ws.onmessage = (ev) => {
+          try {
+            const msg = JSON.parse(ev.data);
+
+            if (msg.event === 'pusher:connection_established') {
+              ws.send(JSON.stringify({
+                event: 'pusher:subscribe',
+                data: { channel: `chatrooms.${chatroomId}.v2` }
+              }));
+              return;
+            }
+
+            if (msg.event === 'pusher_internal:subscription_succeeded') {
+              wsBackoff = 2000;
+              setDebugStatus('ok', `Kick Chat Aktif (#${chatroomId}) • Test: 1-7, T, Q, W`);
+              return;
+            }
+
+            if (msg.event === 'pusher:ping') {
+              ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+              return;
+            }
+
+            if (msg.event === 'App\\Events\\ChatMessageEvent') {
+              const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+              if (!data) return;
+
+              const msgId = data.id || data.message_id;
+              if (msgId) {
+                if (seenMsgIds.has(msgId)) return;
+                seenMsgIds.add(msgId);
+                if (seenMsgIds.size > 200) {
+                  seenMsgIds.delete(seenMsgIds.values().next().value);
+                }
+              }
+
+              const sender = data.sender || {};
+              const username = String(sender.username || sender.slug || '').trim();
+              const content = String(data.content || '').trim();
+              if (!username || !content) return;
+
+              handleChatCommand(username, content, isModOrBroadcaster(sender));
+            }
+          } catch {
+            // Diğer Pusher olayları yoksayılır
+          }
+        };
+
+        ws.onclose = () => {
+          clearInterval(wsPingTimer);
+          setDebugStatus('err', 'Yeniden bağlanıyor...');
+          scheduleWsReconnect();
+        };
+
+        ws.onerror = () => {
+          setDebugStatus('err', 'Bağlantı hatası');
+        };
+      }
+
+      function scheduleWsReconnect() {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = setTimeout(connectKickChat, wsBackoff);
+        wsBackoff = Math.min(wsBackoff * 1.6, 25000);
+      }
+
+      window.addEventListener('online', () => {
+        wsBackoff = 2000;
+        connectKickChat();
+      });
+
+      // =========================================================================
+      // KLAVYE TEST KISAYOLLARI (OBS Interact veya Tarayıcı Testi İçin)
+      // =========================================================================
+      const DEMO_USERS = ['LilaPati', 'Mirmir', 'KediSever', 'YildizTozu', 'LatteFan', 'Pufidik', 'GeceKusu', 'PatiBey'];
+
+      window.addEventListener('pointerdown', () => {
+        if (document.body && typeof document.body.focus === 'function') {
+          document.body.focus();
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const k = e.key.toLowerCase();
+
+        if (k === '1') {
+          const u = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
+          handleChatCommand(u, '!atla', true);
+        } else if (k === '2') {
+          handleChatCommand('himilayk', '!atla', true); // Kraliçe Civciv
+        } else if (k === '3') {
+          handleChatCommand('pairaaa', '!atla', true);  // Kraliçe Kedi
+        } else if (k === '4') {
+          const u = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
+          handleChatCommand(u, '!atla tarzan', true);
+        } else if (k === '5') {
+          handleChatCommand('himilayk', '!atla duo pairaaa', true); // İki Kraliçe Duo
+        } else if (k === '6') {
+          const u = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
+          handleChatCommand(u, '!atla füze', true);
+        } else if (k === '7') {
+          const u = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
+          handleChatCommand(u, '!atla balon', true);
+        } else if (k === 't') {
+          showTopLeaderboard(true);
+        } else if (k === 'q') {
+          handleChatCommand('pairaaa', '!topluatla', true);
+          handleChatCommand('himilayk', '!atla', false);
+          handleChatCommand('pairaaa', '!atla tarzan', false);
+          handleChatCommand('LilaPati', '!atla füze', false);
+          handleChatCommand('Mirmir', '!atla balon', false);
+          handleChatCommand('LatteFan', '!atla', false);
+        } else if (k === 'w') {
+          handleChatCommand('pairaaa', '!atlat', true);
+        } else if (e.shiftKey && k === 'r') {
+          handleChatCommand('pairaaa', '!top sıfırla', true);
+        }
+      });
+
+      // =========================================================================
+      // BAŞLAT
+      // =========================================================================
+      window.addEventListener('resize', resizeCanvas, { passive: true });
+      resizeCanvas();
+      connectKickChat();
+    })();
+  </script>
+</body>
+</html>
