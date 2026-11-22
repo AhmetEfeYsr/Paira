@@ -694,6 +694,7 @@
       // WebSocket Runtime
       let ws = null;
       let wsConnected = false;
+      let wsFatalError = false;
       let wsReconnectTimer = null;
       let wsBackoffMs = 2000;
       let lastWsActivityAt = 0;
@@ -1151,7 +1152,7 @@
       }
 
       function getEffectiveChatroomId() {
-        return state.overrides.chatroomId || state.auth.chatroomId || APP_CONFIG.chatroomId || '';
+        return state.overrides.chatroomId || APP_CONFIG.chatroomId || state.auth.chatroomId || '';
       }
 
       async function resolveChatroomId(slug) {
@@ -1272,8 +1273,10 @@
         }
         updateWsDot();
       }
+
       function connectChatWs() {
         disconnectChatWs();
+        wsFatalError = false;
         const chatroomId = getEffectiveChatroomId();
 
         if (!chatroomId) {
@@ -1291,7 +1294,6 @@
         }
 
         let subscribed = false;
-        let fatalError = false;
 
         const subscribe = () => {
           if (subscribed || !ws || ws.readyState !== WebSocket.OPEN) return;
@@ -1330,7 +1332,7 @@
               const errData = typeof msg.data === 'string' ? JSON.parse(msg.data) : (msg.data || {});
               const code = Number(errData.code) || 0;
               if (code >= 4000 && code <= 4009) {
-                fatalError = true;
+                wsFatalError = true;
               }
               addLog(`Pusher hatası (${code || '?'}): ${errData.message || 'Bilinmiyor'}`, 'err');
               return;
@@ -1361,68 +1363,17 @@
           wsConnected = false;
           updateWsDot();
           if (evt.code >= 4000 && evt.code <= 4009) {
-            fatalError = true;
+            wsFatalError = true;
           }
           addLog(`Chat bağlantısı kapandı (kod: ${evt.code}${evt.reason ? ', ' + evt.reason : ''}).`, 'err');
-          if (!fatalError) {
+          if (!wsFatalError) {
             scheduleWsReconnect();
           }
         };
       }
 
-
-        ws.onopen = () => {
-          wsConnected = true;
-          wsBackoffMs = 2000;
-          lastWsActivityAt = Date.now();
-          updateWsDot();
-        };
-
-        ws.onmessage = (evt) => {
-          lastWsActivityAt = Date.now();
-          try {
-            const msg = JSON.parse(evt.data);
-
-            if (msg.event === 'pusher:connection_established') {
-              subscribe();
-              return;
-            }
-
-            if (msg.event === 'pusher_internal:subscription_succeeded') {
-              addLog(`Chat dinleniyor (#${chatroomId}).`, 'ok');
-              return;
-            }
-
-            if (msg.event === 'pusher:ping') {
-              if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
-              }
-              return;
-            }
-
-            if (msg.event === 'App\\Events\\ChatMessageEvent') {
-              const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
-              onIncomingChatMessage(data);
-            }
-          } catch {
-            // Diğer Pusher eventleri yoksayılır
-          }
-        };
-
-        ws.onerror = () => {
-          wsConnected = false;
-          updateWsDot();
-        };
-
-        ws.onclose = () => {
-          wsConnected = false;
-          updateWsDot();
-          scheduleWsReconnect();
-        };
-      }
-
       function scheduleWsReconnect() {
-        if (!state.auth.accessToken) return;
+        if (!state.auth.accessToken || wsFatalError) return;
         clearTimeout(wsReconnectTimer);
         wsReconnectTimer = setTimeout(() => {
           connectChatWs();
@@ -1431,7 +1382,7 @@
       }
 
       function checkAndPingWs() {
-        if (!state.auth.accessToken) return;
+        if (!state.auth.accessToken || wsFatalError) return;
 
         if (!ws || ws.readyState === WebSocket.CLOSED) {
           connectChatWs();
@@ -1650,7 +1601,7 @@
       // --- UI Render ---
       function updateWsDot() {
         const dot = $('wsDot');
-        dot.className = 'dot ' + (wsConnected ? 'ok' : (getEffectiveChatroomId() ? 'warn' : 'err'));
+        dot.className = 'dot ' + (wsConnected ? 'ok' : (wsFatalError ? 'err' : (getEffectiveChatroomId() ? 'warn' : 'err')));
       }
 
       function renderMonitor() {
