@@ -47,6 +47,7 @@
       min-width: 280px;
       padding: 12px 18px;
       user-select: none;
+      contain: layout style;
     }
 
     .hidden {
@@ -61,6 +62,7 @@
       justify-content: center;
       gap: 2px;
       z-index: 6;
+      contain: layout style;
     }
 
     .latte-slot-top {
@@ -107,7 +109,7 @@
         0 0 22px rgba(216, 180, 254, 0.7);
     }
 
-    /* Bardak sahnesi ve esnek zıplama */
+    /* Bardak sahnesi ve esnek zıplama (canlı drop-shadow yerine statik SVG gölgesi kullanılır) */
     .latte-stage {
       position: relative;
       width: 236px;
@@ -115,12 +117,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 12px 22px rgba(18, 9, 4, 0.42));
       transform-origin: center bottom;
       z-index: 4;
+      pointer-events: none;
+      contain: layout style;
     }
 
     .latte-widget.pouring .latte-stage {
+      will-change: transform;
       animation: latteCupBounce 0.72s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -144,10 +148,11 @@
       opacity: 0;
       pointer-events: none;
       white-space: nowrap;
-      transform: translateY(14px) scale(0.8);
+      transform: translate3d(0, 14px, 0) scale(0.8);
     }
 
     .latte-delta.show {
+      will-change: transform, opacity;
       animation: latteDeltaPop 1.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
@@ -155,6 +160,7 @@
       width: 100%;
       height: 100%;
       overflow: visible;
+      pointer-events: none;
     }
 
     /* Arka parıltı */
@@ -165,6 +171,7 @@
 
     .latte-widget.goal-complete .latte-aura {
       opacity: 1;
+      will-change: opacity;
       animation: latteAuraPulse 2.6s ease-in-out infinite;
     }
 
@@ -174,12 +181,14 @@
       will-change: transform;
     }
 
-    /* Sonsuz akıcı dalga döngüsü (period = 140px) */
+    /* Sonsuz akıcı dalga döngüsü (period = 140px) — boşken GPU/CPU harcamaması için duraklatılır */
     .latte-wave-front {
+      will-change: transform;
       animation: latteWaveFront 3.4s linear infinite;
     }
 
     .latte-wave-back {
+      will-change: transform;
       animation: latteWaveBack 5.2s linear infinite;
     }
 
@@ -193,14 +202,17 @@
 
     /* Süt girdapları */
     .latte-swirl-1 {
+      will-change: transform;
       animation: latteSwirlDrift 6.5s ease-in-out infinite alternate;
     }
 
     .latte-swirl-2 {
+      will-change: transform;
       animation: latteSwirlDriftReverse 7.8s ease-in-out infinite alternate;
     }
 
     .latte-swirl-3 {
+      will-change: transform;
       animation: latteSwirlDrift 9s ease-in-out infinite alternate;
     }
 
@@ -208,6 +220,7 @@
     .latte-bubble {
       fill: #fff6ea;
       opacity: 0;
+      will-change: transform, opacity;
       animation: latteBubbleRise 4.2s ease-in infinite;
     }
 
@@ -216,6 +229,22 @@
     .latte-bubble.b3 { animation-delay: 2.3s; animation-duration: 3.7s; }
     .latte-bubble.b4 { animation-delay: 0.7s; animation-duration: 4.5s; }
     .latte-bubble.b5 { animation-delay: 2.9s; animation-duration: 5.1s; }
+
+    /* Bardak tamamen boşken görünmeyen sıvı animasyonlarını duraklat (0% boşta yük) */
+    .latte-widget:not(.has-liquid) .latte-wave-front,
+    .latte-widget:not(.has-liquid) .latte-wave-back,
+    .latte-widget:not(.has-liquid) .latte-swirl-1,
+    .latte-widget:not(.has-liquid) .latte-swirl-2,
+    .latte-widget:not(.has-liquid) .latte-swirl-3,
+    .latte-widget:not(.has-liquid) .latte-bubble {
+      animation-play-state: paused;
+      will-change: auto;
+    }
+
+    /* Kaynak gizliyken tüm animasyonları duraklat */
+    .is-page-hidden * {
+      animation-play-state: paused !important;
+    }
 
     /* Espresso dökülme şeridi */
     .latte-pour-group {
@@ -253,6 +282,10 @@
       transform-origin: 0 0;
     }
 
+    .latte-widget.has-liquid .ice-bob {
+      will-change: transform;
+    }
+
     .latte-widget.has-liquid .ice-bob-1 { animation: iceBobA 3.6s ease-in-out infinite; }
     .latte-widget.has-liquid .ice-bob-2 { animation: iceBobB 4.1s ease-in-out infinite 0.4s; }
     .latte-widget.has-liquid .ice-bob-3 { animation: iceBobA 3.8s ease-in-out infinite 0.9s; }
@@ -267,54 +300,57 @@
       transform-origin: center;
     }
 
-    .latte-widget.goal-complete .sparkle { animation: sparkleTwinkle 2s ease-in-out infinite; }
+    .latte-widget.goal-complete .sparkle {
+      will-change: transform, opacity;
+      animation: sparkleTwinkle 2s ease-in-out infinite;
+    }
     .latte-widget.goal-complete .sp2 { animation-delay: 0.45s; }
     .latte-widget.goal-complete .sp3 { animation-delay: 0.95s; }
     .latte-widget.goal-complete .sp4 { animation-delay: 1.4s; }
 
     @keyframes latteWaveFront {
-      0% { transform: translateX(0px); }
-      100% { transform: translateX(-140px); }
+      0% { transform: translate3d(0px, 0, 0); }
+      100% { transform: translate3d(-140px, 0, 0); }
     }
 
     @keyframes latteWaveBack {
-      0% { transform: translateX(-140px); }
-      100% { transform: translateX(0px); }
+      0% { transform: translate3d(-140px, 0, 0); }
+      100% { transform: translate3d(0px, 0, 0); }
     }
 
     @keyframes latteSwirlDrift {
-      0% { transform: translateX(-8px) translateY(0px); }
-      100% { transform: translateX(9px) translateY(3px); }
+      0% { transform: translate3d(-8px, 0px, 0); }
+      100% { transform: translate3d(9px, 3px, 0); }
     }
 
     @keyframes latteSwirlDriftReverse {
-      0% { transform: translateX(9px) translateY(2px); }
-      100% { transform: translateX(-8px) translateY(-2px); }
+      0% { transform: translate3d(9px, 2px, 0); }
+      100% { transform: translate3d(-8px, -2px, 0); }
     }
 
     @keyframes latteBubbleRise {
-      0% { transform: translateY(24px) scale(0.6); opacity: 0; }
+      0% { transform: translate3d(0, 24px, 0) scale(0.6); opacity: 0; }
       20% { opacity: 0.48; }
       80% { opacity: 0.25; }
-      100% { transform: translateY(-58px) scale(1.1); opacity: 0; }
+      100% { transform: translate3d(0, -58px, 0) scale(1.1); opacity: 0; }
     }
 
     @keyframes iceBobA {
-      0%, 100% { transform: translateY(0px) rotate(-2.5deg); }
-      50% { transform: translateY(-4px) rotate(2.8deg); }
+      0%, 100% { transform: translate3d(0, 0px, 0) rotate(-2.5deg); }
+      50% { transform: translate3d(0, -4px, 0) rotate(2.8deg); }
     }
 
     @keyframes iceBobB {
-      0%, 100% { transform: translateY(0px) rotate(2.6deg); }
-      50% { transform: translateY(-3.5px) rotate(-2.4deg); }
+      0%, 100% { transform: translate3d(0, 0px, 0) rotate(2.6deg); }
+      50% { transform: translate3d(0, -3.5px, 0) rotate(-2.4deg); }
     }
 
     @keyframes latteCupBounce {
-      0% { transform: scale(1, 1); }
-      25% { transform: scale(1.04, 0.96); }
-      55% { transform: scale(0.98, 1.03); }
-      80% { transform: scale(1.01, 0.99); }
-      100% { transform: scale(1, 1); }
+      0% { transform: scale3d(1, 1, 1); }
+      25% { transform: scale3d(1.04, 0.96, 1); }
+      55% { transform: scale3d(0.98, 1.03, 1); }
+      80% { transform: scale3d(1.01, 0.99, 1); }
+      100% { transform: scale3d(1, 1, 1); }
     }
 
     @keyframes lattePourFlow {
@@ -325,29 +361,29 @@
     }
 
     @keyframes splashLeft {
-      0% { transform: translate(0, 0) scale(0.5); opacity: 0.95; }
-      60% { transform: translate(-15px, -22px) scale(1); opacity: 0.8; }
-      100% { transform: translate(-22px, -8px) scale(0.3); opacity: 0; }
+      0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0.95; }
+      60% { transform: translate3d(-15px, -22px, 0) scale(1); opacity: 0.8; }
+      100% { transform: translate3d(-22px, -8px, 0) scale(0.3); opacity: 0; }
     }
 
     @keyframes splashRight {
-      0% { transform: translate(0, 0) scale(0.5); opacity: 0.95; }
-      60% { transform: translate(15px, -20px) scale(1); opacity: 0.8; }
-      100% { transform: translate(22px, -6px) scale(0.3); opacity: 0; }
+      0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0.95; }
+      60% { transform: translate3d(15px, -20px, 0) scale(1); opacity: 0.8; }
+      100% { transform: translate3d(22px, -6px, 0) scale(0.3); opacity: 0; }
     }
 
     @keyframes splashUp {
-      0% { transform: translate(0, 0) scale(0.5); opacity: 0.95; }
-      55% { transform: translate(2px, -28px) scale(1.05); opacity: 0.85; }
-      100% { transform: translate(4px, -12px) scale(0.25); opacity: 0; }
+      0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0.95; }
+      55% { transform: translate3d(2px, -28px, 0) scale(1.05); opacity: 0.85; }
+      100% { transform: translate3d(4px, -12px, 0) scale(0.25); opacity: 0; }
     }
 
     @keyframes latteDeltaPop {
-      0% { opacity: 0; transform: translateY(14px) scale(0.72); }
-      18% { opacity: 1; transform: translateY(-4px) scale(1.06); }
-      32% { transform: translateY(-8px) scale(1); }
-      75% { opacity: 1; transform: translateY(-20px) scale(1); }
-      100% { opacity: 0; transform: translateY(-34px) scale(0.92); }
+      0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.72); }
+      18% { opacity: 1; transform: translate3d(0, -4px, 0) scale(1.06); }
+      32% { transform: translate3d(0, -8px, 0) scale(1); }
+      75% { opacity: 1; transform: translate3d(0, -20px, 0) scale(1); }
+      100% { opacity: 0; transform: translate3d(0, -34px, 0) scale(0.92); }
     }
 
     @keyframes sparkleTwinkle {
@@ -373,6 +409,14 @@
 
       <svg id="latte-svg" class="latte-svg" viewBox="0 0 260 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Paithon Hedefi Buzlu Pipetli Latte Bardağı">
         <defs>
+          <!-- Statik bardak gölgesi: yalnızca 1 kez çizilir, dalga/buz animasyonlarında yeniden hesaplanmaz -->
+          <filter id="latte-static-shadow" x="-25%" y="-15%" width="150%" height="145%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="11" result="blur" />
+            <feOffset in="blur" dx="0" dy="12" result="offsetBlur" />
+            <feFlood flood-color="#120904" flood-opacity="0.42" result="shadowColor" />
+            <feComposite in="shadowColor" in2="offsetBlur" operator="in" />
+          </filter>
+
           <clipPath id="latte-cup-clip">
             <path d="M 60,114 L 200,114 L 181,298 Q 179,312 165,312 L 95,312 Q 81,312 79,298 Z" />
           </clipPath>
@@ -441,6 +485,11 @@
           </pattern>
         </defs>
 
+        <!-- Statik dış gölge katmanı (animasyonlu içerikten izole, yalnızca gölgeyi çizer) -->
+        <g filter="url(#latte-static-shadow)" aria-hidden="true">
+          <path d="M 55,104 A 75,48 0 0 1 205,104 L 202,112 L 183,299 Q 181,314 166,314 L 94,314 Q 79,314 77,299 L 58,112 Z" fill="#000000" fill-opacity="0.72" />
+        </g>
+
         <ellipse class="latte-aura" cx="130" cy="216" rx="88" ry="96" fill="url(#latte-glow)" />
         <ellipse cx="130" cy="322" rx="60" ry="9" fill="#000000" opacity="0.26" />
         <path d="M 58,112 L 202,112 L 183,299 Q 181,314 166,314 L 94,314 Q 79,314 77,299 Z" fill="#fff8ef" fill-opacity="0.14" />
@@ -461,7 +510,7 @@
             <path d="M 129,110 L 130,310" stroke="#f5cfa0" stroke-width="1.4" stroke-linecap="round" opacity="0.55" />
           </g>
 
-          <g id="latte-liquid-group" class="latte-liquid-group" style="transform: translateY(194px);">
+          <g id="latte-liquid-group" class="latte-liquid-group" style="transform: translate3d(0, 194px, 0);">
             <g class="latte-wave-back">
               <path d="M 0,123 Q 35,129 70,123 T 140,123 Q 175,129 210,123 T 280,123 Q 315,129 350,123 T 420,123 L 420,340 L 0,340 Z" fill="url(#latte-backwave-grad)" />
             </g>
@@ -492,7 +541,7 @@
 
           <!-- 5 yüzen buz küpü -->
           <g id="latte-ice-layer" class="latte-ice-layer">
-            <g id="ice-1" class="ice-mover" style="transform: translate(99px, 286px);">
+            <g id="ice-1" class="ice-mover" style="transform: translate3d(99px, 286px, 0);">
               <g class="ice-bob ice-bob-1">
                 <g transform="rotate(-14)">
                   <rect x="-13.5" y="-13.5" width="27" height="27" rx="5.5" fill="url(#latte-ice-grad)" stroke="#ffffff" stroke-opacity="0.72" stroke-width="1.3" />
@@ -501,7 +550,7 @@
                 </g>
               </g>
             </g>
-            <g id="ice-2" class="ice-mover" style="transform: translate(130px, 290px);">
+            <g id="ice-2" class="ice-mover" style="transform: translate3d(130px, 290px, 0);">
               <g class="ice-bob ice-bob-2">
                 <g transform="rotate(10)">
                   <rect x="-14.5" y="-14.5" width="29" height="29" rx="6" fill="url(#latte-ice-grad)" stroke="#ffffff" stroke-opacity="0.76" stroke-width="1.3" />
@@ -510,7 +559,7 @@
                 </g>
               </g>
             </g>
-            <g id="ice-3" class="ice-mover" style="transform: translate(159px, 285px);">
+            <g id="ice-3" class="ice-mover" style="transform: translate3d(159px, 285px, 0);">
               <g class="ice-bob ice-bob-3">
                 <g transform="rotate(19)">
                   <rect x="-13" y="-13" width="26" height="26" rx="5.5" fill="url(#latte-ice-grad)" stroke="#ffffff" stroke-opacity="0.70" stroke-width="1.3" />
@@ -518,7 +567,7 @@
                 </g>
               </g>
             </g>
-            <g id="ice-4" class="ice-mover" style="transform: translate(113px, 263px);">
+            <g id="ice-4" class="ice-mover" style="transform: translate3d(113px, 263px, 0);">
               <g class="ice-bob ice-bob-4">
                 <g transform="rotate(-7)">
                   <rect x="-12.5" y="-12.5" width="25" height="25" rx="5" fill="url(#latte-ice-grad)" stroke="#ffffff" stroke-opacity="0.78" stroke-width="1.3" />
@@ -526,7 +575,7 @@
                 </g>
               </g>
             </g>
-            <g id="ice-5" class="ice-mover" style="transform: translate(146px, 262px);">
+            <g id="ice-5" class="ice-mover" style="transform: translate3d(146px, 262px, 0);">
               <g class="ice-bob ice-bob-5">
                 <g transform="rotate(13)">
                   <rect x="-13" y="-13" width="26" height="26" rx="5.5" fill="url(#latte-ice-grad)" stroke="#ffffff" stroke-opacity="0.78" stroke-width="1.3" />
@@ -537,7 +586,7 @@
           </g>
 
           <!-- Sıçrama damlaları -->
-          <g id="latte-splash-group" class="latte-splash-group" style="transform: translateY(308px);">
+          <g id="latte-splash-group" class="latte-splash-group" style="transform: translate3d(0, 308px, 0);">
             <circle class="splash-drop s1" cx="118" cy="0" r="3" />
             <circle class="splash-drop s2" cx="131" cy="-2" r="2.3" />
             <circle class="splash-drop s3" cx="144" cy="0" r="2.8" />
@@ -642,11 +691,11 @@
       const LIQUID_EMPTY_Y = 318;
 
       const ICE_CUBES = [
-        { id: 'ice-1', restX: 99,  topX: 88,  restY: 286, floatOffset: 24 },
-        { id: 'ice-2', restX: 130, topX: 129, restY: 290, floatOffset: 28 },
-        { id: 'ice-3', restX: 159, topX: 171, restY: 285, floatOffset: 23 },
-        { id: 'ice-4', restX: 113, topX: 109, restY: 263, floatOffset: 10 },
-        { id: 'ice-5', restX: 146, topX: 151, restY: 262, floatOffset: 11 }
+        { id: 'ice-1', restX: 99,  topX: 88,  restY: 286, floatOffset: 24, el: null },
+        { id: 'ice-2', restX: 130, topX: 129, restY: 290, floatOffset: 28, el: null },
+        { id: 'ice-3', restX: 159, topX: 171, restY: 285, floatOffset: 23, el: null },
+        { id: 'ice-4', restX: 113, topX: 109, restY: 263, floatOffset: 10, el: null },
+        { id: 'ice-5', restX: 146, topX: 151, restY: 262, floatOffset: 11, el: null }
       ];
 
       // Sadece normal bağışlar kabul edilir; Kicks, Bits, Abonelik vb. kesinlikle yoksayılır
@@ -762,7 +811,7 @@
         amountSlot: amountSlot
       };
 
-      // DOM elemanları
+      // DOM elemanlarını bir kez önbelleğe al
       const elWidget = document.getElementById('latte-widget');
       const elSlotTop = document.getElementById('slot-top');
       const elSlotBottom = document.getElementById('slot-bottom');
@@ -771,6 +820,15 @@
       const elLiquid = document.getElementById('latte-liquid-group');
       const elSplash = document.getElementById('latte-splash-group');
       const elDelta = document.getElementById('latte-delta');
+
+      for (let i = 0; i < ICE_CUBES.length; i++) {
+        ICE_CUBES[i].el = document.getElementById(ICE_CUBES[i].id);
+      }
+
+      // Sekme/kaynak görünür değilken animasyonları otomatik duraklat
+      document.addEventListener('visibilitychange', function () {
+        document.documentElement.classList.toggle('is-page-hidden', document.hidden);
+      });
 
       function applyTextLayout() {
         elGoalTitle.textContent = GOAL_TITLE;
@@ -826,17 +884,27 @@
       let pourTimer = null;
       let deltaTimer = null;
       let countAnimId = null;
+      let lastRenderedAmountText = '';
+
+      const numFormatInt = new Intl.NumberFormat('tr-TR');
+      const numFormatDec = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const TARGET_SUFFIX = ' / ' + numFormatInt.format(GOAL_TARGET) + ' ' + GOAL_CURRENCY;
 
       function formatNumberTR(value) {
         const num = Number(value) || 0;
         const isInt = Math.abs(num - Math.round(num)) < 0.005;
-        return isInt
-          ? Math.round(num).toLocaleString('tr-TR')
-          : num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return isInt ? numFormatInt.format(Math.round(num)) : numFormatDec.format(num);
       }
 
       function formatGoalLine(currentVal) {
-        return formatNumberTR(currentVal) + ' / ' + formatNumberTR(GOAL_TARGET) + ' ' + GOAL_CURRENCY;
+        return formatNumberTR(currentVal) + TARGET_SUFFIX;
+      }
+
+      function setAmountTextIfChanged(text) {
+        if (text !== lastRenderedAmountText) {
+          lastRenderedAmountText = text;
+          elGoalAmount.textContent = text;
+        }
       }
 
       function parseNumericAmount(value) {
@@ -881,13 +949,13 @@
           const eased = 1 - Math.pow(1 - p, 3);
           const val = fromVal + (toVal - fromVal) * eased;
           state.displayedCurrent = val;
-          elGoalAmount.textContent = formatGoalLine(val);
+          setAmountTextIfChanged(formatGoalLine(val));
 
           if (p < 1) {
             countAnimId = requestAnimationFrame(step);
           } else {
             state.displayedCurrent = toVal;
-            elGoalAmount.textContent = formatGoalLine(toVal);
+            setAmountTextIfChanged(formatGoalLine(toVal));
             countAnimId = null;
           }
         }
@@ -897,20 +965,22 @@
 
       function triggerPourAnimation(deltaAmount) {
         elWidget.classList.remove('pouring');
-        void elWidget.offsetWidth;
-        elWidget.classList.add('pouring');
+        if (deltaAmount > 0) {
+          elDelta.textContent = '+' + formatNumberTR(deltaAmount) + ' ' + GOAL_CURRENCY;
+          elDelta.classList.remove('show');
+        }
 
+        // Çift reflow yerine tek reflow ile her iki animasyonu aynı karede başlat
+        void elWidget.offsetWidth;
+
+        elWidget.classList.add('pouring');
         clearTimeout(pourTimer);
         pourTimer = setTimeout(function () {
           elWidget.classList.remove('pouring');
         }, 1450);
 
         if (deltaAmount > 0) {
-          elDelta.textContent = '+' + formatNumberTR(deltaAmount) + ' ' + GOAL_CURRENCY;
-          elDelta.classList.remove('show');
-          void elDelta.offsetWidth;
           elDelta.classList.add('show');
-
           clearTimeout(deltaTimer);
           deltaTimer = setTimeout(function () {
             elDelta.classList.remove('show');
@@ -932,21 +1002,20 @@
             ? LIQUID_EMPTY_Y
             : LIQUID_BOTTOM_Y - (clampedPercent / 100) * (LIQUID_BOTTOM_Y - LIQUID_TOP_Y);
 
-        elLiquid.style.transform = 'translateY(' + (surfaceY - LIQUID_TOP_Y).toFixed(1) + 'px)';
-        elSplash.style.transform = 'translateY(' + surfaceY.toFixed(1) + 'px)';
+        elLiquid.style.transform = 'translate3d(0, ' + (surfaceY - LIQUID_TOP_Y).toFixed(1) + 'px, 0)';
+        elSplash.style.transform = 'translate3d(0, ' + surfaceY.toFixed(1) + 'px, 0)';
 
-        // 2. Yüzen buz küpleri
+        // 2. Yüzen buz küpleri (önbelleğe alınmış DOM referansları)
         for (let i = 0; i < ICE_CUBES.length; i++) {
           const cube = ICE_CUBES[i];
-          const cubeEl = document.getElementById(cube.id);
-          if (!cubeEl) continue;
+          if (!cube.el) continue;
 
           const y = Math.min(cube.restY, surfaceY + cube.floatOffset);
           const maxLift = Math.max(1, cube.restY - (LIQUID_TOP_Y + cube.floatOffset));
           const liftRatio = Math.max(0, Math.min(1, (cube.restY - y) / maxLift));
           const x = cube.restX + (cube.topX - cube.restX) * liftRatio;
 
-          cubeEl.style.transform = 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px)';
+          cube.el.style.transform = 'translate3d(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px, 0)';
         }
 
         // 3. Durum sınıfları
@@ -957,7 +1026,7 @@
         if (Math.abs(state.current - prevDisplayed) > 0.001) {
           animateCounter(prevDisplayed, state.current);
         } else {
-          elGoalAmount.textContent = formatGoalLine(state.current);
+          setAmountTextIfChanged(formatGoalLine(state.current));
         }
 
         if (animatePour && delta > 0) {
@@ -1056,6 +1125,7 @@
 
         let ws = null;
         let pingTimer = null;
+        let reconnectTimer = null;
         let reconnectDelay = 2000;
         let closedIntentionally = false;
 
@@ -1066,7 +1136,15 @@
           }
         }
 
+        function clearReconnect() {
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+          }
+        }
+
         function connect() {
+          clearReconnect();
           const wsUrl =
             'wss://sockets.streamlabs.com/socket.io/?token=' +
             encodeURIComponent(token) +
@@ -1125,7 +1203,8 @@
           ws.onclose = function () {
             clearPing();
             if (closedIntentionally) return;
-            setTimeout(connect, reconnectDelay);
+            clearReconnect();
+            reconnectTimer = setTimeout(connect, reconnectDelay);
             reconnectDelay = Math.min(Math.round(reconnectDelay * 1.5), 15000);
           };
         }
@@ -1133,6 +1212,7 @@
         window.addEventListener('beforeunload', function () {
           closedIntentionally = true;
           clearPing();
+          clearReconnect();
           if (ws) ws.close();
         });
 
