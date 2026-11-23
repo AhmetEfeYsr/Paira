@@ -3855,7 +3855,7 @@
                 return '';
             }
 
-            function parseSubMessageMeta(msg, eventData, eventType, msgCurrency) {
+                        function parseSubMessageMeta(msg, eventData, eventType, msgCurrency) {
                 const evPayload = eventData && eventData.payload && typeof eventData.payload === 'object' ? eventData.payload : null;
                 const msgDetails = msg.subscription_details && typeof msg.subscription_details === 'object' ? msg.subscription_details : null;
                 const evDetails = evPayload && evPayload.subscription_details && typeof evPayload.subscription_details === 'object' ? evPayload.subscription_details : null;
@@ -3873,6 +3873,8 @@
                     msg.from_display_name, msg.fromDisplayName, msg.from_name, msg.from_username, msg.from
                 ]);
                 const recipientOrSelfName = firstNonEmptyName([
+                    msg.recipient_display_name, msg.recipientDisplayName, msg.recipient_name, msg.recipientName,
+                    msg.recipient_username, msg.recipientUsername, msg.recipient,
                     msg.display_name, msg.displayName, msg.name, msg.username, msg.user
                 ]);
 
@@ -3886,10 +3888,19 @@
                     (evPayload && evPayload.giver && evPayload.giver.is_anonymous) ||
                     subType.includes('anon')
                 );
-                const hasDistinctFrom = Boolean(
-                    fromName && recipientOrSelfName &&
-                    normalizeKediDonorKey(fromName) !== normalizeKediDonorKey(recipientOrSelfName)
+
+                const gifterCandidate = explicitGifter || fromName;
+                const recipientKey = normalizeKediDonorKey(recipientOrSelfName);
+                const hasNamedRecipient = Boolean(
+                    recipientKey && recipientKey !== 'anonim' && recipientKey !== 'anonymous'
                 );
+                const hasDistinctRecipient = Boolean(
+                    hasNamedRecipient && (
+                        (gifterCandidate && normalizeKediDonorKey(gifterCandidate) !== recipientKey) ||
+                        isAnonymous
+                    )
+                );
+
                 const isGiftType = (
                     eventType === 'submysterygift' || eventType === 'subgift' ||
                     eventType === 'gift_sub' || eventType === 'gift_subscription' ||
@@ -3905,39 +3916,54 @@
                     (evDetails && evDetails.is_gift)
                 );
                 let isGift = Boolean(
-                    isGiftType || isGiftFlag || subType.includes('gift') || explicitGifter || hasDistinctFrom || isAnonymous
+                    isGiftType || isGiftFlag || subType.includes('gift') || explicitGifter || hasDistinctRecipient || isAnonymous
                 );
 
-                const rawCount =
-                    msg.quantity != null ? msg.quantity :
-                        (msg.sub_count != null ? msg.sub_count :
-                            (msg.gift_count != null ? msg.gift_count :
-                                (msg.mass_gift_count != null ? msg.mass_gift_count :
-                                    (msg.massGiftCount != null ? msg.massGiftCount :
-                                        (msg.count != null ? msg.count :
-                                            (msg.total != null ? msg.total :
-                                                (msgDetails && msgDetails.total != null ? msgDetails.total :
-                                                    (evDetails && evDetails.total != null ? evDetails.total : null))))))));
-                let subCount = parseNumericAmount(rawCount);
-                if ((!Number.isFinite(subCount) || subCount <= 0) && isGift && !msgCurrency && msg.amount != null) {
-                    const amtCount = parseNumericAmount(msg.amount);
-                    if (Number.isFinite(amtCount) && amtCount >= 1 && Math.abs(amtCount - Math.round(amtCount)) < 1e-6) {
-                        subCount = Math.round(amtCount);
+                const isExplicitSummaryType = Boolean(
+                    eventType === 'submysterygift' ||
+                    eventType === 'community_gift' ||
+                    subType.includes('mystery') ||
+                    subType.includes('mass') ||
+                    subType.includes('community')
+                );
+                const isSingleGiftType = Boolean(
+                    eventType === 'subgift' ||
+                    eventType === 'gift_sub' ||
+                    eventType === 'kick_gift_sub'
+                );
+                const isIndividualRecipientGift = Boolean(
+                    !isExplicitSummaryType && (isSingleGiftType || hasDistinctRecipient)
+                );
+
+                let subCount = 1;
+                if (!isIndividualRecipientGift) {
+                    const rawCount =
+                        msg.quantity != null ? msg.quantity :
+                            (msg.sub_count != null ? msg.sub_count :
+                                (msg.gift_count != null ? msg.gift_count :
+                                    (msg.mass_gift_count != null ? msg.mass_gift_count :
+                                        (msg.massGiftCount != null ? msg.massGiftCount :
+                                            (msg.count != null ? msg.count :
+                                                (msg.total != null ? msg.total :
+                                                    (msgDetails && msgDetails.total != null ? msgDetails.total :
+                                                        (evDetails && evDetails.total != null ? evDetails.total : null))))))));
+                    const parsedCount = parseNumericAmount(rawCount);
+                    if (Number.isFinite(parsedCount) && parsedCount > 0) {
+                        subCount = Math.round(parsedCount);
+                    } else if (isGift && !msgCurrency && msg.amount != null) {
+                        const amtCount = parseNumericAmount(msg.amount);
+                        if (Number.isFinite(amtCount) && amtCount >= 1 && Math.abs(amtCount - Math.round(amtCount)) < 1e-6) {
+                            subCount = Math.round(amtCount);
+                        }
                     }
                 }
-                if (!Number.isFinite(subCount) || subCount <= 0) {
-                    subCount = 1;
-                }
+
                 if (subCount > 1) {
                     isGift = true;
                 }
 
                 const isBulkSummary = Boolean(
-                    eventType === 'submysterygift' ||
-                    subType.includes('mystery') ||
-                    subType.includes('mass') ||
-                    subType.includes('community') ||
-                    subCount > 1
+                    !isIndividualRecipientGift && (isExplicitSummaryType || subCount > 1)
                 );
 
                 const resolvedDonor = explicitGifter || fromName || (isAnonymous ? 'Anonim' : recipientOrSelfName);
@@ -3957,22 +3983,6 @@
                 };
             }
 
-            function getGiftBufferKey(meta) {
-                const norm = normalizeKediDonorKey(meta.donorName);
-                if (meta.isAnonymous && (!norm || norm === 'anonim' || norm === 'anonymous')) {
-                    return '__anon__';
-                }
-                return norm || '__anon__';
-            }
-
-            function pruneExpiredGiftSummaryCredits(now) {
-                const ts = now || Date.now();
-                recentGiftSummaryCredits.forEach(function (credit, key) {
-                    if (!credit || credit.expiresAt <= ts || credit.remaining <= 0) {
-                        recentGiftSummaryCredits.delete(key);
-                    }
-                });
-            }
 
             function consumeGiftSummaryCredit(gifterKey, count) {
                 const now = Date.now();
