@@ -2365,6 +2365,9 @@
                 notifBaseHoldMs: 3000,
                 notifMsPerChar: 45,
                 notifQueueGapMs: 320,
+                giftSubBufferMs: 1800,
+                giftSubMaxWaitMs: 8000,
+                giftSubSummaryCreditMs: 6000,
                 maxSeenEvents: 500,
                 // Timer auto-fit typography bounds
                 timerMaxFontPx: 68,
@@ -2386,6 +2389,8 @@
             let lastFormattedLength = -1;
             let streamlabsSocket = null;
             const seenEventIds = new Set();
+            const pendingGiftSubBuffers = new Map();
+            const recentGiftSummaryCredits = new Map();
             const donationQueue = [];
             let isProcessingDonation = false;
             let soundConfig = { volume: 0.85, rules: [] };
@@ -2992,7 +2997,7 @@
                             if (videoMatch && (!soundMatch || videoMatch.amount >= soundMatch.minAmount)) {
                                 // Video plays in kedi_dans.html instead of a sound here
                                 stopActiveSound();
-                                notifyKediDansVideo(videoMatch, item.type, item.amount, item.details.donorName, item.eventId, item.isTest);
+                                notifyKediDansVideo(videoMatch, item.type, item.amount, item.details.donorName, item.eventId, item.isTest, item.eventIds);
                             } else {
                                 playDonationSound(item.type, item.amount);
                             }
@@ -3082,6 +3087,7 @@
                     type: type,
                     amount: amount,
                     eventId: info.eventId || null,
+                    eventIds: Array.isArray(info.eventIds) ? info.eventIds.slice() : (info.eventId ? [info.eventId] : []),
                     isTest: Boolean(info.isTest),
                     baseSeconds: baseSeconds,
                     bonusSeconds: bonusSeconds,
@@ -3671,13 +3677,14 @@
                 return bestSpecial || bestGeneral;
             }
 
-            function notifyKediDansVideo(videoMatch, type, amount, donorName, eventId, isTest) {
+            function notifyKediDansVideo(videoMatch, type, amount, donorName, eventId, isTest, eventIds) {
                 const payload = {
                     type: 'kedi_shared_alert',
                     kind: 'kedi_shared_alert',
                     trigger: String(type || '').toUpperCase(),
                     sender: 'paithon',
                     eventId: eventId || null,
+                    eventIds: Array.isArray(eventIds) ? eventIds.slice() : (eventId ? [eventId] : []),
                     donorName: donorName || '',
                     amount: amount,
                     isTest: Boolean(isTest),
@@ -3824,17 +3831,277 @@
                 return false;
             }
 
+            const SUB_EVENT_TYPES = new Set([
+                'subscription', 'resub', 'sub', 'submysterygift', 'subgift',
+                'gift_sub', 'gift_subscription', 'gifted_subscription', 'gifted_subscriptions',
+                'community_gift', 'kick_sub', 'kick_subscription', 'kick_gift_sub',
+                'kick_gifted_subscription', 'gift'
+            ]);
+
+            function extractNameValue(val) {
+                if (typeof val === 'string') return val.trim();
+                if (val && typeof val === 'object') {
+                    const candidate = val.display_name || val.displayName || val.name || val.username || val.login || '';
+                    return typeof candidate === 'string' ? candidate.trim() : '';
+                }
+                return '';
+            }
+
+            function firstNonEmptyName(candidates) {
+                for (let i = 0; i < candidates.length; i++) {
+                    const v = extractNameValue(candidates[i]);
+                    if (v) return v;
+                }
+                return '';
+            }
+
+            function parseSubMessageMeta(msg, eventData, eventType, msgCurrency) {
+                const evPayload = eventData && eventData.payload && typeof eventData.payload === 'object' ? eventData.payload : null;
+                const msgDetails = msg.subscription_details && typeof msg.subscription_details === 'object' ? msg.subscription_details : null;
+                const evDetails = evPayload && evPayload.subscription_details && typeof evPayload.subscription_details === 'object' ? evPayload.subscription_details : null;
+
+                const explicitGifter = firstNonEmptyName([
+                    msg.gifter_display_name, msg.gifterDisplayName, msg.gifter_name, msg.gifterName,
+                    msg.gifter_username, msg.gifterUsername, msg.gifter_user, msg.gifter,
+                    msg.gifted_by, msg.giftedBy, msg.giver_display_name, msg.giver_name, msg.giver,
+                    msg.sender_display_name, msg.sender_name, msg.sender_username, msg.sender,
+                    msg.purchaser_display_name, msg.purchaser_name, msg.purchaser,
+                    eventData && eventData.gifter_display_name, eventData && eventData.gifter, eventData && eventData.sender,
+                    evPayload && evPayload.giver, evPayload && evPayload.gifter, evPayload && evPayload.sender
+                ]);
+                const fromName = firstNonEmptyName([
+                    msg.from_display_name, msg.fromDisplayName, msg.from_name, msg.from_username, msg.from
+                ]);
+                const recipientOrSelfName = firstNonEmptyName([
+                    msg.display_name, msg.displayName, msg.name, msg.username, msg.user
+                ]);
+
+                const subType = String(
+                    msg.sub_type || msg.subType || (eventData && (eventData.sub_type || eventData.subType)) || ''
+                ).trim().toLowerCase();
+
+                const isAnonymous = Boolean(
+                    msg.is_anonymous || msg.isAnonymous ||
+                    (msg.giver && msg.giver.is_anonymous) ||
+                    (evPayload && evPayload.giver && evPayload.giver.is_anonymous) ||
+                    subType.includes('anon')
+                );
+                const hasDistinctFrom = Boolean(
+                    fromName && recipientOrSelfName &&
+                    normalizeKediDonorKey(fromName) !== normalizeKediDonorKey(recipientOrSelfName)
+                );
+                const isGiftType = (
+                    eventType === 'submysterygift' || eventType === 'subgift' ||
+                    eventType === 'gift_sub' || eventType === 'gift_subscription' ||
+                    eventType === 'gifted_subscription' || eventType === 'gifted_subscriptions' ||
+                    eventType === 'community_gift' || eventType === 'kick_gift_sub' ||
+                    eventType === 'kick_gifted_subscription' || eventType === 'gift'
+                );
+                const isGiftFlag = Boolean(
+                    msg.isGift || msg.is_gift || msg.gifted || msg.is_gifted ||
+                    msg.is_community_gift || msg.isCommunityGift ||
+                    msg.is_mass_gift || msg.isMassGift ||
+                    (msgDetails && msgDetails.is_gift) ||
+                    (evDetails && evDetails.is_gift)
+                );
+                let isGift = Boolean(
+                    isGiftType || isGiftFlag || subType.includes('gift') || explicitGifter || hasDistinctFrom || isAnonymous
+                );
+
+                const rawCount =
+                    msg.quantity != null ? msg.quantity :
+                        (msg.sub_count != null ? msg.sub_count :
+                            (msg.gift_count != null ? msg.gift_count :
+                                (msg.mass_gift_count != null ? msg.mass_gift_count :
+                                    (msg.massGiftCount != null ? msg.massGiftCount :
+                                        (msg.count != null ? msg.count :
+                                            (msg.total != null ? msg.total :
+                                                (msgDetails && msgDetails.total != null ? msgDetails.total :
+                                                    (evDetails && evDetails.total != null ? evDetails.total : null))))))));
+                let subCount = parseNumericAmount(rawCount);
+                if ((!Number.isFinite(subCount) || subCount <= 0) && isGift && !msgCurrency && msg.amount != null) {
+                    const amtCount = parseNumericAmount(msg.amount);
+                    if (Number.isFinite(amtCount) && amtCount >= 1 && Math.abs(amtCount - Math.round(amtCount)) < 1e-6) {
+                        subCount = Math.round(amtCount);
+                    }
+                }
+                if (!Number.isFinite(subCount) || subCount <= 0) {
+                    subCount = 1;
+                }
+                if (subCount > 1) {
+                    isGift = true;
+                }
+
+                const isBulkSummary = Boolean(
+                    eventType === 'submysterygift' ||
+                    subType.includes('mystery') ||
+                    subType.includes('mass') ||
+                    subType.includes('community') ||
+                    subCount > 1
+                );
+
+                const resolvedDonor = explicitGifter || fromName || (isAnonymous ? 'Anonim' : recipientOrSelfName);
+                const rawMsgText =
+                    typeof msg.message === 'string' ? msg.message :
+                        (typeof msg.comment === 'string' ? msg.comment :
+                            (typeof msg.text === 'string' ? msg.text :
+                                (typeof msg.note === 'string' ? msg.note : '')));
+
+                return {
+                    donorName: sanitizeText(resolvedDonor, 40),
+                    message: sanitizeText(rawMsgText, 280),
+                    subCount: subCount,
+                    isGift: isGift,
+                    isBulkSummary: isBulkSummary,
+                    isAnonymous: isAnonymous
+                };
+            }
+
+            function getGiftBufferKey(meta) {
+                const norm = normalizeKediDonorKey(meta.donorName);
+                if (meta.isAnonymous && (!norm || norm === 'anonim' || norm === 'anonymous')) {
+                    return '__anon__';
+                }
+                return norm || '__anon__';
+            }
+
+            function pruneExpiredGiftSummaryCredits(now) {
+                const ts = now || Date.now();
+                recentGiftSummaryCredits.forEach(function (credit, key) {
+                    if (!credit || credit.expiresAt <= ts || credit.remaining <= 0) {
+                        recentGiftSummaryCredits.delete(key);
+                    }
+                });
+            }
+
+            function consumeGiftSummaryCredit(gifterKey, count) {
+                const now = Date.now();
+                pruneExpiredGiftSummaryCredits(now);
+                let credit = recentGiftSummaryCredits.get(gifterKey);
+                let matchedKey = gifterKey;
+                if ((!credit || credit.remaining < count) && gifterKey === '__anon__' && recentGiftSummaryCredits.size === 1) {
+                    const onlyEntry = recentGiftSummaryCredits.entries().next().value;
+                    if (onlyEntry && onlyEntry[1] && onlyEntry[1].remaining >= count) {
+                        matchedKey = onlyEntry[0];
+                        credit = onlyEntry[1];
+                    }
+                }
+                if (!credit || credit.remaining < count) return false;
+                credit.remaining -= count;
+                if (credit.remaining <= 0) {
+                    recentGiftSummaryCredits.delete(matchedKey);
+                }
+                return true;
+            }
+
+            function flushGiftSubBuffer(gifterKey) {
+                const entry = pendingGiftSubBuffers.get(gifterKey);
+                if (!entry) return;
+                if (entry.timer) {
+                    clearTimeout(entry.timer);
+                    entry.timer = null;
+                }
+                pendingGiftSubBuffers.delete(gifterKey);
+
+                const finalCount = Math.max(entry.summaryCount, entry.individualCount);
+                if (finalCount <= 0) return;
+
+                if (entry.summaryCount > entry.individualCount) {
+                    const now = Date.now();
+                    pruneExpiredGiftSummaryCredits(now);
+                    const leftover = entry.summaryCount - entry.individualCount;
+                    const existingCredit = recentGiftSummaryCredits.get(gifterKey);
+                    recentGiftSummaryCredits.set(gifterKey, {
+                        remaining: (existingCredit ? existingCredit.remaining : 0) + leftover,
+                        expiresAt: now + CONFIG.giftSubSummaryCreditMs
+                    });
+                }
+
+                processDonation('SUB', finalCount, {
+                    donorName: entry.donorName,
+                    message: entry.message,
+                    eventId: entry.firstEventId,
+                    eventIds: entry.eventIds.slice()
+                });
+            }
+
+            function enqueueGiftSubEvent(meta, eventId) {
+                let gifterKey = getGiftBufferKey(meta);
+
+                if (!meta.isBulkSummary) {
+                    if (consumeGiftSummaryCredit(gifterKey, meta.subCount)) {
+                        return;
+                    }
+                    if (gifterKey === '__anon__' && !pendingGiftSubBuffers.has('__anon__')) {
+                        let candidateKey = null;
+                        let candidateCount = 0;
+                        pendingGiftSubBuffers.forEach(function (buf, k) {
+                            if (buf && buf.summaryCount > buf.individualCount) {
+                                candidateKey = k;
+                                candidateCount++;
+                            }
+                        });
+                        if (candidateCount === 1 && candidateKey) {
+                            gifterKey = candidateKey;
+                        }
+                    }
+                }
+
+                const now = Date.now();
+                let entry = pendingGiftSubBuffers.get(gifterKey);
+                if (!entry) {
+                    entry = {
+                        donorName: meta.donorName || '',
+                        message: meta.message || '',
+                        summaryCount: 0,
+                        individualCount: 0,
+                        firstEventId: eventId || null,
+                        eventIds: [],
+                        startedAt: now,
+                        timer: null
+                    };
+                    pendingGiftSubBuffers.set(gifterKey, entry);
+                }
+
+                if (meta.donorName && (!entry.donorName || (entry.donorName === 'Anonim' && meta.donorName !== 'Anonim'))) {
+                    entry.donorName = meta.donorName;
+                }
+                if (!entry.message && meta.message) {
+                    entry.message = meta.message;
+                }
+                if (eventId) {
+                    if (!entry.firstEventId) entry.firstEventId = eventId;
+                    if (entry.eventIds.indexOf(eventId) === -1) entry.eventIds.push(eventId);
+                }
+                if (meta.isBulkSummary) {
+                    entry.summaryCount += meta.subCount;
+                } else {
+                    entry.individualCount += meta.subCount;
+                }
+
+                if (entry.timer) clearTimeout(entry.timer);
+                const elapsed = now - entry.startedAt;
+                const delay = Math.min(CONFIG.giftSubBufferMs, Math.max(0, CONFIG.giftSubMaxWaitMs - elapsed));
+                entry.timer = setTimeout(function () {
+                    flushGiftSubBuffer(gifterKey);
+                }, delay);
+            }
+
             function handleStreamlabsPayload(eventData) {
                 if (!eventData || typeof eventData !== 'object') return;
                 const type = String(eventData.type || '').toLowerCase();
-                const messages = Array.isArray(eventData.message)
+                let messages = Array.isArray(eventData.message)
                     ? eventData.message
                     : (eventData.message ? [eventData.message] : []);
+                if (messages.length === 0 && eventData.payload && typeof eventData.payload === 'object') {
+                    messages = [eventData.payload];
+                }
 
-                messages.forEach(function (msg) {
+                messages.forEach(function (msg, idx) {
                     if (!msg || typeof msg !== 'object') return;
 
-                    const eventId = msg._id || msg.id || msg.event_id || eventData.event_id;
+                    const rawMsgId = msg._id || msg.id || msg.event_id;
+                    const eventId = rawMsgId || (eventData.event_id ? (messages.length > 1 ? String(eventData.event_id) + '_' + idx : eventData.event_id) : null);
                     if (isDuplicateEvent(eventId)) return;
 
                     const msgCurrency = String(msg.currency || '').trim().toUpperCase();
@@ -3887,29 +4154,17 @@
                     }
 
                     // 3. Subscriptions / Resubs / Mystery Gift Subs / Kick Subscriptions
-                    if (
-                        type === 'subscription' ||
-                        type === 'resub' ||
-                        type === 'sub' ||
-                        type === 'submysterygift' ||
-                        type === 'gift_sub' ||
-                        type === 'gift_subscription' ||
-                        type === 'kick_sub' ||
-                        type === 'kick_subscription' ||
-                        type === 'gift'
-                    ) {
-                        const rawCount =
-                            msg.quantity != null ? msg.quantity :
-                                (msg.sub_count != null ? msg.sub_count :
-                                    (msg.gift_count != null ? msg.gift_count :
-                                        (msg.mass_gift_count != null ? msg.mass_gift_count :
-                                            (msg.count != null ? msg.count : 1))));
-                        const subCount = parseNumericAmount(rawCount);
-                        processDonation('SUB', Number.isFinite(subCount) && subCount > 0 ? subCount : 1, {
-                            donorName: donorName,
-                            message: donorMessage,
-                            eventId: eventId
-                        });
+                    if (SUB_EVENT_TYPES.has(type)) {
+                        const meta = parseSubMessageMeta(msg, eventData, type, msgCurrency);
+                        if (meta.isGift) {
+                            enqueueGiftSubEvent(meta, eventId);
+                        } else {
+                            processDonation('SUB', meta.subCount, {
+                                donorName: meta.donorName,
+                                message: meta.message,
+                                eventId: eventId
+                            });
+                        }
                     }
                 });
             }
