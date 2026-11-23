@@ -3855,7 +3855,7 @@
                 return '';
             }
 
-                        function parseSubMessageMeta(msg, eventData, eventType, msgCurrency) {
+            function parseSubMessageMeta(msg, eventData, eventType, msgCurrency) {
                 const evPayload = eventData && eventData.payload && typeof eventData.payload === 'object' ? eventData.payload : null;
                 const msgDetails = msg.subscription_details && typeof msg.subscription_details === 'object' ? msg.subscription_details : null;
                 const evDetails = evPayload && evPayload.subscription_details && typeof evPayload.subscription_details === 'object' ? evPayload.subscription_details : null;
@@ -3983,6 +3983,22 @@
                 };
             }
 
+            function getGiftBufferKey(meta) {
+                const norm = normalizeKediDonorKey(meta.donorName);
+                if (meta.isAnonymous && (!norm || norm === 'anonim' || norm === 'anonymous')) {
+                    return '__anon__';
+                }
+                return norm || '__anon__';
+            }
+
+            function pruneExpiredGiftSummaryCredits(now) {
+                const ts = now || Date.now();
+                recentGiftSummaryCredits.forEach(function (credit, key) {
+                    if (!credit || credit.expiresAt <= ts || credit.remaining <= 0) {
+                        recentGiftSummaryCredits.delete(key);
+                    }
+                });
+            }
 
             function consumeGiftSummaryCredit(gifterKey, count) {
                 const now = Date.now();
